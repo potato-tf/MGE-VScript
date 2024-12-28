@@ -1,18 +1,3 @@
-::ROOT <- getroottable()
-::CONST <- getconsttable()
-if (!("ConstantNamingConvention" in ROOT)) // make sure folding is only done once
-{
-	foreach (a,b in Constants)
-		foreach (k,v in b)
-        {
-			ROOT[k] <- v != null ? v : 0
-            CONST[k] <- v != null ? v : 0
-        }
-}
-
-CONST.MAXPLAYERS <- MaxClients().tointeger()
-CONST.MAP_NAME <- GetMapName()
-
 const MAXARENAS = 63
 const MAXSPAWNS = 15
 const HUDFADEOUTTIME = 120.0
@@ -41,7 +26,7 @@ const MODEL_POINT = "models/props_gameplay/cap_point_base.mdl"
 const MODEL_BRIEFCASE = "models/flag/briefcase.mdl"
 const MODEL_AMMOPACK = "models/items/ammopack_small.mdl"
 const MODEL_LARGE_AMMOPACK = "models/items/ammopack_large.mdl"
-const MGE_SPAWN_FILE = "mge_configs/mgemod_spawns.nut"
+const MGE_SPAWN_FILE = "mge/cfg/mgemod_spawns.nut"
 
 // this will get overwritten by the config file
 // defined here to avoid errors
@@ -74,10 +59,30 @@ const MGE_SPAWN_FILE = "mge_configs/mgemod_spawns.nut"
     "vo/announcer_you_failed.wav"
 ]
 
-foreach (sound in stockSounds)
+foreach (sound in StockSounds)
     PrecacheSound(sound)
 
 PrecacheModel(MODEL_POINT)
 PrecacheModel(MODEL_BRIEFCASE)
 PrecacheModel(MODEL_AMMOPACK)
 PrecacheModel(MODEL_LARGE_AMMOPACK)
+
+::All_Arenas <- {}
+
+::MGE_Respawn <- SpawnEntityFromTable("trigger_player_respawn_override", {
+    spawnflags = 1,
+    targetname = "__mge_respawn",
+    RespawnTime = 0.0
+})
+MGE_Respawn.SetSolid(SOLID_BBOX)
+MGE_Respawn.SetSize(Vector(), Vector(1, 1, 1))
+
+//fix delayed starttouch crash
+function RespawnStartTouch() { return (activator && activator.IsValid()) ? true : false; }
+function RespawnEndTouch() { return (activator && activator.IsValid()) ? true : false; }
+
+MGE_Respawn.ValidateScriptScope()
+MGE_Respawn.GetScriptScope().InputStartTouch <- RespawnStartTouch
+MGE_Respawn.GetScriptScope().Inputstarttouch <- RespawnStartTouch
+MGE_Respawn.GetScriptScope().InputEndTouch <- RespawnEndTouch
+MGE_Respawn.GetScriptScope().Inputendtouch <- RespawnEndTouch
