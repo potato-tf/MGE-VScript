@@ -1,13 +1,3 @@
-const MAXARENAS = 63
-const MAXSPAWNS = 15
-const HUDFADEOUTTIME = 120.0
-//config file included above
-
-const SLOT_ONE = 1
-const SLOT_TWO = 2
-const SLOT_THREE = 3
-const SLOT_FOUR = 4
-
 //arena status
 const AS_IDLE = 0
 const AS_PRECOUNTDOWN = 1
@@ -69,20 +59,20 @@ PrecacheModel(MODEL_LARGE_AMMOPACK)
 
 ::All_Arenas <- {}
 
-::MGE_Respawn <- SpawnEntityFromTable("trigger_player_respawn_override", {
-    spawnflags = 1,
-    targetname = "__mge_respawn",
-    RespawnTime = 0.0
-})
-MGE_Respawn.SetSolid(SOLID_BBOX)
-MGE_Respawn.SetSize(Vector(), Vector(1, 1, 1))
+// ::MGE_Respawn <- SpawnEntityFromTable("trigger_player_respawn_override", {
+//     spawnflags = 1,
+//     targetname = "__mge_respawn",
+//     RespawnTime = 0.0
+// })
+// MGE_Respawn.SetSolid(SOLID_BBOX)
+// MGE_Respawn.SetSize(Vector(), Vector(1, 1, 1))
 
-//fix delayed starttouch crash
-function RespawnStartTouch() { return (activator && activator.IsValid()) ? true : false; }
-function RespawnEndTouch() { return (activator && activator.IsValid()) ? true : false; }
+// //fix delayed starttouch crash
+// function RespawnStartTouch() { return (activator && activator.IsValid()) ? true : false; }
+// function RespawnEndTouch() { return (activator && activator.IsValid()) ? true : false; }
 
-MGE_Respawn.ValidateScriptScope()
-MGE_Respawn.GetScriptScope().InputStartTouch <- RespawnStartTouch
-MGE_Respawn.GetScriptScope().Inputstarttouch <- RespawnStartTouch
-MGE_Respawn.GetScriptScope().InputEndTouch <- RespawnEndTouch
-MGE_Respawn.GetScriptScope().Inputendtouch <- RespawnEndTouch
+// MGE_Respawn.ValidateScriptScope()
+// MGE_Respawn.GetScriptScope().InputStartTouch <- RespawnStartTouch
+// MGE_Respawn.GetScriptScope().Inputstarttouch <- RespawnStartTouch
+// MGE_Respawn.GetScriptScope().InputEndTouch <- RespawnEndTouch
+// MGE_Respawn.GetScriptScope().Inputendtouch <- RespawnEndTouch

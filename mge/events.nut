@@ -63,6 +63,14 @@ class MGE_Events {
                 chatCommands[splitText[0]](params)
         }
 
+        function OnGameEvent_player_activate(params) {
+            local player = GetPlayerFromUserID(params.userid)
+
+            player.ValidateScriptScope()
+            local scope = player.GetScriptScope()
+            scope.elo <- -INT_MAX
+        }
+
         function OnGameEvent_player_spawn(params) {
 
             local player = GetPlayerFromUserID(params.userid)
@@ -101,7 +109,7 @@ class MGE_Events {
 
             local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : -1
             //koth/bball mode doesn't count deaths
-            if ("koth" in arena || "bball" in arena) return
+            if ("koth" in arena || "bball" in arena || arena.State != AS_FIGHT) return
 
             player.GetTeam() == TF_TEAM_RED ? arena.Score[1]++ : arena.Score[0]++
 

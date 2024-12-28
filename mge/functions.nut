@@ -11,20 +11,23 @@ function LoadSpawnPoints()
 
     //this is used for the !add command so we have the same ordering as the OG plugin
     //plugin version uses nested arrays
+    All_Arenas.Indexes <- array(config.len(), null)
 
     // printl(config.len())
     foreach(k, v in config) {
 
         All_Arenas[k] <- v
+
         local idx = "idx" in v ? v.idx.tointeger() : -1
-
-        All_Arenas[k].CurrentPlayers <- {}
-
-        All_Arenas[k].Queue <- []
-        All_Arenas[k].SpawnPoints <- []
-        All_Arenas[k].Score <- array(2, 0)
+        local arena = All_Arenas[k]
+        arena.CurrentPlayers <- {}
+        arena.Queue <- []
+        arena.SpawnPoints <- []
+        arena.Score <- array(2, 0)
+        arena.State <- AS_IDLE
 
         All_Arenas.Indexes[idx] = k
+
         foreach(a, b in v) {
 
             try
@@ -101,19 +104,18 @@ function AddToArena(player, arena_name)
     local arena = All_Arenas[arena_name]
     local current_players = arena.CurrentPlayers
 
-    scope.Arena <- {}
-    scope.Arena.name <- arena_name
-    scope.Arena.spawns <- arena.SpawnPoints
-    scope.Arena.spawnidx <- 0
-
+    scope.Arena <- {
+        name = arena_name,
+        spawns = arena.SpawnPoints,
+        spawnidx = 0
+    }
     current_players[player] <- scope.elo
 
     local team = 1
     local red = 0, blue = 0
     if (current_players.len())
         foreach(p, _ in current_players)
-            if (p.GetTeam() > TEAM_SPECTATOR)
-                p.GetTeam() == TF_TEAM_RED ? red++ : blue++
+            p.GetTeam() == TF_TEAM_RED ? red++ : blue++
 
     if (red == blue)
         team = RandomInt(TF_TEAM_RED, TF_TEAM_BLUE)
@@ -201,24 +203,37 @@ function CalcELO2(winner, winner2, loser, loser2) {
 function CalcArenaScore(player, arena_name) {
 
     local arena = All_Arenas[arena_name]
+
+    if (arena.State == AS_IDLE) return
+
     local fraglimit = "fraglimit" in arena ? arena.fraglimit.tointeger() : 20
 
     //round over
-    local winner_idx = 0
-    foreach(i, score in arena.Score)
+    local winner, loser
+
+    foreach(p, _ in arena.CurrentPlayers)
     {
-        if (score >= fraglimit)
-        {
-            winner_idx = i
-            local winner, loser
-            foreach(p, _ in arena.CurrentPlayers)
-            {
-                p.GetTeam() + 2 == winner_idx ? winner = p : loser = p
-            }
+        if (arena.Score[0] >= fraglimit && p.GetTeam() == TF_TEAM_RED)
+            winner = p
+        else if (arena.Score[1] >= fraglimit && p.GetTeam() == TF_TEAM_BLUE)
+            winner = p
+        else
+            loser = p
+    }
+
             MGE_ClientPrint(winner, 3, format(MGE_Localization.XdefeatsY, Convars.GetClientConvarValue("name", winner.entindex()), winner.GetScriptScope().elo, Convars.GetClientConvarValue("name", loser.entindex()), loser.GetScriptScope().elo, fraglimit, scope.Arena.name))
             CalcELO(winner, loser)
-            return
-        }
+}
+
+function SetArenaState(arena_name, state) {
+    local arena = All_Arenas[arena_name]
+    arena.State = state
+
+    switch (state) {
+        case AS_COUNTDOWN:
+            break
+        case AS_FIGHT:
+            break
     }
 }
 
