@@ -16,11 +16,6 @@ const MODEL_POINT = "models/props_gameplay/cap_point_base.mdl"
 const MODEL_BRIEFCASE = "models/flag/briefcase.mdl"
 const MODEL_AMMOPACK = "models/items/ammopack_small.mdl"
 const MODEL_LARGE_AMMOPACK = "models/items/ammopack_large.mdl"
-const MGE_SPAWN_FILE = "mge/cfg/mgemod_spawns.nut"
-
-// this will get overwritten by the config file
-// defined here to avoid errors
-::SpawnConfigs <- {}
 
 ::StockSounds <- [
     "vo/intel_teamcaptured.wav",

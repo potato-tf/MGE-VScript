@@ -1,22 +1,31 @@
 //::DEFAULT_LANGUAGE <- "english"
 
 local function Include(file) {
-    local path = format("mge/%s", file)
-        IncludeScript(path)
+	local path = format("mge/%s", file)
+	IncludeScript(path)
 }
 
-//include order is important
+Include("cfg/mgemod_spawns")
 
-local language = "DEFAULT_LANGUAGE" in getroottable() ? DEFAULT_LANGUAGE : Convars.GetStr("cl_language")
+local mapname = GetMapName()
+if (!(mapname in SpawnConfigs))
+	delete SpawnConfigs
+else
+{
+	//include order is important
 
-try
-    Include(format("cfg/localization/%s", language))
-catch (_)
-    Include(format("cfg/localization/english"))
+	local language = "DEFAULT_LANGUAGE" in getroottable() ? DEFAULT_LANGUAGE : Convars.GetStr("cl_language")
+
+	try
+		Include(format("cfg/localization/%s", language))
+	catch (_)
+		Include(format("cfg/localization/english"))
 
 
-Include("constants")
-Include("globals")
-Include("functions")
-Include("events")
-Include("mge")
+	Include("constants")
+	Include("globals")
+	Include("functions")
+	Include("events")
+	Include("mge")
+}
+

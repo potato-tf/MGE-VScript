@@ -1,6 +1,11 @@
+function ForceChangeClass(player, classIndex)
+{
+	player.SetPlayerClass(classIndex)
+	SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", classIndex)
+}
+
 function LoadSpawnPoints()
 {
-    IncludeScript(MGE_SPAWN_FILE)
     local spawn = ""
 
     local config = SpawnConfigs[GetMapName()]
@@ -121,6 +126,9 @@ function AddToArena(player, arena_name)
         team = RandomInt(TF_TEAM_RED, TF_TEAM_BLUE)
     else
         team = red > blue ? TF_TEAM_RED : TF_TEAM_BLUE
+
+    if (!GetPropInt(player, "m_Shared.m_iDesiredPlayerClass"))
+        ForceChangeClass(player, TF_CLASS_SCOUT);
 
     player.ForceChangeTeam(team, true)
     player.ForceRespawn()

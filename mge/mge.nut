@@ -15,9 +15,10 @@
     }
     LoadSpawnPoints()
 
-    Convars.SetValue("mp_autoteambalance", "0");
-    Convars.SetValue("mp_teams_unbalance_limit", "32");
-    Convars.SetValue("mp_tournament", "0");
+    Convars.SetValue("mp_humans_must_join_team", "spectator")
+    Convars.SetValue("mp_autoteambalance", "0")
+    Convars.SetValue("mp_teams_unbalance_limit", "32")
+    Convars.SetValue("mp_tournament", "0")
 }
 
 OnMapStart()
