@@ -91,8 +91,12 @@ class MGE_Events {
                     MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1])
                 }
                 AddThinkToEnt(player, "ScoreThink")
-            } else {
-                MGE_ClientPrint(null, 3, "[MGE ERROR] "+player+" spawned outside of arena!")
+            }
+            else
+            {
+                local team = player.GetTeam()
+                if (team == TF_TEAM_BLUE || team == TF_TEAM_RED)
+                    MGE_ClientPrint(null, 3, "[MGE ERROR] "+player+" spawned outside of arena!")
             }
         }
 
