@@ -13,12 +13,12 @@ class MGE_Events {
                 idx = splitText[1].tointeger() - 1
             catch(_)
 
-            if (splitText.len() < 2 || idx > All_Arenas.len()) {
+            if (splitText.len() < 2 || idx > All_Arenas.Indexes.len() || idx < 1) {
 
                 ClientPrint(player, 3, "Valid areas:")
 
                 local i = 1
-                foreach (arena_name, _ in All_Arenas) {
+                foreach (arena_name in All_Arenas.Indexes) {
                     ClientPrint(player, 3, format("\t%d: %s", i, arena_name))
                     i++
                 }
