@@ -1,3 +1,9 @@
+// Color codes:
+// 32CD32 - Light green
+// 00FF00 - Green
+// 808000 - Olive
+
+
 ::MGE_Localization <- {
     MenuTitle  =			"Join arena..."
 	MenuRemove  =			"Remove from queue"
