@@ -8,21 +8,21 @@ function HandleRoundStart()
 		tf_gamerules.AcceptInput("SetBlueTeamRespawnWaveTime", "99999", null, null)
 	}
 
-    // Hide respawn text
-    local player_manager = FindByClassname(null, "tf_player_manager")
+	// Hide respawn text
+	local player_manager = FindByClassname(null, "tf_player_manager")
 
-    player_manager.ValidateScriptScope()
-    player_manager.GetScriptScope().HideRespawnText <- function() {
-        for (local i = 1; i <= MAX_CLIENTS; i++)
-        {
-            local player = PlayerInstanceFromIndex(i)
-            if (!player || !player.IsValid() || player.IsFakeClient()) continue
+	player_manager.ValidateScriptScope()
+	player_manager.GetScriptScope().HideRespawnText <- function() {
+		for (local i = 1; i <= MAX_CLIENTS; i++)
+		{
+			local player = PlayerInstanceFromIndex(i)
+			if (!player || !player.IsValid() || player.IsFakeClient()) continue
 
-            SetPropFloatArray(player_manager, "m_flNextRespawnTime", -1, player.entindex())
-        }
-        return -1
-    }
-    AddThinkToEnt(player_manager, "HideRespawnText")
+			SetPropFloatArray(player_manager, "m_flNextRespawnTime", -1, player.entindex())
+		}
+		return -1
+	}
+	AddThinkToEnt(player_manager, "HideRespawnText")
 }
 
 function ForceChangeClass(player, classIndex)

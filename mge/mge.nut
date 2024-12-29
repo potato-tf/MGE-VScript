@@ -1,7 +1,7 @@
 ::MGE_Init <- function()
 {
 	printl("[VScript MGEMod] Loaded, moving all active players to spectator")
-	
+
 	local default_scope = {
 		"self"    : null,
 		"__vname" : null,
@@ -15,7 +15,7 @@
 
 		player.ValidateScriptScope()
 		local scope = player.GetScriptScope()
-		
+
 		// Clear scope
 		foreach (k, v in scope)
 			if (!(k in default_scope))

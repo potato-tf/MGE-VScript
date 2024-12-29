@@ -23,7 +23,7 @@ class MGE_Events
 				}
 				return
 			}
-			
+
 			if (idx != null)
 			{
 				AddToQueue(player, Arenas_List[idx])
@@ -53,7 +53,7 @@ class MGE_Events
 		{
 			HandleRoundStart()
 		}
-		
+
 		function OnGameEvent_player_activate(params)
 		{
 			local player = GetPlayerFromUserID(params.userid)
@@ -63,9 +63,9 @@ class MGE_Events
 			local scope = player.GetScriptScope()
 			scope.elo <- -INT_MAX
 		}
-		
+
 		// todo logic for player_disconnect (remove from queue / arena, etc)
-		
+
 		function OnGameEvent_player_say(params)
 		{
 			local chatCommands = MGE_Events.chat_commands
@@ -90,9 +90,9 @@ class MGE_Events
 			if ("arena_info" in scope)
 			{
 				local arena = scope.arena_info.arena
-				
+
 				local idx = RandomInt(0, arena.SpawnPoints.len() - 1)
-				
+
 				printl(arena.SpawnPoints[idx][0])
 				printl(arena.SpawnPoints[idx][1])
 
@@ -125,7 +125,7 @@ class MGE_Events
 			local arena = scope.arena_info.arena
 
 			local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : -1
-			
+
 			// Koth / bball mode doesn't count deaths
 			// todo braindawg one obscure map has bball: 0 lol
 			if ("koth" in arena || "bball" in arena || arena.State != AS_FIGHT) return
