@@ -56,7 +56,7 @@ function AddToQueue(player, arena_name)
     local arena = All_Arenas[arena_name]
     local current_players = arena.CurrentPlayers
 
-    if (player in current_players || arena.Queue.find(player))
+    if (player in current_players || arena.Queue.find(player) != null)
         return
 
     //nobody is in this arena
