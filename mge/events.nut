@@ -1,132 +1,147 @@
-class MGE_Events {
+class MGE_Events
+{
+	chat_commands = {
+		"!add" : function(params) {
+			local player = GetPlayerFromUserID(params.userid)
 
-    chat_commands = {
-        "!add" : function(params) {
+			local splitText = split(params.text, " ")
 
-            local player = GetPlayerFromUserID(params.userid)
+			local idx = null
 
-            local splitText = split(params.text, " ")
+			try
+				idx = splitText[1].tointeger() - 1
+			catch(_) {}
 
-            local idx = INT_MAX
+			if (splitText.len() < 2 || idx > Arenas_List.len() - 1 || idx < 0) {
 
-            try
-                idx = splitText[1].tointeger() - 1
-            catch(_)
+				ClientPrint(player, 3, "Valid arenas:")
 
-            if (splitText.len() < 2 || idx > All_Arenas.Indexes.len() || idx < 1) {
+				local i = 1
+				foreach (arena_name in Arenas_List) {
+					ClientPrint(player, 3, format("\t%d: %s", i, arena_name))
+					i++
+				}
+				return
+			}
+			
+			if (idx != null)
+			{
+				AddToQueue(player, Arenas_List[idx])
+			}
+			else
+			{
+				foreach (arena_name, _ in Arenas)
+				{
+					if (startswith(arena_name, splitText[1]))
+					{
+						AddToQueue(player, arena_name)
+						break
+					}
+				}
+			}
+		},
+		"!remove" : function(params) {
+			local player = GetPlayerFromUserID(params.userid)
+			local scope = player.GetScriptScope()
+			if (!("arena_info" in scope)) return
 
-                ClientPrint(player, 3, "Valid areas:")
+			RemoveFromQueue(player, scope.arena_info.name)
+		}
+	}
+	Events = {
+		function OnGameEvent_teamplay_round_start(params)
+		{
+			HandleRoundStart()
+		}
+		
+		function OnGameEvent_player_activate(params)
+		{
+			local player = GetPlayerFromUserID(params.userid)
+			if (player.IsFakeClient()) return
 
-                local i = 1
-                foreach (arena_name in All_Arenas.Indexes) {
-                    ClientPrint(player, 3, format("\t%d: %s", i, arena_name))
-                    i++
-                }
-                return
-            }
-            if (idx != INT_MAX)
-            {
-                AddToQueue(player, All_Arenas.Indexes[idx])
-            }
-            else
-            {
-                foreach (arena_name, _ in All_Arenas)
-                {
-                    if (startswith(arena_name, splitText[1]))
-                    {
-                        AddToQueue(player, arena_name)
-                        break
-                    }
-                }
-            }
-        },
-        "!remove" : function(params) {
+			player.ValidateScriptScope()
+			local scope = player.GetScriptScope()
+			scope.elo <- -INT_MAX
+		}
+		
+		// todo logic for player_disconnect (remove from queue / arena, etc)
+		
+		function OnGameEvent_player_say(params)
+		{
+			local chatCommands = MGE_Events.chat_commands
+			local text = params.text.tolower()
 
-            local player = GetPlayerFromUserID(params.userid)
+			local splitText = split(text, " ")
 
-            RemoveFromQueue(player, player.GetScriptScope().Arena.name)
-        }
-    }
-    Events = {
+			if (splitText[0][0] != 33) //ASCII for !
+				return
 
-        function OnGameEvent_player_say(params) {
+			if (splitText[0] in chatCommands)
+				chatCommands[splitText[0]](params)
+		}
 
-            local chatCommands = MGE_Events.chat_commands
-            local text = params.text.tolower()
+		function OnGameEvent_player_spawn(params)
+		{
+			local player = GetPlayerFromUserID(params.userid)
+			if (player.IsFakeClient()) return
 
-            local splitText = split(text, " ")
+			local scope = player.GetScriptScope()
 
-            if (splitText[0][0] != 33) //ASCII for !
-                return
+			if ("arena_info" in scope)
+			{
+				local arena = scope.arena_info.arena
+				
+				local idx = RandomInt(0, arena.SpawnPoints.len() - 1)
+				
+				printl(arena.SpawnPoints[idx][0])
+				printl(arena.SpawnPoints[idx][1])
 
-            if (splitText[0] in chatCommands)
-                chatCommands[splitText[0]](params)
-        }
+				player.SetAbsOrigin(arena.SpawnPoints[idx][0])
+				player.SnapEyeAngles(arena.SpawnPoints[idx][1])
 
-        function OnGameEvent_player_activate(params) {
-            local player = GetPlayerFromUserID(params.userid)
+				player.EmitSound("items/spawn_item.wav")
 
-            player.ValidateScriptScope()
-            local scope = player.GetScriptScope()
-            scope.elo <- -INT_MAX
-        }
+				scope.ScoreThink <- function() {
+					MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1])
+				}
+				AddThinkToEnt(player, "ScoreThink")
+			}
+			else
+			{
+				local team = player.GetTeam()
+				if (team == TF_TEAM_BLUE || team == TF_TEAM_RED)
+					MGE_ClientPrint(null, 3, "[VScript MGEMod] Warning: "+player+" spawned outside of arena!")
+			}
+		}
 
-        function OnGameEvent_player_spawn(params) {
+		function OnGameEvent_player_death(params)
+		{
+			local player = GetPlayerFromUserID(params.userid)
+			if (player.IsFakeClient()) return
 
-            local player = GetPlayerFromUserID(params.userid)
-            local scope = player.GetScriptScope()
+			local scope = player.GetScriptScope()
+			if (!("arena_info" in scope)) return
 
-            if ("Arena" in scope)
-            {
-                local idx = scope.Arena.spawnidx
-                player.SetAbsOrigin(scope.Arena.spawns[idx][0])
-                player.SetAbsAngles(scope.Arena.spawns[idx][1])
-                player.EmitSound("items/spawn_item.wav")
-                idx++
-                if (idx >= scope.Arena.spawns.len()) idx = 0
-                scope.Arena.spawnidx = idx
+			local arena = scope.arena_info.arena
 
-                local arena = All_Arenas[scope.Arena.name]
-                scope.ScoreThink <- function() {
-                    MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1])
-                }
-                AddThinkToEnt(player, "ScoreThink")
-            }
-            else
-            {
-                local team = player.GetTeam()
-                if (team == TF_TEAM_BLUE || team == TF_TEAM_RED)
-                    MGE_ClientPrint(null, 3, "[MGE ERROR] "+player+" spawned outside of arena!")
-            }
-        }
+			local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : -1
+			
+			// Koth / bball mode doesn't count deaths
+			// todo braindawg one obscure map has bball: 0 lol
+			if ("koth" in arena || "bball" in arena || arena.State != AS_FIGHT) return
 
-        function OnGameEvent_player_death(params) {
+			(player.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
 
-            local player = GetPlayerFromUserID(params.userid)
+			CalcArenaScore(player, scope.arena_info.name)
 
-            local scope = player.GetScriptScope()
+			local attacker = GetPlayerFromUserID(params.attacker)
 
-            //we aren't in an arena
-            if (!("Arena" in scope)) return
+			if (attacker && attacker != player)
+				MGE_ClientPrint(player, 3, format(MGE_Localization.HPLeft, attacker.GetHealth()))
 
-            local arena = All_Arenas[scope.Arena.name]
-
-            local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : -1
-            //koth/bball mode doesn't count deaths
-            if ("koth" in arena || "bball" in arena || arena.State != AS_FIGHT) return
-
-            player.GetTeam() == TF_TEAM_RED ? arena.Score[1]++ : arena.Score[0]++
-
-            CalcArenaScore(player, scope.Arena.name)
-
-            local attacker = GetPlayerFromUserID(params.attacker)
-
-            if (attacker && attacker != player)
-                MGE_ClientPrint(player, 3, format(MGE_Localization.HPLeft, attacker.GetHealth()))
-
-            EntFireByHandle(player, "RunScriptCode", "self.ForceRespawn()", respawntime, null, null)
-        }
-    }
+			EntFireByHandle(player, "RunScriptCode", "self.ForceRespawn()", respawntime, null, null)
+		}
+	}
 }
 
 __CollectGameEventCallbacks(MGE_Events.Events)

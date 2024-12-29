@@ -1,44 +1,38 @@
-::OnMapStart <- function()
+::MGE_Init <- function()
 {
-    printl("[VScript MGEMod] Loaded, moving all players to spectator")
-    for (local i = 1; i <= MAX_CLIENTS; i++)
-    {
-        local player = PlayerInstanceFromIndex(i)
+	printl("[VScript MGEMod] Loaded, moving all active players to spectator")
+	
+	local default_scope = {
+		"self"    : null,
+		"__vname" : null,
+		"__vrefs" : null,
+	}
 
-        if (!player || !player.IsValid()) continue
+	for (local i = 1; i <= MAX_CLIENTS; i++)
+	{
+		local player = PlayerInstanceFromIndex(i)
+		if (!player || !player.IsValid() || player.IsFakeClient()) continue
 
-        player.ValidateScriptScope()
-        local scope = player.GetScriptScope()
-        scope.elo <- -INT_MAX
-        // player.TakeDamage(99999, 0, null)
-        player.ForceChangeTeam(TEAM_SPECTATOR, true)
-    }
-    LoadSpawnPoints()
+		player.ValidateScriptScope()
+		local scope = player.GetScriptScope()
+		
+		// Clear scope
+		foreach (k, v in scope)
+			if (!(k in default_scope))
+				delete scope[k]
 
-    Convars.SetValue("mp_autoteambalance", "0");
-    Convars.SetValue("mp_teams_unbalance_limit", "32");
-    Convars.SetValue("mp_tournament", "0");
+		scope.elo <- -INT_MAX
+		player.ForceChangeTeam(TEAM_SPECTATOR, true)
+	}
 
-    EntFire("tf_gamerules", "SetRedTeamRespawnWaveTime", "99999")
-    EntFire("tf_gamerules", "SetBlueTeamRespawnWaveTime", "99999")
+	HandleRoundStart()
+	LoadSpawnPoints()
 
-    //hide respawn text
-
-    local player_manager = Entities.FindByClassname(null, "tf_player_manager")
-    player_manager.ValidateScriptScope()
-
-    player_manager.GetScriptScope().HideRespawnText <- function() {
-
-        for (local i = 1; i <= MAX_CLIENTS; i++)
-        {
-            local player = PlayerInstanceFromIndex(i)
-            if (!player || !player.IsValid()) continue
-            SetPropFloatArray(player_manager, "m_flNextRespawnTime", -1, player.entindex())
-        }
-        return -1
-    }
-
-    AddThinkToEnt(player_manager, "HideRespawnText")
+	Convars.SetValue("mp_humans_must_join_team", "spectator")
+	Convars.SetValue("mp_autoteambalance", 0);
+	Convars.SetValue("mp_teams_unbalance_limit", 0);
+	Convars.SetValue("mp_scrambleteams_auto", 0);
+	Convars.SetValue("mp_tournament", 0);
 }
 
-OnMapStart()
+MGE_Init()
