@@ -57,15 +57,12 @@ class MGE_Events
 		function OnGameEvent_player_activate(params)
 		{
 			local player = GetPlayerFromUserID(params.userid)
-			if (player.IsFakeClient()) return
 
 			player.ValidateScriptScope()
 			local scope = player.GetScriptScope()
 
 			local _toscope = {
-
 				elo = -INT_MAX
-
 				ThinkTable = {}
 			}
 
@@ -114,8 +111,6 @@ class MGE_Events
 					EntFire("worldspawn", "RunScriptCode", "SetArenaState('"+arena.name+"', 'AS_COUNTDOWN')", COUNTDOWN_START_DELAY)
 				}
 
-				if (player.IsFakeClient()) return
-
 				local idx = RandomInt(0, arena.SpawnPoints.len() - 1)
 
 				printl(arena.SpawnPoints[idx][0])
@@ -141,7 +136,6 @@ class MGE_Events
 		function OnGameEvent_player_death(params)
 		{
 			local player = GetPlayerFromUserID(params.userid)
-			if (player.IsFakeClient()) return
 
 			local scope = player.GetScriptScope()
 			if (!("arena_info" in scope)) return

@@ -21,7 +21,21 @@
 			if (!(k in default_scope))
 				delete scope[k]
 
-		scope.elo <- -INT_MAX
+		// todo make this a util func since we use it in player_activate
+		local _toscope = {
+			elo = -INT_MAX
+			ThinkTable = {}
+		}
+
+		foreach (k, v in _toscope)
+			scope[k] <- v
+
+		scope.PlayerThink <- function() {
+			foreach(name, func in scope.ThinkTable)
+				func.call(scope)
+		}
+		AddThinkToEnt(player, "PlayerThink")
+
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
 	}
 

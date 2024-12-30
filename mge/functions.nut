@@ -46,6 +46,7 @@
 		return
 }
 
+// todo put into newthread
 ::LoadSpawnPoints <- function()
 {
 	local config = SpawnConfigs[GetMapName()]
@@ -61,7 +62,7 @@
 		datatable.SpawnPoints    <- []
 		datatable.Score          <- array(2, 0)
 		datatable.State          <- AS_IDLE
-		datatable.MaxPlayers <- "4player" in datatable && datatable["4player"] == "1" ? 4 : 2
+		datatable.MaxPlayers     <- "4player" in datatable && datatable["4player"] == "1" ? 4 : 2
 
 		local idx = ("idx" in datatable) ? datatable.idx.tointeger() : null
 		if (idx == null && !idx_failed)
@@ -106,6 +107,89 @@
 	}
 }
 
+function AddBot(arena_name)
+{
+	if (typeof(arena_name) == "string" && !(arena_name in Arenas)) return
+	if (typeof(arena_name) == "integer")
+	{
+		--arena_name
+		if (arena_name > Arenas_List.len() - 1 || arena_name < 0) return
+		arena_name = Arenas_List[arena_name]
+	}
+
+	// Ideally find a bot that isn't currently in an arena, but we aren't picky at the end of the day
+	local abot = null
+	local bot  = null
+	for (local i = 1; i <= MAX_CLIENTS; ++i)
+	{
+		local player = PlayerInstanceFromIndex(i)
+		if (!player || !player.IsBotOfType(1337)) continue
+
+		player.ValidateScriptScope()
+		local scope = player.GetScriptScope()
+
+		if (!bot && !("arena_info" in scope))
+		{
+			bot = player
+			break
+		}
+		if (!abot && "arena_info" in scope)
+			abot = player
+	}
+	if (!bot && !abot) return
+
+	AddToQueue((bot) ? bot : abot, arena_name)
+}
+
+function RemoveBot(arena_name, all=false)
+{
+	if (typeof(arena_name) == "string" && !(arena_name in Arenas)) return
+	if (typeof(arena_name) == "integer")
+	{
+		--arena_name
+		if (arena_name > Arenas_List.len() - 1 || arena_name < 0) return
+		arena_name = Arenas_List[arena_name]
+	}
+
+	local arena = Arenas[arena_name]
+
+	// Remove active bot(s)
+	foreach (player in arena.CurrentPlayers)
+	{
+		if (player.IsFakeClient())
+		{
+			player.ForceChangeTeam(TEAM_UNASSIGNED, true);
+			SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", 0)
+
+			delete arena.CurrentPlayers[player]
+			player.ValidateScriptScope()
+			local scope = player.GetScriptScope()
+			if ("arena_info" in scope)
+				delete scope.arena_info
+
+			if (!all) return
+		}
+	}
+
+	// No active bot(s) found, remove from queue
+	local remidxs = []
+	foreach (idx, player in arena.Queue)
+	{
+		if (player.IsFakeClient())
+			remidxs.append(idx)
+
+		if (!all) break
+	}
+	foreach (idx in remidxs)
+		arena.Queue.remove(idx)
+}
+
+function RemoveAllBots()
+{
+	foreach (arena_name, _ in Arenas)
+		RemoveBot(arena_name, true)
+}
+
 ::AddToQueue <- function(player, arena_name)
 {
 	local arena = Arenas[arena_name]
@@ -129,6 +213,7 @@
 				delete current_arena.CurrentPlayers[player]
 	}
 
+	// if (current_players.len() < arena.MaxPlayers)
 	if (!current_players.len())
 		AddToArena(player, arena_name)
 	else
@@ -182,6 +267,11 @@
 {
 	local arena = Arenas[arena_name]
 	local index = arena.Queue.find(player)
+
+	player.ValidateScriptScope()
+	local scope = player.GetScriptScope()
+	if ("arena_info" in scope)
+		delete scope.arena_info
 
 	try
 		arena.Queue.remove(index)
@@ -335,4 +425,3 @@
 	local str = localized_string in MGE_Localization ? MGE_Localization[localized_string] : localized_string
 	ClientPrint(player, target, str)
 }
-
