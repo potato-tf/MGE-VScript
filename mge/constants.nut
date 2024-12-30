@@ -1,3 +1,18 @@
+//CONFIG CONSTANTS
+const ELO_TRACKING_MODE = 1 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
+const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
+const COUNTDOWN_START_DELAY = 3.0 //delay before countdown starts
+
+//END CONFIG CONSTANTS
+
+// Arena status
+const AS_IDLE         = 0
+const AS_PRECOUNTDOWN = 1
+const AS_COUNTDOWN    = 2
+const AS_FIGHT        = 3
+const AS_AFTERFIGHT   = 4
+const AS_REPORTED     = 5
+
 //"reminder that constants are resolved at preprocessor level and not runtime"
 //"if you add them dynamically to the table they wont show up until you execute a new script as the preprocessor isnt aware yet"
 
@@ -25,11 +40,6 @@ foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
 	foreach (k, v in i.getclass())
 		if (k != "IsValid" && !(k in ROOT))
 			ROOT[k] <- i[k].bindenv(i)
-
-//0 = none
-//1 = file (plain text in the tf/scriptdata/mge_playerdata folder)
-//2 = database (requires VPI)
-const ELO_TRACKING_MODE = 1
 
 const STRING_NETPROP_ITEMDEF = "m_AttributeManager.m_Item.m_iItemDefinitionIndex"
 const SINGLE_TICK = 0.015
@@ -96,16 +106,6 @@ PrecacheModel(MODEL_POINT)
 PrecacheModel(MODEL_BRIEFCASE)
 PrecacheModel(MODEL_AMMOPACK)
 PrecacheModel(MODEL_LARGE_AMMOPACK)
-
-const COUNTDOWN_START_DELAY = 3.0
-
-// Arena status
-const AS_IDLE         = 0
-const AS_PRECOUNTDOWN = 1
-const AS_COUNTDOWN    = 2
-const AS_FIGHT        = 3
-const AS_AFTERFIGHT   = 4
-const AS_REPORTED     = 5
 
 // For neutral cap points
 const NEUTRAL = 1

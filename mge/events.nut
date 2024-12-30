@@ -69,6 +69,7 @@ class MGE_Events
 			local scope = player.GetScriptScope()
 
 			scope.ThinkTable <- {}
+			scope.Name <- Convars.GetClientConvarValue("name", player.entindex())
 
 			scope.PlayerThink <- function() {
 				foreach(name, func in scope.ThinkTable)
@@ -119,7 +120,8 @@ class MGE_Events
 				player.SetAbsOrigin(arena.SpawnPoints[idx][0])
 				player.SnapEyeAngles(arena.SpawnPoints[idx][1])
 
-				player.EmitSound("items/spawn_item.wav")
+				if (arena.State == AS_FIGHT)
+					player.EmitSound("items/spawn_item.wav")
 
 				scope.ThinkTable.ScoreThink <- function() {
 					MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1]+"\nRed ELO: "+player.GetScriptScope().stats.elo+" BLU ELO: "+player.GetScriptScope().stats.elo)
@@ -146,18 +148,19 @@ class MGE_Events
 
 			// Koth / bball mode doesn't count deaths
 			// todo braindawg one obscure map has bball: 0 lol
-			if ("koth" in arena || "bball" in arena || arena.State != AS_FIGHT) return
+			if (!("koth" in arena) && !("bball" in arena) && arena.State != AS_FIGHT)
+			{
+				(player.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
 
-			(player.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
-
-			CalcArenaScore(player, scope.arena_info.name)
+				CalcArenaScore(player, scope.arena_info.name)
+			}
 
 			local attacker = GetPlayerFromUserID(params.attacker)
 
 			if (attacker && attacker != player)
 				MGE_ClientPrint(player, 3, format(MGE_Localization.HPLeft, attacker.GetHealth()))
 
-			EntFireByHandle(player, "RunScriptCode", "self.ForceRespawn()", respawntime, null, null)
+			EntFireByHandle(player, "RunScriptCode", "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime, null, null)
 		}
 	}
 }

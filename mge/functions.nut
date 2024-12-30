@@ -204,21 +204,28 @@ function RemoveAllBots()
 	// Remove ourselves from our current arena if applicable
 	local scope = player.GetScriptScope()
 	local current_arena = ("arena_info" in scope) ? scope.arena_info.arena : null
+	local queue_slot = current_arena ? current_arena.Queue.find(player) : null
 	if (current_arena)
 	{
 		try
-			current_arena.Queue.remove(current_arena.Queue.find(player))
+			current_arena.Queue.remove(queue_slot)
 		catch (_)
 			if (player in current_arena.CurrentPlayers)
 				delete current_arena.CurrentPlayers[player]
 	}
 
+	MGE_ClientPrint(player, 3, format(MGE_Localization.ChoseArena, arena_name))
 	if (current_players.len() < arena.MaxPlayers)
+	{
 		AddToArena(player, arena_name)
+		local str = ELO_TRACKING_MODE ? format(MGE_Localization.JoinsArena, scope.Name, scope.stats.elo.tostring(), arena_name) : format(MGE_Localization.JoinsArenaNoStats, scope.Name, arena_name)
+		MGE_ClientPrint(null, 3, str)
+	}
 	else
 	{
 		arena.Queue.append(player)
-		MGE_ClientPrint(player, 3, format(MGE_Localization.ChoseArena, arena_name))
+		local str = queue_slot == 0 ? format(MGE_Localization.NextInLine, arena.Queue.len().tostring()) : format(MGE_Localization.InLine, arena.Queue.len().tostring())
+		MGE_ClientPrint(null, 3, str)
 	}
 }
 
@@ -303,7 +310,8 @@ function RemoveAllBots()
 
 
 ::CalcELO <- function(winner, loser) {
-	if ( winner.IsFakeClient() || loser.IsFakeClient())
+
+	if ( winner.IsFakeClient() || loser.IsFakeClient() || !ELO_TRACKING_MODE)
 		return;
 
 	local winner_elo = winner.GetScriptScope().stats.elo
@@ -338,7 +346,7 @@ function RemoveAllBots()
 
 ::CalcELO2 <- function(winner, winner2, loser, loser2) {
 
-	if (winner.IsFakeClient() || loser.IsFakeClient() || g_bNoStats || loser2.IsFakeClient() || winner2.IsFakeClient())
+	if (winner.IsFakeClient() || loser.IsFakeClient() || !ELO_TRACKING_MODE || loser2.IsFakeClient() || winner2.IsFakeClient())
 		return;
 
 	local Losers_ELO = (loser.stats.elo + loser2.stats.elo).tofloat() / 2;
@@ -395,7 +403,7 @@ function RemoveAllBots()
 			loser = p
 	}
 
-	MGE_ClientPrint(winner, 3, format(MGE_Localization.XdefeatsY, Convars.GetClientConvarValue("name", winner.entindex()), winner.GetScriptScope().stats.elo, Convars.GetClientConvarValue("name", loser.entindex()), loser.GetScriptScope().stats.elo, fraglimit, scope.arena_info.name))
+	MGE_ClientPrint(winner, 3, format(MGE_Localization.XdefeatsY, winner.GetScriptScope().Name, winner.GetScriptScope().stats.elo, loser.GetScriptScope().Name, loser.GetScriptScope().stats.elo, fraglimit, scope.arena_info.name))
 	CalcELO(winner, loser)
 }
 
