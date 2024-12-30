@@ -61,13 +61,7 @@ class MGE_Events
 			player.ValidateScriptScope()
 			local scope = player.GetScriptScope()
 
-			local _toscope = {
-				elo = -INT_MAX
-				ThinkTable = {}
-			}
-
-			foreach (k, v in _toscope)
-				scope[k] <- v
+			scope.ThinkTable <- {}
 
 			scope.PlayerThink <- function() {
 				foreach(name, func in scope.ThinkTable)
@@ -107,7 +101,7 @@ class MGE_Events
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
 				{
 					// SetArenaState(arena.name, AS_COUNTDOWN)
-					EntFire("worldspawn", "RunScriptCode", "SetArenaState('"+arena_name+"', 'AS_COUNTDOWN')", COUNTDOWN_START_DELAY)
+					EntFireByHandle(player, "RunScriptCode", "SetArenaState("+arena.name+", AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
 				}
 
 				local idx = RandomInt(0, arena.SpawnPoints.len() - 1)
@@ -121,7 +115,7 @@ class MGE_Events
 				player.EmitSound("items/spawn_item.wav")
 
 				scope.ThinkTable.ScoreThink <- function() {
-					MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1]+"\nRed ELO: "+player.GetScriptScope().elo+" BLU ELO: "+player.GetScriptScope().elo)
+					MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1]+"\nRed ELO: "+player.GetScriptScope().stats.elo+" BLU ELO: "+player.GetScriptScope().stats.elo)
 				}
 			}
 			else

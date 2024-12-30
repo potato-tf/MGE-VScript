@@ -232,7 +232,7 @@ function RemoveAllBots()
 		arena = arena,
 		name  = arena_name,
 	}
-	current_players[player] <- scope.elo
+	current_players[player] <- scope.stats.elo
 
 	// Choose the team with the lower amount of players
 	local team = 1
@@ -305,19 +305,19 @@ function RemoveAllBots()
 	if ( winner.IsFakeClient() || loser.IsFakeClient())
 		return;
 
-	local winner_elo = winner.GetScriptScope().elo
-	local loser_elo = loser.GetScriptScope().elo
+	local winner_elo = winner.GetScriptScope().stats.elo
+	local loser_elo = loser.GetScriptScope().stats.elo
 
 	// ELO formula
 	local El = 1.0 / (pow(10.0, (winner_elo - loser_elo).tofloat() / 400) + 1)
 
 	local k = (winner_elo >= 2400) ? 10 : 15
 	local winnerscore = floor(k * El + 0.5)
-	winner.elo += winnerscore
+	winner.stats.elo += winnerscore
 
 	k = (loser_elo >= 2400) ? 10 : 15
 	local loserscore = floor(k * El + 0.5)
-	loser.elo -= loserscore
+	loser.stats.elo -= loserscore
 
 	// local arena_index = winner.arena
 	// local time = Time()
@@ -340,19 +340,19 @@ function RemoveAllBots()
 	if (winner.IsFakeClient() || loser.IsFakeClient() || g_bNoStats || loser2.IsFakeClient() || winner2.IsFakeClient())
 		return;
 
-	local Losers_ELO = (loser.elo + loser2.elo).tofloat() / 2;
-	local Winners_ELO = (winner.elo + winner2.elo).tofloat() / 2;
+	local Losers_ELO = (loser.stats.elo + loser2.stats.elo).tofloat() / 2;
+	local Winners_ELO = (winner.stats.elo + winner2.stats.elo).tofloat() / 2;
 
 	// ELO formula
 	local El = 1 / (pow(10.0, (Winners_ELO - Losers_ELO) / 400) + 1);
 	local k = (Winners_ELO >= 2400) ? 10 : 15;
 	local winnerscore = floor(k * El + 0.5);
-	winner.elo += winnerscore;
-	winner2.elo += winnerscore;
+	winner.stats.elo += winnerscore;
+	winner2.stats.elo += winnerscore;
 	k = (Losers_ELO >= 2400) ? 10 : 15;
 	local loserscore = floor(k * El + 0.5);
-	loser.elo -= loserscore;
-	loser2.elo -= loserscore;
+	loser.stats.elo -= loserscore;
+	loser2.stats.elo -= loserscore;
 
 	// local winner_team_slot = (g_iPlayerSlot[winner] > 2) ? (g_iPlayerSlot[winner] - 2) : g_iPlayerSlot[winner];
 	// local loser_team_slot = (g_iPlayerSlot[loser] > 2) ? (g_iPlayerSlot[loser] - 2) : g_iPlayerSlot[loser];
@@ -394,7 +394,7 @@ function RemoveAllBots()
 			loser = p
 	}
 
-	MGE_ClientPrint(winner, 3, format(MGE_Localization.XdefeatsY, Convars.GetClientConvarValue("name", winner.entindex()), winner.GetScriptScope().elo, Convars.GetClientConvarValue("name", loser.entindex()), loser.GetScriptScope().elo, fraglimit, scope.arena_info.name))
+	MGE_ClientPrint(winner, 3, format(MGE_Localization.XdefeatsY, Convars.GetClientConvarValue("name", winner.entindex()), winner.GetScriptScope().stats.elo, Convars.GetClientConvarValue("name", loser.entindex()), loser.GetScriptScope().stats.elo, fraglimit, scope.arena_info.name))
 	CalcELO(winner, loser)
 }
 
@@ -423,4 +423,33 @@ function RemoveAllBots()
 ::MGE_ClientPrint <- function(player, target, localized_string) {
 	local str = localized_string in MGE_Localization ? MGE_Localization[localized_string] : localized_string
 	ClientPrint(player, target, str)
+}
+
+::GetStats <- function(player) {
+
+	local scope = player.GetScriptScope()
+	local steam_id = NetProps.GetPropString(player, "m_iszNetworkIDString")
+	local steam_id_slice = steam_id.slice(5, steam_id.find("]"))
+	scope.stats <- { elo = -INT_MAX } //default ELO
+
+	if (!("VPI" in getroottable()))
+	{
+		scope.stats = compilestring(FileToString(format("mge_playerdata/%s.nut", steam_id_slice)))()
+	}
+
+	VPI.AsyncCall({
+		func="VPI_DB_MGE_GetPlayerStats",
+		kwargs= {
+			query_mode="read",
+			network_id=steam_id_slice
+		},
+		callback=function(response, error) {
+			if (typeof(response) != "array" || !response.len())
+			{
+				printl("Error getting player stats")
+				return
+			}
+			scope.stats = response[0]
+		}
+	})
 }
