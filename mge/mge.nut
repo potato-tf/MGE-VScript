@@ -11,7 +11,7 @@
 	for (local i = 1; i <= MAX_CLIENTS; i++)
 	{
 		local player = PlayerInstanceFromIndex(i)
-		if (!player || !player.IsValid() || player.IsFakeClient()) continue
+		if (!player || !player.IsValid()) continue
 
 		player.ValidateScriptScope()
 		local scope = player.GetScriptScope()
@@ -37,6 +37,10 @@
 		AddThinkToEnt(player, "PlayerThink")
 
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
+		// todo bots dont like to stay dead with this, need to come up with something else
+		/*
+			SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", 0)
+		*/
 	}
 
 	HandleRoundStart()

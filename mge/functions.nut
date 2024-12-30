@@ -154,7 +154,7 @@ function RemoveBot(arena_name, all=false)
 	local arena = Arenas[arena_name]
 
 	// Remove active bot(s)
-	foreach (player in arena.CurrentPlayers)
+	foreach (player, _ in arena.CurrentPlayers)
 	{
 		if (player.IsFakeClient())
 		{
