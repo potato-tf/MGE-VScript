@@ -26,6 +26,11 @@ foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
 		if (k != "IsValid" && !(k in ROOT))
 			ROOT[k] <- i[k].bindenv(i)
 
+//0 = none
+//1 = file (plain text in the tf/scriptdata/mge_playerdata folder)
+//2 = database (requires VPI)
+const ELO_TRACKING_MODE = 1
+
 const STRING_NETPROP_ITEMDEF = "m_AttributeManager.m_Item.m_iItemDefinitionIndex"
 const SINGLE_TICK = 0.015
 
