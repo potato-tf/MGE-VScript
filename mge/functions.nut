@@ -213,8 +213,7 @@ function RemoveAllBots()
 				delete current_arena.CurrentPlayers[player]
 	}
 
-	// if (current_players.len() < arena.MaxPlayers)
-	if (!current_players.len())
+	if (current_players.len() < arena.MaxPlayers)
 		AddToArena(player, arena_name)
 	else
 	{

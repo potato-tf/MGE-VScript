@@ -98,17 +98,16 @@ class MGE_Events
 
 			local scope = player.GetScriptScope()
 
-			local arena
-
 			if ("arena_info" in scope)
 			{
-				arena = scope.arena_info.arena
+				local arena      = scope.arena_info.arena
+				local arena_name = scope.arena_info.name
 
 				//spawned into arena with waiting player, start countdown
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
 				{
 					// SetArenaState(arena.name, AS_COUNTDOWN)
-					EntFire("worldspawn", "RunScriptCode", "SetArenaState('"+arena.name+"', 'AS_COUNTDOWN')", COUNTDOWN_START_DELAY)
+					EntFire("worldspawn", "RunScriptCode", "SetArenaState('"+arena_name+"', 'AS_COUNTDOWN')", COUNTDOWN_START_DELAY)
 				}
 
 				local idx = RandomInt(0, arena.SpawnPoints.len() - 1)
