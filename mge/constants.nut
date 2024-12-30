@@ -92,6 +92,8 @@ PrecacheModel(MODEL_BRIEFCASE)
 PrecacheModel(MODEL_AMMOPACK)
 PrecacheModel(MODEL_LARGE_AMMOPACK)
 
+const COUNTDOWN_START_DELAY = 3.0
+
 // Arena status
 const AS_IDLE         = 0
 const AS_PRECOUNTDOWN = 1

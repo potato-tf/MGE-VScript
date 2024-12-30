@@ -1,4 +1,4 @@
-function HandleRoundStart()
+::HandleRoundStart <- function()
 {
 	local tf_gamerules = FindByClassname(null, "tf_gamerules")
 	if (tf_gamerules)
@@ -27,7 +27,7 @@ function HandleRoundStart()
 	}
 }
 
-function ForceChangeClass(player, classIndex)
+::ForceChangeClass <- function(player, classIndex)
 {
 	player.SetPlayerClass(classIndex)
 	SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", classIndex)
@@ -35,7 +35,7 @@ function ForceChangeClass(player, classIndex)
 
 // tointeger() allows trailing garbage (e.g. "123abc")
 // This will only allow strictly integers (also floats with only zeroes: e.g "1.00")
-function ToStrictInt(str)
+::ToStrictInt <- function(str)
 {
 	local rex = regexp(@"-?[0-9]+(\.0+)?") // [-](digit)[.(>0 zeroes)]
 	if (!rex.match(str)) return
@@ -46,7 +46,7 @@ function ToStrictInt(str)
 		return
 }
 
-function LoadSpawnPoints()
+::LoadSpawnPoints <- function()
 {
 	local config = SpawnConfigs[GetMapName()]
 	Arenas_List <- array(config.len(), null)
@@ -61,6 +61,7 @@ function LoadSpawnPoints()
 		datatable.SpawnPoints    <- []
 		datatable.Score          <- array(2, 0)
 		datatable.State          <- AS_IDLE
+		datatable.MaxPlayers <- "4player" in datatable && datatable["4player"] == "1" ? 4 : 2
 
 		local idx = ("idx" in datatable) ? datatable.idx.tointeger() : null
 		if (idx == null && !idx_failed)
@@ -73,7 +74,7 @@ function LoadSpawnPoints()
 					new_list.append(arena)
 			Arenas_List = new_list
 		}
-		
+
 		if (idx_failed)
 			Arenas_List.append(arena_name)
 		else
@@ -99,13 +100,13 @@ function LoadSpawnPoints()
 					datatable.SpawnPoints.append([origin, angles])
 				}
 				catch(_)
-					printl(format("[VSCRIPT MGEMod] Warning: Data parsing for arena '%s' failed -- key: %s, val: %s"), arena_name, k, v)
+					printl(format("[VSCRIPT MGEMod] Warning: Data parsing for arena '%s' failed -- key: %s, val: %s"), arena_name, k, v.tostring())
 			}
 		}
 	}
 }
 
-function AddToQueue(player, arena_name)
+::AddToQueue <- function(player, arena_name)
 {
 	local arena = Arenas[arena_name]
 	local current_players = arena.CurrentPlayers
@@ -115,7 +116,7 @@ function AddToQueue(player, arena_name)
 		ClientPrint(player, 3, "Already in arena");
 		return
 	}
-	
+
 	// Remove ourselves from our current arena if applicable
 	local scope = player.GetScriptScope()
 	local current_arena = ("arena_info" in scope) ? scope.arena_info.arena : null
@@ -137,7 +138,7 @@ function AddToQueue(player, arena_name)
 	}
 }
 
-function AddToArena(player, arena_name)
+::AddToArena <- function(player, arena_name)
 {
 	local scope = player.GetScriptScope()
 	local arena = Arenas[arena_name]
@@ -177,7 +178,7 @@ function AddToArena(player, arena_name)
 	player.ForceRespawn()
 }
 
-function RemoveFromQueue(player, arena_name)
+::RemoveFromQueue <- function(player, arena_name)
 {
 	local arena = Arenas[arena_name]
 	local index = arena.Queue.find(player)
@@ -194,7 +195,7 @@ function RemoveFromQueue(player, arena_name)
 	}
 }
 
-function CycleQueue(player, arena_name)
+::CycleQueue <- function(player, arena_name)
 {
 	local arena = Arenas[arena_name]
 	local queue = arena.Queue
@@ -211,7 +212,7 @@ function CycleQueue(player, arena_name)
 }
 
 
-function CalcELO(winner, loser) {
+::CalcELO <- function(winner, loser) {
 	if ( winner.IsFakeClient() || loser.IsFakeClient())
 		return;
 
@@ -245,7 +246,7 @@ function CalcELO(winner, loser) {
 
 }
 
-function CalcELO2(winner, winner2, loser, loser2) {
+::CalcELO2 <- function(winner, winner2, loser, loser2) {
 
 	if (winner.IsFakeClient() || loser.IsFakeClient() || g_bNoStats || loser2.IsFakeClient() || winner2.IsFakeClient())
 		return;
@@ -283,7 +284,7 @@ function CalcELO2(winner, winner2, loser, loser2) {
 	//     ClientPrint(loser2, 3, format("You lost %d points!", loserscore));
 }
 
-function CalcArenaScore(player, arena_name) {
+::CalcArenaScore <- function(player, arena_name) {
 
 	local arena = Arenas[arena_name]
 
@@ -308,19 +309,29 @@ function CalcArenaScore(player, arena_name) {
 	CalcELO(winner, loser)
 }
 
-function SetArenaState(arena_name, state) {
+::SetArenaState <- function(arena_name, state) {
 	local arena = Arenas[arena_name]
 	arena.State = state
 
-	switch (state) {
-		case AS_COUNTDOWN:
-			break
-		case AS_FIGHT:
-			break
+	local arenaStates = {
+		AS_IDLE = function() {
+			return
+		},
+		AS_COUNTDOWN = function() {
+			foreach(p, _ in arena.CurrentPlayers)
+			{
+				p.ForceRespawn()
+				p.AddCustomAttribute("no_attack", 1.0, arena.cdtime.tofloat())
+			}
+		},
+		AS_FIGHT = function() {
+
+		},
 	}
+	arenaStates[state]()
 }
 
-function MGE_ClientPrint(player, target, localized_string) {
+::MGE_ClientPrint <- function(player, target, localized_string) {
 	local str = localized_string in MGE_Localization ? MGE_Localization[localized_string] : localized_string
 	ClientPrint(player, target, str)
 }
