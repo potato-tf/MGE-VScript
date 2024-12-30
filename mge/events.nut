@@ -61,13 +61,7 @@ class MGE_Events
 			player.ValidateScriptScope()
 			local scope = player.GetScriptScope()
 
-			local _toscope = {
-				elo = -INT_MAX
-				ThinkTable = {}
-			}
-
-			foreach (k, v in _toscope)
-				scope[k] <- v
+			scope.ThinkTable <- {}
 
 			scope.PlayerThink <- function() {
 				foreach(name, func in scope.ThinkTable)
