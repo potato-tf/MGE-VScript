@@ -478,9 +478,10 @@ function RemoveAllBots()
 			return
 		break
 		case 1:
-			local file_data = ""
+			local file_data = format("getroottable()[\"%s\"] <- {\n", steam_id_slice)
 			foreach(k, v in scope.stats)
-				file_data += format("%s = %s\n", k.tostring(), v.tostring())
+				file_data += format("\t%s = %s\n", k.tostring(), v.tostring())
+			file_data += "}\n"
 			StringToFile(format("mge_playerdata/%s.nut", steam_id_slice), file_data)
 
 		break
