@@ -4,6 +4,11 @@ class MGE_Events
 		"!add" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 
+			local scope = player.GetScriptScope()
+
+			foreach (k, v in scope)
+				printl(k)
+
 			local splitText = split(params.text, " ")
 
 			local idx = null
@@ -59,6 +64,8 @@ class MGE_Events
 			local player = GetPlayerFromUserID(params.userid)
 
 			player.ValidateScriptScope()
+			GetStats(player)
+
 			local scope = player.GetScriptScope()
 
 			scope.ThinkTable <- {}

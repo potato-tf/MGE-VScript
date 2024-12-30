@@ -232,6 +232,7 @@ function RemoveAllBots()
 		arena = arena,
 		name  = arena_name,
 	}
+	printl(scope.stats)
 	current_players[player] <- scope.stats.elo
 
 	// Choose the team with the lower amount of players
@@ -428,28 +429,74 @@ function RemoveAllBots()
 ::GetStats <- function(player) {
 
 	local scope = player.GetScriptScope()
-	local steam_id = NetProps.GetPropString(player, "m_iszNetworkIDString")
+	local steam_id = GetPropString(player, "m_szNetworkIDString")
 	local steam_id_slice = steam_id.slice(5, steam_id.find("]"))
+	local player_file = FileToString(format("mge_playerdata/%s.nut", steam_id_slice))
+
 	scope.stats <- { elo = -INT_MAX } //default ELO
 
-	if (!("VPI" in getroottable()))
+	if (player_file)
 	{
-		scope.stats = compilestring(FileToString(format("mge_playerdata/%s.nut", steam_id_slice)))()
+		scope.stats <- compilestring(player_file)()
+		return
 	}
-
-	VPI.AsyncCall({
-		func="VPI_DB_MGE_GetPlayerStats",
-		kwargs= {
-			query_mode="read",
-			network_id=steam_id_slice
-		},
-		callback=function(response, error) {
-			if (typeof(response) != "array" || !response.len())
-			{
-				printl("Error getting player stats")
-				return
+	else if ("VPI" in getroottable())
+	{
+		VPI.AsyncCall({
+			func="VPI_DB_MGE_ReadWritePlayerStats",
+			kwargs= {
+				query_mode="read",
+				network_id=steam_id_slice
+			},
+			callback=function(response, error) {
+				if (typeof(response) != "array" || !response.len())
+				{
+					printl("Error getting player stats")
+					return
+				}
+				scope.stats <- response[0]
 			}
-			scope.stats = response[0]
-		}
-	})
+		})
+	}
+}
+
+::UpdateStats <-  function(player, stats = {}, additive = false) {
+	local scope = player.GetScriptScope()
+
+	if (!("stats" in scope) || scope.stats.len() == 1)
+	{
+		printf("Error: stats not found for %s! fetching again and skipping update...\n", GetPropString(player, "m_szNetworkIDString"))
+		GetStats(player)
+		return
+	}
+	foreach (k, v in stats)
+		additive ? scope.stats[k] += v : scope.stats[k] = v
+
+	switch(ELO_TRACKING_MODE)
+	{
+		case 0:
+			return
+		break
+		case 1:
+			local file_data = ""
+			foreach(k, v in scope.stats)
+				file_data += format("%s = %s\n", k.tostring(), v.tostring())
+			StringToFile(format("mge_playerdata/%s.nut", steam_id_slice), file_data)
+
+		break
+		case 2:
+			VPI.AsyncCall({
+				func="VPI_DB_MGE_ReadWritePlayerStats",
+				kwargs= {
+					query_mode="write",
+					network_id=steam_id_slice,
+					stats=stats,
+					additive=additive
+				},
+				callback=function(response, error) {
+					printf("Stats updated for %s\n", GetPropString(player, "m_szNetworkIDString"))
+				}
+			})
+		break
+	}
 }
