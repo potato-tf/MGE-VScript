@@ -280,7 +280,10 @@ function RemoveAllBots()
 			++blue
 	}
 
-	team = (red < blue) ? TF_TEAM_RED : TF_TEAM_BLUE
+	if (!red && !blue)
+		team = RandomInt(TF_TEAM_RED, TF_TEAM_BLUE)
+	else
+		team = (red < blue) ? TF_TEAM_RED : TF_TEAM_BLUE
 
 	// Make sure spectators have a class chosen to be able to spawn
 	if (!GetPropInt(player, "m_Shared.m_iDesiredPlayerClass"))
@@ -289,7 +292,7 @@ function RemoveAllBots()
 	// printl(player.GetTeam())
 	// Spawn (goto player_spawn)
 	player.ForceRespawn()
-	// player.ForceChangeTeam(team, true)
+	player.ForceChangeTeam(team, true)
 	// printl(player.GetTeam())
 }
 
