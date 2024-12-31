@@ -9,8 +9,11 @@ const COUNTDOWN_SOUND_VOLUME = 0.5
 const ROUND_START_SOUND = "ui/chime_rd_2base_neg.wav"
 const ROUND_START_SOUND_VOLUME = 0.5
 
+const SPAWN_SOUND = "items/spawn_item.wav"
+
 PrecacheSound(COUNTDOWN_SOUND)
 PrecacheSound(ROUND_START_SOUND)
+PrecacheSound(SPAWN_SOUND)
 
 //END CONFIG CONSTANTS
 

@@ -120,10 +120,12 @@ class MGE_Events
 				player.SnapEyeAngles(arena.SpawnPoints[idx][1])
 
 				if (arena.State == AS_FIGHT)
-					player.EmitSound("items/spawn_item.wav")
+					player.EmitSound(SPAWN_SOUND)
 
 				scope.ThinkTable.ScoreThink <- function() {
-					MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1]+"\nRed ELO: "+player.GetScriptScope().stats.elo+" BLU ELO: "+player.GetScriptScope().stats.elo)
+					// MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1]+"\nRed ELO: "+player.GetScriptScope().stats.elo+" BLU ELO: "+player.GetScriptScope().stats.elo)
+					local str = format("RED: %d (%d)\nBLU: %d (%d)", arena.Score[0], player.GetScriptScope().stats.elo, arena.Score[1], player.GetScriptScope().stats.elo)
+					MGE_ClientPrint(player, 4, str)
 				}
 			}
 			else

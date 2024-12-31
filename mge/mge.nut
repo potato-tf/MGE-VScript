@@ -1,3 +1,41 @@
+::StockSounds <- [
+	"vo/announcer_ends_5sec.wav",
+	"vo/announcer_ends_4sec.wav",
+	"vo/announcer_ends_3sec.wav",
+	"vo/announcer_ends_2sec.wav",
+	"vo/announcer_ends_1sec.wav",
+	"vo/announcer_ends_10sec.wav",
+	"vo/announcer_control_point_warning.wav",
+	"vo/announcer_control_point_warning2.wav",
+	"vo/announcer_control_point_warning3.wav",
+	"vo/announcer_overtime.wav",
+	"vo/announcer_overtime2.wav",
+	"vo/announcer_overtime3.wav",
+	"vo/announcer_overtime4.wav",
+	"vo/announcer_we_captured_control.wav",
+	"vo/announcer_we_lost_control.wav",
+	"vo/announcer_victory.wav",
+	"vo/announcer_you_failed.wav"
+
+	"vo/intel_teamcaptured.wav",
+	"vo/intel_teamdropped.wav",
+	"vo/intel_teamstolen.wav",
+	"vo/intel_enemycaptured.wav",
+	"vo/intel_enemydropped.wav",
+	"vo/intel_enemystolen.wav",
+]
+foreach (sound in StockSounds)
+	PrecacheSound(sound)
+
+::Arenas      <- {}
+::Arenas_List <- [] // Need ordered arenas for selection with client commands like !add
+
+::default_scope <- {
+	"self"    : null,
+	"__vname" : null,
+	"__vrefs" : null,
+}
+
 ::MGE_Init <- function()
 {
 	printl("[VScript MGEMod] Loaded, moving all active players to spectator")

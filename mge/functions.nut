@@ -269,7 +269,7 @@ function RemoveAllBots()
 	current_players[player] <- scope.stats.elo
 
 	// Choose the team with the lower amount of players
-	local team = 1
+	local team = RandomInt(TF_TEAM_RED, TF_TEAM_BLUE)
 	local red  = 0, blue = 0
 
 	foreach(p, _ in current_players)
@@ -280,10 +280,9 @@ function RemoveAllBots()
 			++blue
 	}
 
-	if (!red && !blue)
-		team = RandomInt(TF_TEAM_RED, TF_TEAM_BLUE)
-	else
-		team = (red < blue) ? TF_TEAM_RED : TF_TEAM_BLUE
+	team = !red && !blue ? team : red < blue ? TF_TEAM_RED : TF_TEAM_BLUE
+
+	printl("team: " + team)
 
 	// Make sure spectators have a class chosen to be able to spawn
 	if (!GetPropInt(player, "m_Shared.m_iDesiredPlayerClass"))
@@ -291,8 +290,8 @@ function RemoveAllBots()
 
 	// printl(player.GetTeam())
 	// Spawn (goto player_spawn)
-	player.ForceRespawn()
 	player.ForceChangeTeam(team, true)
+	player.ForceRespawn()
 	// printl(player.GetTeam())
 }
 
