@@ -272,9 +272,7 @@ function RemoveAllBots()
 	current_players[player] <- scope.stats.elo
 
 	// Choose the team with the lower amount of players
-	local team = RandomInt(TF_TEAM_RED, TF_TEAM_BLUE)
 	local red  = 0, blue = 0
-
 	foreach(p, _ in current_players)
 	{
 		if (p.GetTeam() == TF_TEAM_RED)
@@ -283,7 +281,11 @@ function RemoveAllBots()
 			++blue
 	}
 
-	team = !red && !blue ? team : red < blue ? TF_TEAM_RED : TF_TEAM_BLUE
+	local team = null
+	if (red == blue)
+		team = RandomInt(TF_TEAM_RED, TF_TEAM_BLUE)
+	else
+		team = (red < blue) ? TF_TEAM_RED : TF_TEAM_BLUE
 
 	printl("team: " + team)
 
