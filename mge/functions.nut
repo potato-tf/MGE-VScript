@@ -42,7 +42,9 @@
 		Name       = Convars.GetClientConvarValue("name", player.entindex()),
 		arena_info = null,
 		queue      = null,
-		stats      = { elo = -INT_MAX }
+		stats      = { elo = -INT_MAX },
+		enable_announcer = true,
+		won_last_match = false
 	}
 	foreach (k, v in toscope)
 		scope[k] <- v
@@ -88,6 +90,7 @@
 		datatable.SpawnPoints    <- []
 		datatable.Score          <- array(2, 0)
 		datatable.State          <- AS_IDLE
+		datatable.cdtime         <- "cdtime" in datatable ? datatable.cdtime : DEFAULT_CDTIME
 		datatable.MaxPlayers     <- "4player" in datatable && datatable["4player"] == "1" ? 4 : 2
 
 		local idx = ("idx" in datatable) ? datatable.idx.tointeger() : null
@@ -251,7 +254,7 @@ function RemoveAllBots()
 
 		local idx = arena.Queue.len() - 1
 		local str = (idx == 0) ? format(MGE_Localization.NextInLine, arena.Queue.len().tostring()) : format(MGE_Localization.InLine, arena.Queue.len().tostring())
-		MGE_ClientPrint(null, 3, str)
+		MGE_ClientPrint(player, 3, str)
 	}
 }
 
@@ -297,7 +300,6 @@ function RemoveAllBots()
 
 ::RemovePlayer <- function(player, changeteam=true)
 {
-	player.ValidateScriptScope()
 	local scope = player.GetScriptScope()
 
 	if (changeteam)
@@ -305,8 +307,12 @@ function RemoveAllBots()
 
 	if (scope.queue)
 	{
-		if (scope.queue.find(player) != null)
-			scope.queue.remove(player)
+		for (local i = scope.queue.len() - 1; i >= 0; --i)
+			if (scope.queue[i] == player)
+			{
+				scope.queue.remove(i)
+				break
+			}
 
 		scope.queue <- null
 	}
@@ -319,23 +325,29 @@ function RemoveAllBots()
 			arena.Queue.remove(player)
 
 		if (player in arena.CurrentPlayers)
+		{
 			delete arena.CurrentPlayers[player]
-
-		scope.arena_info <- null
+			SetArenaState(scope.arena_info.name, AS_IDLE)
+		}
 	}
 }
 
-::CycleQueue <- function(player, arena_name)
+::CycleQueue <- function(arena_name)
 {
 	local arena = Arenas[arena_name]
+
 	local queue = arena.Queue
-	local current_players = arena.CurrentPlayers
 	local next_player = queue[0]
 
-	RemovePlayer(player)
+	foreach (p, _ in arena.CurrentPlayers)
+		if (!p.GetScriptScope().won_last_match)
+			RemovePlayer(p)
+
 	AddToArena(next_player, arena_name)
 
 	queue.remove(0)
+
+	SetArenaState(arena_name, AS_IDLE)
 
 	foreach(i, p in queue)
 		MGE_ClientPrint(p, 3, format(MGE_Localization.InLine, i + 1))
@@ -415,11 +427,9 @@ function RemoveAllBots()
 	//     ClientPrint(loser2, 3, format("You lost %d points!", loserscore))
 }
 
-::CalcArenaScore <- function(player, arena_name) {
+::CalcArenaScore <- function(arena_name) {
 
 	local arena = Arenas[arena_name]
-
-	if (arena.State == AS_IDLE) return
 
 	local fraglimit = "fraglimit" in arena ? arena.fraglimit.tointeger() : 20
 
@@ -436,7 +446,15 @@ function RemoveAllBots()
 			loser = p
 	}
 
-	MGE_ClientPrint(winner, 3, format(MGE_Localization.XdefeatsY, winner.GetScriptScope().Name, winner.GetScriptScope().stats.elo, loser.GetScriptScope().Name, loser.GetScriptScope().stats.elo, fraglimit, scope.arena_info.name))
+	local loser_scope = loser ? loser.GetScriptScope() : false
+	local winner_scope = winner ? winner.GetScriptScope() : false
+
+	if (!winner || !loser) return
+
+	loser_scope.won_last_match = false
+	winner_scope.won_last_match = true
+
+	MGE_ClientPrint(null, 3, format(MGE_Localization.XdefeatsY, winner_scope.Name, winner_scope.stats.elo.tostring(), loser_scope.Name, loser_scope.stats.elo.tostring(), fraglimit.tostring(), arena_name))
 	CalcELO(winner, loser)
 }
 
@@ -446,6 +464,9 @@ function RemoveAllBots()
 
 	local arenaStates = {
 		[AS_IDLE] = function() {
+
+			//reset score
+			arena.Score <- array(2, 0)
 			return
 		},
 		[AS_COUNTDOWN] = function() {
@@ -467,20 +488,53 @@ function RemoveAllBots()
 				}
 
 				EntFireByHandle(p, "RunScriptCode", format(@"
+					SetArenaState(`%s`, AS_FIGHT)
 					EmitSoundEx({
 						sound_name = `%s`,
 						volume = %.2f,
 						filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
 						entity = self
 					})
-				", ROUND_START_SOUND, ROUND_START_SOUND_VOLUME), arena.cdtime.tofloat(), null, null)
+				", arena_name, ROUND_START_SOUND, ROUND_START_SOUND_VOLUME), arena.cdtime.tofloat(), null, null)
 			}
 		},
 		[AS_FIGHT] = function() {
-
+			foreach(p, _ in arena.CurrentPlayers)
+				PlayAnnouncer(p, ROUND_START_SOUND)
+		},
+		[AS_AFTERFIGHT] = function() {
+			foreach(p, _ in arena.CurrentPlayers)
+			{
+				//20-0
+				if (arena.Score.find(arena.fraglimit.tointeger()) && arena.Score.find(0))
+				{
+					local sound = p.GetScriptScope().won_last_match ? format("vo/announcer_am_flawlessvictory%d.mp3", RandomInt(1, 3)) : format("vo/announcer_am_flawlessdefeat%d.mp3", RandomInt(1, 4))
+					PlayAnnouncer(p, sound)
+				}
+				//left early
+				else if (!arena.Score.find(arena.fraglimit.tointeger()))
+				{
+					PlayAnnouncer(p, "vo/announcer_am_lastmanforfeit01.mp3")
+				}
+			}
+			if (arena.Queue.len())
+				// CycleQueue(arena.Queue[0], arena_name)
+				EntFireByHandle(arena.Queue[0], "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY, null, null)
 		},
 	}
 	arenaStates[state]()
+}
+
+::PlayAnnouncer <- function(player, sound_name) {
+
+	if (!ENABLE_ANNOUNCER || !player.GetScriptScope().enable_announcer) return
+
+	EmitSoundEx({
+			sound_name = sound_name,
+			volume =  ANNOUNCER_VOLUME,
+			filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
+			entity = player
+	})
 }
 
 ::MGE_ClientPrint <- function(player, target, localized_string) {

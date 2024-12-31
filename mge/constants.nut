@@ -2,7 +2,14 @@
 const ELO_TRACKING_MODE = 1 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
 
-const COUNTDOWN_START_DELAY = 3.0 //delay before countdown starts
+const ENABLE_ANNOUNCER = true //enable announcer quips (first blood airshots etc)
+const ANNOUNCER_VOLUME = 0.5 //volume of announcer quips
+
+const KILLSTREAK_ANNOUNCER_INTERVAL = 5 //how many kills before we play a killstreak sound
+
+const COUNTDOWN_START_DELAY = 1.0 //delay before countdown starts, additive to queue cycle delay
+const QUEUE_CYCLE_DELAY = 4.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
+
 const COUNTDOWN_SOUND = "ui/chime_rd_2base_pos.wav"
 const COUNTDOWN_SOUND_VOLUME = 0.5
 
@@ -10,10 +17,9 @@ const ROUND_START_SOUND = "ui/chime_rd_2base_neg.wav"
 const ROUND_START_SOUND_VOLUME = 0.5
 
 const SPAWN_SOUND = "items/spawn_item.wav"
+const SPAWN_SOUND_VOLUME = 1.0
 
-PrecacheSound(COUNTDOWN_SOUND)
-PrecacheSound(ROUND_START_SOUND)
-PrecacheSound(SPAWN_SOUND)
+const DEFAULT_CDTIME    = 3 //default countdown time
 
 //END CONFIG CONSTANTS
 
@@ -96,6 +102,31 @@ const LOADOUT_POSITION_TAUNT6 = 17
 const LOADOUT_POSITION_TAUNT7 = 18
 const LOADOUT_POSITION_TAUNT8 = 19
 
+// DMG type bits, less confusing than shit like DMG_AIRBOAT or DMG_SLOWBURN
+const DMG_USE_HITLOCATIONS   = 33554432  // DMG_AIRBOAT
+const DMG_HALF_FALLOFF       = 262144    // DMG_RADIATION
+const DMG_CRITICAL           = 1048576   // DMG_ACID
+const DMG_RADIUS_MAX         = 1024      // DMG_ENERGYBEAM
+const DMG_IGNITE             = 16777216  // DMG_PLASMA
+const DMG_FROM_OTHER_SAPPER  = 16777216  // same as DMG_IGNITE
+const DMG_USEDISTANCEMOD     = 2097152   // DMG_SLOWBURN
+const DMG_NOCLOSEDISTANCEMOD = 131072    // DMG_POISON
+const DMG_MELEE              = 134217728 // DMG_BLAST_SURFACE
+const DMG_DONT_COUNT_DAMAGE_TOWARDS_CRIT_RATE = 67108864 //DMG_DISSOLVE
+
+const TF_DEATH_DOMINATION = 		 1
+const TF_DEATH_ASSISTER_DOMINATION = 2
+const TF_DEATH_REVENGE =			 4
+const TF_DEATH_ASSISTER_REVENGE = 	 8
+const TF_DEATH_FIRST_BLOOD = 		 16
+const TF_DEATH_FEIGN_DEATH = 		 32
+const TF_DEATH_INTERRUPTED = 		 64
+const TF_DEATH_GIBBED = 			 128
+const TF_DEATH_PURGATORY =			 256
+const TF_DEATH_MINIBOSS =			 512
+const TF_DEATH_AUSTRALIUM =			 1024
+
+
 // Numbers
 const FLT_SMALL = 0.0000001
 const FLT_MIN   = 1.175494e-38
@@ -119,9 +150,6 @@ PrecacheModel(MODEL_BRIEFCASE)
 PrecacheModel(MODEL_AMMOPACK)
 PrecacheModel(MODEL_LARGE_AMMOPACK)
 
-// For neutral cap points
-const NEUTRAL = 1
-
-// Sounds
-const STOCK_SOUND_COUNT = 24
-const DEFAULT_CDTIME    = 3
+PrecacheSound(COUNTDOWN_SOUND)
+PrecacheSound(ROUND_START_SOUND)
+PrecacheSound(SPAWN_SOUND)

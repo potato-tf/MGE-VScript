@@ -17,6 +17,40 @@
 	"vo/announcer_victory.wav",
 	"vo/announcer_you_failed.wav"
 
+	"vo/announcer_am_roundstart01.mp3",
+	"vo/announcer_am_roundstart02.mp3",
+	"vo/announcer_am_roundstart03.mp3",
+	"vo/announcer_am_roundstart04.mp3",
+
+	"vo/announcer_am_lastmanforfeit01.mp3",
+
+	"vo/announcer_am_killstreak01.mp3",
+	"vo/announcer_am_killstreak02.mp3",
+	"vo/announcer_am_killstreak03.mp3",
+	"vo/announcer_am_killstreak04.mp3",
+	"vo/announcer_am_killstreak05.mp3",
+	"vo/announcer_am_killstreak06.mp3",
+	"vo/announcer_am_killstreak07.mp3",
+	"vo/announcer_am_killstreak08.mp3",
+	"vo/announcer_am_killstreak09.mp3",
+	"vo/announcer_am_killstreak10.mp3",
+	"vo/announcer_am_killstreak11.mp3",
+
+	"vo/announcer_am_firstblood01.mp3",
+	"vo/announcer_am_firstblood02.mp3",
+	"vo/announcer_am_firstblood03.mp3",
+	"vo/announcer_am_firstblood04.mp3",
+	"vo/announcer_am_firstblood05.mp3",
+	"vo/announcer_am_firstblood06.mp3",
+
+	"vo/announcer_am_flawlessvictory01.mp3",
+	"vo/announcer_am_flawlessvictory02.mp3",
+	"vo/announcer_am_flawlessvictory03.mp3",
+	"vo/announcer_am_flawlessdefeat01.mp3",
+	"vo/announcer_am_flawlessdefeat02.mp3",
+	"vo/announcer_am_flawlessdefeat03.mp3",
+	"vo/announcer_am_flawlessdefeat04.mp3",
+
 	"vo/intel_teamcaptured.wav",
 	"vo/intel_teamdropped.wav",
 	"vo/intel_teamstolen.wav",

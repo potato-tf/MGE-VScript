@@ -74,6 +74,7 @@ class MGE_Events
 		{
 			local player = GetPlayerFromUserID(params.userid)
 			RemovePlayer(player, false)
+			UpdateStats(player, player.GetScriptScope().stats, true)
 		}
 
 		function OnGameEvent_player_say(params)
@@ -94,8 +95,20 @@ class MGE_Events
 		{
 			local player = GetPlayerFromUserID(params.userid)
 
-			player.ValidateScriptScope()
 			local scope = player.GetScriptScope()
+			if (!scope) player.ValidateScriptScope()
+
+			EntFireByHandle(player, "RunScriptCode",  @"
+				for (local child = self.FirstMoveChild(); child != null; child = child.NextMovePeer())
+				{
+					if (child instanceof CBaseCombatWeapon && !child.GetAttribute(`killstreak tier`, 0))
+					{
+						child.AddAttribute(`killstreak tier`, 1, -1)
+						child.ReapplyProvision()
+					}
+				}
+			", 0.1, null, null)
+
 			if (!("arena_info" in scope)) return // Wait for player_activate
 
 			if (scope.arena_info)
@@ -120,7 +133,7 @@ class MGE_Events
 				player.SnapEyeAngles(arena.SpawnPoints[idx][1])
 
 				if (arena.State == AS_FIGHT)
-					player.EmitSound(SPAWN_SOUND)
+					EmitSoundEx({ sound_name = SPAWN_SOUND, entity = player, volume = SPAWN_SOUND_VOLUME })
 
 				scope.ThinkTable.ScoreThink <- function() {
 					// MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1]+"\nRed ELO: "+player.GetScriptScope().stats.elo+" BLU ELO: "+player.GetScriptScope().stats.elo)
@@ -138,30 +151,76 @@ class MGE_Events
 
 		function OnGameEvent_player_death(params)
 		{
-			local player = GetPlayerFromUserID(params.userid)
-
-			local scope = player.GetScriptScope()
-			if (!scope.arena_info) return
-
-			local arena = scope.arena_info.arena
-
-			local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : 0.1
-
-			// Koth / bball mode doesn't count deaths
-			// todo braindawg one obscure map has bball: 0 lol
-			if (!("koth" in arena) && !("bball" in arena) && arena.State == AS_FIGHT)
-			{
-				(player.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
-
-				CalcArenaScore(player, scope.arena_info.name)
-			}
-
+			local victim = GetPlayerFromUserID(params.userid)
 			local attacker = GetPlayerFromUserID(params.attacker)
 
-			if (attacker && attacker != player)
-				MGE_ClientPrint(player, 3, format(MGE_Localization.HPLeft, attacker.GetHealth()))
+			local victim_scope = victim.GetScriptScope()
+			local attacker_scope = attacker.GetScriptScope()
 
-			EntFireByHandle(player, "RunScriptCode", "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime, null, null)
+			if (!victim_scope.arena_info) return
+
+			local arena = victim_scope.arena_info.arena
+
+			local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : 0.2
+			local fraglimit = "fraglimit" in arena ? arena.fraglimit.tointeger() : 20
+			// Koth / bball mode doesn't count deaths
+			// todo braindawg one obscure map has bball: 0 lol
+			if (!("koth" in arena) && (!("bball" in arena) || arena.bball == "0") && arena.State == AS_FIGHT)
+				(victim.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
+
+			if (ENABLE_ANNOUNCER)
+			{
+				local killstreak_total = "kill_streak_total" in params ? params.kill_streak_total.tointeger() : 0
+				local str = false, hud_str = false
+
+				printl(params.death_flags)
+				//first blood
+				if (params.death_flags & TF_DEATH_FIRST_BLOOD)
+				{
+					hud_str = MGE_Localization.FirstBlood
+					str = format("vo/announcer_am_firstblood0%d.mp3", RandomInt(1, 6))
+				}
+				//we've hit a killstreak threshold
+				else if (killstreak_total && !(killstreak_total % KILLSTREAK_ANNOUNCER_INTERVAL))
+				{
+					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
+
+					foreach (p, _ in arena.CurrentPlayers)
+						MGE_ClientPrint(p, HUD_PRINTTALK, format(MGE_Localization.Killstreak, attacker_scope.Name, killstreak_total.tostring()))
+				}
+				//we've hit an airshot
+				else if (params.rocket_jump || (!(victim.GetFlags() & FL_ONGROUND) && victim.InCond(TF_COND_BLASTJUMPING) && (params.damagebits & DMG_BLAST)))
+				{
+					hud_str = MGE_Localization.Airshot
+					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(10, 11))
+				}
+
+				if (str) PlayAnnouncer(attacker, str)
+				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTCENTER, hud_str)
+
+			}
+
+			if (attacker && attacker != victim)
+				MGE_ClientPrint(victim, 3, format(MGE_Localization.HPLeft, attacker.GetHealth()))
+
+			if ((arena.Score[0] >= fraglimit || arena.Score[1] >= fraglimit) && arena.State == AS_FIGHT)
+			{
+				local arena_name = victim_scope.arena_info.name
+				CalcArenaScore(arena_name)
+				SetArenaState(arena_name, AS_AFTERFIGHT)
+				return
+			}
+
+			EntFireByHandle(victim, "RunScriptCode", "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime, null, null)
+		}
+
+		function OnGameEvent_player_team(params)
+		{
+			local player = GetPlayerFromUserID(params.userid)
+			local team = params.team
+
+			if (team == TEAM_SPECTATOR)
+				RemovePlayer(player)
 		}
 	}
 }

@@ -21,8 +21,8 @@
 	ClassIsNotAllowed =			"\x07808000This class is not allowed!"
 	LowRating =			"Your rating \x0732CD32%s\x07FFFFFFis too low, minimum is \x0732CD32%s\x07FFFFFF"
 	HighRating =			"Your rating \x0732CD32%s\x07FFFFFFis too high, maximum is \x0732CD32%s\x07FFFFFF"
-	XdefeatsY =			"\x0700FF00%s (Score:%s)\x07FFFFFFdefeats \x0700FF00%s (Score:%s)\x07FFFFFFin duel to \x0732CD32%s\x07FFFFFFon \x0732CD32%s\x07"
-	XdefeatsYearly =			"\x0700FF00%s (Score:%s)\x07FFFFFFdefeats \x0700FF00%s (Score:%s)\x07FFFFFFin a duel on \x0732CD32%s\x07"
+	XdefeatsY =			"\x0700FF00%s (Score:%s)\x07FFFFFF defeats \x0700FF00%s (Score:%s)\x07FFFFFF in duel to \x0732CD32%s\x07FFFFFF on \x0732CD32%s\x07"
+	XdefeatsYearly =			"\x0700FF00%s (Score:%s)\x07FFFFFF defeats \x0700FF00%s (Score:%s)\x07FFFFFF in a duel on \x0732CD32%s\x07"
 	SpecRemove =			"\x07808000Can't go in spec while in fight, removing from queue."
 	ClassChangePoint =			"\x07808000You changed class during a fight, giving your opponent one point."
 	ClassChangePointOpponent =			"\x07808000Your opponent changed class during a fight, giving you one point."
@@ -52,4 +52,7 @@
 	CurrentHandicap =			"\x07808000Your current handicap is \x0700FF00%s \x07808000maximum HP."
 	InvalidHandicap =			"\x07808000Your desired handicap is invalid. Disabling handicap."
 	HandicapDisabled =			"\x07808000Handicap disabled."
+	Killstreak =			"\x07808000%s is on a killstreak! (%s kills)"
+	FirstBlood =            "\x07808000First Blood!"
+	Airshot =               "\x07808000Airshot!"
 }
