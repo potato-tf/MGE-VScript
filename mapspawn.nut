@@ -21,7 +21,6 @@ else
 		Include(format("cfg/localization/english"))
 
 	Include("constants")
-	Include("globals")
 	Include("functions")
 	Include("events")
 	Include("mge")

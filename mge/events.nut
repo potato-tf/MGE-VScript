@@ -145,7 +145,7 @@ class MGE_Events
 
 			local arena = scope.arena_info.arena
 
-			local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : -1
+			local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : 0.1
 
 			// Koth / bball mode doesn't count deaths
 			// todo braindawg one obscure map has bball: 0 lol
