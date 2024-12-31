@@ -163,19 +163,15 @@ class MGE_Events
 
 			local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : 0.2
 			local fraglimit = "fraglimit" in arena ? arena.fraglimit.tointeger() : 20
-			// Koth / bball mode doesn't count deaths
-			// todo braindawg one obscure map has bball: 0 lol
-			if (!("koth" in arena) && (!("bball" in arena) || arena.bball == "0") && arena.State == AS_FIGHT)
-				(victim.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
 
 			if (ENABLE_ANNOUNCER)
 			{
 				local killstreak_total = "kill_streak_total" in params ? params.kill_streak_total.tointeger() : 0
 				local str = false, hud_str = false
 
-				printl(params.death_flags)
+				printl("death flags: " + params.death_flags)
 				//first blood
-				if (params.death_flags & TF_DEATH_FIRST_BLOOD)
+				if (!arena.Score[0] && !arena.Score[1])
 				{
 					hud_str = MGE_Localization.FirstBlood
 					str = format("vo/announcer_am_firstblood0%d.mp3", RandomInt(1, 6))
@@ -203,7 +199,12 @@ class MGE_Events
 			if (attacker && attacker != victim)
 				MGE_ClientPrint(victim, 3, format(MGE_Localization.HPLeft, attacker.GetHealth()))
 
-			if ((arena.Score[0] >= fraglimit || arena.Score[1] >= fraglimit) && arena.State == AS_FIGHT)
+			// Koth / bball mode doesn't count deaths
+			// todo braindawg one obscure map has bball: 0 lol
+			if (!("koth" in arena) && (!("bball" in arena) || arena.bball == "0") && arena.State == AS_FIGHT)
+				(victim.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
+
+			if (arena.Score[0] >= fraglimit || arena.Score[1] >= fraglimit)
 			{
 				local arena_name = victim_scope.arena_info.name
 				CalcArenaScore(arena_name)
