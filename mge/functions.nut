@@ -160,7 +160,7 @@ function AddBot(arena_name)
 		if(!("stats" in scope))
 			GetStats(player)
 
-		if (!bot && !("arena_info" in scope))
+		if (!bot && !scope.arena_info)
 		{
 			bot = player
 			break
