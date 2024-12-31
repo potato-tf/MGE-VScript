@@ -31,12 +31,12 @@
 {
 	player.ValidateScriptScope()
 	local scope = player.GetScriptScope()
-	
+
 	// Clear scope
 	foreach (k, v in scope)
 		if (!(k in default_scope))
 			delete scope[k]
-	
+
 	local toscope = {
 		ThinkTable = {},
 		Name       = Convars.GetClientConvarValue("name", player.entindex()),
@@ -154,7 +154,10 @@ function AddBot(arena_name)
 		player.ValidateScriptScope()
 		local scope = player.GetScriptScope()
 
-		if (!bot && !scope.arena_info)
+		if(!("stats" in scope))
+			GetStats(player)
+
+		if (!bot && !("arena_info" in scope))
 		{
 			bot = player
 			break
@@ -228,11 +231,11 @@ function RemoveAllBots()
 	}
 
 	local scope = player.GetScriptScope()
-	
+
 	RemovePlayer(player, false)
 
 	MGE_ClientPrint(player, 3, format(MGE_Localization.ChoseArena, arena_name))
-	
+
 	// Enough room, add to arena
 	if (current_players.len() < arena.MaxPlayers)
 	{
@@ -245,7 +248,7 @@ function RemoveAllBots()
 	{
 		arena.Queue.append(player)
 		scope.queue <- arena.Queue
-		
+
 		local idx = arena.Queue.len() - 1
 		local str = (idx == 0) ? format(MGE_Localization.NextInLine, arena.Queue.len().tostring()) : format(MGE_Localization.InLine, arena.Queue.len().tostring())
 		MGE_ClientPrint(null, 3, str)
@@ -263,50 +266,46 @@ function RemoveAllBots()
 		arena = arena,
 		name  = arena_name,
 	}
-	printl(scope.stats)
 	current_players[player] <- scope.stats.elo
 
 	// Choose the team with the lower amount of players
 	local team = 1
 	local red  = 0, blue = 0
-	if (current_players.len())
-	{
-		foreach (p, _ in current_players)
-		{
-			local t = p.GetTeam()
-			if (t != TF_TEAM_RED && t != TF_TEAM_BLUE) continue
 
-			(t == TF_TEAM_RED) ? ++red : ++blue
-		}
+	foreach(p, _ in current_players)
+	{
+		if (p.GetTeam() == TF_TEAM_RED)
+			++red
+		else if (p.GetTeam() == TF_TEAM_BLUE)
+			++blue
 	}
 
-	if (red == blue)
-		team = RandomInt(TF_TEAM_RED, TF_TEAM_BLUE)
-	else
-		team = (red < blue) ? TF_TEAM_RED : TF_TEAM_BLUE
+	team = (red < blue) ? TF_TEAM_RED : TF_TEAM_BLUE
 
 	// Make sure spectators have a class chosen to be able to spawn
 	if (!GetPropInt(player, "m_Shared.m_iDesiredPlayerClass"))
 		ForceChangeClass(player, TF_CLASS_SCOUT)
 
+	// printl(player.GetTeam())
 	// Spawn (goto player_spawn)
-	player.ForceChangeTeam(team, true)
 	player.ForceRespawn()
+	// player.ForceChangeTeam(team, true)
+	// printl(player.GetTeam())
 }
 
 ::RemovePlayer <- function(player, changeteam=true)
 {
 	player.ValidateScriptScope()
 	local scope = player.GetScriptScope()
-	
+
 	if (changeteam)
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
-	
+
 	if (scope.queue)
 	{
 		if (scope.queue.find(player) != null)
 			scope.queue.remove(player)
-		
+
 		scope.queue <- null
 	}
 
@@ -444,10 +443,10 @@ function RemoveAllBots()
 	arena.State = state
 
 	local arenaStates = {
-		AS_IDLE = function() {
+		[AS_IDLE] = function() {
 			return
 		},
-		AS_COUNTDOWN = function() {
+		[AS_COUNTDOWN] = function() {
 			foreach(p, _ in arena.CurrentPlayers)
 			{
 				p.ForceRespawn()
@@ -457,23 +456,25 @@ function RemoveAllBots()
 				{
 					EntFireByHandle(p, "RunScriptCode", format(@"
 						EmitSoundEx({
-							sound_name = `%s`,
+							sound_name = `%s`
+							volume = %.2f
 							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
 							entity = self
 						})
-					", COUNTDOWN_SOUND), i, null, null)
+					", COUNTDOWN_SOUND, COUNTDOWN_SOUND_VOLUME), i, null, null)
 				}
 
 				EntFireByHandle(p, "RunScriptCode", format(@"
 					EmitSoundEx({
 						sound_name = `%s`,
+						volume = %.2f,
 						filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
 						entity = self
 					})
-				", ROUND_START_SOUND), arena.cdtime.tointeger(), null, null)
+				", ROUND_START_SOUND, ROUND_START_SOUND_VOLUME), arena.cdtime.tofloat(), null, null)
 			}
 		},
-		AS_FIGHT = function() {
+		[AS_FIGHT] = function() {
 
 		},
 	}
@@ -489,7 +490,7 @@ function RemoveAllBots()
 
 	local scope = player.GetScriptScope()
 	local steam_id = GetPropString(player, "m_szNetworkIDString")
-	local steam_id_slice = steam_id.slice(5, steam_id.find("]"))
+	local steam_id_slice = steam_id == "BOT" ? "BOT" : steam_id.slice(5, steam_id.find("]"))
 	local player_file = FileToString(format("mge_playerdata/%s.nut", steam_id_slice))
 
 	if (player_file)

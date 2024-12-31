@@ -1,9 +1,13 @@
 //CONFIG CONSTANTS
 const ELO_TRACKING_MODE = 1 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
+
 const COUNTDOWN_START_DELAY = 3.0 //delay before countdown starts
 const COUNTDOWN_SOUND = "ui/chime_rd_2base_pos.wav"
+const COUNTDOWN_SOUND_VOLUME = 0.5
+
 const ROUND_START_SOUND = "ui/chime_rd_2base_neg.wav"
+const ROUND_START_SOUND_VOLUME = 0.5
 
 PrecacheSound(COUNTDOWN_SOUND)
 PrecacheSound(ROUND_START_SOUND)

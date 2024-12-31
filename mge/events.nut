@@ -103,6 +103,9 @@ class MGE_Events
 				local arena      = scope.arena_info.arena
 				local arena_name = scope.arena_info.name
 
+				foreach(p, _ in arena.CurrentPlayers)
+					printl(p)
+
 				//spawned into arena with waiting player, start countdown
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
 				{
@@ -147,7 +150,7 @@ class MGE_Events
 
 			// Koth / bball mode doesn't count deaths
 			// todo braindawg one obscure map has bball: 0 lol
-			if (!("koth" in arena) && !("bball" in arena) && arena.State != AS_FIGHT)
+			if (!("koth" in arena) && !("bball" in arena) && arena.State == AS_FIGHT)
 			{
 				(player.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
 
