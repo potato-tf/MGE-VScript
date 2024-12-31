@@ -32,6 +32,12 @@ foreach (sound in StockSounds)
 ::Arenas      <- {}
 ::Arenas_List <- [] // Need ordered arenas for selection with client commands like !add
 
+::default_scope <- {
+	"self"    : null,
+	"__vname" : null,
+	"__vrefs" : null,
+}
+
 // ::MGE_Respawn <- SpawnEntityFromTable("trigger_player_respawn_override", {
 //     spawnflags = 1,
 //     targetname = "__mge_respawn",

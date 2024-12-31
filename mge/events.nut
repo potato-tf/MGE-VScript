@@ -4,8 +4,8 @@ class MGE_Events
 		"!add" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 
+			// todo remove
 			local scope = player.GetScriptScope()
-
 			foreach (k, v in scope)
 				printl(k)
 
@@ -31,7 +31,7 @@ class MGE_Events
 
 			if (idx != null)
 			{
-				AddToQueue(player, Arenas_List[idx])
+				AddPlayer(player, Arenas_List[idx])
 			}
 			else
 			{
@@ -39,7 +39,7 @@ class MGE_Events
 				{
 					if (startswith(arena_name, splitText[1]))
 					{
-						AddToQueue(player, arena_name)
+						AddPlayer(player, arena_name)
 						break
 					}
 				}
@@ -48,9 +48,8 @@ class MGE_Events
 		"!remove" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
-			if (!("arena_info" in scope)) return
 
-			RemoveFromQueue(player, scope.arena_info.name)
+			RemovePlayer(player)
 		}
 	}
 	Events = {
@@ -64,21 +63,18 @@ class MGE_Events
 			local player = GetPlayerFromUserID(params.userid)
 
 			player.ValidateScriptScope()
+			InitPlayerScope(player)
+
+			if (player.IsFakeClient()) return
+
 			GetStats(player)
-
-			local scope = player.GetScriptScope()
-
-			scope.ThinkTable <- {}
-			scope.Name <- Convars.GetClientConvarValue("name", player.entindex())
-
-			scope.PlayerThink <- function() {
-				foreach(name, func in scope.ThinkTable)
-					func.call(scope)
-			}
-			AddThinkToEnt(player, "PlayerThink")
 		}
 
-		// todo logic for player_disconnect (remove from queue / arena, etc)
+		function OnGameEvent_player_disconnect(params)
+		{
+			local player = GetPlayerFromUserID(params.userid)
+			RemovePlayer(player, false)
+		}
 
 		function OnGameEvent_player_say(params)
 		{
@@ -98,9 +94,11 @@ class MGE_Events
 		{
 			local player = GetPlayerFromUserID(params.userid)
 
+			player.ValidateScriptScope()
 			local scope = player.GetScriptScope()
+			if (!("arena_info" in scope)) return // Wait for player_activate
 
-			if ("arena_info" in scope)
+			if (scope.arena_info)
 			{
 				local arena      = scope.arena_info.arena
 				local arena_name = scope.arena_info.name
@@ -109,9 +107,10 @@ class MGE_Events
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
 				{
 					// SetArenaState(arena.name, AS_COUNTDOWN)
-					EntFireByHandle(player, "RunScriptCode", "SetArenaState("+arena.name+", AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
+					EntFireByHandle(player, "RunScriptCode", "SetArenaState("+arena_name+", AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
 				}
 
+				// todo need to have a system for checking if the spawn we pick is occupied in preround
 				local idx = RandomInt(0, arena.SpawnPoints.len() - 1)
 
 				printl(arena.SpawnPoints[idx][0])
@@ -130,7 +129,7 @@ class MGE_Events
 			else
 			{
 				local team = player.GetTeam()
-				if (team == TF_TEAM_BLUE || team == TF_TEAM_RED)
+				if (!player.IsFakeClient() && (team == TF_TEAM_BLUE || team == TF_TEAM_RED))
 					MGE_ClientPrint(null, 3, "[VScript MGEMod] Warning: "+player+" spawned outside of arena!")
 			}
 		}
@@ -140,7 +139,7 @@ class MGE_Events
 			local player = GetPlayerFromUserID(params.userid)
 
 			local scope = player.GetScriptScope()
-			if (!("arena_info" in scope)) return
+			if (!scope.arena_info) return
 
 			local arena = scope.arena_info.arena
 

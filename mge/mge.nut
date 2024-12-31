@@ -2,39 +2,17 @@
 {
 	printl("[VScript MGEMod] Loaded, moving all active players to spectator")
 
-	local default_scope = {
-		"self"    : null,
-		"__vname" : null,
-		"__vrefs" : null,
-	}
-
 	for (local i = 1; i <= MAX_CLIENTS; i++)
 	{
 		local player = PlayerInstanceFromIndex(i)
 		if (!player || !player.IsValid()) continue
 
 		player.ValidateScriptScope()
+		InitPlayerScope(player)
 		local scope = player.GetScriptScope()
-
-		// Clear scope
 		foreach (k, v in scope)
-			if (!(k in default_scope))
-				delete scope[k]
-
-		// todo make this a util func since we use it in player_activate
-		local _toscope = {
-			elo = -INT_MAX
-			ThinkTable = {}
-		}
-
-		foreach (k, v in _toscope)
-			scope[k] <- v
-
-		scope.PlayerThink <- function() {
-			foreach(name, func in scope.ThinkTable)
-				func.call(scope)
-		}
-		AddThinkToEnt(player, "PlayerThink")
+			printl(k + " " + v)
+		printl(player)
 
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
 		// todo bots dont like to stay dead with this, need to come up with something else

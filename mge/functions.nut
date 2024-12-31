@@ -27,6 +27,33 @@
 	}
 }
 
+::InitPlayerScope <- function(player)
+{
+	player.ValidateScriptScope()
+	local scope = player.GetScriptScope()
+	
+	// Clear scope
+	foreach (k, v in scope)
+		if (!(k in default_scope))
+			delete scope[k]
+	
+	local toscope = {
+		ThinkTable = {},
+		Name       = Convars.GetClientConvarValue("name", player.entindex()),
+		arena_info = null,
+		queue      = null,
+		stats      = { elo = -INT_MAX }
+	}
+	foreach (k, v in toscope)
+		scope[k] <- v
+
+	scope.PlayerThink <- function() {
+		foreach(name, func in scope.ThinkTable)
+			func.call(scope)
+	}
+	AddThinkToEnt(player, "PlayerThink")
+}
+
 ::ForceChangeClass <- function(player, classIndex)
 {
 	player.SetPlayerClass(classIndex)
@@ -46,7 +73,6 @@
 		return
 }
 
-// todo put into newthread
 ::LoadSpawnPoints <- function()
 {
 	local config = SpawnConfigs[GetMapName()]
@@ -128,17 +154,17 @@ function AddBot(arena_name)
 		player.ValidateScriptScope()
 		local scope = player.GetScriptScope()
 
-		if (!bot && !("arena_info" in scope))
+		if (!bot && !scope.arena_info)
 		{
 			bot = player
 			break
 		}
-		if (!abot && "arena_info" in scope)
+		if (!abot && scope.arena_info)
 			abot = player
 	}
 	if (!bot && !abot) return
 
-	AddToQueue((bot) ? bot : abot, arena_name)
+	AddPlayer((bot) ? bot : abot, arena_name)
 }
 
 function RemoveBot(arena_name, all=false)
@@ -158,30 +184,30 @@ function RemoveBot(arena_name, all=false)
 	{
 		if (player.IsFakeClient())
 		{
-			player.ForceChangeTeam(TEAM_UNASSIGNED, true);
+			player.ForceChangeTeam(TEAM_UNASSIGNED, true)
 			SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", 0)
 
-			delete arena.CurrentPlayers[player]
-			player.ValidateScriptScope()
-			local scope = player.GetScriptScope()
-			if ("arena_info" in scope)
-				delete scope.arena_info
+			RemovePlayer(player, false)
 
 			if (!all) return
 		}
 	}
 
 	// No active bot(s) found, remove from queue
-	local remidxs = []
+	local rem = []
 	foreach (idx, player in arena.Queue)
 	{
 		if (player.IsFakeClient())
-			remidxs.append(idx)
+			rem.append(player)
 
 		if (!all) break
 	}
-	foreach (idx in remidxs)
-		arena.Queue.remove(idx)
+	foreach (player in rem)
+	{
+		player.ForceChangeTeam(TEAM_UNASSIGNED, true)
+		SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", 0)
+		RemovePlayer(player, false)
+	}
 }
 
 function RemoveAllBots()
@@ -190,41 +216,38 @@ function RemoveAllBots()
 		RemoveBot(arena_name, true)
 }
 
-::AddToQueue <- function(player, arena_name)
+::AddPlayer <- function(player, arena_name)
 {
 	local arena = Arenas[arena_name]
 	local current_players = arena.CurrentPlayers
 
 	if (player in current_players || arena.Queue.find(player) != null)
 	{
-		ClientPrint(player, 3, "Already in arena");
+		ClientPrint(player, 3, "Already in arena")
 		return
 	}
 
-	// Remove ourselves from our current arena if applicable
 	local scope = player.GetScriptScope()
-	local current_arena = ("arena_info" in scope) ? scope.arena_info.arena : null
-	local queue_slot = current_arena ? current_arena.Queue.find(player) : null
-	if (current_arena)
-	{
-		try
-			current_arena.Queue.remove(queue_slot)
-		catch (_)
-			if (player in current_arena.CurrentPlayers)
-				delete current_arena.CurrentPlayers[player]
-	}
+	
+	RemovePlayer(player, false)
 
 	MGE_ClientPrint(player, 3, format(MGE_Localization.ChoseArena, arena_name))
+	
+	// Enough room, add to arena
 	if (current_players.len() < arena.MaxPlayers)
 	{
 		AddToArena(player, arena_name)
 		local str = ELO_TRACKING_MODE ? format(MGE_Localization.JoinsArena, scope.Name, scope.stats.elo.tostring(), arena_name) : format(MGE_Localization.JoinsArenaNoStats, scope.Name, arena_name)
 		MGE_ClientPrint(null, 3, str)
 	}
+	// Add to queue
 	else
 	{
 		arena.Queue.append(player)
-		local str = queue_slot == 0 ? format(MGE_Localization.NextInLine, arena.Queue.len().tostring()) : format(MGE_Localization.InLine, arena.Queue.len().tostring())
+		scope.queue <- arena.Queue
+		
+		local idx = arena.Queue.len() - 1
+		local str = (idx == 0) ? format(MGE_Localization.NextInLine, arena.Queue.len().tostring()) : format(MGE_Localization.InLine, arena.Queue.len().tostring())
 		MGE_ClientPrint(null, 3, str)
 	}
 }
@@ -235,6 +258,7 @@ function RemoveAllBots()
 	local arena = Arenas[arena_name]
 	local current_players = arena.CurrentPlayers
 
+	scope.queue <- null
 	scope.arena_info <- {
 		arena = arena,
 		name  = arena_name,
@@ -263,32 +287,40 @@ function RemoveAllBots()
 
 	// Make sure spectators have a class chosen to be able to spawn
 	if (!GetPropInt(player, "m_Shared.m_iDesiredPlayerClass"))
-		ForceChangeClass(player, TF_CLASS_SCOUT);
+		ForceChangeClass(player, TF_CLASS_SCOUT)
 
 	// Spawn (goto player_spawn)
 	player.ForceChangeTeam(team, true)
 	player.ForceRespawn()
 }
 
-::RemoveFromQueue <- function(player, arena_name)
+::RemovePlayer <- function(player, changeteam=true)
 {
-	local arena = Arenas[arena_name]
-	local index = arena.Queue.find(player)
-
 	player.ValidateScriptScope()
 	local scope = player.GetScriptScope()
-	if ("arena_info" in scope)
-		delete scope.arena_info
-
-	try
-		arena.Queue.remove(index)
-	catch(_)
+	
+	if (changeteam)
+		player.ForceChangeTeam(TEAM_SPECTATOR, true)
+	
+	if (scope.queue)
 	{
+		if (scope.queue.find(player) != null)
+			scope.queue.remove(player)
+		
+		scope.queue <- null
+	}
+
+	if (scope.arena_info)
+	{
+		local arena = scope.arena_info.arena
+
+		if (arena.Queue.find(player) != null)
+			arena.Queue.remove(player)
+
 		if (player in arena.CurrentPlayers)
-		{
-			player.ForceChangeTeam(TEAM_SPECTATOR, true)
 			delete arena.CurrentPlayers[player]
-		}
+
+		scope.arena_info <- null
 	}
 }
 
@@ -299,7 +331,7 @@ function RemoveAllBots()
 	local current_players = arena.CurrentPlayers
 	local next_player = queue[0]
 
-	RemoveFromQueue(player, arena_name)
+	RemovePlayer(player)
 	AddToArena(next_player, arena_name)
 
 	queue.remove(0)
@@ -312,7 +344,7 @@ function RemoveAllBots()
 ::CalcELO <- function(winner, loser) {
 
 	if ( winner.IsFakeClient() || loser.IsFakeClient() || !ELO_TRACKING_MODE)
-		return;
+		return
 
 	local winner_elo = winner.GetScriptScope().stats.elo
 	local loser_elo = loser.GetScriptScope().stats.elo
@@ -347,39 +379,39 @@ function RemoveAllBots()
 ::CalcELO2 <- function(winner, winner2, loser, loser2) {
 
 	if (winner.IsFakeClient() || loser.IsFakeClient() || !ELO_TRACKING_MODE || loser2.IsFakeClient() || winner2.IsFakeClient())
-		return;
+		return
 
-	local Losers_ELO = (loser.stats.elo + loser2.stats.elo).tofloat() / 2;
-	local Winners_ELO = (winner.stats.elo + winner2.stats.elo).tofloat() / 2;
+	local Losers_ELO = (loser.stats.elo + loser2.stats.elo).tofloat() / 2
+	local Winners_ELO = (winner.stats.elo + winner2.stats.elo).tofloat() / 2
 
 	// ELO formula
-	local El = 1 / (pow(10.0, (Winners_ELO - Losers_ELO) / 400) + 1);
-	local k = (Winners_ELO >= 2400) ? 10 : 15;
-	local winnerscore = floor(k * El + 0.5);
-	winner.stats.elo += winnerscore;
-	winner2.stats.elo += winnerscore;
-	k = (Losers_ELO >= 2400) ? 10 : 15;
-	local loserscore = floor(k * El + 0.5);
-	loser.stats.elo -= loserscore;
-	loser2.stats.elo -= loserscore;
+	local El = 1 / (pow(10.0, (Winners_ELO - Losers_ELO) / 400) + 1)
+	local k = (Winners_ELO >= 2400) ? 10 : 15
+	local winnerscore = floor(k * El + 0.5)
+	winner.stats.elo += winnerscore
+	winner2.stats.elo += winnerscore
+	k = (Losers_ELO >= 2400) ? 10 : 15
+	local loserscore = floor(k * El + 0.5)
+	loser.stats.elo -= loserscore
+	loser2.stats.elo -= loserscore
 
-	// local winner_team_slot = (g_iPlayerSlot[winner] > 2) ? (g_iPlayerSlot[winner] - 2) : g_iPlayerSlot[winner];
-	// local loser_team_slot = (g_iPlayerSlot[loser] > 2) ? (g_iPlayerSlot[loser] - 2) : g_iPlayerSlot[loser];
+	// local winner_team_slot = (g_iPlayerSlot[winner] > 2) ? (g_iPlayerSlot[winner] - 2) : g_iPlayerSlot[winner]
+	// local loser_team_slot = (g_iPlayerSlot[loser] > 2) ? (g_iPlayerSlot[loser] - 2) : g_iPlayerSlot[loser]
 
-	// local arena_index = winner.arena;
-	// local time = Time();
+	// local arena_index = winner.arena
+	// local time = Time()
 
 	// if (winner && winner.IsValid() && !g_bNoDisplayRating)
-	//     ClientPrint(winner, 3, format("You gained %d points!", winnerscore));
+	//     ClientPrint(winner, 3, format("You gained %d points!", winnerscore))
 
 	// if (winner2 && winner2.IsValid() && !g_bNoDisplayRating)
-	//     ClientPrint(winner2, 3, format("You gained %d points!", winnerscore));
+	//     ClientPrint(winner2, 3, format("You gained %d points!", winnerscore))
 
 	// if (loser && loser.IsValid() && !g_bNoDisplayRating)
-	//     ClientPrint(loser, 3, format("You lost %d points!", loserscore));
+	//     ClientPrint(loser, 3, format("You lost %d points!", loserscore))
 
 	// if (loser2 && loser2.IsValid() && !g_bNoDisplayRating)
-	//     ClientPrint(loser2, 3, format("You lost %d points!", loserscore));
+	//     ClientPrint(loser2, 3, format("You lost %d points!", loserscore))
 }
 
 ::CalcArenaScore <- function(player, arena_name) {
@@ -440,8 +472,6 @@ function RemoveAllBots()
 	local steam_id = GetPropString(player, "m_szNetworkIDString")
 	local steam_id_slice = steam_id.slice(5, steam_id.find("]"))
 	local player_file = FileToString(format("mge_playerdata/%s.nut", steam_id_slice))
-
-	scope.stats <- { elo = -INT_MAX } //default ELO
 
 	if (player_file)
 	{
