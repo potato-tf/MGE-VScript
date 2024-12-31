@@ -420,6 +420,25 @@ function RemoveAllBots()
 			{
 				p.ForceRespawn()
 				p.AddCustomAttribute("no_attack", 1.0, arena.cdtime.tofloat())
+
+				for (local i = 0; i < arena.cdtime.tointeger(); ++i)
+				{
+					EntFireByHandle(p, "RunScriptCode", format(@"
+						EmitSoundEx({
+							sound_name = `%s`,
+							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
+							entity = self
+						})
+					", COUNTDOWN_SOUND), i, null, null)
+				}
+
+				EntFireByHandle(p, "RunScriptCode", format(@"
+					EmitSoundEx({
+						sound_name = `%s`,
+						filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
+						entity = self
+					})
+				", ROUND_START_SOUND), arena.cdtime.tointeger(), null, null)
 			}
 		},
 		AS_FIGHT = function() {
