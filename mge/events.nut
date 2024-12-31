@@ -110,7 +110,7 @@ class MGE_Events
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
 				{
 					// SetArenaState(arena.name, AS_COUNTDOWN)
-					EntFireByHandle(player, "RunScriptCode", "SetArenaState("+arena_name+", AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
+					EntFireByHandle(player, "RunScriptCode", format("SetArenaState(`%s`, AS_COUNTDOWN)", arena_name), COUNTDOWN_START_DELAY, null, null)
 				}
 
 				// todo need to have a system for checking if the spawn we pick is occupied in preround
