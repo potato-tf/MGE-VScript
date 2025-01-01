@@ -109,6 +109,9 @@ AddThinkToEnt(mge_ent, "MGEThink")
 	Convars.SetValue("mp_teams_unbalance_limit", 0);
 	Convars.SetValue("mp_scrambleteams_auto", 0);
 	Convars.SetValue("mp_tournament", 0);
+
+	Convars.SetValue("tf_weapon_criticals", 0);
+	Convars.SetValue("tf_fall_damage_disablespread", 1);
 }
 
 MGE_Init()

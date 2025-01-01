@@ -202,12 +202,16 @@ class MGE_Events
 					str = format("vo/announcer_am_killstreak%d.mp3", RandomInt(10, 11))
 				}
 			}
-
+			foreach (p, _ in arena.CurrentPlayers)
+			{
+				p.Regenerate(true)
+				//this attrib is set by ammomod
+				if (!p.GetCustomAttribute("hidden maxhealth non buffed", 0)	)
+					p.SetHealth(p.GetMaxHealth() * arena.hpratio.tofloat())
+			}
 			if (attacker && attacker != victim)
 			{
 				MGE_ClientPrint(victim, 3, format(MGE_Localization.HPLeft, attacker.GetHealth()))
-				attacker.Regenerate(true)
-				attacker.SetHealth(attacker.GetMaxHealth() * arena.hpratio.tofloat())
 
 				if (str) PlayAnnouncer(attacker, str)
 				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)
@@ -243,9 +247,8 @@ class MGE_Events
 			local victim = params.const_entity
 			local attacker = params.attacker
 			local victim_scope = victim.GetScriptScope()
-			// printl(victim + " " + victim_scope)
 
-			local arena = victim_scope.arena_info.arena
+			local arena = victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
 
 			local damage_type = params.damage_type
 

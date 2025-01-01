@@ -112,7 +112,8 @@
 		datatable.SpawnPoints    <- []
 		datatable.Score          <- array(2, 0)
 		datatable.State          <- AS_IDLE
-		datatable.cdtime         <- "cdtime" in datatable && datatable.cdtime != "0" ? datatable.cdtime : DEFAULT_CDTIME
+		//0 breaks our countdown system, default to 1
+		datatable.cdtime         <- "cdtime" in datatable ? datatable.cdtime != "0" ? datatable.cdtime : 1 : DEFAULT_CDTIME
 		datatable.MaxPlayers     <- "4player" in datatable && datatable["4player"] == "1" ? 4 : 2
 		datatable.classes        <- ("classes" in datatable) ? split(datatable.classes, " ", true) : []
 		datatable.fraglimit      <- "fraglimit" in datatable ? datatable.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
@@ -310,8 +311,6 @@ function RemoveAllBots()
 		team = RandomInt(TF_TEAM_RED, TF_TEAM_BLUE)
 	else
 		team = (red < blue) ? TF_TEAM_RED : TF_TEAM_BLUE
-
-	printl("team: " + team)
 
 	// Make sure spectators have a class chosen to be able to spawn
 	if (!GetPropInt(player, "m_Shared.m_iDesiredPlayerClass"))
@@ -548,37 +547,74 @@ function RemoveAllBots()
 			return
 		},
 		[AS_COUNTDOWN] = function() {
+
+			local countdown_time = arena.cdtime.tointeger()
 			foreach(p, _ in arena.CurrentPlayers)
 			{
-				p.ForceRespawn()
-				p.AddCustomAttribute("no_attack", 1.0, arena.cdtime.tofloat())
 
-				for (local i = 0; i < arena.cdtime.tointeger(); ++i)
+				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart%d.mp3", RandomInt(1, 4))
+
+				p.ForceRespawn()
+
+				//it might be better to remove this in AS_FIGHT instead of using the timer
+				//there's probably a good reason to remove no_attack separate from the countdown but I'm not sure what
+				p.AddCustomAttribute("no_attack", 1.0, countdown_time)
+
+				if (p.GetScriptScope().enable_countdown)
 				{
-					EntFireByHandle(p, "RunScriptCode", format(@"
-						EmitSoundEx({
-							sound_name = `%s`
-							volume = %.2f
-							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
-							entity = self
-						})
-					", COUNTDOWN_SOUND, COUNTDOWN_SOUND_VOLUME), i, null, null)
+					for (local i = 0; i < countdown_time; ++i)
+					{
+						EntFireByHandle(p, "RunScriptCode", format(@"
+
+							local arena = Arenas[`%s`]
+							//left before countdown ended
+							if (!(self in arena.CurrentPlayers)) return
+
+							EmitSoundEx({
+								sound_name = `%s`
+								volume = %.2f
+								filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
+								entity = self
+							})
+						", arena_name, COUNTDOWN_SOUND, COUNTDOWN_SOUND_VOLUME), i, null, null)
+					}
 				}
 
 				EntFireByHandle(p, "RunScriptCode", format(@"
-					SetArenaState(`%s`, AS_FIGHT)
+
+					local arena_name = `%s`
+					local arena = Arenas[arena_name]
+
+					//left before countdown ended
+					if (!(self in arena.CurrentPlayers))
+					{
+						SetArenaState(arena_name, AS_IDLE)
+						return
+					}
+					SetArenaState(arena_name, AS_FIGHT)
 					EmitSoundEx({
 						sound_name = `%s`,
 						volume = %.2f,
 						filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
 						entity = self
 					})
-				", arena_name, ROUND_START_SOUND, ROUND_START_SOUND_VOLUME), arena.cdtime.tofloat(), null, null)
+				", arena_name, round_start_sound, ROUND_START_SOUND_VOLUME), countdown_time, null, null)
 			}
 		},
 		[AS_FIGHT] = function() {
 			foreach(p, _ in arena.CurrentPlayers)
-				PlayAnnouncer(p, ROUND_START_SOUND)
+			{
+				PlayAnnouncer(p, round_start_sound)
+
+				// function UnfreezePlayer(player)
+				// {
+				// 	player.RemoveCustomAttribute("no_attack")
+				// 	player.RemoveCustomAttribute("no_jump")
+				// 	player.RemoveCustomAttribute("no_duck")
+				// 	player.RemoveFlags(FL_FROZEN|FL_ATCONTROLS)
+				// }
+				// UnfreezePlayer(p)
+			}
 		},
 		[AS_AFTERFIGHT] = function() {
 			foreach(p, _ in arena.CurrentPlayers)
@@ -590,7 +626,7 @@ function RemoveAllBots()
 					PlayAnnouncer(p, sound)
 				}
 				//left early
-				else if (!arena.Score.find(arena.fraglimit.tointeger()))
+				else if (arena.Score[0] != arena.fraglimit.tointeger() && arena.Score[1] != arena.fraglimit.tointeger())
 				{
 					PlayAnnouncer(p, "vo/announcer_am_lastmanforfeit01.mp3")
 				}
@@ -619,7 +655,7 @@ function RemoveAllBots()
 		{
 
 		}
-		//I legit have no idea what midair config is
+		//I have no idea what midair config is
 		//the sourcemod plugin provided CFG only has one midair-specific map and I don't have this map
 		//so I'm just using the endif config for now
 		midair = function()
@@ -641,27 +677,18 @@ function RemoveAllBots()
 		}
 		ammomod = function()
 		{
-			printl("attr : " + player.GetCustomAttribute("hidden maxhealth non buffed", 0))
+			// printl("attr : " + player.GetCustomAttribute("hidden maxhealth non buffed", 0))
 
 			if (player.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
 
 			EntFireByHandle(player, "RunScriptCode", format(@"
-				local player = self
-				self.SetHealth(1)
-				printl(`attr : ` + self.GetCustomAttribute(`hidden maxhealth non buffed`, 0) + `:` + self.GetMaxHealth())
 
-				if (self.GetCustomAttribute(`hidden maxhealth non buffed`, 0))
-				{
-					self.Regenerate(true)
-					return
-				}
-
-				self.RemoveCustomAttribute(`hidden maxhealth non buffed`)
+				if (self.GetCustomAttribute(`hidden maxhealth non buffed`, 0)) return
 				self.Regenerate(true)
 				self.AddCustomAttribute(`hidden maxhealth non buffed`, %d - self.GetMaxHealth(), -1)
 				self.SetHealth(self.GetMaxHealth())
-				self.Regenerate(true)
-			", maxhp), 1, null, null)
+
+			", maxhp), -1, null, null)
 		}
 		endif = function()
 		{
@@ -671,12 +698,11 @@ function RemoveAllBots()
 			EntFireByHandle(player, "RunScriptCode", format(@"
 
 				if (self.GetCustomAttribute(`hidden maxhealth non buffed`, 0)) return
-
 				self.AddCustomAttribute(`hidden maxhealth non buffed`, %d - self.GetMaxHealth(), -1)
 				self.AddCustomAttribute(`health regen`, %d, -1)
-
 				self.Regenerate(true)
-			", 9999, 9999), 0.5, null, null)
+
+			", 9999, 9999), -1, null, null)
 
 			scope.ThinkTable.EndifThink <- function() {
 				//redefine here to avoid reaching out of scope
