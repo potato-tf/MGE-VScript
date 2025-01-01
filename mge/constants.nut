@@ -7,6 +7,8 @@ CONST.MAX_CLIENTS <- MaxClients().tointeger()
 //CONFIG CONSTANTS
 const DEFAULT_FRAGLIMIT = 20
 
+const MAX_CLEAR_SPAWN_RETRIES = 10
+
 const ELO_TRACKING_MODE = 1 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
 
