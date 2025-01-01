@@ -44,6 +44,7 @@
 		queue      = null,
 		stats      = { elo = -INT_MAX },
 		enable_announcer = true,
+		enable_countdown = true,
 		won_last_match = false
 	}
 	foreach (k, v in toscope)
@@ -81,7 +82,7 @@
 	else
 		ForceChangeClass(player, ("scout" in classes) ? TF_CLASS_SCOUT : ArenaClasses.find(classes[0]))
 
-	ClientPrint(player, 3, format("Class '%s' is not allowed in this arena", newclass))
+	ClientPrint(player, 3, format(MGE_Localization.ClassIsNotAllowed, newclass))
 }
 
 // tointeger() allows trailing garbage (e.g. "123abc")
@@ -671,6 +672,7 @@ function RemoveAllBots()
 		[AS_FIGHT] = function() {
 			foreach(p, _ in arena.CurrentPlayers)
 			{
+				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart%d.mp3", RandomInt(1, 4))
 				PlayAnnouncer(p, round_start_sound)
 
 				// function UnfreezePlayer(player)
@@ -723,7 +725,7 @@ function RemoveAllBots()
 			local team = player.GetTeam()
 			local goal = team == TF_TEAM_RED ? arena.BBallSetup.red_hoop : arena.BBallSetup.blue_hoop
 			scope.ThinkTable.BBallThink <- function() {
-				if (ball_carrier)
+				if ("ball_carrier" in scope && scope.ball_carrier)
 				{
 					//bball score think
 					if ((self.GetOrigin() - goal).Length() < BBALL_HOOP_SIZE)
