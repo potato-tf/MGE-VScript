@@ -7,11 +7,15 @@ A fully vanilla compatible rewrite of the MGEMod plugin.  No sourcemod plugins r
 |---------|--------|
 | [Legacy map support](https://github.com/sapphonie/MGEMod/blob/master/addons/sourcemod/configs/mgemod_spawns.cfg) | ✅ |
 | Quake-style announcer lines (toggleable) | ✅ |
+| Endif | ✅ |
+| Ammomod | ✅ |
+| Infammo | ✅ |
 | Plain text ELO/stat tracking | ❌ |
 | Database stat tracking support | ❌ |
 | BBall | ❌ |
 | 4Player | ❌ |
 | Koth | ❌ |
+| Turris | ❌ |
 | Arena leader system for custom rulesets | ❌ |
 | Arbitrary team sizes | ❌ |
 | Player-configurable spawn ordering | ❌ |
