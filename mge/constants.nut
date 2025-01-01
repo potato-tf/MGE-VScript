@@ -30,6 +30,9 @@ ROOT. ENDIF_FORCE_MULT <- Vector(1.1, 1.1, 2.15)
 
 const BBALL_MAX_SPAWNS = 8
 const BBALL_HOOP_SIZE = 135
+const BBALL_PICKUP_SOUND = "items/pickup_powerup.wav"
+const BBALL_PICKUP_PARTICLE = "powerup_glow_red"
+const BBALL_BALL_MODEL = "models/items/flag.mdl"
 
 //spawn shuffle modes
 //0 = none, spawns are iterated over in consistent order based on provided config
@@ -166,7 +169,11 @@ PrecacheModel(MODEL_POINT)
 PrecacheModel(MODEL_BRIEFCASE)
 PrecacheModel(MODEL_AMMOPACK)
 PrecacheModel(MODEL_LARGE_AMMOPACK)
+PrecacheModel(BBALL_BALL_MODEL)
 
 PrecacheSound(COUNTDOWN_SOUND)
 PrecacheSound(ROUND_START_SOUND)
 PrecacheSound(SPAWN_SOUND)
+PrecacheSound(BBALL_PICKUP_SOUND)
+
+PrecacheEntityFromTable({ classname = "info_particle_system" effect_name = BBALL_PICKUP_PARTICLE })

@@ -66,7 +66,7 @@
 ::ValidatePlayerClass <- function(player, newclass, pre=false)
 {
 	local scope = player.GetScriptScope()
-	if (!scope.arena_info) return
+	if (!("arena_info" in scope) || !scope.arena_info) return
 
 	local arena = scope.arena_info.arena
 	local classes = arena.classes
@@ -142,16 +142,19 @@
 				red_score_home = "bball_home_red" in datatable ? datatable.bball_home_red : datatable["10"],
 				blue_score_home = "bball_home_blue" in datatable ? datatable.bball_home_blue : datatable["11"],
 				red_hoop = "bball_hoop_red" in datatable ? datatable.bball_hoop_red : datatable["12"],
-				blue_hoop = "bball_hoop_blue" in datatable ? datatable.bball_hoop_blue : datatable["13"]
+				blue_hoop = "bball_hoop_blue" in datatable ? datatable.bball_hoop_blue : datatable["13"],
+				last_score_team = -1
 			}
 
 			foreach (k, v in bball_points)
 			{
+				if (k == "last_score_team") continue
 				local split_spawns = split(v, " ").apply( @(str) str.tofloat() )
 				bball_points[k] <- Vector(split_spawns[0], split_spawns[1], split_spawns[2])
 			}
 
 			datatable.BBallSetup <- bball_points
+			BBall_SpawnBall(arena_name)
 
 		}
 		// Grab spawn points
@@ -162,7 +165,7 @@
 				try
 				{
 
-					if ("bball" in datatable && ToStrictInt(k) > MAX_BBALL_SPAWNS) continue
+					if ("bball" in datatable && ToStrictInt(k) > BBALL_MAX_SPAWNS) continue
 
 					local split_spawns = split(v, " ", true).apply( @(str) str.tofloat() )
 
@@ -181,6 +184,48 @@
 			}
 		}
 	}
+}
+
+::BBall_SpawnBall <- function(arena_name)
+{
+	local arena = Arenas[arena_name]
+	local bball_points = arena.BBallSetup
+
+	local ball_ground = CreateByClassname("tf_halloween_pickup")
+
+	ball_ground.KeyValueFromString("pickup_sound", BBALL_PICKUP_SOUND)
+	ball_ground.KeyValueFromString("pickup_particle", BBALL_PICKUP_PARTICLE)
+	ball_ground.KeyValueFromString("powerup_model", BBALL_BALL_MODEL)
+
+	local origin = bball_points.neutral_home
+	origin =  arena.BBallSetup.last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home
+	ball_ground.SetOrigin(origin)
+
+	AddOutput(ball_ground, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self)", 0.0, 1)
+
+	DispatchSpawn(ball_ground)
+}
+
+::BBall_Pickup <- function(player)
+{
+	local scope = player.GetScriptScope()
+	scope.ball_carrier <- true
+	if ("ball_ent" in scope && scope.ball_ent.IsValid())
+	{
+		delete scope.ball_ent
+		scope.ball_ent.Kill()
+	}
+
+	local ball_ent = CreateByClassname("funCBaseFlex")
+
+	ball_ent.SetOrigin(player.GetOrigin())
+	ball_ent.SetModel(BBALL_BALL_MODEL)
+	ball_ent.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+	ball_ent.SetSolid(SOLID_NONE)
+	ball_ent.SetOwner(player)
+
+	EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
+	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", 0.3, player, player)
 }
 
 function AddBot(arena_name)
@@ -678,11 +723,22 @@ function RemoveAllBots()
 			local team = player.GetTeam()
 			local goal = team == TF_TEAM_RED ? arena.BBallSetup.red_hoop : arena.BBallSetup.blue_hoop
 			scope.ThinkTable.BBallThink <- function() {
-				local player = self
-
-				if (GetPropEntity(player, "m_hItem") &&(player.GetOrigin() - goal).Length() < BBALL_HOOP_SIZE)
+				if (ball_carrier)
 				{
-					team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
+					//bball score think
+					if ((self.GetOrigin() - goal).Length() < BBALL_HOOP_SIZE)
+					{
+						if ("ball_ent" in scope)
+						{
+							if (scope.ball_ent.IsValid())
+								scope.ball_ent.Kill()
+							delete scope.ball_ent
+						}
+						team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
+						arena.BBallSetup.last_score_team = team
+						BBall_SpawnBall(arena_name)
+						return
+					}
 				}
 			}
 		}
@@ -699,10 +755,10 @@ function RemoveAllBots()
 			scope.ThinkTable.TurrisThink <- function() {
 				//redefine here to avoid reaching out of scope
 				local player = self
-				if (scope.turris_cooldown < Time())
+				if (turris_cooldown < Time())
 				{
 					player.Regenerate(true)
-					scope.turris_cooldown = Time() + TURRIS_REGEN_TIME
+					turris_cooldown = Time() + TURRIS_REGEN_TIME
 				}
 			}
 		}
