@@ -45,7 +45,8 @@
 		stats      = { elo = -INT_MAX },
 		enable_announcer = true,
 		enable_countdown = true,
-		won_last_match = false
+		won_last_match = false,
+		ball_ent = null
 	}
 	foreach (k, v in toscope)
 		scope[k] <- v
@@ -137,7 +138,7 @@
 		else
 			Arenas_List[idx] = arena_name
 
-		if ("bball" in datatable)
+		if ("bball" in datatable && datatable.bball == "1")
 		{
 			local bball_points = {
 				neutral_home = "bball_home" in datatable ? datatable.bball_home : datatable["9"],
@@ -192,31 +193,29 @@
 {
 	local arena = Arenas[arena_name]
 	local bball_points = arena.BBallSetup
+	local last_score_team = arena.BBallSetup.last_score_team
 
 	local ball_ground = CreateByClassname("tf_halloween_pickup")
 
 	ball_ground.KeyValueFromString("pickup_sound", BBALL_PICKUP_SOUND)
 	ball_ground.KeyValueFromString("pickup_particle", BBALL_PICKUP_PARTICLE)
 	ball_ground.KeyValueFromString("powerup_model", BBALL_BALL_MODEL)
+	ball_ground.SetOrigin(last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
+	AddOutput(ball_ground, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self);", 0.0, 1)
+	AddOutput(ball_ground, "OnPlayerTouch", "!self", "Kill", "", 0.0, 1)
+	if ("ball_ground" in arena.BBallSetup && arena.BBallSetup.ball_ground.IsValid())
+		arena.BBallSetup.ball_ground.Kill()
+	
+	arena.BBallSetup.ball_ground <- ball_ground
 
-	local origin = bball_points.neutral_home
-	origin =  arena.BBallSetup.last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home
-	ball_ground.SetOrigin(origin)
-
-	AddOutput(ball_ground, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self)", 0.0, 1)
-
-	DispatchSpawn(ball_ground)
+	EntFireByHandle(ball_ground, "RunScriptCode", "DispatchSpawn(self)", 0.1, null, null)
 }
 
 ::BBall_Pickup <- function(player)
 {
 	local scope = player.GetScriptScope()
-	scope.ball_carrier <- true
-	if ("ball_ent" in scope && scope.ball_ent.IsValid())
-	{
-		delete scope.ball_ent
-		scope.ball_ent.Kill()
-	}
+	if (scope.ball_ent && scope.ball_ent.IsValid())
+		return
 
 	local ball_ent = CreateByClassname("funCBaseFlex")
 
@@ -225,9 +224,14 @@
 	ball_ent.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 	ball_ent.SetSolid(SOLID_NONE)
 	ball_ent.SetOwner(player)
+	ball_ent.KeyValueFromString("targetname", format("__ball_%d", player.entindex()))
+	scope.ball_ent <- ball_ent
 
 	EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
-	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", 0.3, player, player)
+	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
+
+	EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", 0.1, null, null)
+
 }
 
 function AddBot(arena_name)
@@ -394,6 +398,8 @@ function RemoveAllBots()
 ::RemovePlayer <- function(player, changeteam=true)
 {
 	local scope = player.GetScriptScope()
+
+	scope.ThinkTable.clear()
 
 	if (changeteam)
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
@@ -700,6 +706,10 @@ function RemoveAllBots()
 					})
 				", arena_name, round_start_sound, ROUND_START_SOUND_VOLUME), countdown_time, null, null)
 			}
+
+			if ("bball" in arena && arena.bball == "1")
+				BBall_SpawnBall(arena_name)
+			
 		},
 		[AS_FIGHT] = function() {
 			foreach(p, _ in arena.CurrentPlayers)
@@ -757,16 +767,15 @@ function RemoveAllBots()
 			local team = player.GetTeam()
 			local goal = team == TF_TEAM_RED ? arena.BBallSetup.red_hoop : arena.BBallSetup.blue_hoop
 			scope.ThinkTable.BBallThink <- function() {
-				if ("ball_carrier" in scope && scope.ball_carrier)
+				if (scope.ball_ent && scope.ball_ent.IsValid())
 				{
 					//bball score think
 					if ((self.GetOrigin() - goal).Length() < BBALL_HOOP_SIZE)
 					{
-						if ("ball_ent" in scope)
+						if (scope.ball_ent && scope.ball_ent.IsValid())
 						{
-							if (scope.ball_ent.IsValid())
-								scope.ball_ent.Kill()
-							delete scope.ball_ent
+							scope.ball_ent.Kill()
+							scope.ball_ent = null
 						}
 						team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
 						arena.BBallSetup.last_score_team = team
