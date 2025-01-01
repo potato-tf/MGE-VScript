@@ -6,9 +6,9 @@ A fully vanilla compatible rewrite of the MGEMod plugin.  No sourcemod plugins r
 | Feature | Status |
 |---------|--------|
 | [Legacy map support](https://github.com/sapphonie/MGEMod/blob/master/addons/sourcemod/configs/mgemod_spawns.cfg) | ✅ |
-| Plain text ELO/stat tracking | ✅ |
-| Database stat tracking support | ✅ |
 | Quake-style announcer lines (toggleable) | ✅ |
+| Plain text ELO/stat tracking | ❌ |
+| Database stat tracking support | ❌ |
 | BBall | ❌ |
 | 4Player | ❌ |
 | Koth | ❌ |
