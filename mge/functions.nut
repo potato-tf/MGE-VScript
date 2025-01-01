@@ -135,6 +135,25 @@
 		else
 			Arenas_List[idx] = arena_name
 
+		if ("bball" in datatable)
+		{
+			local bball_points = {
+				neutral_home = "bball_home" in datatable ? datatable.bball_home : datatable["9"],
+				red_score_home = "bball_home_red" in datatable ? datatable.bball_home_red : datatable["10"],
+				blue_score_home = "bball_home_blue" in datatable ? datatable.bball_home_blue : datatable["11"],
+				red_hoop = "bball_hoop_red" in datatable ? datatable.bball_hoop_red : datatable["12"],
+				blue_hoop = "bball_hoop_blue" in datatable ? datatable.bball_hoop_blue : datatable["13"]
+			}
+
+			foreach (k, v in bball_points)
+			{
+				local split_spawns = split(v, " ").apply( @(str) str.tofloat() )
+				bball_points[k] <- Vector(split_spawns[0], split_spawns[1], split_spawns[2])
+			}
+
+			datatable.BBallSetup <- bball_points
+
+		}
 		// Grab spawn points
 		foreach(k, v in datatable)
 		{
@@ -142,6 +161,9 @@
 			{
 				try
 				{
+
+					if ("bball" in datatable && ToStrictInt(k) > MAX_BBALL_SPAWNS) continue
+
 					local split_spawns = split(v, " ", true).apply( @(str) str.tofloat() )
 
 					local origin = Vector(split_spawns[0], split_spawns[1], split_spawns[2])
@@ -653,7 +675,16 @@ function RemoveAllBots()
 		}
 		bball = function()
 		{
+			local team = player.GetTeam()
+			local goal = team == TF_TEAM_RED ? arena.BBallSetup.red_hoop : arena.BBallSetup.blue_hoop
+			scope.ThinkTable.BBallThink <- function() {
+				local player = self
 
+				if (GetPropEntity(player, "m_hItem") &&(player.GetOrigin() - goal).Length() < BBALL_HOOP_SIZE)
+				{
+					team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
+				}
+			}
 		}
 		//I have no idea what midair config is
 		//the sourcemod plugin provided CFG only has one midair-specific map and I don't have this map

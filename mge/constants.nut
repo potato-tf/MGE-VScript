@@ -28,6 +28,9 @@ const TURRIS_REGEN_TIME = 5.0
 const ENDIF_HEIGHT_THRESHOLD = 250
 ROOT. ENDIF_FORCE_MULT <- Vector(1.1, 1.1, 2.15)
 
+const BBALL_MAX_SPAWNS = 8
+const BBALL_HOOP_SIZE = 135
+
 //spawn shuffle modes
 //0 = none, spawns are iterated over in consistent order based on provided config
 //1 = random shuffle, iterates over a randomly shuffled array of spawns (classic MGE plugin behavior)
