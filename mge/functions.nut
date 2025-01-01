@@ -78,7 +78,7 @@
 	if (pre)
 		ForceChangeClass(player, player.GetPlayerClass())
 	else
-		ForceChangeClass(player, TF_CLASS_SCOUT)
+		ForceChangeClass(player, ("scout" in classes) ? TF_CLASS_SCOUT : ArenaClasses.find(classes[0]))
 	
 	ClientPrint(player, 3, format("Class '%s' is not allowed in this arena", newclass))
 }
