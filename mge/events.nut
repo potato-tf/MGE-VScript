@@ -164,7 +164,8 @@ class MGE_Events
 			local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : 0.2
 			local fraglimit = "fraglimit" in arena ? arena.fraglimit.tointeger() : 20
 
-			if (ENABLE_ANNOUNCER)
+			// local rocket_jumping = (!(victim.GetFlags() & FL_ONGROUND) && victim.InCond(TF_COND_BLASTJUMPING)
+			if (ENABLE_ANNOUNCER && arena.State == AS_FIGHT)
 			{
 				local killstreak_total = "kill_streak_total" in params ? params.kill_streak_total.tointeger() : 0
 				local str = false, hud_str = false
@@ -185,19 +186,23 @@ class MGE_Events
 						MGE_ClientPrint(p, HUD_PRINTTALK, format(MGE_Localization.Killstreak, attacker_scope.Name, killstreak_total.tostring()))
 				}
 				//we've hit an airshot
-				else if (params.rocket_jump || (!(victim.GetFlags() & FL_ONGROUND) && victim.InCond(TF_COND_BLASTJUMPING) && (params.damagebits & DMG_BLAST)))
+				else if (params.rocket_jump && (params.damagebits & DMG_BLAST))
 				{
 					hud_str = MGE_Localization.Airshot
-					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(10, 11))
+					str = format("vo/announcer_am_killstreak%d.mp3", RandomInt(10, 11))
 				}
 
 				if (str) PlayAnnouncer(attacker, str)
-				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTCENTER, hud_str)
+				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)
 
 			}
 
 			if (attacker && attacker != victim)
+			{
 				MGE_ClientPrint(victim, 3, format(MGE_Localization.HPLeft, attacker.GetHealth()))
+				attacker.Regenerate(true)
+				attacker.SetHealth(attacker.GetMaxHealth() * arena.hpratio.tofloat())
+			}
 
 			// Koth / bball mode doesn't count deaths
 			// todo braindawg one obscure map has bball: 0 lol
@@ -221,6 +226,15 @@ class MGE_Events
 			local team = params.team
 
 			if (team == TEAM_SPECTATOR)
+				RemovePlayer(player)
+		}
+
+		function OnScriptHook_OnTakeDamage(params)
+		{
+			local player = GetPlayerFromUserID(params.userid)
+			local attacker = GetPlayerFromUserID(params.attacker)
+
+			if (player.GetTeam() == TEAM_SPECTATOR)
 				RemovePlayer(player)
 		}
 	}

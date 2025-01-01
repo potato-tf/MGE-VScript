@@ -70,6 +70,16 @@ foreach (sound in StockSounds)
 	"__vrefs" : null,
 }
 
+::GlobalThinkTable <- {}
+
+local mge_ent = CreateByClassname("move_rope")
+mge_ent.ValidateScriptScope()
+mge_ent.GetScriptScope().MGEThink <- function() {
+	foreach(name, func in GlobalThinkTable)
+		func()
+}
+AddThinkToEnt(mge_ent, "MGEThink")
+
 ::MGE_Init <- function()
 {
 	printl("[VScript MGEMod] Loaded, moving all active players to spectator")

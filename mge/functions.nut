@@ -339,6 +339,21 @@ function RemoveAllBots()
 	local arena = Arenas[arena_name]
 
 	local queue = arena.Queue
+
+	if (!queue.len())
+	{
+		local i = 0
+		foreach (p, _ in arena.CurrentPlayers)
+		{
+			i++
+			RemovePlayer(p)
+			// AddPlayer(p, arena_name)
+			EntFireByHandle(p, "RunScriptCode", format("AddPlayer(self, `%s`)", arena_name), i * 0.1, null, null)
+			break
+		}
+		return
+	}
+
 	local next_player = queue[0]
 
 	foreach (p, _ in arena.CurrentPlayers)
@@ -352,7 +367,7 @@ function RemoveAllBots()
 	SetArenaState(arena_name, AS_IDLE)
 
 	foreach(i, p in queue)
-		MGE_ClientPrint(p, 3, format(MGE_Localization.InLine, i + 1))
+		MGE_ClientPrint(p, 3, format(MGE_Localization.InLine, (i + 1).tostring()))
 }
 
 
@@ -457,7 +472,44 @@ function RemoveAllBots()
 	winner_scope.won_last_match = true
 
 	MGE_ClientPrint(null, 3, format(MGE_Localization.XdefeatsY, winner_scope.Name, winner_scope.stats.elo.tostring(), loser_scope.Name, loser_scope.stats.elo.tostring(), fraglimit.tostring(), arena_name))
-	CalcELO(winner, loser)
+	// CalcELO(winner, loser)
+}
+
+::GetNextSpawnPoint <- function(player, arena_name) {
+
+	local arena = Arenas[arena_name]
+	arena.NextSpawnIndex <- SPAWN_SHUFFLE_MODE ? RandomInt(0, arena.SpawnPoints.len() - 1) : 0
+
+	local shuffleModes = {
+		[0] = function() {
+			arena.NextSpawnIndex = (arena.NextSpawnIndex + 1) % arena.SpawnPoints.len()
+		},
+		[1] = function() {
+
+			if (!("SpawnPointsOriginal" in arena))
+			{
+				arena.SpawnPointsOriginal <- clone arena.SpawnPoints
+				local len = arena.SpawnPointsOriginal.len()
+				for (local i = len - 1; i > 0; i--)
+				{
+					local j = RandomInt(0, i)
+					local temp = arena.SpawnPoints[i]
+					arena.SpawnPoints[i] = arena.SpawnPoints[j]
+					arena.SpawnPoints[j] = temp
+				}
+			}
+			arena.NextSpawnIndex = (arena.NextSpawnIndex + 1) % arena.SpawnPoints.len()
+		},
+		[2] = function() {
+			while (player.GetScriptScope().last_spawn_point == arena.NextSpawnIndex)
+				arena.NextSpawnIndex = RandomInt(0, arena.SpawnPoints.len() - 1)
+		},
+		// [3] = function() {
+		// 	return
+		// },
+	}
+	if (SPAWN_SHUFFLE_MODE in shuffleModes)
+		shuffleModes[SPAWN_SHUFFLE_MODE]()
 }
 
 ::SetArenaState <- function(arena_name, state) {
@@ -519,12 +571,65 @@ function RemoveAllBots()
 					PlayAnnouncer(p, "vo/announcer_am_lastmanforfeit01.mp3")
 				}
 			}
-			if (arena.Queue.len())
-				// CycleQueue(arena.Queue[0], arena_name)
-				EntFireByHandle(arena.Queue[0], "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY, null, null)
+			EntFire("worldspawn", "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
 		},
 	}
 	arenaStates[state]()
+}
+
+::SetSpecialArena <- function(player, arena_name) {
+	local arena = Arenas[arena_name]
+
+	if ("mge" in arena && arena.mge == "1") return
+
+	local scope = player.GetScriptScope()
+	local special_arenas = {
+
+		koth = function()
+		{
+
+		}
+		bball = function()
+		{
+
+		}
+		turris = function()
+		{
+
+		}
+		ammomod = function()
+		{
+
+		}
+
+
+		endif = function()
+		{
+			scope.EndifBaseOrigin <- Vector()
+			scope.ThinkTable.EndifThink <- function() {
+
+				local origin = player.GetOrigin()
+
+				if (self.GetFlags() & FL_ONGROUND)
+					EndifBaseOrigin <- origin
+
+				endif_killme <- abs(EndifBaseOrigin.z - origin.z) > ENDIF_HEIGHT_THRESHOLD ? true : false
+			}
+		}
+
+		infammo = function()
+		{
+			scope.ThinkTable.InfAmmoThink <- function() {
+				local weapon = player.GetActiveWeapon()
+				if (weapon.Clip1() < weapon.GetMaxClip1())
+					weapon.SetClip1(weapon.GetMaxClip1())
+			}
+		}
+	}
+
+	foreach(k, func in special_arenas)
+		if (k in arena)
+			func()
 }
 
 ::PlayAnnouncer <- function(player, sound_name) {

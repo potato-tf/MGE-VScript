@@ -16,6 +16,14 @@ const COUNTDOWN_SOUND_VOLUME = 0.5
 const ROUND_START_SOUND = "ui/chime_rd_2base_neg.wav"
 const ROUND_START_SOUND_VOLUME = 0.5
 
+const ENDIF_HEIGHT_THRESHOLD = 200
+
+//spawn shuffle modes
+//0 = none, spawns are iterated over in consistent order based on provided config
+//1 = random shuffle, iterates over a randomly shuffled array of spawns (classic MGE plugin behavior)
+//2 = random except, picks a truly random spawn so long as it's not the last one we spawned at
+//3 = random, no shuffling (can repeat spawns)
+const SPAWN_SHUFFLE_MODE = 1
 const SPAWN_SOUND = "items/spawn_item.wav"
 const SPAWN_SOUND_VOLUME = 1.0
 
