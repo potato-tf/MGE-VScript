@@ -94,10 +94,6 @@ AddThinkToEnt(mge_ent, "MGEThink")
 		player.ValidateScriptScope()
 		InitPlayerScope(player)
 		local scope = player.GetScriptScope()
-		foreach (k, v in scope)
-			printl(k + " " + v)
-		printl(player)
-
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
 		// todo bots dont like to stay dead with this, need to come up with something else
 		/*

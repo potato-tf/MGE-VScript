@@ -1,4 +1,12 @@
+::CONST <- getconsttable()
+::ROOT <- getroottable()
+
+CONST.setdelegate({ _newslot = @(k, v) compilestring("const " + k + "=" + (typeof(v) == "string" ? ("\"" + v + "\"") : v))() })
+CONST.MAX_CLIENTS <- MaxClients().tointeger()
+
 //CONFIG CONSTANTS
+const DEFAULT_FRAGLIMIT = 20
+
 const ELO_TRACKING_MODE = 1 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
 
@@ -16,7 +24,9 @@ const COUNTDOWN_SOUND_VOLUME = 0.5
 const ROUND_START_SOUND = "ui/chime_rd_2base_neg.wav"
 const ROUND_START_SOUND_VOLUME = 0.5
 
-const ENDIF_HEIGHT_THRESHOLD = 200
+const TURRIS_REGEN_TIME = 5.0
+const ENDIF_HEIGHT_THRESHOLD = 250
+ROOT. ENDIF_FORCE_MULT <- Vector(1.1, 1.1, 2.15)
 
 //spawn shuffle modes
 //0 = none, spawns are iterated over in consistent order based on provided config
@@ -28,6 +38,8 @@ const SPAWN_SOUND = "items/spawn_item.wav"
 const SPAWN_SOUND_VOLUME = 1.0
 
 const DEFAULT_CDTIME    = 3 //default countdown time
+
+const PLAYER_THINK_INTERVAL = -1
 
 //END CONFIG CONSTANTS
 
@@ -44,9 +56,6 @@ const AS_REPORTED     = 5
 
 //fold into both const and root table to work around this.
 
-::CONST <- getconsttable()
-::ROOT <- getroottable()
-
 if (!("ConstantNamingConvention" in ROOT))
 {
 	foreach(a, b in Constants)
@@ -58,9 +67,6 @@ if (!("ConstantNamingConvention" in ROOT))
 		}
 	}
 }
-
-CONST.setdelegate({ _newslot = @(k, v) compilestring("const " + k + "=" + (typeof(v) == "string" ? ("\"" + v + "\"") : v))() })
-CONST.MAX_CLIENTS <- MaxClients().tointeger()
 
 foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
 	foreach (k, v in i.getclass())

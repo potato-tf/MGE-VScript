@@ -52,6 +52,7 @@
 	scope.PlayerThink <- function() {
 		foreach(name, func in scope.ThinkTable)
 			func.call(scope)
+		return PLAYER_THINK_INTERVAL
 	}
 	AddThinkToEnt(player, "PlayerThink")
 }
@@ -66,20 +67,20 @@
 {
 	local scope = player.GetScriptScope()
 	if (!scope.arena_info) return
-	
+
 	local arena = scope.arena_info.arena
 	local classes = arena.classes
 	if (!classes.len()) return
-	
+
 	newclass = ArenaClasses[newclass]   // Get string version of class
 	if (classes.find(newclass) != null) // Class is in the whitelist
 		return
-	
+
 	if (pre)
 		ForceChangeClass(player, player.GetPlayerClass())
 	else
 		ForceChangeClass(player, ("scout" in classes) ? TF_CLASS_SCOUT : ArenaClasses.find(classes[0]))
-	
+
 	ClientPrint(player, 3, format("Class '%s' is not allowed in this arena", newclass))
 }
 
@@ -111,9 +112,10 @@
 		datatable.SpawnPoints    <- []
 		datatable.Score          <- array(2, 0)
 		datatable.State          <- AS_IDLE
-		datatable.cdtime         <- "cdtime" in datatable ? datatable.cdtime : DEFAULT_CDTIME
+		datatable.cdtime         <- "cdtime" in datatable && datatable.cdtime != "0" ? datatable.cdtime : DEFAULT_CDTIME
 		datatable.MaxPlayers     <- "4player" in datatable && datatable["4player"] == "1" ? 4 : 2
 		datatable.classes        <- ("classes" in datatable) ? split(datatable.classes, " ", true) : []
+		datatable.fraglimit      <- "fraglimit" in datatable ? datatable.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
 
 		local idx = ("idx" in datatable) ? datatable.idx.tointeger() : null
 		if (idx == null && !idx_failed)
@@ -470,7 +472,7 @@ function RemoveAllBots()
 
 	local arena = Arenas[arena_name]
 
-	local fraglimit = "fraglimit" in arena ? arena.fraglimit.tointeger() : 20
+	local fraglimit = arena.fraglimit.tointeger()
 
 	//round over
 	local winner, loser
@@ -605,6 +607,8 @@ function RemoveAllBots()
 	if ("mge" in arena && arena.mge == "1") return
 
 	local scope = player.GetScriptScope()
+	local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
+	local maxhp = player.GetMaxHealth() * hpratio
 	local special_arenas = {
 
 		koth = function()
@@ -615,35 +619,84 @@ function RemoveAllBots()
 		{
 
 		}
+		//I legit have no idea what midair config is
+		//the sourcemod plugin provided CFG only has one midair-specific map and I don't have this map
+		//so I'm just using the endif config for now
+		midair = function()
+		{
+			special_arenas.endif()
+		}
 		turris = function()
 		{
-
+			scope.turris_cooldown <- 0.0
+			scope.ThinkTable.TurrisThink <- function() {
+				//redefine here to avoid reaching out of scope
+				local player = self
+				if (scope.turris_cooldown < Time())
+				{
+					player.Regenerate(true)
+					scope.turris_cooldown = Time() + TURRIS_REGEN_TIME
+				}
+			}
 		}
 		ammomod = function()
 		{
+			printl("attr : " + player.GetCustomAttribute("hidden maxhealth non buffed", 0))
 
+			if (player.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
+
+			EntFireByHandle(player, "RunScriptCode", format(@"
+				local player = self
+				self.SetHealth(1)
+				printl(`attr : ` + self.GetCustomAttribute(`hidden maxhealth non buffed`, 0) + `:` + self.GetMaxHealth())
+
+				if (self.GetCustomAttribute(`hidden maxhealth non buffed`, 0))
+				{
+					self.Regenerate(true)
+					return
+				}
+
+				self.RemoveCustomAttribute(`hidden maxhealth non buffed`)
+				self.Regenerate(true)
+				self.AddCustomAttribute(`hidden maxhealth non buffed`, %d - self.GetMaxHealth(), -1)
+				self.SetHealth(self.GetMaxHealth())
+				self.Regenerate(true)
+			", maxhp), 1, null, null)
 		}
-
-
 		endif = function()
 		{
-			scope.EndifBaseOrigin <- Vector()
-			scope.ThinkTable.EndifThink <- function() {
+			scope.endif_base_origin <- Vector()
+			scope.endif_killme <- false
 
+			EntFireByHandle(player, "RunScriptCode", format(@"
+
+				if (self.GetCustomAttribute(`hidden maxhealth non buffed`, 0)) return
+
+				self.AddCustomAttribute(`hidden maxhealth non buffed`, %d - self.GetMaxHealth(), -1)
+				self.AddCustomAttribute(`health regen`, %d, -1)
+
+				self.Regenerate(true)
+			", 9999, 9999), 0.5, null, null)
+
+			scope.ThinkTable.EndifThink <- function() {
+				//redefine here to avoid reaching out of scope
+				local player = self
 				local origin = player.GetOrigin()
 
-				if (self.GetFlags() & FL_ONGROUND)
-					EndifBaseOrigin <- origin
-
-				endif_killme <- abs(EndifBaseOrigin.z - origin.z) > ENDIF_HEIGHT_THRESHOLD ? true : false
+				if (player.GetFlags() & FL_ONGROUND)
+				{
+					endif_base_origin = origin
+				}
+				endif_killme = abs(endif_base_origin.z - origin.z) > ENDIF_HEIGHT_THRESHOLD ? true : false
 			}
 		}
-
 		infammo = function()
 		{
 			scope.ThinkTable.InfAmmoThink <- function() {
+				//redefine here to avoid reaching out of scope
+				local player = self
 				local weapon = player.GetActiveWeapon()
-				if (weapon.Clip1() < weapon.GetMaxClip1())
+				if (weapon && weapon.Clip1() < weapon.GetMaxClip1())
 					weapon.SetClip1(weapon.GetMaxClip1())
 			}
 		}

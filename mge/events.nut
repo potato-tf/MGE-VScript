@@ -5,9 +5,9 @@ class MGE_Events
 			local player = GetPlayerFromUserID(params.userid)
 
 			// todo remove
-			local scope = player.GetScriptScope()
-			foreach (k, v in scope)
-				printl(k)
+			// local scope = player.GetScriptScope()
+			// foreach (k, v in scope)
+				// printl(k)
 
 			local splitText = split(params.text, " ")
 
@@ -129,11 +129,10 @@ class MGE_Events
 					EntFireByHandle(player, "RunScriptCode", format("SetArenaState(`%s`, AS_COUNTDOWN)", arena_name), COUNTDOWN_START_DELAY, null, null)
 				}
 
-				// todo need to have a system for checking if the spawn we pick is occupied in preround
-				local idx = RandomInt(0, arena.SpawnPoints.len() - 1)
+				SetSpecialArena(player, arena_name)
+				GetNextSpawnPoint(player, arena_name)
 
-				printl(arena.SpawnPoints[idx][0])
-				printl(arena.SpawnPoints[idx][1])
+				local idx = arena.NextSpawnIndex
 
 				player.SetAbsOrigin(arena.SpawnPoints[idx][0])
 				player.SnapEyeAngles(arena.SpawnPoints[idx][1])
@@ -158,6 +157,7 @@ class MGE_Events
 		function OnGameEvent_player_changeclass(params)
 		{
 			local player = GetPlayerFromUserID(params.userid)
+			printl(player)
 			ValidatePlayerClass(player, params["class"], true)
 		}
 
@@ -167,22 +167,20 @@ class MGE_Events
 			local attacker = GetPlayerFromUserID(params.attacker)
 
 			local victim_scope = victim.GetScriptScope()
-			local attacker_scope = attacker.GetScriptScope()
+			local attacker_scope = attacker ? attacker.GetScriptScope() : victim_scope
 
 			if (!victim_scope.arena_info) return
 
 			local arena = victim_scope.arena_info.arena
 
 			local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : 0.2
-			local fraglimit = "fraglimit" in arena ? arena.fraglimit.tointeger() : 20
+			local fraglimit = arena.fraglimit.tointeger()
 
+			local str = false, hud_str = false
 			// local rocket_jumping = (!(victim.GetFlags() & FL_ONGROUND) && victim.InCond(TF_COND_BLASTJUMPING)
 			if (ENABLE_ANNOUNCER && arena.State == AS_FIGHT)
 			{
 				local killstreak_total = "kill_streak_total" in params ? params.kill_streak_total.tointeger() : 0
-				local str = false, hud_str = false
-
-				printl("death flags: " + params.death_flags)
 				//first blood
 				if (!arena.Score[0] && !arena.Score[1])
 				{
@@ -203,10 +201,6 @@ class MGE_Events
 					hud_str = MGE_Localization.Airshot
 					str = format("vo/announcer_am_killstreak%d.mp3", RandomInt(10, 11))
 				}
-
-				if (str) PlayAnnouncer(attacker, str)
-				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)
-
 			}
 
 			if (attacker && attacker != victim)
@@ -214,6 +208,9 @@ class MGE_Events
 				MGE_ClientPrint(victim, 3, format(MGE_Localization.HPLeft, attacker.GetHealth()))
 				attacker.Regenerate(true)
 				attacker.SetHealth(attacker.GetMaxHealth() * arena.hpratio.tofloat())
+
+				if (str) PlayAnnouncer(attacker, str)
+				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)
 			}
 
 			// Koth / bball mode doesn't count deaths
@@ -243,11 +240,26 @@ class MGE_Events
 
 		function OnScriptHook_OnTakeDamage(params)
 		{
-			local player = GetPlayerFromUserID(params.userid)
-			local attacker = GetPlayerFromUserID(params.attacker)
+			local victim = params.const_entity
+			local attacker = params.attacker
+			local victim_scope = victim.GetScriptScope()
+			// printl(victim + " " + victim_scope)
 
-			if (player.GetTeam() == TEAM_SPECTATOR)
-				RemovePlayer(player)
+			local arena = victim_scope.arena_info.arena
+
+			local damage_type = params.damage_type
+
+			if ("endif_killme" in victim_scope)
+			{
+				if (!("midair" in arena) || arena.midair == "0")
+					params.damage_force *= ENDIF_FORCE_MULT
+
+				if (victim_scope.endif_killme && damage_type & DMG_BLAST)
+				{
+					victim.SetHealth(1)
+					damage_type = damage_type | DMG_CRITICAL
+				}
+			}
 		}
 	}
 }
