@@ -859,7 +859,7 @@ function RemoveAllBots()
 	}
 
 	foreach(k, func in special_arenas)
-		if (k in arena)
+		if (k in arena && arena[k] == "1")
 			func()
 }
 
@@ -882,17 +882,33 @@ function RemoveAllBots()
 
 ::GetStats <- function(player) {
 
+	if (!ELO_TRACKING_MODE) return
+
 	local scope = player.GetScriptScope()
 	local steam_id = GetPropString(player, "m_szNetworkIDString")
 	local steam_id_slice = steam_id == "BOT" ? "BOT" : steam_id.slice(5, steam_id.find("]"))
 	local player_file = FileToString(format("mge_playerdata/%s.nut", steam_id_slice))
 
-	if (player_file)
+	if (ELO_TRACKING_MODE == 1)
 	{
-		scope.stats <- compilestring(player_file)()
+		if (player_file)
+		{
+			compilestring(player_file)()
+			scope.stats <- ROOT[steam_id_slice]
+			delete ROOT[steam_id_slice]
+		}
+		else
+		{
+			scope.stats.elo <- DEFAULT_ELO
+			local str = format("ROOT[\"%s\"]<-{\n", steam_id_slice)
+			foreach(k, v in scope.stats)
+				str += format("%s=%s\n", k.tostring(), v.tostring())
+			str += "}\n"
+			StringToFile(player_file, str)
+		}	
 		return
 	}
-	else if ("VPI" in getroottable())
+	else if (ELO_TRACKING_MODE == 2 && "VPI" in getroottable())
 	{
 		VPI.AsyncCall({
 			func="VPI_DB_MGE_ReadWritePlayerStats",
@@ -931,12 +947,11 @@ function RemoveAllBots()
 			return
 		break
 		case 1:
-			local file_data = format("getroottable()[\"%s\"] <- {\n", steam_id_slice)
+			local file_data = format("ROOT[\"%s\"]<-{\n", steam_id_slice)
 			foreach(k, v in scope.stats)
-				file_data += format("\t%s = %s\n", k.tostring(), v.tostring())
+				file_data += format("%s=%s\n", k.tostring(), v.tostring())
 			file_data += "}\n"
 			StringToFile(format("mge_playerdata/%s.nut", steam_id_slice), file_data)
-
 		break
 		case 2:
 			VPI.AsyncCall({

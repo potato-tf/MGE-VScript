@@ -6,6 +6,7 @@ CONST.MAX_CLIENTS <- MaxClients().tointeger()
 
 //CONFIG CONSTANTS
 const DEFAULT_FRAGLIMIT = 20
+const DEFAULT_ELO = 1500
 
 const MAX_CLEAR_SPAWN_RETRIES = 10
 
@@ -27,6 +28,7 @@ const ROUND_START_SOUND = "ui/chime_rd_2base_neg.wav"
 const ROUND_START_SOUND_VOLUME = 0.5
 
 const TURRIS_REGEN_TIME = 5.0
+
 const ENDIF_HEIGHT_THRESHOLD = 250
 ROOT. ENDIF_FORCE_MULT <- Vector(1.1, 1.1, 2.15)
 

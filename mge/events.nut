@@ -140,7 +140,7 @@ class MGE_Events
 
 				scope.ThinkTable.ScoreThink <- function() {
 					// MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1]+"\nRed ELO: "+player.GetScriptScope().stats.elo+" BLU ELO: "+player.GetScriptScope().stats.elo)
-					local str = format("RED: %d (%d)\nBLU: %d (%d)", arena.Score[0], player.GetScriptScope().stats.elo, arena.Score[1], player.GetScriptScope().stats.elo)
+					local str = format("RED: %d (%d)\nBLU: %d (%d)", arena.Score[0], scope.stats.elo, arena.Score[1], scope.stats.elo)
 					MGE_ClientPrint(player, 4, str)
 				}
 			}
