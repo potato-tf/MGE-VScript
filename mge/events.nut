@@ -250,17 +250,15 @@ class MGE_Events
 
 			local arena = victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
 
-			local damage_type = params.damage_type
-
 			if ("endif_killme" in victim_scope)
 			{
 				if (!("midair" in arena) || arena.midair == "0")
 					params.damage_force *= ENDIF_FORCE_MULT
 
-				if (victim_scope.endif_killme && damage_type & DMG_BLAST)
+				if (victim_scope.endif_killme && params.damage_type & DMG_BLAST)
 				{
 					victim.SetHealth(1)
-					damage_type = damage_type | DMG_CRITICAL
+					params.damage_type = params.damage_type | DMG_CRITICAL
 				}
 			}
 		}

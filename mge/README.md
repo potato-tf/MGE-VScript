@@ -37,9 +37,9 @@ A fully vanilla compatible rewrite of the MGEMod plugin.  No sourcemod plugins r
 ### SECURITY WARNING
 Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issues/6356) if you want this to be fixed.
 - While most existing MGE maps are safe to use, **DO NOT ENABLE ANY STAT TRACKING ON UNTRUSTED MAPS!**
-    - Any MGE maps created after the VScript update can pack a mapspawn.nut file that executes before ours
+    - Any MGE maps created after the VScript update can pack a mapspawn.nut file that will override ours
     - Not only will this break the gamemode, but malicious maps can target either the database or filesystem and manipulate player stats
-    - This cannot be fixed unless Valve implements a way for server owners to execute their own scripts before map-packed scripts.
+    - This cannot be fixed unless Valve implements another reserved file (i.e. init.nut) that runs before mapspawn.nut and can only run from the server filesystem
     - **How to check if a map is safe:**
         - Open the bsp using GCFScape, open the .zip file, and check the tf/scripts/vscripts directory in this zip file
         - If you see a mapspawn.nut file, the gamemode will either not load correctly or this map is unsafe

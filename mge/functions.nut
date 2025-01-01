@@ -698,6 +698,7 @@ function RemoveAllBots()
 			EntFireByHandle(player, "RunScriptCode", format(@"
 
 				if (self.GetCustomAttribute(`hidden maxhealth non buffed`, 0)) return
+				self.AddCustomAttribute(`cancel falling damage`, 1, -1)
 				self.AddCustomAttribute(`hidden maxhealth non buffed`, %d - self.GetMaxHealth(), -1)
 				self.AddCustomAttribute(`health regen`, %d, -1)
 				self.Regenerate(true)
@@ -710,9 +711,8 @@ function RemoveAllBots()
 				local origin = player.GetOrigin()
 
 				if (player.GetFlags() & FL_ONGROUND)
-				{
 					endif_base_origin = origin
-				}
+
 				endif_killme = abs(endif_base_origin.z - origin.z) > ENDIF_HEIGHT_THRESHOLD ? true : false
 			}
 		}
