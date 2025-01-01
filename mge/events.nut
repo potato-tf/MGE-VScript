@@ -130,10 +130,8 @@ class MGE_Events
 				}
 
 				SetSpecialArena(player, arena_name)
-				GetNextSpawnPoint(player, arena_name)
 
-				local idx = arena.NextSpawnIndex
-
+				local idx = TryGetClearSpawnPoint(player, arena_name)
 				player.SetAbsOrigin(arena.SpawnPoints[idx][0])
 				player.SnapEyeAngles(arena.SpawnPoints[idx][1])
 

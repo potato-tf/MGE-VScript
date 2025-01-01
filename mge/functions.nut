@@ -118,6 +118,7 @@
 		datatable.MaxPlayers     <- "4player" in datatable && datatable["4player"] == "1" ? 4 : 2
 		datatable.classes        <- ("classes" in datatable) ? split(datatable.classes, " ", true) : []
 		datatable.fraglimit      <- "fraglimit" in datatable ? datatable.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
+		datatable.SpawnIdx       <- 0
 
 		local idx = ("idx" in datatable) ? datatable.idx.tointeger() : null
 		if (idx == null && !idx_failed)
@@ -362,7 +363,6 @@ function RemoveAllBots()
 		arena = arena,
 		name  = arena_name,
 	}
-	current_players[player] <- scope.stats.elo
 
 	// Choose the team with the lower amount of players
 	local red  = 0, blue = 0
@@ -384,11 +384,11 @@ function RemoveAllBots()
 	if (!GetPropInt(player, "m_Shared.m_iDesiredPlayerClass"))
 		ForceChangeClass(player, TF_CLASS_SCOUT)
 
-	// printl(player.GetTeam())
 	// Spawn (goto player_spawn)
 	player.ForceChangeTeam(team, true)
 	player.ForceRespawn()
-	// printl(player.GetTeam())
+
+	current_players[player] <- scope.stats.elo
 }
 
 ::RemovePlayer <- function(player, changeteam=true)
@@ -566,14 +566,41 @@ function RemoveAllBots()
 	// CalcELO(winner, loser)
 }
 
-::GetNextSpawnPoint <- function(player, arena_name) {
+::TryGetClearSpawnPoint <- function(player, arena_name)
+{
+	local arena   = Arenas[arena_name]
+	local spawns  = arena.SpawnPoints
+	local mindist = ("mindist" in arena) ? arena.mindist.tofloat() : 0.0;
+	local idx     = arena.SpawnIdx
+	for (local i = 0; i < MAX_CLEAR_SPAWN_RETRIES; ++i)
+	{
+		idx = GetNextSpawnPoint(player, arena_name)
+		if (!mindist) return idx
 
+		local origin = spawns[idx][0]
+
+		local clear = true
+		for (local p; p = FindByClassnameWithin(p, "player", origin, mindist);)
+		{
+			if (p.IsValid() && p.IsAlive())
+			{
+				clear = false
+				break
+			}
+		}
+		if (clear) return idx
+	}
+
+	return idx
+}
+
+::GetNextSpawnPoint <- function(player, arena_name)
+{
 	local arena = Arenas[arena_name]
-	arena.NextSpawnIndex <- SPAWN_SHUFFLE_MODE ? RandomInt(0, arena.SpawnPoints.len() - 1) : 0
 
 	local shuffleModes = {
 		[0] = function() {
-			arena.NextSpawnIndex = (arena.NextSpawnIndex + 1) % arena.SpawnPoints.len()
+			arena.SpawnIdx = (arena.SpawnIdx + 1) % arena.SpawnPoints.len()
 		},
 		[1] = function() {
 
@@ -589,18 +616,23 @@ function RemoveAllBots()
 					arena.SpawnPoints[j] = temp
 				}
 			}
-			arena.NextSpawnIndex = (arena.NextSpawnIndex + 1) % arena.SpawnPoints.len()
+			arena.SpawnIdx = (arena.SpawnIdx + 1) % arena.SpawnPoints.len()
 		},
 		[2] = function() {
-			while (player.GetScriptScope().last_spawn_point == arena.NextSpawnIndex)
-				arena.NextSpawnIndex = RandomInt(0, arena.SpawnPoints.len() - 1)
+			while (player.GetScriptScope().last_spawn_point == arena.SpawnIdx)
+				arena.SpawnIdx = RandomInt(0, arena.SpawnPoints.len() - 1)
 		},
 		// [3] = function() {
 		// 	return
 		// },
 	}
+
 	if (SPAWN_SHUFFLE_MODE in shuffleModes)
 		shuffleModes[SPAWN_SHUFFLE_MODE]()
+	else
+		arena.SpawnIdx = RandomInt(0, arena.SpawnPoints.len() - 1)
+
+	return arena.SpawnIdx
 }
 
 ::SetArenaState <- function(arena_name, state) {
