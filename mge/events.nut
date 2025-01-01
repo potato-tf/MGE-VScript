@@ -96,7 +96,13 @@ class MGE_Events
 			local player = GetPlayerFromUserID(params.userid)
 
 			local scope = player.GetScriptScope()
-			if (!scope) player.ValidateScriptScope()
+			if (!scope)
+			{
+				player.ValidateScriptScope()
+				scope = player.GetScriptScope()
+			}
+
+			ValidatePlayerClass(player, player.GetPlayerClass())
 
 			EntFireByHandle(player, "RunScriptCode",  @"
 				for (local child = self.FirstMoveChild(); child != null; child = child.NextMovePeer())
@@ -147,6 +153,12 @@ class MGE_Events
 				if (!player.IsFakeClient() && (team == TF_TEAM_BLUE || team == TF_TEAM_RED))
 					MGE_ClientPrint(null, 3, "[VScript MGEMod] Warning: "+player+" spawned outside of arena!")
 			}
+		}
+
+		function OnGameEvent_player_changeclass(params)
+		{
+			local player = GetPlayerFromUserID(params.userid)
+			ValidatePlayerClass(player, params["class"], true)
 		}
 
 		function OnGameEvent_player_death(params)

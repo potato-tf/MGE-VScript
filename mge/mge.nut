@@ -64,6 +64,8 @@ foreach (sound in StockSounds)
 ::Arenas      <- {}
 ::Arenas_List <- [] // Need ordered arenas for selection with client commands like !add
 
+::ArenaClasses <- ["", "scout", "sniper", "soldier", "demoman", "medic", "heavy", "pyro", "spy", "engineer", "civilian"]
+
 ::default_scope <- {
 	"self"    : null,
 	"__vname" : null,
