@@ -62,6 +62,27 @@
 	SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", classIndex)
 }
 
+::ValidatePlayerClass <- function(player, newclass, pre=false)
+{
+	local scope = player.GetScriptScope()
+	if (!scope.arena_info) return
+	
+	local arena = scope.arena_info.arena
+	local classes = arena.classes
+	if (!classes.len()) return
+	
+	newclass = ArenaClasses[newclass]   // Get string version of class
+	if (classes.find(newclass) != null) // Class is in the whitelist
+		return
+	
+	if (pre)
+		ForceChangeClass(player, player.GetPlayerClass())
+	else
+		ForceChangeClass(player, TF_CLASS_SCOUT)
+	
+	ClientPrint(player, 3, format("Class '%s' is not allowed in this arena", newclass))
+}
+
 // tointeger() allows trailing garbage (e.g. "123abc")
 // This will only allow strictly integers (also floats with only zeroes: e.g "1.00")
 ::ToStrictInt <- function(str)
@@ -92,6 +113,7 @@
 		datatable.State          <- AS_IDLE
 		datatable.cdtime         <- "cdtime" in datatable ? datatable.cdtime : DEFAULT_CDTIME
 		datatable.MaxPlayers     <- "4player" in datatable && datatable["4player"] == "1" ? 4 : 2
+		datatable.classes        <- ("classes" in datatable) ? split(datatable.classes, " ", true) : []
 
 		local idx = ("idx" in datatable) ? datatable.idx.tointeger() : null
 		if (idx == null && !idx_failed)
