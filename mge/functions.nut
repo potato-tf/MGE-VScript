@@ -862,10 +862,11 @@ function RemoveAllBots()
 			callback=function(response, error) {
 				if (typeof(response) != "array" || !response.len())
 				{
-					printl("Error getting player stats")
+					printf(MGE_Localization.VPI_ReadError, GetPropString(player, "m_szNetworkIDString"))
 					return
 				}
 				scope.stats <- response[0]
+				printf(MGE_Localization.VPI_ReadSuccess, GetPropString(player, "m_szNetworkIDString"))
 			}
 		})
 	}
@@ -876,7 +877,7 @@ function RemoveAllBots()
 
 	if (!("stats" in scope) || scope.stats.len() == 1)
 	{
-		printf("Error: stats not found for %s! fetching again and skipping update...\n", GetPropString(player, "m_szNetworkIDString"))
+		printf(MGE_Localization.Error_StatsNotFound, GetPropString(player, "m_szNetworkIDString"))
 		GetStats(player)
 		return
 	}
@@ -906,7 +907,7 @@ function RemoveAllBots()
 					additive=additive
 				},
 				callback=function(response, error) {
-					printf("Stats updated for %s\n", GetPropString(player, "m_szNetworkIDString"))
+					printf(MGE_Localization.VPI_WriteSuccess, GetPropString(player, "m_szNetworkIDString"))
 				}
 			})
 		break

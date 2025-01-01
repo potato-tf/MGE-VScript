@@ -21,17 +21,20 @@ A fully vanilla compatible rewrite of the MGEMod plugin.  No sourcemod plugins r
 - Drop the mapspawn.nut file and mge folder in your tf/scripts/vscripts directory.
 - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
 
-## Map Disclaimer
-- We are accepting PRs for this, if your favorite map isn't indexed, please make a pull request!
-- Arena indexing may not be correct on older/more obscure maps
-    - What this means is your old !add binds will be wrong on some maps
-    - Server owners need to manually configure map indexing to fix this in the `mge/cfg/mgemod_spawns.nut` file
-    - See `mge_training_v8_beta4b` in the map config file for an example of how to properly index your arenas
-- The following maps have been manually indexed:
-    - `mge_training_v8_beta4b`
-    - `mge_chillypunch_final4_fix2`
-    - `mge_oihguy_sucks_b5`
-    - `mge_oihguy_sucks_a12`
+## Converting your map configs
+- Open a copy of `mgemod_spawns.cfg` in VSCode/NP++/any text editor that supports regex search/replace, enable regex
+- If you're confused, Google/ask ChatGPT how to enable regex search/replace in your text editor
+
+    - Find pattern: `(\s*)"([^"]+)"\s*\n\s*\{`
+    - Replace pattern: `$1"$2": {`
+    - Replace All
+- Then:
+    - Find pattern: `(\s*)"([^"]+)"\s+"([^"]+)"`
+    - Replace pattern: `$1"$2": "$3"`
+    - Replace All
+
+- **CUSTOM MAPS NEED TO BE INDEXED MANUALLY!** See the `mgemod_spawns.cfg` file for an example of how to index your map
+    - Failing to index your maps will result in !add being unordered, rendering everyone's !add binds useless
 
 ## ELO/Stat Tracking
 ### SECURITY WARNING
@@ -52,4 +55,7 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 
 ### Database
 - Database tracking uses [VScript-Python Interface](https://github.com/potato-tf/VPI) to send data from vscript to python through the filesystem.
-    - Install VPI and the `aiomysql` module.
+    - Install Python 3.10+ if you don't already have it
+    - Install the `aiomysql` module
+    - Add your database credentials to `tf/scripts/mge_python/vpi.py`
+    - Check server console for any VPI related errors, you should see 

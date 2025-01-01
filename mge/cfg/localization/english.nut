@@ -61,4 +61,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 	Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s is on a killstreak! (%s kills)"
 	FirstBlood =            "\x07"+MGE_COLOR_SUBJECT+"First Blood!"
 	Airshot =               "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
+
+	Error_StatsNotFound =			"\n\nError: stats not found for %s! fetching again and skipping update...\n\n"
+
+	VPI_ReadSuccess =			"\n\nVPI: Got data for user %s.\n\n"
+	VPI_ReadError =			"\n\nVPI: Error getting data for user %s.\n\n"
+	VPI_WriteSuccess =			"\n\nVPI: Wrote data for user %s.\n\n"
+	VPI_WriteError =			"\n\nVPI: Error writing data for user %s.\n\n"
 }
