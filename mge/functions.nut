@@ -189,7 +189,7 @@
 	}
 }
 
-::BBall_SpawnBall <- function(arena_name)
+::BBall_SpawnBall <- function(arena_name, origin_override = null)
 {
 	local arena = Arenas[arena_name]
 	local bball_points = arena.BBallSetup
@@ -200,7 +200,7 @@
 	ball_ground.KeyValueFromString("pickup_sound", BBALL_PICKUP_SOUND)
 	ball_ground.KeyValueFromString("pickup_particle", BBALL_PICKUP_PARTICLE)
 	ball_ground.KeyValueFromString("powerup_model", BBALL_BALL_MODEL)
-	ball_ground.SetOrigin(last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
+	ball_ground.SetOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
 	AddOutput(ball_ground, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self);", 0.0, 1)
 	AddOutput(ball_ground, "OnPlayerTouch", "!self", "Kill", "", 0.0, 1)
 	if ("ball_ground" in arena.BBallSetup && arena.BBallSetup.ball_ground.IsValid())
@@ -362,6 +362,7 @@ function RemoveAllBots()
 	local arena = Arenas[arena_name]
 	local current_players = arena.CurrentPlayers
 
+	scope.endif_killme <- false
 	scope.queue <- null
 	scope.arena_info <- {
 		arena = arena,
@@ -470,22 +471,30 @@ function RemoveAllBots()
 
 ::CalcELO <- function(winner, loser) {
 
-	if ( winner.IsFakeClient() || loser.IsFakeClient() || !ELO_TRACKING_MODE)
-		return
-
+	if ( !ELO_TRACKING_MODE || 
+		!winner ||
+		!loser  ||
+		!winner.IsValid() ||
+		!loser.IsValid()  ||
+		loser.IsFakeClient() ||
+		winner.IsFakeClient()
+	) return
 	local winner_elo = winner.GetScriptScope().stats.elo
 	local loser_elo = loser.GetScriptScope().stats.elo
+
+	local winner_stats = winner.GetScriptScope().stats
+	local loser_stats = loser.GetScriptScope().stats
 
 	// ELO formula
 	local El = 1.0 / (pow(10.0, (winner_elo - loser_elo).tofloat() / 400) + 1)
 
 	local k = (winner_elo >= 2400) ? 10 : 15
 	local winnerscore = floor(k * El + 0.5)
-	winner.stats.elo += winnerscore
+	winner_elo += winnerscore
 
 	k = (loser_elo >= 2400) ? 10 : 15
 	local loserscore = floor(k * El + 0.5)
-	loser.stats.elo -= loserscore
+	loser_elo -= loserscore
 
 	// local arena_index = winner.arena
 	// local time = Time()
@@ -495,7 +504,10 @@ function RemoveAllBots()
 
 	 if (loser && loser.IsValid())
 		ClientPrint(loser, 3, format("You lost %d points!", loserscore))
-
+	winner_stats.elo <- winner_elo
+	loser_stats.elo <- loser_elo
+	UpdateStats(winner, winner_stats, false)
+	UpdateStats(loser, loser_stats, false)
 	//This is necessary for when a player leaves a 2v2 arena that is almost done.
 	//I don't want to penalize the player that doesn't leave, so only the winners/leavers ELO will be effected.
 	// local winner_team_slot = (g_iPlayerSlot[winner] > 2) ? (g_iPlayerSlot[winner] - 2) : g_iPlayerSlot[winner]
@@ -569,7 +581,7 @@ function RemoveAllBots()
 	winner_scope.won_last_match = true
 
 	MGE_ClientPrint(null, 3, format(MGE_Localization.XdefeatsY, winner_scope.Name, winner_scope.stats.elo.tostring(), loser_scope.Name, loser_scope.stats.elo.tostring(), fraglimit.tostring(), arena_name))
-	// CalcELO(winner, loser)
+	CalcELO(winner, loser)
 }
 
 ::TryGetClearSpawnPoint <- function(player, arena_name)
@@ -658,7 +670,7 @@ function RemoveAllBots()
 			foreach(p, _ in arena.CurrentPlayers)
 			{
 
-				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart%d.mp3", RandomInt(1, 4))
+				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
 
 				p.ForceRespawn()
 
@@ -714,7 +726,7 @@ function RemoveAllBots()
 		[AS_FIGHT] = function() {
 			foreach(p, _ in arena.CurrentPlayers)
 			{
-				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart%d.mp3", RandomInt(1, 4))
+				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
 				PlayAnnouncer(p, round_start_sound)
 
 				// function UnfreezePlayer(player)
@@ -887,13 +899,13 @@ function RemoveAllBots()
 	local scope = player.GetScriptScope()
 	local steam_id = GetPropString(player, "m_szNetworkIDString")
 	local steam_id_slice = steam_id == "BOT" ? "BOT" : steam_id.slice(5, steam_id.find("]"))
-	local player_file = FileToString(format("mge_playerdata/%s.nut", steam_id_slice))
+	local filename = format("mge_playerdata/%s.nut", steam_id_slice)
 
 	if (ELO_TRACKING_MODE == 1)
 	{
-		if (player_file)
+		if (FileToString(filename))
 		{
-			compilestring(player_file)()
+			compilestring(FileToString(filename))()
 			scope.stats <- ROOT[steam_id_slice]
 			delete ROOT[steam_id_slice]
 		}
@@ -901,10 +913,12 @@ function RemoveAllBots()
 		{
 			scope.stats.elo <- DEFAULT_ELO
 			local str = format("ROOT[\"%s\"]<-{\n", steam_id_slice)
+			
 			foreach(k, v in scope.stats)
 				str += format("%s=%s\n", k.tostring(), v.tostring())
+
 			str += "}\n"
-			StringToFile(player_file, str)
+			StringToFile(filename, str)
 		}	
 		return
 	}
@@ -929,16 +943,19 @@ function RemoveAllBots()
 	}
 }
 
-::UpdateStats <-  function(player, stats = {}, additive = false) {
+::UpdateStats <-  function(player, _stats = {}, additive = false) {
 	local scope = player.GetScriptScope()
+	local steam_id = GetPropString(player, "m_szNetworkIDString")
+	local steam_id_slice = steam_id == "BOT" ? "BOT" : steam_id.slice(5, steam_id.find("]"))
+	local filename = format("mge_playerdata/%s.nut", steam_id_slice)
 
-	if (!("stats" in scope) || scope.stats.len() == 1)
+	if (!("stats" in scope))
 	{
-		printf(MGE_Localization.Error_StatsNotFound, GetPropString(player, "m_szNetworkIDString"))
+		printf(MGE_Localization.Error_StatsNotFound, steam_id)
 		GetStats(player)
 		return
 	}
-	foreach (k, v in stats)
+	foreach (k, v in _stats)
 		additive ? scope.stats[k] += v : scope.stats[k] = v
 
 	switch(ELO_TRACKING_MODE)
@@ -951,7 +968,7 @@ function RemoveAllBots()
 			foreach(k, v in scope.stats)
 				file_data += format("%s=%s\n", k.tostring(), v.tostring())
 			file_data += "}\n"
-			StringToFile(format("mge_playerdata/%s.nut", steam_id_slice), file_data)
+			StringToFile(filename, file_data)
 		break
 		case 2:
 			VPI.AsyncCall({
@@ -959,7 +976,7 @@ function RemoveAllBots()
 				kwargs= {
 					query_mode="write",
 					network_id=steam_id_slice,
-					stats=stats,
+					stats=_stats,
 					additive=additive
 				},
 				callback=function(response, error) {

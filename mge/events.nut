@@ -115,19 +115,21 @@ class MGE_Events
 				}
 			", 0.1, null, null)
 
-			if (!("arena_info" in scope)) return // Wait for player_activate
-
-			if (scope.arena_info)
+			if ("arena_info" in scope && scope.arena_info)
 			{
+
 				local arena      = scope.arena_info.arena
 				local arena_name = scope.arena_info.name
-
 				//spawned into arena with waiting player, start countdown
-				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
-				{
-					// SetArenaState(arena.name, AS_COUNTDOWN)
-					EntFireByHandle(player, "RunScriptCode", format("SetArenaState(`%s`, AS_COUNTDOWN)", arena_name), COUNTDOWN_START_DELAY, null, null)
-				}
+				EntFireByHandle(player, "RunScriptCode", format(@"
+
+					local scope 	 = self.GetScriptScope()
+					local arena      = scope.arena_info.arena
+
+					if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)	
+						EntFireByHandle(self, `RunScriptCode`, `SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)`, COUNTDOWN_START_DELAY, null, null)
+					
+				", arena_name), -1, null, null)
 
 				SetSpecialArena(player, arena_name)
 
@@ -140,7 +142,10 @@ class MGE_Events
 
 				scope.ThinkTable.ScoreThink <- function() {
 					// MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1]+"\nRed ELO: "+player.GetScriptScope().stats.elo+" BLU ELO: "+player.GetScriptScope().stats.elo)
-					local str = format("RED: %d (%d)\nBLU: %d (%d)", arena.Score[0], scope.stats.elo, arena.Score[1], scope.stats.elo)
+					
+					local _players = array(2)
+					foreach (p, _ in arena.CurrentPlayers) _players[p.GetTeam() - 2] = p
+					local str = _players[0] && _players[1] ? format("RED: %d (%d)\nBLU: %d (%d)", arena.Score[0], _players[0].GetScriptScope().stats.elo, arena.Score[1], _players[1].GetScriptScope().stats.elo) : ""
 					MGE_ClientPrint(player, 4, str)
 				}
 			}
@@ -171,7 +176,7 @@ class MGE_Events
 
 			local arena = victim_scope.arena_info.arena
 
-			local respawntime = "respawntime" in arena ? arena.respawntime.tointeger() : 0.2
+			local respawntime = "respawntime" in arena && arena.respawntime != "0" ? arena.respawntime.tointeger() : 0.2
 			local fraglimit = arena.fraglimit.tointeger()
 
 			local str = false, hud_str = false
@@ -200,13 +205,6 @@ class MGE_Events
 					str = format("vo/announcer_am_killstreak%d.mp3", RandomInt(10, 11))
 				}
 			}
-			foreach (p, _ in arena.CurrentPlayers)
-			{
-				p.Regenerate(true)
-				//this attrib is set by ammomod
-				if (!p.GetCustomAttribute("hidden maxhealth non buffed", 0)	)
-					p.SetHealth(p.GetMaxHealth() * arena.hpratio.tofloat())
-			}
 			if (attacker && attacker != victim)
 			{
 				MGE_ClientPrint(victim, 3, format(MGE_Localization.HPLeft, attacker.GetHealth()))
@@ -214,10 +212,17 @@ class MGE_Events
 				if (str) PlayAnnouncer(attacker, str)
 				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)
 			}
-
+			foreach (p, _ in arena.CurrentPlayers)
+			{
+				p.Regenerate(true)
+				//this attrib is set by ammomod
+				if (!p.GetCustomAttribute("hidden maxhealth non buffed", 0)	)
+					p.SetHealth(p.GetMaxHealth() * arena.hpratio.tofloat())
+			}
+			local bball_mode = "bball" in arena && arena.bball == "1"
 			// Koth / bball mode doesn't count deaths
 			// todo braindawg one obscure map has bball: 0 lol
-			if (!("koth" in arena) && (!("bball" in arena) || arena.bball == "0") && arena.State == AS_FIGHT)
+			if (!("koth" in arena) && !bball_mode && arena.State == AS_FIGHT)
 				(victim.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
 
 			if (arena.Score[0] >= fraglimit || arena.Score[1] >= fraglimit)
@@ -226,6 +231,12 @@ class MGE_Events
 				CalcArenaScore(arena_name)
 				SetArenaState(arena_name, AS_AFTERFIGHT)
 				return
+			}
+
+			if (bball_mode)
+			{
+				victim.GetScriptScope().ball_ent.Kill()
+				BBall_SpawnBall(arena_name, victim.GetOrigin())
 			}
 
 			EntFireByHandle(victim, "RunScriptCode", "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime, null, null)
@@ -248,7 +259,7 @@ class MGE_Events
 
 			local arena = victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
 
-			if ("endif_killme" in victim_scope)
+			if ("endif_killme" in victim_scope && victim_scope.endif_killme)
 			{
 				if (!("midair" in arena) || arena.midair == "0")
 					params.damage_force *= ENDIF_FORCE_MULT
