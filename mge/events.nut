@@ -175,6 +175,7 @@ class MGE_Events
 			if (!victim_scope.arena_info) return
 
 			local arena = victim_scope.arena_info.arena
+			local arena_name = victim_scope.arena_info.name
 
 			local respawntime = "respawntime" in arena && arena.respawntime != "0" ? arena.respawntime.tointeger() : 0.2
 			local fraglimit = arena.fraglimit.tointeger()
@@ -185,7 +186,7 @@ class MGE_Events
 			{
 				local killstreak_total = "kill_streak_total" in params ? params.kill_streak_total.tointeger() : 0
 				//first blood
-				if (!arena.Score[0] && !arena.Score[1])
+				if (!arena.Score[0] && !arena.Score[1] && !arena.IsBBall && !arena.IsKoth)
 				{
 					hud_str = MGE_Localization.FirstBlood
 					str = format("vo/announcer_am_firstblood0%d.mp3", RandomInt(1, 6))
@@ -219,24 +220,28 @@ class MGE_Events
 				if (!p.GetCustomAttribute("hidden maxhealth non buffed", 0)	)
 					p.SetHealth(p.GetMaxHealth() * arena.hpratio.tofloat())
 			}
-			local bball_mode = "bball" in arena && arena.bball == "1"
 			// Koth / bball mode doesn't count deaths
 			// todo braindawg one obscure map has bball: 0 lol
-			if (!("koth" in arena) && !bball_mode && arena.State == AS_FIGHT)
+			if (!arena.IsKoth && !arena.IsBBall && arena.State == AS_FIGHT)
+			{
 				(victim.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
 
-			if (arena.Score[0] >= fraglimit || arena.Score[1] >= fraglimit)
-			{
-				local arena_name = victim_scope.arena_info.name
-				CalcArenaScore(arena_name)
-				SetArenaState(arena_name, AS_AFTERFIGHT)
-				return
+				if (arena.Score[0] >= fraglimit || arena.Score[1] >= fraglimit)
+				{
+					CalcArenaScore(arena_name)
+					SetArenaState(arena_name, AS_AFTERFIGHT)
+					return
+				}
 			}
 
-			if (bball_mode)
+			if (arena.IsBBall)
 			{
-				victim.GetScriptScope().ball_ent.Kill()
-				BBall_SpawnBall(arena_name, victim.GetOrigin())
+				local scope = victim.GetScriptScope()
+				if (scope.ball_ent && scope.ball_ent.IsValid())
+				{
+					scope.ball_ent.Kill()
+					BBall_SpawnBall(arena_name, victim.GetOrigin())
+				}
 			}
 
 			EntFireByHandle(victim, "RunScriptCode", "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime, null, null)
@@ -257,7 +262,7 @@ class MGE_Events
 			local attacker = params.attacker
 			local victim_scope = victim.GetScriptScope()
 
-			local arena = victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
+			local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
 
 			if ("endif_killme" in victim_scope && victim_scope.endif_killme)
 			{

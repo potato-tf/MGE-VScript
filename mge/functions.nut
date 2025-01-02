@@ -121,6 +121,14 @@
 		datatable.fraglimit      <- "fraglimit" in datatable ? datatable.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
 		datatable.SpawnIdx       <- 0
 
+		//do this instead of checking both of these everywhere
+		datatable.IsKoth         <- "koth" in datatable && datatable.koth == "1"
+		datatable.IsBBall        <- "bball" in datatable && datatable.bball == "1"
+		datatable.IsAmmomod      <- "ammomod" in datatable && datatable.ammomod == "1"
+		datatable.IsTurris       <- "turris" in datatable && datatable.turris == "1"
+		datatable.IsEndif        <- "endif" in datatable && datatable.endif == "1"
+		datatable.IsMidair       <- "midair" in datatable && datatable.midair == "1"
+
 		local idx = ("idx" in datatable) ? datatable.idx.tointeger() : null
 		if (idx == null && !idx_failed)
 		{
@@ -138,7 +146,7 @@
 		else
 			Arenas_List[idx] = arena_name
 
-		if ("bball" in datatable && datatable.bball == "1")
+		if (datatable.IsBBall)
 		{
 			local bball_points = {
 				neutral_home = "bball_home" in datatable ? datatable.bball_home : datatable["9"],
@@ -168,7 +176,7 @@
 				try
 				{
 
-					if ("bball" in datatable && ToStrictInt(k) > BBALL_MAX_SPAWNS) continue
+					if (datatable.IsBBall && ToStrictInt(k) > BBALL_MAX_SPAWNS) continue
 
 					local split_spawns = split(v, " ", true).apply( @(str) str.tofloat() )
 
@@ -208,7 +216,7 @@
 	
 	arena.BBallSetup.ball_ground <- ball_ground
 
-	EntFireByHandle(ball_ground, "RunScriptCode", "DispatchSpawn(self)", 0.1, null, null)
+	EntFireByHandle(ball_ground, "RunScriptCode", "DispatchSpawn(self)", 0.2, null, null)
 }
 
 ::BBall_Pickup <- function(player)
@@ -719,7 +727,7 @@ function RemoveAllBots()
 				", arena_name, round_start_sound, ROUND_START_SOUND_VOLUME), countdown_time, null, null)
 			}
 
-			if ("bball" in arena && arena.bball == "1")
+			if (arena.IsBBall)
 				BBall_SpawnBall(arena_name)
 			
 		},
@@ -790,6 +798,7 @@ function RemoveAllBots()
 							scope.ball_ent = null
 						}
 						team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
+						CalcArenaScore(arena_name)
 						arena.BBallSetup.last_score_team = team
 						BBall_SpawnBall(arena_name)
 						return
@@ -840,7 +849,7 @@ function RemoveAllBots()
 			scope.endif_base_origin <- Vector()
 			scope.endif_killme <- false
 
-			if (self.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
+			if (player.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
 			EntFireByHandle(player, "RunScriptCode", format(@"
 
 				self.AddCustomAttribute(`cancel falling damage`, 1, -1)

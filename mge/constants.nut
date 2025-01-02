@@ -33,7 +33,7 @@ const ENDIF_HEIGHT_THRESHOLD = 250
 ROOT. ENDIF_FORCE_MULT <- Vector(1.1, 1.1, 2.15)
 
 const BBALL_MAX_SPAWNS = 8
-const BBALL_HOOP_SIZE = 35
+const BBALL_HOOP_SIZE = 30
 const BBALL_PICKUP_SOUND = "items/pickup_powerup.wav"
 const BBALL_PICKUP_PARTICLE = "powerup_glow_red"
 const BBALL_BALL_MODEL = "models/flag/ticket_case.mdl"
