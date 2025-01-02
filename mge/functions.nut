@@ -825,21 +825,24 @@ function RemoveAllBots()
 
 			EntFireByHandle(player, "RunScriptCode", format(@"
 
-				if (self.GetCustomAttribute(`hidden maxhealth non buffed`, 0)) return
+				local maxhp = %d
+				local hp_ratio = Arenas[`%s`].hpratio.tofloat()
+				self.AddCustomAttribute(`hidden maxhealth non buffed`, maxhp - self.GetMaxHealth(), -1)
+				self.AddCustomAttribute(`dmg taken increased`, (1 / hp_ratio), -1)
+				self.AddCustomAttribute(`dmg from ranged reduced`, hp_ratio, -1)
+				self.SetHealth(maxhp)
 				self.Regenerate(true)
-				self.AddCustomAttribute(`hidden maxhealth non buffed`, %d - self.GetMaxHealth(), -1)
-				self.SetHealth(self.GetMaxHealth())
 
-			", maxhp), -1, null, null)
+			", maxhp, arena_name), -1, null, null)
 		}
 		endif = function()
 		{
 			scope.endif_base_origin <- Vector()
 			scope.endif_killme <- false
 
+			if (self.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
 			EntFireByHandle(player, "RunScriptCode", format(@"
 
-				if (self.GetCustomAttribute(`hidden maxhealth non buffed`, 0)) return
 				self.AddCustomAttribute(`cancel falling damage`, 1, -1)
 				self.AddCustomAttribute(`hidden maxhealth non buffed`, %d - self.GetMaxHealth(), -1)
 				self.AddCustomAttribute(`health regen`, %d, -1)
