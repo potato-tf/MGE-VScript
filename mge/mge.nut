@@ -114,49 +114,74 @@ AddThinkToEnt(mge_ent, "MGEThink")
 	Convars.SetValue("tf_weapon_criticals", 0);
 	Convars.SetValue("tf_fall_damage_disablespread", 1);
 }
-
 //assumes spawn config exists
-::MGE_CreateNav <- function() {
-	local player = GetListenServerHost()
-	if (!Arenas.len()) {
-		LoadSpawnPoints()
-	}
-	player.SetMoveType(MOVETYPE_NOCLIP, MOVECOLLIDE_DEFAULT)
-	local i = 0.0
-	SendToConsole("nav_generate_incremental_range 999999999")
-	foreach(arena_name, arena in Arenas) {
-		i += 0.01
-		// local spawn_point = arena.SpawnPoints[0]
-			// EntFireByHandle(player, "RunScriptCode", format(@"
-				
-			// 	local origin = Vector(%f, %f, %f)
-			// 	self.SetOrigin(origin)
-			// 	self.SnapEyeAngles(QAngle(90, 0, 0))
-			// 	SendToConsole(`nav_mark_walkable`)
-			// 	SendToConsole(`nav_generate_incremental`)
-			// 	ClientPrint(self, 3, `Marking Spawn Point: ` + origin)
-			// ", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), i, null, null)
 
+::nav_generation_state <- {
+	generator = null,
+	is_running = false
+}
+
+::ArenaNavGenerator <- function() {
+	local player = GetListenServerHost()
+	foreach(arena_name, arena in Arenas) {
+		local generate_delay = 0.0
+		// Process spawn points for current arena
 		foreach(spawn_point in arena.SpawnPoints) {
-			i += 0.01
+			generate_delay += 0.01
 			EntFireByHandle(player, "RunScriptCode", format(@"
-				
 				local origin = Vector(%f, %f, %f)
 				self.SetOrigin(origin)
 				self.SnapEyeAngles(QAngle(90, 0, 0))
-				SendToConsole(`nav_mark_walkable`)
-				ClientPrint(self, 3, `Marking Spawn Point: ` + origin)
-			", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), i, null, null)
+					SendToConsole(`nav_mark_walkable`)
+					ClientPrint(self, 3, `Marking Spawn Point: ` + origin)
+			", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), generate_delay, null, null)
 		}
+		
+		// Schedule nav generation for current arena
+		EntFire("bignet", "RunScriptCode", @"
+			ClientPrint(self, 3, `Areas marked!`)
+			ClientPrint(self, 3, `Generating nav...`)
+			SendToConsole(`host_thread_mode -1`)
+			SendToConsole(`nav_generate_incremental`)
+		", generate_delay + 0.1)
+		
+		yield // Pause here until resumed
 	}
-	// EntFire("bignet", "RunScriptCode", @"
-	// 	ClientPrint(self, 3, `Areas marked!`)
-	// 	ClientPrint(self, 3, `Generating nav...`)
-	// 	SendToConsole(`nav_generate_incremental`)
-	// ", i)
 }
 
-//assumes nav exists
+::MGE_CreateNav <- function() {
+	local player = GetListenServerHost()
+	player.ValidateScriptScope()
+	player.GetScriptScope().NavThink <- function() {
+		if (!Convars.GetInt("host_thread_mode")) {
+			EntFire("bignet", "CallScriptFunction", "ResumeNavGeneration", 0.5)
+		}
+	}
+	AddThinkToEnt(player, "NavThink")
+
+	if (!Arenas.len()) {
+		LoadSpawnPoints()
+	}
+
+	player.SetMoveType(MOVETYPE_NOCLIP, MOVECOLLIDE_DEFAULT)
+	AddPlayer(player, Arenas_List[0])
+	
+	// Initialize generation state
+	nav_generation_state.generator = ArenaNavGenerator()
+	nav_generation_state.is_running = true
+}
+
+::ResumeNavGeneration <- function() {
+	if (!nav_generation_state.is_running || !nav_generation_state.generator) return
+	
+	if (nav_generation_state.generator.getstatus() == "dead") {
+		nav_generation_state.is_running = false
+		return
+	}
+	
+	resume nav_generation_state.generator
+}
+
 ::MGE_CreateSpawns <- function() {
 
 }
