@@ -122,6 +122,7 @@
 		datatable.SpawnIdx       <- 0
 
 		//do this instead of checking both of these everywhere
+		datatable.IsMGE         <- "mge" in datatable && datatable.mge == "1"
 		datatable.IsKoth         <- "koth" in datatable && datatable.koth == "1"
 		datatable.IsBBall        <- "bball" in datatable && datatable.bball == "1"
 		datatable.IsAmmomod      <- "ammomod" in datatable && datatable.ammomod == "1"
@@ -171,12 +172,13 @@
 		// Grab spawn points
 		foreach(k, v in datatable)
 		{
-			if (ToStrictInt(k) != null)
+			local spawn_idx = ToStrictInt(k)
+			if (spawn_idx != null)
 			{
 				try
 				{
 
-					if (datatable.IsBBall && ToStrictInt(k) > BBALL_MAX_SPAWNS) continue
+					if (datatable.IsBBall && spawn_idx > BBALL_MAX_SPAWNS) continue
 
 					local split_spawns = split(v, " ", true).apply( @(str) str.tofloat() )
 
@@ -188,10 +190,15 @@
 					else if (split_spawns.len() == 6)
 						angles = QAngle(split_spawns[3], split_spawns[4], split_spawns[5])
 
-					datatable.SpawnPoints.append([origin, angles])
+					local spawn = [origin, angles, TEAM_UNASSIGNED]
+
+					if (datatable.MaxPlayers > 2)
+						spawn[2] = spawn_idx < 4 ? TF_TEAM_RED : TF_TEAM_BLUE
+
+					datatable.SpawnPoints.append(spawn)
 				}
-				catch(_)
-					printl(format("[VSCRIPT MGEMod] Warning: Data parsing for arena '%s' failed -- key: %s, val: %s"), arena_name, k, v.tostring())
+				catch(e)
+					printf("[VSCRIPT MGEMod] Warning: Data parsing for arena '%s' failed: %s\nkey: %s, val: %s\n", arena_name, e.tostring(), k, v.tostring())
 			}
 		}
 	}
@@ -206,11 +213,15 @@
 	local ball_ground = CreateByClassname("tf_halloween_pickup")
 
 	ball_ground.KeyValueFromString("pickup_sound", BBALL_PICKUP_SOUND)
-	ball_ground.KeyValueFromString("pickup_particle", BBALL_PICKUP_PARTICLE)
+	ball_ground.KeyValueFromString("pickup_particle", BBALL_PICKUP_PARTICLE_GENERIC)
 	ball_ground.KeyValueFromString("powerup_model", BBALL_BALL_MODEL)
+
+	//I did this specifically to annoy mince
 	ball_ground.SetOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
+	
 	AddOutput(ball_ground, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self);", 0.0, 1)
 	AddOutput(ball_ground, "OnPlayerTouch", "!self", "Kill", "", 0.0, 1)
+	
 	if ("ball_ground" in arena.BBallSetup && arena.BBallSetup.ball_ground.IsValid())
 		arena.BBallSetup.ball_ground.Kill()
 	
@@ -225,20 +236,23 @@
 	if (scope.ball_ent && scope.ball_ent.IsValid())
 		return
 
-	local ball_ent = CreateByClassname("funCBaseFlex")
+	// local ball_ent = CreateByClassname("funCBaseFlex")
 
-	ball_ent.SetOrigin(player.GetOrigin())
-	ball_ent.SetModel(BBALL_BALL_MODEL)
-	ball_ent.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-	ball_ent.SetSolid(SOLID_NONE)
-	ball_ent.SetOwner(player)
-	ball_ent.KeyValueFromString("targetname", format("__ball_%d", player.entindex()))
-	scope.ball_ent <- ball_ent
+	// ball_ent.SetOrigin(player.GetOrigin())
+	// ball_ent.SetModel(BBALL_BALL_MODEL)
+	// ball_ent.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+	// ball_ent.SetSolid(SOLID_NONE)
+	// ball_ent.SetOwner(player)
+	// ball_ent.KeyValueFromString("targetname", format("__ball_%d", player.entindex()))
+	// SetPropInt(ball_ent, "m_clrRender", 0)
+	// scope.ball_ent <- ball_ent
 
-	EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
-	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
-
-	EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", 0.1, null, null)
+	// EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
+	// EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
+	// EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", 0.1, null, null)
+	
+	DispatchParticleEffect(player.GetTeam() == TF_TEAM_RED ? BBALL_PARTICLE_PICKUP_RED : BBALL_PARTICLE_PICKUP_BLUE, player.GetOrigin(), Vector(0, 90, 0))
+	EntFire(format("__mge_bball_pickup_%d", player.GetTeam()), "StartTouch", "!activator", -1, player)
 
 }
 
@@ -590,6 +604,7 @@ function RemoveAllBots()
 
 	MGE_ClientPrint(null, 3, format(MGE_Localization.XdefeatsY, winner_scope.Name, winner_scope.stats.elo.tostring(), loser_scope.Name, loser_scope.stats.elo.tostring(), fraglimit.tostring(), arena_name))
 	CalcELO(winner, loser)
+	SetArenaState(arena_name, AS_AFTERFIGHT)
 }
 
 ::TryGetClearSpawnPoint <- function(player, arena_name)
@@ -598,15 +613,37 @@ function RemoveAllBots()
 	local spawns  = arena.SpawnPoints
 	local mindist = ("mindist" in arena) ? arena.mindist.tofloat() : 0.0;
 	local idx     = arena.SpawnIdx
+
+	//most non-MGE configs have fixed spawn rotations per team
+	if (!arena.IsMGE)
+	{
+		idx++
+		local end = -1
+
+		if (arena.IsKoth)
+			end = KOTH_MAX_SPAWNS
+		else if (arena.IsBBall)
+			end = BBALL_MAX_SPAWNS
+
+		if (player.GetTeam() == TF_TEAM_RED) 
+			end /= 2
+
+		local _idx = idx > end ? 0 : idx
+
+		arena.SpawnIdx = _idx
+		printl("spawn idx : " + _idx)
+		return _idx
+	}
+	
 	for (local i = 0; i < MAX_CLEAR_SPAWN_RETRIES; ++i)
 	{
 		idx = GetNextSpawnPoint(player, arena_name)
+		local spawn = spawns[idx]
 		if (!mindist) return idx
 
-		local origin = spawns[idx][0]
-
 		local clear = true
-		for (local p; p = FindByClassnameWithin(p, "player", origin, mindist);)
+		
+		for (local p; p = FindByClassnameWithin(p, "player", spawn[0], mindist);)
 		{
 			if (p.IsValid() && p.IsAlive())
 			{
@@ -699,6 +736,7 @@ function RemoveAllBots()
 							EmitSoundEx({
 								sound_name = `%s`
 								volume = %.2f
+								channel = CHAN_STREAM
 								filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
 								entity = self
 							})
@@ -721,7 +759,8 @@ function RemoveAllBots()
 					EmitSoundEx({
 						sound_name = `%s`,
 						volume = %.2f,
-						filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
+						channel = CHAN_STREAM,
+						filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
 						entity = self
 					})
 				", arena_name, round_start_sound, ROUND_START_SOUND_VOLUME), countdown_time, null, null)
@@ -799,8 +838,12 @@ function RemoveAllBots()
 						}
 						team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
 						CalcArenaScore(arena_name)
+
 						arena.BBallSetup.last_score_team = team
 						BBall_SpawnBall(arena_name)
+						
+						foreach(p, _ in arena.CurrentPlayers)
+							p.ForceRespawn()
 						return
 					}
 				}
@@ -894,6 +937,7 @@ function RemoveAllBots()
 	EmitSoundEx({
 			sound_name = sound_name,
 			volume =  ANNOUNCER_VOLUME,
+			channel = CHAN_STREAM,
 			filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
 			entity = player
 	})

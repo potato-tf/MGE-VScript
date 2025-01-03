@@ -138,7 +138,13 @@ class MGE_Events
 				player.SnapEyeAngles(arena.SpawnPoints[idx][1])
 
 				if (arena.State == AS_FIGHT)
-					EmitSoundEx({ sound_name = SPAWN_SOUND, entity = player, volume = SPAWN_SOUND_VOLUME })
+					EmitSoundEx({ 
+						sound_name = SPAWN_SOUND,
+						entity = player,
+						volume = SPAWN_SOUND_VOLUME,
+						channel = CHAN_STREAM,
+						sound_level = 65
+					})
 
 				scope.ThinkTable.ScoreThink <- function() {
 					// MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1]+"\nRed ELO: "+player.GetScriptScope().stats.elo+" BLU ELO: "+player.GetScriptScope().stats.elo)
@@ -182,7 +188,7 @@ class MGE_Events
 
 			local str = false, hud_str = false
 			// local rocket_jumping = (!(victim.GetFlags() & FL_ONGROUND) && victim.InCond(TF_COND_BLASTJUMPING)
-			if (ENABLE_ANNOUNCER && arena.State == AS_FIGHT)
+			if (ENABLE_ANNOUNCER && arena.State == AS_FIGHT && attacker && attacker.GetScriptScope().enable_announcer)
 			{
 				local killstreak_total = "kill_streak_total" in params ? params.kill_streak_total.tointeger() : 0
 				//first blood
@@ -213,15 +219,18 @@ class MGE_Events
 				if (str) PlayAnnouncer(attacker, str)
 				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)
 			}
-			foreach (p, _ in arena.CurrentPlayers)
-			{
-				p.Regenerate(true)
-				//this attrib is set by ammomod
-				if (!p.GetCustomAttribute("hidden maxhealth non buffed", 0)	)
-					p.SetHealth(p.GetMaxHealth() * arena.hpratio.tofloat())
-			}
+			
+			
+			if (!arena.IsBBall)
+				foreach (p, _ in arena.CurrentPlayers)
+				{
+					p.Regenerate(true)
+					//this attrib is set by ammomod
+					if (!p.GetCustomAttribute("hidden maxhealth non buffed", 0) && arena.IsMGE)
+						p.SetHealth(p.GetMaxHealth() * arena.hpratio.tofloat())
+				}
+
 			// Koth / bball mode doesn't count deaths
-			// todo braindawg one obscure map has bball: 0 lol
 			if (!arena.IsKoth && !arena.IsBBall && arena.State == AS_FIGHT)
 			{
 				(victim.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
@@ -229,7 +238,6 @@ class MGE_Events
 				if (arena.Score[0] >= fraglimit || arena.Score[1] >= fraglimit)
 				{
 					CalcArenaScore(arena_name)
-					SetArenaState(arena_name, AS_AFTERFIGHT)
 					return
 				}
 			}
@@ -240,7 +248,7 @@ class MGE_Events
 				if (scope.ball_ent && scope.ball_ent.IsValid())
 				{
 					scope.ball_ent.Kill()
-					BBall_SpawnBall(arena_name, victim.GetOrigin())
+					BBall_SpawnBall(arena_name, victim.GetFlags() & FL_ONGROUND ? victim.EyePosition() : victim.GetOrigin())
 				}
 			}
 

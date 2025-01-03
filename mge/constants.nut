@@ -32,11 +32,18 @@ const TURRIS_REGEN_TIME = 5.0
 const ENDIF_HEIGHT_THRESHOLD = 250
 ROOT. ENDIF_FORCE_MULT <- Vector(1.1, 1.1, 2.15)
 
+const BBALL_SHOW_CARRIER_BALL = false
 const BBALL_MAX_SPAWNS = 8
 const BBALL_HOOP_SIZE = 30
 const BBALL_PICKUP_SOUND = "items/pickup_powerup.wav"
-const BBALL_PICKUP_PARTICLE = "powerup_glow_red"
 const BBALL_BALL_MODEL = "models/flag/ticket_case.mdl"
+const BBALL_PARTICLE_PICKUP_RED = "teleported_red"
+const BBALL_PARTICLE_PICKUP_BLUE = "teleported_blue"
+const BBALL_PARTICLE_PICKUP_GENERIC = ""
+const BBALL_PARTICLE_TRAIL_RED = "player_intel_trail_red"
+const BBALL_PARTICLE_TRAIL_BLUE = "player_intel_trail_blue"
+
+const KOTH_MAX_SPAWNS = 12
 
 //spawn shuffle modes
 //0 = none, spawns are iterated over in consistent order based on provided config
@@ -138,6 +145,7 @@ const DMG_NOCLOSEDISTANCEMOD = 131072    // DMG_POISON
 const DMG_MELEE              = 134217728 // DMG_BLAST_SURFACE
 const DMG_DONT_COUNT_DAMAGE_TOWARDS_CRIT_RATE = 67108864 //DMG_DISSOLVE
 
+//player_death flags
 const TF_DEATH_DOMINATION = 		 1
 const TF_DEATH_ASSISTER_DOMINATION = 2
 const TF_DEATH_REVENGE =			 4
@@ -150,6 +158,32 @@ const TF_DEATH_PURGATORY =			 256
 const TF_DEATH_MINIBOSS =			 512
 const TF_DEATH_AUSTRALIUM =			 1024
 
+// EmitSoundEx flags
+const SND_NOFLAGS         = 0
+const SND_CHANGE_VOL      = 1
+const SND_CHANGE_PITCH    = 2
+const SND_STOP            = 4
+const SND_SPAWNING        = 8
+const SND_DELAY           = 16
+const SND_STOP_LOOPING    = 32
+const SND_SPEAKER         = 64
+const SND_SHOULDPAUSE     = 128
+const SND_IGNORE_PHONEMES = 256
+const SND_IGNORE_NAME     = 512
+const SND_DO_NOT_OVERWRITE_EXISTING_ON_CHANNEL = 1024
+
+// EmitSoundEx channels
+const CHAN_REPLACE    = -1
+const CHAN_AUTO       =  0
+const CHAN_WEAPON     =  1
+const CHAN_VOICE      =  2
+const CHAN_ITEM       =  3
+const CHAN_BODY       =  4
+const CHAN_STREAM     =  5
+const CHAN_STATIC     =  6
+const CHAN_VOICE2     =  7
+const CHAN_VOICE_BASE =  8
+const CHAN_USER_BASE  =  136
 
 // Numbers
 const FLT_SMALL = 0.0000001
@@ -169,6 +203,11 @@ const MODEL_BRIEFCASE      = "models/flag/briefcase.mdl"
 const MODEL_AMMOPACK       = "models/items/ammopack_small.mdl"
 const MODEL_LARGE_AMMOPACK = "models/items/ammopack_large.mdl"
 
+function PrecacheParticle(particle)
+{
+	PrecacheEntityFromTable({ classname = "info_particle_system" effect_name = particle })
+}
+
 PrecacheModel(MODEL_POINT)
 PrecacheModel(MODEL_BRIEFCASE)
 PrecacheModel(MODEL_AMMOPACK)
@@ -180,4 +219,8 @@ PrecacheSound(ROUND_START_SOUND)
 PrecacheSound(SPAWN_SOUND)
 PrecacheSound(BBALL_PICKUP_SOUND)
 
-PrecacheEntityFromTable({ classname = "info_particle_system" effect_name = BBALL_PICKUP_PARTICLE })
+PrecacheParticle(BBALL_PICKUP_PARTICLE_RED)
+PrecacheParticle(BBALL_PICKUP_PARTICLE_BLUE)
+PrecacheParticle(BBALL_PICKUP_PARTICLE_GENERIC)
+PrecacheParticle(BBALL_PARTICLE_TRAIL_RED)
+PrecacheParticle(BBALL_PARTICLE_TRAIL_BLUE)
