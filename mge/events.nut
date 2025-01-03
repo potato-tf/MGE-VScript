@@ -73,6 +73,7 @@ class MGE_Events
 		function OnGameEvent_player_disconnect(params)
 		{
 			local player = GetPlayerFromUserID(params.userid)
+			if (!player) return
 			RemovePlayer(player, false)
 			UpdateStats(player, player.GetScriptScope().stats, true)
 		}

@@ -121,11 +121,41 @@ AddThinkToEnt(mge_ent, "MGEThink")
 	is_running = false
 }
 
-::ArenaNavGenerator <- function() {
+::ArenaNavGenerator <- function(only_this_arena = null) {
 	local player = GetListenServerHost()
-	foreach(arena_name, arena in Arenas) {
+
+	local progress = 0
+	if (!only_this_arena) {
+		local arenas_len = Arenas.len()
+		foreach(arena_name, arena in Arenas) {
+			local generate_delay = 0.0
+			progress++
+			// Process spawn points for current arena
+			foreach(spawn_point in arena.SpawnPoints) {
+				generate_delay += 0.01
+				EntFireByHandle(player, "RunScriptCode", format(@"
+					local origin = Vector(%f, %f, %f)
+					self.SetOrigin(origin)
+					self.SnapEyeAngles(QAngle(90, 0, 0))
+						SendToConsole(`nav_mark_walkable`)
+						printl(`Marking Spawn Point: ` + origin)
+				", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), generate_delay, null, null)
+			}
+		
+			// Schedule nav generation for current arena
+			EntFire("bignet", "RunScriptCode", format(@"
+				ClientPrint(null, 3, `Areas marked!`)
+				ClientPrint(null, 3, `Generating nav...`)
+				SendToConsole(`host_thread_mode -1`)
+				SendToConsole(`nav_generate_incremental`)
+				ClientPrint(null, 3, `Progress: ` + %d +`/`+ %d)
+			", progress,arenas_len), generate_delay + 0.1)
+	
+			yield
+		}
+	} else {
+		local arena = Arenas[only_this_arena]
 		local generate_delay = 0.0
-		// Process spawn points for current arena
 		foreach(spawn_point in arena.SpawnPoints) {
 			generate_delay += 0.01
 			EntFireByHandle(player, "RunScriptCode", format(@"
@@ -133,42 +163,18 @@ AddThinkToEnt(mge_ent, "MGEThink")
 				self.SetOrigin(origin)
 				self.SnapEyeAngles(QAngle(90, 0, 0))
 					SendToConsole(`nav_mark_walkable`)
-					ClientPrint(self, 3, `Marking Spawn Point: ` + origin)
+					printl(`Marking Spawn Point: ` + origin)
 			", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), generate_delay, null, null)
 		}
 		
 		// Schedule nav generation for current arena
 		EntFire("bignet", "RunScriptCode", @"
-			ClientPrint(self, 3, `Areas marked!`)
-			ClientPrint(self, 3, `Generating nav...`)
+			ClientPrint(null, 3, `Areas marked!`)
+			ClientPrint(null, 3, `Generating nav...`)
 			SendToConsole(`host_thread_mode -1`)
 			SendToConsole(`nav_generate_incremental`)
 		", generate_delay + 0.1)
-		
-		yield // Pause here until resumed
 	}
-}
-
-::MGE_CreateNav <- function() {
-	local player = GetListenServerHost()
-	player.ValidateScriptScope()
-	player.GetScriptScope().NavThink <- function() {
-		if (!Convars.GetInt("host_thread_mode")) {
-			EntFire("bignet", "CallScriptFunction", "ResumeNavGeneration", 0.5)
-		}
-	}
-	AddThinkToEnt(player, "NavThink")
-
-	if (!Arenas.len()) {
-		LoadSpawnPoints()
-	}
-
-	player.SetMoveType(MOVETYPE_NOCLIP, MOVECOLLIDE_DEFAULT)
-	AddPlayer(player, Arenas_List[0])
-	
-	// Initialize generation state
-	nav_generation_state.generator = ArenaNavGenerator()
-	nav_generation_state.is_running = true
 }
 
 ::ResumeNavGeneration <- function() {
@@ -182,28 +188,43 @@ AddThinkToEnt(mge_ent, "MGEThink")
 	resume nav_generation_state.generator
 }
 
-::MGE_CreateSpawns <- function() {
+::MGE_CreateNav <- function(only_this_arena = null) {
+	local player = GetListenServerHost()
+	player.SetMoveType(MOVETYPE_NOCLIP, MOVECOLLIDE_DEFAULT)
 
+	if (!Arenas.len()) 
+		LoadSpawnPoints()
+	
+	AddPlayer(player, Arenas_List[0])
+
+	player.ValidateScriptScope()
+	player.GetScriptScope().NavThink <- function() {
+		if (!Convars.GetInt("host_thread_mode")) {
+			ResumeNavGeneration()
+		}
+		return 1
+	}
+	AddThinkToEnt(player, "NavThink")
+	
+	// Start generating
+	nav_generation_state.generator = ArenaNavGenerator(only_this_arena)
+	nav_generation_state.is_running = true
 }
 
 local bball_pickup_r = CreateByClassname("trigger_particle")
-
 bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_red")
 bball_pickup_r.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_RED)
 bball_pickup_r.KeyValueFromString("attachment_name", "flag")
 bball_pickup_r.KeyValueFromInt("attachment_type", 4)
 bball_pickup_r.KeyValueFromInt("spawnflags", 1)
-
-bball_pickup_r.DispatchSpawn()
+DispatchSpawn(bball_pickup_r)
 
 local bball_pickup_b = CreateByClassname("trigger_particle")
-
 bball_pickup_b.KeyValueFromString("targetname", "__mge_bball_trail_blue")
 bball_pickup_b.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_BLUE)
 bball_pickup_b.KeyValueFromString("attachment_name", "flag")
 bball_pickup_b.KeyValueFromInt("attachment_type", 4)
 bball_pickup_b.KeyValueFromInt("spawnflags", 1)
-
-bball_pickup_b.DispatchSpawn()
+DispatchSpawn(bball_pickup_b)
 
 MGE_Init()
