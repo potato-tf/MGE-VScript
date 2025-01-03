@@ -115,4 +115,70 @@ AddThinkToEnt(mge_ent, "MGEThink")
 	Convars.SetValue("tf_fall_damage_disablespread", 1);
 }
 
+//assumes spawn config exists
+::MGE_CreateNav <- function() {
+	local player = GetListenServerHost()
+	if (!Arenas.len()) {
+		LoadSpawnPoints()
+	}
+	player.SetMoveType(MOVETYPE_NOCLIP, MOVECOLLIDE_DEFAULT)
+	local i = 0.0
+	SendToConsole("nav_generate_incremental_range 999999999")
+	foreach(arena_name, arena in Arenas) {
+		i += 0.01
+		// local spawn_point = arena.SpawnPoints[0]
+			// EntFireByHandle(player, "RunScriptCode", format(@"
+				
+			// 	local origin = Vector(%f, %f, %f)
+			// 	self.SetOrigin(origin)
+			// 	self.SnapEyeAngles(QAngle(90, 0, 0))
+			// 	SendToConsole(`nav_mark_walkable`)
+			// 	SendToConsole(`nav_generate_incremental`)
+			// 	ClientPrint(self, 3, `Marking Spawn Point: ` + origin)
+			// ", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), i, null, null)
+
+		foreach(spawn_point in arena.SpawnPoints) {
+			i += 0.01
+			EntFireByHandle(player, "RunScriptCode", format(@"
+				
+				local origin = Vector(%f, %f, %f)
+				self.SetOrigin(origin)
+				self.SnapEyeAngles(QAngle(90, 0, 0))
+				SendToConsole(`nav_mark_walkable`)
+				ClientPrint(self, 3, `Marking Spawn Point: ` + origin)
+			", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), i, null, null)
+		}
+	}
+	// EntFire("bignet", "RunScriptCode", @"
+	// 	ClientPrint(self, 3, `Areas marked!`)
+	// 	ClientPrint(self, 3, `Generating nav...`)
+	// 	SendToConsole(`nav_generate_incremental`)
+	// ", i)
+}
+
+//assumes nav exists
+::MGE_CreateSpawns <- function() {
+
+}
+
+local bball_pickup_r = CreateByClassname("trigger_particle")
+
+bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_red")
+bball_pickup_r.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_RED)
+bball_pickup_r.KeyValueFromString("attachment_name", "flag")
+bball_pickup_r.KeyValueFromInt("attachment_type", 4)
+bball_pickup_r.KeyValueFromInt("spawnflags", 1)
+
+bball_pickup_r.DispatchSpawn()
+
+local bball_pickup_b = CreateByClassname("trigger_particle")
+
+bball_pickup_b.KeyValueFromString("targetname", "__mge_bball_trail_blue")
+bball_pickup_b.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_BLUE)
+bball_pickup_b.KeyValueFromString("attachment_name", "flag")
+bball_pickup_b.KeyValueFromInt("attachment_type", 4)
+bball_pickup_b.KeyValueFromInt("spawnflags", 1)
+
+bball_pickup_b.DispatchSpawn()
+
 MGE_Init()

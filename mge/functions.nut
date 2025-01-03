@@ -165,7 +165,7 @@
 				bball_points[k] <- Vector(split_spawns[0], split_spawns[1], split_spawns[2])
 			}
 
-			datatable.BBallSetup <- bball_points
+			datatable.BBall <- bball_points
 			BBall_SpawnBall(arena_name)
 
 		}
@@ -207,25 +207,25 @@
 ::BBall_SpawnBall <- function(arena_name, origin_override = null)
 {
 	local arena = Arenas[arena_name]
-	local bball_points = arena.BBallSetup
-	local last_score_team = arena.BBallSetup.last_score_team
+	local bball_points = arena.BBall
+	local last_score_team = arena.BBall.last_score_team
 
 	local ball_ground = CreateByClassname("tf_halloween_pickup")
 
 	ball_ground.KeyValueFromString("pickup_sound", BBALL_PICKUP_SOUND)
-	ball_ground.KeyValueFromString("pickup_particle", BBALL_PICKUP_PARTICLE_GENERIC)
+	ball_ground.KeyValueFromString("pickup_particle", BBALL_PARTICLE_PICKUP_GENERIC)
 	ball_ground.KeyValueFromString("powerup_model", BBALL_BALL_MODEL)
 
 	//I did this specifically to annoy mince
 	ball_ground.SetOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
 	
 	AddOutput(ball_ground, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self);", 0.0, 1)
-	AddOutput(ball_ground, "OnPlayerTouch", "!self", "Kill", "", 0.0, 1)
+	AddOutput(ball_ground, "OnPlayerTouch", "!self", "Kill", "", SINGLE_TICK, 1)
 	
-	if ("ball_ground" in arena.BBallSetup && arena.BBallSetup.ball_ground.IsValid())
-		arena.BBallSetup.ball_ground.Kill()
+	if ("ball_ground" in arena.BBall && arena.BBall.ball_ground.IsValid())
+		arena.BBall.ball_ground.Kill()
 	
-	arena.BBallSetup.ball_ground <- ball_ground
+	arena.BBall.ball_ground <- ball_ground
 
 	EntFireByHandle(ball_ground, "RunScriptCode", "DispatchSpawn(self)", 0.2, null, null)
 }
@@ -236,23 +236,23 @@
 	if (scope.ball_ent && scope.ball_ent.IsValid())
 		return
 
-	// local ball_ent = CreateByClassname("funCBaseFlex")
+	local ball_ent = CreateByClassname("funCBaseFlex")
 
-	// ball_ent.SetOrigin(player.GetOrigin())
-	// ball_ent.SetModel(BBALL_BALL_MODEL)
-	// ball_ent.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-	// ball_ent.SetSolid(SOLID_NONE)
-	// ball_ent.SetOwner(player)
-	// ball_ent.KeyValueFromString("targetname", format("__ball_%d", player.entindex()))
-	// SetPropInt(ball_ent, "m_clrRender", 0)
-	// scope.ball_ent <- ball_ent
+	ball_ent.SetOrigin(player.GetOrigin())
+	ball_ent.SetModel(BBALL_BALL_MODEL)
+	ball_ent.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+	ball_ent.SetSolid(SOLID_NONE)
+	ball_ent.SetOwner(player)
+	ball_ent.KeyValueFromString("targetname", format("__ball_%d", player.entindex()))
+	ball_ent.DisableDraw()
+	scope.ball_ent <- ball_ent
 
-	// EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
-	// EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
-	// EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", 0.1, null, null)
+	EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
+	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
+	EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", 0.1, null, null)
 	
 	DispatchParticleEffect(player.GetTeam() == TF_TEAM_RED ? BBALL_PARTICLE_PICKUP_RED : BBALL_PARTICLE_PICKUP_BLUE, player.GetOrigin(), Vector(0, 90, 0))
-	EntFire(format("__mge_bball_pickup_%d", player.GetTeam()), "StartTouch", "!activator", -1, player)
+	EntFire(format("__mge_bball_trail_%d", player.GetTeam()), "StartTouch", "!activator", -1, player)
 
 }
 
@@ -612,28 +612,7 @@ function RemoveAllBots()
 	local arena   = Arenas[arena_name]
 	local spawns  = arena.SpawnPoints
 	local mindist = ("mindist" in arena) ? arena.mindist.tofloat() : 0.0;
-	local idx     = arena.SpawnIdx
-
-	//most non-MGE configs have fixed spawn rotations per team
-	if (!arena.IsMGE)
-	{
-		idx++
-		local end = -1
-
-		if (arena.IsKoth)
-			end = KOTH_MAX_SPAWNS
-		else if (arena.IsBBall)
-			end = BBALL_MAX_SPAWNS
-
-		if (player.GetTeam() == TF_TEAM_RED) 
-			end /= 2
-
-		local _idx = idx > end ? 0 : idx
-
-		arena.SpawnIdx = _idx
-		printl("spawn idx : " + _idx)
-		return _idx
-	}
+	local idx = arena.SpawnIdx
 	
 	for (local i = 0; i < MAX_CLEAR_SPAWN_RETRIES; ++i)
 	{
@@ -660,6 +639,27 @@ function RemoveAllBots()
 ::GetNextSpawnPoint <- function(player, arena_name)
 {
 	local arena = Arenas[arena_name]
+
+	//most non-MGE configs have fixed spawn rotations per team
+	if (!arena.IsMGE)
+	{
+		local end = -1
+		local idx = arena.SpawnIdx
+
+		if (arena.IsKoth)
+			end = KOTH_MAX_SPAWNS
+		else if (arena.IsBBall)
+			end = BBALL_MAX_SPAWNS
+
+		local team = player.GetTeam()
+		if (team == TF_TEAM_RED) 
+			end /= 2
+
+		idx = (idx + 1) % end
+		if (team == TF_TEAM_BLUE)
+			idx += arena.SpawnPoints.len() / 2
+		return idx
+	}
 
 	local shuffleModes = {
 		[0] = function() {
@@ -712,10 +712,17 @@ function RemoveAllBots()
 		[AS_COUNTDOWN] = function() {
 
 			local countdown_time = arena.cdtime.tointeger()
+
+			if (arena.IsBBall && arena.BBall.ball_ground.IsValid())
+				arena.BBall.ball_ground.SetOrigin(arena.BBall.neutral_home)
+
 			foreach(p, _ in arena.CurrentPlayers)
 			{
 
 				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
+
+				if (arena.IsBBall && p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
+					p.GetScriptScope().ball_ent.Kill()
 
 				p.ForceRespawn()
 
@@ -824,7 +831,7 @@ function RemoveAllBots()
 		bball = function()
 		{
 			local team = player.GetTeam()
-			local goal = team == TF_TEAM_RED ? arena.BBallSetup.red_hoop : arena.BBallSetup.blue_hoop
+			local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
 			scope.ThinkTable.BBallThink <- function() {
 				if (scope.ball_ent && scope.ball_ent.IsValid())
 				{
@@ -839,7 +846,7 @@ function RemoveAllBots()
 						team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
 						CalcArenaScore(arena_name)
 
-						arena.BBallSetup.last_score_team = team
+						arena.BBall.last_score_team = team
 						BBall_SpawnBall(arena_name)
 						
 						foreach(p, _ in arena.CurrentPlayers)
@@ -967,7 +974,8 @@ function RemoveAllBots()
 		}
 		else
 		{
-			scope.stats.elo <- DEFAULT_ELO
+			if (scope.stats.elo == -INT_MAX)
+				scope.stats.elo <- DEFAULT_ELO
 			local str = format("ROOT[\"%s\"]<-{\n", steam_id_slice)
 			
 			foreach(k, v in scope.stats)
