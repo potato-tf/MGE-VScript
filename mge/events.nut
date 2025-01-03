@@ -75,7 +75,7 @@ class MGE_Events
 			local player = GetPlayerFromUserID(params.userid)
 			if (!player) return
 			RemovePlayer(player, false)
-			UpdateStats(player, player.GetScriptScope().stats, true)
+			// UpdateStats(player, player.GetScriptScope().stats, true)
 		}
 
 		function OnGameEvent_player_say(params)
