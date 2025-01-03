@@ -72,8 +72,7 @@ Included is a tool to generate a navmesh for every arena on a given map.  Load a
 `ent_fire bignet callscriptfunction "MGE_CreateNav"`
 
 Or for only one arena:
-
-`ent_fire bignet RunScriptCode "MGE_CreateNav(\`Badlands Middle\`)"`
+```ent_fire bignet RunScriptCode "MGE_CreateNav(`Badlands Middle`)"```
 
 ### WARNING:
 - This is very slow and will freeze your game for every arena
