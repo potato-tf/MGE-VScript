@@ -409,7 +409,10 @@ function RemoveAllBots()
 
 	// Make sure spectators have a class chosen to be able to spawn
 	if (!GetPropInt(player, "m_Shared.m_iDesiredPlayerClass"))
-		ForceChangeClass(player, TF_CLASS_SCOUT)
+	{
+			ForceChangeClass(player, TF_CLASS_SCOUT)
+			player.ForceRespawn()
+	}
 
 	// Spawn (goto player_spawn)
 	player.ForceChangeTeam(team, true)
@@ -905,7 +908,7 @@ function RemoveAllBots()
 			scope.endif_base_origin <- Vector()
 			scope.endif_killme <- false
 
-			if (player.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
+			// if (player.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
 			EntFireByHandle(player, "RunScriptCode", format(@"
 
 				self.AddCustomAttribute(`cancel falling damage`, 1, -1)
@@ -932,8 +935,11 @@ function RemoveAllBots()
 				//redefine here to avoid reaching out of scope
 				local player = self
 				local weapon = player.GetActiveWeapon()
-				if (weapon && weapon.Clip1() < weapon.GetMaxClip1())
+				local itemid = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
+				if (weapon && weapon.Clip1() < weapon.GetMaxClip1() && itemid != ID_BEGGARS_BAZOOKA)
 					weapon.SetClip1(weapon.GetMaxClip1())
+				
+				SetPropIntArray(player, "m_iAmmo", 99, 1)
 			}
 		}
 	}

@@ -11,9 +11,9 @@ A fully vanilla compatible rewrite of the MGEMod plugin.  No sourcemod plugins r
 | Ammomod | ✅ |
 | Infammo | ✅ |
 | Turris | ✅ |
+| BBall | ✅ |
 | Plain text ELO/stat tracking | ✅ |
 | Database stat tracking support | ❌ |
-| BBall | ❌ |
 | 4Player | ❌ |
 | Koth | ❌ |
 | Arena leader system for custom rulesets | ❌ |
@@ -27,7 +27,7 @@ A fully vanilla compatible rewrite of the MGEMod plugin.  No sourcemod plugins r
 
 ## Converting your map configs
 - Open a copy of `mgemod_spawns.cfg` in VSCode/NP++/any text editor that supports regex search/replace, enable regex
-- If you're confused, Google/ask ChatGPT how to enable regex search/replace in your text editor
+- If you're confused, Google/ask your favorite AI chat bot how to enable regex search/replace in your text editor
 
     - Find pattern: `(\s*)"([^"]+)"\s*\n\s*\{`
     - Replace pattern: `$1"$2": {`
@@ -59,9 +59,10 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 
 ### Database
 - Database tracking uses [VScript-Python Interface](https://github.com/potato-tf/VPI) to send data from vscript to python through the filesystem.
-    - Install Python 3.10+ if you don't already have it
+    - Install Python 3.10 or newer if you don't already have it
     - Install the `aiomysql` module
-    - Add your database credentials to `tf/scripts/mge_python/vpi.py` and run this script in the background, this is your database connection
+    - Add your database credentials to `tf/scripts/mge_python/vpi.py` and run this script constantly in the background, this is your database connection
+        - You should create a systemd service for this on linux, or whatever the windows equivalent is
     - Check server console for any VPI related errors when you join/leave the server.
     - This will automatically create the `mge_playerdata` table in your database
 
