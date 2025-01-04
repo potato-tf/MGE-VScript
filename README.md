@@ -50,7 +50,7 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
     - **How to check if a map is safe:**
         - Open the bsp using GCFScape, open the .zip file, and check the tf/scripts/vscripts directory in this zip file
         - If you see a mapspawn.nut file, the gamemode will either not load correctly or this map is unsafe
-        - Ctrl+F and search for `StringToFile` or `FileToString` in every script file, if you see any of these, the map is probably unsafe
+        - If you see any other packed script files, Ctrl+F and search for `StringToFile` or `FileToString` in every script file, if you see any of these, the map is potentially unsafe
         - Search for `__MGE__VPI`.  If this shows up anywhere, the map is attempting to tamper with the database 
 
 ### Plain Text
