@@ -602,7 +602,13 @@ function RemoveAllBots()
 	loser_scope.won_last_match = false
 	winner_scope.won_last_match = true
 
-	MGE_ClientPrint(null, 3, format(MGE_Localization.XdefeatsY, winner_scope.Name, winner_scope.stats.elo.tostring(), loser_scope.Name, loser_scope.stats.elo.tostring(), fraglimit.tostring(), arena_name))
+	MGE_ClientPrint(null, 3, format(MGE_Localization.XdefeatsY, 
+		winner_scope.Name, 
+		winner_scope.stats.elo.tostring(), 
+		loser_scope.Name, 
+		loser_scope.stats.elo.tostring(), 
+		fraglimit.tostring(),
+	arena_name))
 	CalcELO(winner, loser)
 	SetArenaState(arena_name, AS_AFTERFIGHT)
 }
