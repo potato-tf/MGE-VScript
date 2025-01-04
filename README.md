@@ -69,7 +69,7 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 
 Included is a tool to generate a navmesh for every arena on a given map.  Load any map you want to generate a navmesh for in singleplayer, enable cheats, and paste this into console
 
-`ent_fire bignet callscriptfunction "MGE_CreateNav"`
+`ent_fire bignet CallScriptFunction "MGE_CreateNav"`
 
 Or for only one arena:
 
