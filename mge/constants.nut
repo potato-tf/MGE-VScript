@@ -44,7 +44,11 @@ const BBALL_PARTICLE_PICKUP_GENERIC = "teleported_generic"
 const BBALL_PARTICLE_TRAIL_RED 		= "player_intel_trail_red"
 const BBALL_PARTICLE_TRAIL_BLUE 	= "player_intel_trail_blue"
 
-const KOTH_MAX_SPAWNS = 12
+const KOTH_DEFAULT_CAPTURE_POINT_RADIUS = 300
+const KOTH_PARTIAL_CAP_RATE 			= 0.1
+const KOTH_COUNTDOWN_INTERVAL 			= 1.0
+const KOTH_START_TIME_RED 				= 180
+const KOTH_START_TIME_BLUE 				= 180
 
 //spawn shuffle modes
 //0 = none, spawns are iterated over in consistent order based on provided config

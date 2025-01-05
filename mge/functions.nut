@@ -122,7 +122,7 @@
 		datatable.SpawnIdx       <- 0
 
 		//do this instead of checking both of these everywhere
-		datatable.IsMGE         <- "mge" in datatable && datatable.mge == "1"
+		datatable.IsMGE          <- "mge" in datatable && datatable.mge == "1"
 		datatable.IsKoth         <- "koth" in datatable && datatable.koth == "1"
 		datatable.IsBBall        <- "bball" in datatable && datatable.bball == "1"
 		datatable.IsAmmomod      <- "ammomod" in datatable && datatable.ammomod == "1"
@@ -168,6 +168,27 @@
 			datatable.BBall <- bball_points
 			BBall_SpawnBall(arena_name)
 
+		}
+		if (datatable.IsKoth)
+		{
+			local koth_points = {
+				cap_point = "koth_cap" in datatable ? datatable.koth_cap : datatable["7"]
+				cap_radius = "koth_radius" in datatable ? datatable.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
+
+				red_cap_time = KOTH_START_TIME_RED
+				blue_cap_time = KOTH_START_TIME_BLUE
+				owner_team = 0
+
+				blu_partial_cap_amount = 0.0
+				red_partial_cap_amount = 0.0
+				timelimit = 0.0
+				timeleft = 0.0
+
+				is_overtime = false
+			}
+			local split_cap = split(koth_points.cap_point, " ").apply( @(str) str.tofloat() )
+			koth_points.cap_point = Vector(split_cap[0], split_cap[1], split_cap[2])
+			datatable.Koth <- koth_points
 		}
 		// Grab spawn points
 		foreach(k, v in datatable)
@@ -280,7 +301,7 @@
 
 }
 
-function AddBot(arena_name)
+::AddBot <- function(arena_name)
 {
 	if (typeof(arena_name) == "string" && !(arena_name in Arenas)) return
 	if (typeof(arena_name) == "integer")
@@ -317,7 +338,7 @@ function AddBot(arena_name)
 	AddPlayer((bot) ? bot : abot, arena_name)
 }
 
-function RemoveBot(arena_name, all=false)
+::RemoveBot <- function(arena_name, all=false)
 {
 	if (typeof(arena_name) == "string" && !(arena_name in Arenas)) return
 	if (typeof(arena_name) == "integer")
@@ -360,7 +381,7 @@ function RemoveBot(arena_name, all=false)
 	}
 }
 
-function RemoveAllBots()
+::RemoveAllBots <- function()
 {
 	foreach (arena_name, _ in Arenas)
 		RemoveBot(arena_name, true)
@@ -895,10 +916,40 @@ function RemoveAllBots()
 	local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
 	local maxhp = player.GetMaxHealth() * hpratio
 	local special_arenas = {
-
 		koth = function()
 		{
+			local partial_cap_cooldowntime = 0.0
+			local cap_countdown_interval = 0.0
 
+			local radius = arena.Koth.cap_radius
+			local point = arena.Koth.cap_point
+			local owner_team = arena.Koth.owner_team
+			local team = player.GetTeam()
+
+			scope.ThinkTable.KothThink <- function() {
+				if ((self.GetOrigin() - point).Length() < radius)
+				{
+					if (owner_team != team && partial_cap_cooldowntime < Time())
+					{
+						arena.Koth[team == TF_TEAM_RED ? "red_partial_cap_amount" : "blu_partial_cap_amount"] += 1
+						partial_cap_cooldowntime = Time() + KOTH_PARTIAL_CAP_RATE
+					}
+
+					else if (owner_team == team)
+					{
+						if (cap_countdown_interval < Time())
+						{
+							arena.Koth[team == TF_TEAM_RED ? "red_cap_time" : "blue_cap_time"] -= 1
+							if (arena.Koth[team == TF_TEAM_RED ? "red_cap_time" : "blue_cap_time"] <= 0)
+							{
+								arena.Score[team == TF_TEAM_RED ? 1 : 0] += 1
+								CalcArenaScore(arena_name)
+							}
+							cap_countdown_interval = Time() + KOTH_COUNTDOWN_INTERVAL
+						}
+					}
+				}
+			}
 		}
 		bball = function()
 		{
@@ -984,6 +1035,7 @@ function RemoveAllBots()
 		}
 		infammo = function()
 		{
+
 			scope.ThinkTable.InfAmmoThink <- function() {
 				//redefine here to avoid reaching out of scope
 				local player = self
@@ -992,7 +1044,11 @@ function RemoveAllBots()
 				if (weapon && weapon.Clip1() < weapon.GetMaxClip1() && itemid != ID_BEGGARS_BAZOOKA)
 					weapon.SetClip1(weapon.GetMaxClip1())
 
-				SetPropIntArray(player, "m_iAmmo", 99, 1)
+				if (weapon && GetPropFloat(weapon, "m_flEnergy") != weapon.GetMaxClip1() && (itemid == ID_COW_MANGLER_5000 || itemid == ID_RIGHTEOUS_BISON || itemid == ID_POMSON_6000))
+					SetPropFloat(weapon, "m_flEnergy", 20)
+
+				SetPropIntArray(self, "m_iAmmo", 9999, 1)
+				SetPropIntArray(self, "m_iAmmo", 9999, 2)
 			}
 		}
 	}
