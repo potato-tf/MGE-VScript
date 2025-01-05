@@ -247,6 +247,30 @@
 	ball_ent.DisableDraw()
 	scope.ball_ent <- ball_ent
 
+	local arena = scope.arena_info.arena
+	local visbit = 0
+	foreach (p, _ in arena.CurrentPlayers)
+	{
+		// visbit = 1 << p.entindex() | visbit
+		// SendGlobalGameEvent("show_annotation", {
+		// 	visibilityBitfield = visbit
+		// 	text = format("%s has the flag!", player.GetScriptScope().Name)
+		// 	lifetime = 3.0
+		// 	play_sound = BBALL_PICKUP_SOUND
+		// 	follow_entindex = player.entindex()
+		// 	show_distance = true
+		// 	show_effect = true
+		// })
+		EmitSoundEx({
+			sound_name = BBALL_PICKUP_SOUND,
+			entity = p,
+			volume = BBALL_PICKUP_SOUND_VOLUME,
+			channel = CHAN_STREAM,
+			sound_level = 65
+		})
+		ClientPrint(p, 3, p == player ? "You have the ball!" : format("%s has the ball!", player.GetScriptScope().Name))
+	}
+
 	EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
 	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
 	EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", 0.1, null, null)
@@ -385,6 +409,7 @@ function RemoveAllBots()
 	local current_players = arena.CurrentPlayers
 
 	scope.endif_killme <- false
+	scope.endif_firstspawn <- true
 	scope.queue <- null
 	scope.arena_info <- {
 		arena = arena,
@@ -730,8 +755,28 @@ function RemoveAllBots()
 
 				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
 
-				if (arena.IsBBall && p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
-					p.GetScriptScope().ball_ent.Kill()
+				if (arena.IsBBall)
+				{
+					if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
+						p.GetScriptScope().ball_ent.Kill()
+
+						
+					local bball_pickup_r = CreateByClassname("trigger_particle")
+					bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_2")
+					bball_pickup_r.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_RED)
+					bball_pickup_r.KeyValueFromString("attachment_name", "flag")
+					bball_pickup_r.KeyValueFromInt("attachment_type", 4)
+					bball_pickup_r.KeyValueFromInt("spawnflags", 1)
+					DispatchSpawn(bball_pickup_r)
+
+					local bball_pickup_b = CreateByClassname("trigger_particle")
+					bball_pickup_b.KeyValueFromString("targetname", "__mge_bball_trail_3")
+					bball_pickup_b.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_BLUE)
+					bball_pickup_b.KeyValueFromString("attachment_name", "flag")
+					bball_pickup_b.KeyValueFromInt("attachment_type", 4)
+					bball_pickup_b.KeyValueFromInt("spawnflags", 1)
+					DispatchSpawn(bball_pickup_b)
+				}
 
 				p.ForceRespawn()
 
@@ -792,6 +837,12 @@ function RemoveAllBots()
 				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
 				PlayAnnouncer(p, round_start_sound)
 
+				if (arena.IsBBall)
+				{
+					if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
+						p.GetScriptScope().ball_ent.Kill()
+				}
+
 				// function UnfreezePlayer(player)
 				// {
 				// 	player.RemoveCustomAttribute("no_attack")
@@ -817,6 +868,9 @@ function RemoveAllBots()
 					PlayAnnouncer(p, "vo/announcer_am_lastmanforfeit01.mp3")
 				}
 			}
+			if (arena.IsBBall)
+				EntFireByHandle(arena.BBall.ball_ground, "Kill", "", -1, null, null)
+
 			EntFire("worldspawn", "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
 		},
 	}
@@ -889,24 +943,23 @@ function RemoveAllBots()
 		{
 			// printl("attr : " + player.GetCustomAttribute("hidden maxhealth non buffed", 0))
 
-			if (player.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
-
 			EntFireByHandle(player, "RunScriptCode", format(@"
 
-				local maxhp = %d
 				local hp_ratio = Arenas[`%s`].hpratio.tofloat()
-				self.AddCustomAttribute(`hidden maxhealth non buffed`, maxhp - self.GetMaxHealth(), -1)
-				self.AddCustomAttribute(`dmg taken increased`, (1 / hp_ratio), -1)
-				self.AddCustomAttribute(`dmg from ranged reduced`, hp_ratio, -1)
-				self.SetHealth(maxhp)
+				self.AddCustomAttribute(`max health additive bonus`,(self.GetMaxHealth() * hp_ratio) - self.GetMaxHealth(), -1)
 				self.Regenerate(true)
 
-			", maxhp, arena_name), -1, null, null)
+			", arena_name), 0.1, null, null)
 		}
 		endif = function()
 		{
 			scope.endif_base_origin <- Vector()
 			scope.endif_killme <- false
+
+			for (local child = player.FirstMoveChild(); child; child = child.NextMovePeer())
+				if (child instanceof CEconEntity && GetPropInt(child, STRING_NETPROP_ITEMDEF) == ID_MANTREADS)
+					EntFireByHandle(child, "Kill", "", -1, null, null)
+			
 
 			// if (player.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
 			EntFireByHandle(player, "RunScriptCode", format(@"
@@ -926,7 +979,7 @@ function RemoveAllBots()
 				if (player.GetFlags() & FL_ONGROUND)
 					endif_base_origin = origin
 
-				endif_killme = abs(endif_base_origin.z - origin.z) > ENDIF_HEIGHT_THRESHOLD ? true : false
+				endif_killme = (abs(endif_base_origin.z - origin.z) > ENDIF_HEIGHT_THRESHOLD) ? true : false
 			}
 		}
 		infammo = function()

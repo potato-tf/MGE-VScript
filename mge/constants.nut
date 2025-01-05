@@ -6,7 +6,7 @@ CONST.MAX_CLIENTS <- MaxClients().tointeger()
 
 //CONFIG CONSTANTS
 const DEFAULT_FRAGLIMIT = 20
-const DEFAULT_ELO = 1500
+const DEFAULT_ELO = 1600
 
 const MAX_CLEAR_SPAWN_RETRIES = 10
 
@@ -30,12 +30,13 @@ const ROUND_START_SOUND_VOLUME = 0.5
 const TURRIS_REGEN_TIME = 5.0
 
 const ENDIF_HEIGHT_THRESHOLD = 250
-ROOT. ENDIF_FORCE_MULT <- Vector(1.1, 1.1, 2.15)
+ROOT. ENDIF_FORCE_MULT <- Vector(1.1, 1.1, 1.31)
 
 const BBALL_SHOW_CARRIER_BALL = false
 const BBALL_MAX_SPAWNS = 8
 const BBALL_HOOP_SIZE = 30
-const BBALL_PICKUP_SOUND = "items/pickup_powerup.wav"
+const BBALL_PICKUP_SOUND_VOLUME = 1.0
+const BBALL_PICKUP_SOUND = "ui/chime_rd_2base_neg.wav"
 const BBALL_BALL_MODEL = "models/flag/ticket_case.mdl"
 const BBALL_PARTICLE_PICKUP_RED = "teleported_red"
 const BBALL_PARTICLE_PICKUP_BLUE = "teleported_blue"

@@ -155,6 +155,8 @@ class MGE_Events
 					local str = _players[0] && _players[1] ? format("RED: %d (%d)\nBLU: %d (%d)", arena.Score[0], _players[0].GetScriptScope().stats.elo, arena.Score[1], _players[1].GetScriptScope().stats.elo) : ""
 					MGE_ClientPrint(player, 4, str)
 				}
+				if (arena.IsBBall)
+					EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", 0.1, null, null)
 			}
 			else
 			{
@@ -167,7 +169,7 @@ class MGE_Events
 		function OnGameEvent_player_changeclass(params)
 		{
 			local player = GetPlayerFromUserID(params.userid)
-			printl(player)
+			// printl(player)
 			ValidatePlayerClass(player, params["class"], true)
 		}
 
@@ -249,10 +251,12 @@ class MGE_Events
 				if (scope.ball_ent && scope.ball_ent.IsValid())
 				{
 					scope.ball_ent.Kill()
+					victim.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
 					BBall_SpawnBall(arena_name, victim.GetFlags() & FL_ONGROUND ? victim.EyePosition() : victim.GetOrigin())
 				}
 			}
 
+			printl("Respawn Time: " + (arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime))
 			EntFireByHandle(victim, "RunScriptCode", "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime, null, null)
 		}
 
@@ -272,16 +276,38 @@ class MGE_Events
 			local victim_scope = victim.GetScriptScope()
 
 			local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
+			// if ("endif_killme" in victim_scope || ("endif" in arena && arena.endif == "1"))
+			// {
+			// 	if (!("midair" in arena) || arena.midair == "0")
+			// 	{
+			// 		print("old velocity: " + victim.GetAbsVelocity())
+			// 		params.damage_force *= ENDIF_FORCE_MULT
+			// 		victim.ApplyAbsVelocityImpulse(victim.GetAbsVelocity() * ENDIF_FORCE_MULT)
+			// 		print("new velocity: " + victim.GetAbsVelocity())
+			// 	}
 
-			if ("endif_killme" in victim_scope && victim_scope.endif_killme)
-			{
-				if (!("midair" in arena) || arena.midair == "0")
-					params.damage_force *= ENDIF_FORCE_MULT
-
-				if (victim_scope.endif_killme && params.damage_type & DMG_BLAST)
+				if (victim != attacker &&"endif_killme" in victim_scope && victim_scope.endif_killme && params.damage_type & DMG_BLAST)
 				{
 					victim.SetHealth(1)
 					params.damage_type = params.damage_type | DMG_CRITICAL
+				}
+		}
+
+		function OnGameEvent_player_hurt(params)
+		{
+			local victim = GetPlayerFromUserID(params.userid)
+			local attacker = GetPlayerFromUserID(params.attacker)
+			local victim_scope = victim.GetScriptScope()
+			local attacker_scope = attacker ? attacker.GetScriptScope() : victim_scope
+			local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
+
+			if ("endif" in arena && arena.endif == "1")
+			{
+				if (!("midair" in arena) || arena.midair == "0")
+				{
+					local old_vel = victim.GetAbsVelocity()
+					local vel = Vector(old_vel.x * ENDIF_FORCE_MULT.x, old_vel.y * ENDIF_FORCE_MULT.y, old_vel.z * ENDIF_FORCE_MULT.z)
+					victim.SetAbsVelocity(vel)
 				}
 			}
 		}

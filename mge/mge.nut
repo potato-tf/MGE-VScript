@@ -211,20 +211,4 @@ AddThinkToEnt(mge_ent, "MGEThink")
 	nav_generation_state.is_running = true
 }
 
-local bball_pickup_r = CreateByClassname("trigger_particle")
-bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_red")
-bball_pickup_r.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_RED)
-bball_pickup_r.KeyValueFromString("attachment_name", "flag")
-bball_pickup_r.KeyValueFromInt("attachment_type", 4)
-bball_pickup_r.KeyValueFromInt("spawnflags", 1)
-DispatchSpawn(bball_pickup_r)
-
-local bball_pickup_b = CreateByClassname("trigger_particle")
-bball_pickup_b.KeyValueFromString("targetname", "__mge_bball_trail_blue")
-bball_pickup_b.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_BLUE)
-bball_pickup_b.KeyValueFromString("attachment_name", "flag")
-bball_pickup_b.KeyValueFromInt("attachment_type", 4)
-bball_pickup_b.KeyValueFromInt("spawnflags", 1)
-DispatchSpawn(bball_pickup_b)
-
 MGE_Init()
