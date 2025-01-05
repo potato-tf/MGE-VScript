@@ -747,8 +747,31 @@ function RemoveAllBots()
 
 			local countdown_time = arena.cdtime.tointeger()
 
-			if (arena.IsBBall && arena.BBall.ball_ground.IsValid())
-				arena.BBall.ball_ground.SetOrigin(arena.BBall.neutral_home)
+			if (arena.IsBBall)
+			{
+				if (arena.BBall.ball_ground.IsValid())
+					arena.BBall.ball_ground.SetOrigin(arena.BBall.neutral_home)
+				
+				if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
+					p.GetScriptScope().ball_ent.Kill()
+
+						
+				arena.BBall.bball_pickup_r <- CreateByClassname("trigger_particle")
+				arena.BBall.bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_2")
+				arena.BBall.bball_pickup_r.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_RED)
+				arena.BBall.bball_pickup_r.KeyValueFromString("attachment_name", "flag")
+				arena.BBall.bball_pickup_r.KeyValueFromInt("attachment_type", 4)
+				arena.BBall.bball_pickup_r.KeyValueFromInt("spawnflags", 1)
+				DispatchSpawn(arena.BBall.bball_pickup_r)
+
+				arena.BBall.bball_pickup_b <- CreateByClassname("trigger_particle")
+				arena.BBall.bball_pickup_b.KeyValueFromString("targetname", "__mge_bball_trail_3")
+				arena.BBall.bball_pickup_b.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_BLUE)
+				arena.BBall.bball_pickup_b.KeyValueFromString("attachment_name", "flag")
+				arena.BBall.bball_pickup_b.KeyValueFromInt("attachment_type", 4)
+				arena.BBall.bball_pickup_b.KeyValueFromInt("spawnflags", 1)
+				DispatchSpawn(arena.BBall.bball_pickup_b)
+			}
 
 			foreach(p, _ in arena.CurrentPlayers)
 			{
@@ -756,27 +779,9 @@ function RemoveAllBots()
 				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
 
 				if (arena.IsBBall)
-				{
 					if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
 						p.GetScriptScope().ball_ent.Kill()
-
-						
-					local bball_pickup_r = CreateByClassname("trigger_particle")
-					bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_2")
-					bball_pickup_r.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_RED)
-					bball_pickup_r.KeyValueFromString("attachment_name", "flag")
-					bball_pickup_r.KeyValueFromInt("attachment_type", 4)
-					bball_pickup_r.KeyValueFromInt("spawnflags", 1)
-					DispatchSpawn(bball_pickup_r)
-
-					local bball_pickup_b = CreateByClassname("trigger_particle")
-					bball_pickup_b.KeyValueFromString("targetname", "__mge_bball_trail_3")
-					bball_pickup_b.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_BLUE)
-					bball_pickup_b.KeyValueFromString("attachment_name", "flag")
-					bball_pickup_b.KeyValueFromInt("attachment_type", 4)
-					bball_pickup_b.KeyValueFromInt("spawnflags", 1)
-					DispatchSpawn(bball_pickup_b)
-				}
+				
 
 				p.ForceRespawn()
 
@@ -869,7 +874,11 @@ function RemoveAllBots()
 				}
 			}
 			if (arena.IsBBall)
+			{
+				EntFireByHandle(arena.BBall.bball_pickup_r, "Kill", "", -1, null, null)
+				EntFireByHandle(arena.BBall.bball_pickup_b, "Kill", "", -1, null, null)
 				EntFireByHandle(arena.BBall.ball_ground, "Kill", "", -1, null, null)
+			}
 
 			EntFire("worldspawn", "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
 		},
@@ -947,6 +956,8 @@ function RemoveAllBots()
 
 				local hp_ratio = Arenas[`%s`].hpratio.tofloat()
 				self.AddCustomAttribute(`max health additive bonus`,(self.GetMaxHealth() * hp_ratio) - self.GetMaxHealth(), -1)
+				self.AddCustomAttribute(`dmg taken increased`, 1 / hp_ratio, -1)
+				self.AddCustomAttribute(`dmg from ranged reduced`, hp_ratio, -1)
 				self.Regenerate(true)
 
 			", arena_name), 0.1, null, null)

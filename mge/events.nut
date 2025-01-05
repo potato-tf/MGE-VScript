@@ -286,21 +286,24 @@ class MGE_Events
 			// 		print("new velocity: " + victim.GetAbsVelocity())
 			// 	}
 
-				if (victim != attacker &&"endif_killme" in victim_scope && victim_scope.endif_killme && params.damage_type & DMG_BLAST)
+				
+			if ("endif" in arena && arena.endif == "1")
+			{
+				if (attacker != victim && TraceLine(victim.GetOrigin(), victim.GetOrigin() - Vector(0, 0, ENDIF_HEIGHT_THRESHOLD), victim) == 1 && params.damage_type & DMG_BLAST)
 				{
 					victim.SetHealth(1)
 					params.damage_type = params.damage_type | DMG_CRITICAL
 				}
+			}
 		}
 
 		function OnGameEvent_player_hurt(params)
 		{
 			local victim = GetPlayerFromUserID(params.userid)
-			local attacker = GetPlayerFromUserID(params.attacker)
 			local victim_scope = victim.GetScriptScope()
-			local attacker_scope = attacker ? attacker.GetScriptScope() : victim_scope
 			local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
 
+			//set this here instead of OnTakeDamage since damage_force isn't set until OnTakeDamage
 			if ("endif" in arena && arena.endif == "1")
 			{
 				if (!("midair" in arena) || arena.midair == "0")
