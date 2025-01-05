@@ -6,7 +6,7 @@ CONST.MAX_CLIENTS <- MaxClients().tointeger()
 
 //CONFIG CONSTANTS
 const DEFAULT_FRAGLIMIT = 20
-const DEFAULT_ELO = 1600
+const DEFAULT_ELO 		= 1600
 
 const MAX_CLEAR_SPAWN_RETRIES = 10
 
@@ -19,30 +19,30 @@ const ANNOUNCER_VOLUME = 0.5 //volume of announcer quips
 const KILLSTREAK_ANNOUNCER_INTERVAL = 5 //how many kills before we play a killstreak sound
 
 const COUNTDOWN_START_DELAY = 1.0 //delay before countdown starts, additive to queue cycle delay
-const QUEUE_CYCLE_DELAY = 4.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
+const QUEUE_CYCLE_DELAY 	= 4.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
 
-const COUNTDOWN_SOUND = "ui/chime_rd_2base_pos.wav"
+const COUNTDOWN_SOUND		 = "ui/chime_rd_2base_pos.wav"
 const COUNTDOWN_SOUND_VOLUME = 0.5
 
-const ROUND_START_SOUND = "ui/chime_rd_2base_neg.wav"
+const ROUND_START_SOUND 	   = "ui/chime_rd_2base_neg.wav"
 const ROUND_START_SOUND_VOLUME = 0.5
 
-const TURRIS_REGEN_TIME = 5.0
+const TURRIS_REGEN_TIME 	 = 5.0
 
 const ENDIF_HEIGHT_THRESHOLD = 250
-ROOT. ENDIF_FORCE_MULT <- Vector(1.1, 1.1, 1.1)
+ROOT. ENDIF_FORCE_MULT 		 <- Vector(1.1, 1.1, 1.1)
 
-const BBALL_SHOW_CARRIER_BALL = false
-const BBALL_MAX_SPAWNS = 8
-const BBALL_HOOP_SIZE = 30
-const BBALL_PICKUP_SOUND_VOLUME = 1.0
-const BBALL_PICKUP_SOUND = "ui/chime_rd_2base_neg.wav"
-const BBALL_BALL_MODEL = "models/flag/ticket_case.mdl"
-const BBALL_PARTICLE_PICKUP_RED = "teleported_red"
-const BBALL_PARTICLE_PICKUP_BLUE = "teleported_blue"
-const BBALL_PARTICLE_PICKUP_GENERIC = ""
-const BBALL_PARTICLE_TRAIL_RED = "player_intel_trail_red"
-const BBALL_PARTICLE_TRAIL_BLUE = "player_intel_trail_blue"
+const BBALL_SHOW_CARRIER_BALL 		= false
+const BBALL_MAX_SPAWNS 				= 8
+const BBALL_HOOP_SIZE 				= 30
+const BBALL_PICKUP_SOUND_VOLUME 	= 1.0
+const BBALL_PICKUP_SOUND			= "ui/chime_rd_2base_neg.wav"
+const BBALL_BALL_MODEL				= "models/flag/ticket_case.mdl"
+const BBALL_PARTICLE_PICKUP_RED 	= "teleported_red"
+const BBALL_PARTICLE_PICKUP_BLUE 	= "teleported_blue"
+const BBALL_PARTICLE_PICKUP_GENERIC = "teleported_generic"
+const BBALL_PARTICLE_TRAIL_RED 		= "player_intel_trail_red"
+const BBALL_PARTICLE_TRAIL_BLUE 	= "player_intel_trail_blue"
 
 const KOTH_MAX_SPAWNS = 12
 
