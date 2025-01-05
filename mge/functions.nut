@@ -218,13 +218,13 @@
 
 	//I did this specifically to annoy mince
 	ball_ground.SetOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
-	
+
 	AddOutput(ball_ground, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self);", 0.0, 1)
 	AddOutput(ball_ground, "OnPlayerTouch", "!self", "Kill", "", SINGLE_TICK, 1)
-	
+
 	if ("ball_ground" in arena.BBall && arena.BBall.ball_ground.IsValid())
 		arena.BBall.ball_ground.Kill()
-	
+
 	arena.BBall.ball_ground <- ball_ground
 
 	EntFireByHandle(ball_ground, "RunScriptCode", "DispatchSpawn(self)", 0.2, null, null)
@@ -274,7 +274,7 @@
 	EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
 	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
 	EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", 0.1, null, null)
-	
+
 	DispatchParticleEffect(player.GetTeam() == TF_TEAM_RED ? BBALL_PARTICLE_PICKUP_RED : BBALL_PARTICLE_PICKUP_BLUE, player.GetOrigin(), Vector(0, 90, 0))
 	EntFire(format("__mge_bball_trail_%d", player.GetTeam()), "StartTouch", "!activator", -1, player)
 
@@ -521,7 +521,7 @@ function RemoveAllBots()
 
 ::CalcELO <- function(winner, loser) {
 
-	if ( !ELO_TRACKING_MODE || 
+	if ( !ELO_TRACKING_MODE ||
 		!winner ||
 		!loser  ||
 		!winner.IsValid() ||
@@ -630,11 +630,11 @@ function RemoveAllBots()
 	loser_scope.won_last_match = false
 	winner_scope.won_last_match = true
 
-	MGE_ClientPrint(null, 3, format(MGE_Localization.XdefeatsY, 
-		winner_scope.Name, 
-		winner_scope.stats.elo.tostring(), 
-		loser_scope.Name, 
-		loser_scope.stats.elo.tostring(), 
+	MGE_ClientPrint(null, 3, format(MGE_Localization.XdefeatsY,
+		winner_scope.Name,
+		winner_scope.stats.elo.tostring(),
+		loser_scope.Name,
+		loser_scope.stats.elo.tostring(),
 		fraglimit.tostring(),
 	arena_name))
 	CalcELO(winner, loser)
@@ -647,7 +647,7 @@ function RemoveAllBots()
 	local spawns  = arena.SpawnPoints
 	local mindist = ("mindist" in arena) ? arena.mindist.tofloat() : 0.0;
 	local idx = arena.SpawnIdx
-	
+
 	for (local i = 0; i < MAX_CLEAR_SPAWN_RETRIES; ++i)
 	{
 		idx = GetNextSpawnPoint(player, arena_name)
@@ -655,7 +655,7 @@ function RemoveAllBots()
 		if (!mindist) return idx
 
 		local clear = true
-		
+
 		for (local p; p = FindByClassnameWithin(p, "player", spawn[0], mindist);)
 		{
 			if (p.IsValid() && p.IsAlive())
@@ -686,7 +686,7 @@ function RemoveAllBots()
 			end = BBALL_MAX_SPAWNS
 
 		local team = player.GetTeam()
-		if (team == TF_TEAM_RED) 
+		if (team == TF_TEAM_RED)
 			end /= 2
 
 		idx = (idx + 1) % end
@@ -751,11 +751,11 @@ function RemoveAllBots()
 			{
 				if (arena.BBall.ball_ground.IsValid())
 					arena.BBall.ball_ground.SetOrigin(arena.BBall.neutral_home)
-				
+
 				if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
 					p.GetScriptScope().ball_ent.Kill()
 
-						
+
 				arena.BBall.bball_pickup_r <- CreateByClassname("trigger_particle")
 				arena.BBall.bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_2")
 				arena.BBall.bball_pickup_r.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_RED)
@@ -781,7 +781,7 @@ function RemoveAllBots()
 				if (arena.IsBBall)
 					if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
 						p.GetScriptScope().ball_ent.Kill()
-				
+
 
 				p.ForceRespawn()
 
@@ -834,7 +834,7 @@ function RemoveAllBots()
 
 			if (arena.IsBBall)
 				BBall_SpawnBall(arena_name)
-			
+
 		},
 		[AS_FIGHT] = function() {
 			foreach(p, _ in arena.CurrentPlayers)
@@ -920,7 +920,7 @@ function RemoveAllBots()
 
 						arena.BBall.last_score_team = team
 						BBall_SpawnBall(arena_name)
-						
+
 						foreach(p, _ in arena.CurrentPlayers)
 							p.ForceRespawn()
 						return
@@ -970,7 +970,7 @@ function RemoveAllBots()
 			for (local child = player.FirstMoveChild(); child; child = child.NextMovePeer())
 				if (child instanceof CEconEntity && GetPropInt(child, STRING_NETPROP_ITEMDEF) == ID_MANTREADS)
 					EntFireByHandle(child, "Kill", "", -1, null, null)
-			
+
 
 			// if (player.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
 			EntFireByHandle(player, "RunScriptCode", format(@"
@@ -981,17 +981,6 @@ function RemoveAllBots()
 				self.Regenerate(true)
 
 			", 9999, 9999), -1, null, null)
-
-			scope.ThinkTable.EndifThink <- function() {
-				//redefine here to avoid reaching out of scope
-				local player = self
-				local origin = player.GetOrigin()
-
-				if (player.GetFlags() & FL_ONGROUND)
-					endif_base_origin = origin
-
-				endif_killme = (abs(endif_base_origin.z - origin.z) > ENDIF_HEIGHT_THRESHOLD) ? true : false
-			}
 		}
 		infammo = function()
 		{
@@ -1002,7 +991,7 @@ function RemoveAllBots()
 				local itemid = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
 				if (weapon && weapon.Clip1() < weapon.GetMaxClip1() && itemid != ID_BEGGARS_BAZOOKA)
 					weapon.SetClip1(weapon.GetMaxClip1())
-				
+
 				SetPropIntArray(player, "m_iAmmo", 99, 1)
 			}
 		}
@@ -1053,13 +1042,13 @@ function RemoveAllBots()
 			if (scope.stats.elo == -INT_MAX)
 				scope.stats.elo <- DEFAULT_ELO
 			local str = format("ROOT[\"%s\"]<-{\n", steam_id_slice)
-			
+
 			foreach(k, v in scope.stats)
 				str += format("%s=%s\n", k.tostring(), v.tostring())
 
 			str += "}\n"
 			StringToFile(filename, str)
-		}	
+		}
 		return
 	}
 	else if (ELO_TRACKING_MODE == 2 && "VPI" in getroottable())
