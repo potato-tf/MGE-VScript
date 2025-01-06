@@ -56,7 +56,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 All chat commands can be prefixed with any of these characters: `/\.!?`
 
 | Feature | What it do
-|---------|--------|--------|
+|---------|--------|
 | add | Add yourself to a given arena index
 | remove | Remove yourself from the arena you are currently in 
 | stats | view your stats breakdown
