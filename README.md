@@ -27,7 +27,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | Arbitrary team sizes | ❌ |
 | Custom spawn ordering | ❌ |
 | In-Game map configuration tool | ❌ |
-*Only english is supported right now, PRs porting the [Chinese, German, and Russian translations](https://github.com/sapphonie/MGEMod/tree/master/addons/sourcemod/translations) would be appreciated
+*Non-english translations are machine translated, PRs fixing bad translations + porting the [Chinese, German, and Russian translations](https://github.com/sapphonie/MGEMod/tree/master/addons/sourcemod/translations) would be appreciated
 **See below for navmesh warning
 
 ## Installation
@@ -115,5 +115,5 @@ Or for only one arena:
 - More "abstract" arenas (such as the ones on oihguy or chillypunch) will generate nav squares where you may not want them, and will take forever to generate.  Both oihguy and triumph take 30+ mins for every arena.  You have been warned.
 
 ## Localization
-- Localization files are automatically detected by `cl_language` for per-player language settings, if a language is not localized it will default back to the DEFAULT_LANGUAGE constant.
+- Localization files are automatically detected by `cl_language` for per-player language settings, if a string is not localized it will default back to the DEFAULT_LANGUAGE constant.
 - **Non-English translations are machine translated**, please submit pull requests to fix any bad translations.
