@@ -28,6 +28,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | Custom spawn ordering | ❌ |
 | In-Game map configuration tool | ❌ |
 *Only english is supported right now, PRs porting the [Chinese, German, and Russian translations](https://github.com/sapphonie/MGEMod/tree/master/addons/sourcemod/translations) would be appreciated
+**See below for navmesh warning
 
 ## Installation
 - Drop the mapspawn.nut file and mge folder in your tf/scripts/vscripts directory.
@@ -71,8 +72,6 @@ All chat commands can be prefixed with any of these characters: `/\.!?`
 | teamsize | vote to change the team sizes for the current arena.  Syntax would be `!teamsize 2 1` for 2v1.
 | nostats | vote to disable stat tracking for the current arena
 |
-[Legacy map support]
-
 
 ## ELO/Stat Tracking
 ### SECURITY WARNING
