@@ -560,49 +560,42 @@
 
 
 ::CalcELO <- function(winner, loser) {
-
-	if ( !ELO_TRACKING_MODE ||
-		!winner ||
-		!loser  ||
-		!winner.IsValid() ||
-		!loser.IsValid()  ||
-		loser.IsFakeClient() ||
-		winner.IsFakeClient()
-	) return
-	local winner_elo = winner.GetScriptScope().stats.elo
-	local loser_elo = loser.GetScriptScope().stats.elo
+	// Early validation
+	if (!ELO_TRACKING_MODE || !winner || !loser ||
+		!winner.IsValid() || !loser.IsValid() ||
+		winner.IsFakeClient() || loser.IsFakeClient()) {
+		return
+	}
 
 	local winner_stats = winner.GetScriptScope().stats
 	local loser_stats = loser.GetScriptScope().stats
+	local winner_elo = winner_stats.elo
+	local loser_elo = loser_stats.elo
 
-	// ELO formula
-	local El = 1.0 / (pow(10.0, (winner_elo - loser_elo).tofloat() / 400) + 1)
+	// Calculate expected probability
+	local expected_prob = 1.0 / (pow(10.0, (winner_elo - loser_elo).tofloat() / 400) + 1)
 
-	local k = (winner_elo >= 2400) ? 10 : 15
-	local winnerscore = floor(k * El + 0.5)
-	winner_elo += winnerscore
+	// Calculate K-factor based on ELO
+	local k_winner = (winner_elo >= 2400) ? 10 : 15
+	local k_loser = (loser_elo >= 2400) ? 10 : 15
 
-	k = (loser_elo >= 2400) ? 10 : 15
-	local loserscore = floor(k * El + 0.5)
-	loser_elo -= loserscore
+	// Calculate score changes
+	local winner_gain = floor(k_winner * expected_prob + 0.5)
+	local loser_loss = floor(k_loser * expected_prob + 0.5)
 
-	// local arena_index = winner.arena
-	// local time = Time()
+	// Update ELOs
+	winner_stats.elo = winner_elo + winner_gain
+	loser_stats.elo = loser_elo - loser_loss
 
-	if (winner && winner.IsValid())
-		ClientPrint(winner, 3, format("You gained %d points!", winnerscore))
+	// Print results to players
+	if (winner.IsValid())
+		ClientPrint(winner, 3, format("You gained %d points!", winner_gain))
+	if (loser.IsValid())
+		ClientPrint(loser, 3, format("You lost %d points!", loser_loss))
 
-	 if (loser && loser.IsValid())
-		ClientPrint(loser, 3, format("You lost %d points!", loserscore))
-	winner_stats.elo <- winner_elo
-	loser_stats.elo <- loser_elo
+	// Update stats in database/file
 	UpdateStats(winner, winner_stats, false)
 	UpdateStats(loser, loser_stats, false)
-	//This is necessary for when a player leaves a 2v2 arena that is almost done.
-	//I don't want to penalize the player that doesn't leave, so only the winners/leavers ELO will be effected.
-	// local winner_team_slot = (g_iPlayerSlot[winner] > 2) ? (g_iPlayerSlot[winner] - 2) : g_iPlayerSlot[winner]
-	// local loser_team_slot = (g_iPlayerSlot[loser] > 2) ? (g_iPlayerSlot[loser] - 2) : g_iPlayerSlot[loser]
-
 }
 
 ::CalcELO2 <- function(winner, winner2, loser, loser2) {
@@ -643,8 +636,8 @@
 	//     ClientPrint(loser2, 3, format("You lost %d points!", loserscore))
 }
 
-::CalcArenaScore <- function(arena_name) {
-
+::CalcArenaScore <- function(arena_name)
+{
 	local arena = Arenas[arena_name]
 
 	local fraglimit = arena.fraglimit.tointeger()
@@ -946,29 +939,31 @@
 			local team = player.GetTeam()
 			local partial_cap_amount = team == TF_TEAM_RED ? "red_partial_cap_amount" : "blu_partial_cap_amount"
 			local enemy_partial_cap_amount = team == TF_TEAM_RED ? "blu_partial_cap_amount" : "red_partial_cap_amount"
-			local cap_amount = team == TF_TEAM_RED ? "red_cap_amount" : "blu_cap_amount"
+			local cap_amount = team == TF_TEAM_RED ? "red_cap_time" : "blu_cap_time"
 
 			scope.ThinkTable.KothThink <- function()
 			{
 				if (owner_team != team && partial_cap_cooldowntime < Time() && (self.GetOrigin() - point).Length() < radius)
 				{
-					if (owner_team == 0 && arena.Koth.enemy_partial_cap_amount > 0.0)
+					if (arena.Koth[enemy_partial_cap_amount])
 					{
-						arena.Koth.enemy_partial_cap_amount -= KOTH_PARTIAL_CAP_RATE
+						arena.Koth[enemy_partial_cap_amount] -= KOTH_PARTIAL_CAP_RATE
+						partial_cap_cooldowntime = Time() + KOTH_PARTIAL_CAP_INTERVAL
 						return
 					}
-					arena.Koth.partial_cap_amount += KOTH_PARTIAL_CAP_RATE
 
-					if (arena.Koth.partial_cap_amount >= 1.0)
+					arena.Koth[partial_cap_amount] += KOTH_PARTIAL_CAP_RATE
+
+					if (arena.Koth[partial_cap_amount] >= 1.0)
 					{
 						owner_team = team
-						arena.Koth.partial_cap_amount = owner_team == self.GetTeam() ? 0.0 : 0.99
+						arena.Koth[partial_cap_amount] = owner_team == self.GetTeam() ? 0.0 : 0.99
 					}
 					foreach(p, _ in arena.CurrentPlayers)
 					{
-						KOTH_HUD_RED.KeyValueFromString("message", "Capping: " + arena.Koth.red_partial_cap_amount)
+						KOTH_HUD_RED.KeyValueFromString("message", format("Capping: %.2f", arena.Koth.red_partial_cap_amount))
 						KOTH_HUD_RED.AcceptInput("Display", "", p, p)
-						KOTH_HUD_BLU.KeyValueFromString("message", "Capping: " + arena.Koth.blu_partial_cap_amount)
+						KOTH_HUD_BLU.KeyValueFromString("message", format("Capping: %.2f", arena.Koth.blu_partial_cap_amount))
 						KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
 
 					}
@@ -977,25 +972,25 @@
 				}
 				else if (cap_countdown_interval < Time() && owner_team == team)
 				{
-					arena.Koth.cap_amount -= KOTH_COUNTDOWN_RATE
-					if (arena.Koth.cap_amount == 0)
+					arena.Koth[cap_amount] -= KOTH_COUNTDOWN_RATE
+					if (arena.Koth[cap_amount] == 0)
 					{
 						arena.Score[team == TF_TEAM_RED ? 0 : 1] += 1
 						CalcArenaScore(arena_name)
 					}
 					foreach(p, _ in arena.CurrentPlayers)
 					{
-						KOTH_HUD_RED.KeyValueFromString("message", "Cap Time: " + arena.Koth.red_cap_time)
+						KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
 						KOTH_HUD_RED.AcceptInput("Display", "", p, p)
-						KOTH_HUD_BLU.KeyValueFromString("message", "Cap Time: " + arena.Koth.blu_cap_time)
+						KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
 						KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
 					}
 					cap_countdown_interval = Time() + KOTH_COUNTDOWN_INTERVAL
 					return
 				}
-				else if (cap_decay_interval < Time() && partial_cap_amount > 0.0)
+				else if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount] && (self.GetOrigin() - point).Length() > radius)
 				{
-					arena.Koth.partial_cap_amount -= KOTH_DECAY_RATE
+					arena.Koth[partial_cap_amount] -= KOTH_DECAY_RATE
 					cap_decay_interval = Time() + KOTH_DECAY_INTERVAL
 				}
 			}
@@ -1122,10 +1117,11 @@
 
 ::GetLocalizedString <-  function(string, player = null) {
 
-	local str = ""
+	local str = false
 
 	local language = DEFAULT_LANGUAGE
 	local language_cvar = Convars.GetClientConvarValue("cl_language", player.entindex())
+
 	if (player && player.IsValid() && !player.IsFakeClient())
 	{
 		local scope = player.GetScriptScope()
@@ -1133,6 +1129,8 @@
 
 		str = MGE_Localization[language][string]
 	}
+	if (!str) str = MGE_Localization[DEFAULT_LANGUAGE][string]
+
 	return str
 }
 

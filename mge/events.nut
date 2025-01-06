@@ -195,7 +195,7 @@ class MGE_Events
 			local arena = victim_scope.arena_info.arena
 			local arena_name = victim_scope.arena_info.name
 
-			local respawntime = "respawntime" in arena && arena.respawntime != "0" ? arena.respawntime.tointeger() : 0.2
+			local respawntime = "respawntime" in arena && arena.respawntime != "0" ? arena.respawntime.tofloat() : 0.2
 			local fraglimit = arena.fraglimit.tointeger()
 
 			local str = false, hud_str = false
