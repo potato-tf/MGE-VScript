@@ -3,7 +3,7 @@ A fully vanilla compatible rewrite of the MGEMod plugin.  No sourcemod plugins r
 
 The existing MGE plugin is old, not fun to modify, and worst of all, written in SourcePawn (the incantations of the devil).  The goal of this project is to create a drop-in replacement for the SM version for better long term support/stability, ease of use, and generally expanding on the gamemode in ways that were prohibitively complicated before.  PRs and Issues are more than welcome.
 
-The biggest obstacle that obviously cannot be worked around is the lack of a proper detabase connector.  If stat tracking is set to database mode, this gamemode copes by using an external python script to read/write JSON from disk, .  You should be EXTREMELY careful about using this alongside untrusted maps/scripts, see below for more. 
+The biggest obstacle that obviously cannot be worked around is the lack of a proper database connector.  If stat tracking is set to database mode, this gamemode copes by using an external python script to read/write JSON from disk, .  You should be EXTREMELY careful about using this alongside untrusted maps/scripts, see below for more. 
 
 ## Features & Progress
 
