@@ -16,6 +16,7 @@ A fully vanilla compatible rewrite of the MGEMod plugin.  No sourcemod plugins r
 | Plain text ELO/stat tracking | ✅ |
 | Quake-style announcer lines (toggleable) | ✅ |
 | Localization* | ✅ |
+| NavMesh Generation** | ✅ |
 | Database tracking (MySQL) | ❌ |
 | Database tracking (SQLite) | ❌ |
 | Arena leader system for custom rulesets | ❌ |
@@ -83,7 +84,7 @@ Or for only one arena:
 
 ```ent_fire bignet RunScriptCode "MGE_CreateNav(`Badlands Middle`)"```
 
-### WARNING:
+### **WARNING:
 - This is very slow and will freeze your game for every arena
 - More "abstract" arenas (such as the ones on oihguy or chillypunch) will generate nav squares where you may not want them, and will take forever to generate.  Both oihguy and triumph take 30+ mins for every arena.  You have been warned.
 
