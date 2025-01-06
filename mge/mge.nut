@@ -72,16 +72,6 @@ foreach (sound in StockSounds)
 	"__vrefs" : null,
 }
 
-::GlobalThinkTable <- {}
-
-local mge_ent = CreateByClassname("move_rope")
-mge_ent.ValidateScriptScope()
-mge_ent.GetScriptScope().MGEThink <- function() {
-	foreach(name, func in GlobalThinkTable)
-		func()
-}
-AddThinkToEnt(mge_ent, "MGEThink")
-
 ::MGE_Init <- function()
 {
 	printl("[VScript MGEMod] Loaded, moving all active players to spectator")
@@ -141,7 +131,7 @@ AddThinkToEnt(mge_ent, "MGEThink")
 						printl(`Marking Spawn Point: ` + origin)
 				", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), generate_delay, null, null)
 			}
-		
+
 			// Schedule nav generation for current arena
 			EntFire("bignet", "RunScriptCode", format(@"
 				ClientPrint(null, 3, `Areas marked!`)
@@ -150,7 +140,7 @@ AddThinkToEnt(mge_ent, "MGEThink")
 				SendToConsole(`nav_generate_incremental`)
 				ClientPrint(null, 3, `Progress: ` + %d +`/`+ %d)
 			", progress,arenas_len), generate_delay + 0.1)
-	
+
 			yield
 		}
 	} else {
@@ -166,7 +156,7 @@ AddThinkToEnt(mge_ent, "MGEThink")
 					printl(`Marking Spawn Point: ` + origin)
 			", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), generate_delay, null, null)
 		}
-		
+
 		// Schedule nav generation for current arena
 		EntFire("bignet", "RunScriptCode", @"
 			ClientPrint(null, 3, `Areas marked!`)
@@ -179,12 +169,12 @@ AddThinkToEnt(mge_ent, "MGEThink")
 
 ::ResumeNavGeneration <- function() {
 	if (!nav_generation_state.is_running || !nav_generation_state.generator) return
-	
+
 	if (nav_generation_state.generator.getstatus() == "dead") {
 		nav_generation_state.is_running = false
 		return
 	}
-	
+
 	resume nav_generation_state.generator
 }
 
@@ -192,9 +182,9 @@ AddThinkToEnt(mge_ent, "MGEThink")
 	local player = GetListenServerHost()
 	player.SetMoveType(MOVETYPE_NOCLIP, MOVECOLLIDE_DEFAULT)
 
-	if (!Arenas.len()) 
+	if (!Arenas.len())
 		LoadSpawnPoints()
-	
+
 	AddPlayer(player, Arenas_List[0])
 
 	player.ValidateScriptScope()
@@ -205,10 +195,58 @@ AddThinkToEnt(mge_ent, "MGEThink")
 		return 1
 	}
 	AddThinkToEnt(player, "NavThink")
-	
+
 	// Start generating
 	nav_generation_state.generator = ArenaNavGenerator(only_this_arena)
 	nav_generation_state.is_running = true
 }
+
+//EFL_KILLME effectively acts as a way to make any entity act like a preserved entity
+::MGE_HUD <- CreateByClassname("game_text")
+
+MGE_HUD.KeyValueFromString("targetname", "__mge_hud")
+MGE_HUD.KeyValueFromInt("effect", 2)
+MGE_HUD.KeyValueFromString("color", "255 254 255")
+MGE_HUD.KeyValueFromString("color2", "255 254 255")
+MGE_HUD.KeyValueFromFloat("fxtime", 1.0)
+MGE_HUD.KeyValueFromFloat("holdtime", MGE_HUD_HOLDTIME)
+MGE_HUD.KeyValueFromFloat("fadeout", 0.01)
+MGE_HUD.KeyValueFromFloat("fadein", 0.01)
+MGE_HUD.KeyValueFromInt("channel", 4)
+MGE_HUD.KeyValueFromFloat("x", MGE_HUD_POS_X)
+MGE_HUD.KeyValueFromFloat("y", MGE_HUD_POS_Y)
+SetPropBool(MGE_HUD, "m_bForcePurgeFixedupStrings", true)
+MGE_HUD.AddEFlags(EFL_KILLME)
+
+::KOTH_HUD_RED <- CreateByClassname("game_text")
+
+KOTH_HUD_RED.KeyValueFromString("targetname", "__mge_hud_koth_red")
+KOTH_HUD_RED.KeyValueFromInt("effect", 2)
+KOTH_HUD_RED.KeyValueFromString("color", KOTH_RED_HUD_COLOR)
+KOTH_HUD_RED.KeyValueFromString("color2", "255 254 255")
+KOTH_HUD_RED.KeyValueFromFloat("fxtime", 0.02)
+KOTH_HUD_RED.KeyValueFromFloat("holdtime", 1.0)
+KOTH_HUD_RED.KeyValueFromFloat("fadeout", 0.01)
+KOTH_HUD_RED.KeyValueFromFloat("fadein", 0.01)
+KOTH_HUD_RED.KeyValueFromInt("channel", 5)
+KOTH_HUD_RED.KeyValueFromFloat("x", KOTH_HUD_RED_POS_X)
+KOTH_HUD_RED.KeyValueFromFloat("y", KOTH_HUD_RED_POS_Y)
+SetPropBool(KOTH_HUD_RED, "m_bForcePurgeFixedupStrings", true)
+KOTH_HUD_RED.AddEFlags(EFL_KILLME)
+::KOTH_HUD_BLU <- CreateByClassname("game_text")
+
+KOTH_HUD_BLU.KeyValueFromString("targetname", "__mge_hud_koth_blu")
+KOTH_HUD_BLU.KeyValueFromInt("effect", 2)
+KOTH_HUD_BLU.KeyValueFromString("color", KOTH_BLU_HUD_COLOR)
+KOTH_HUD_BLU.KeyValueFromString("color2", "255 254 255")
+KOTH_HUD_BLU.KeyValueFromFloat("fxtime", 0.02)
+KOTH_HUD_BLU.KeyValueFromFloat("holdtime", 1.0)
+KOTH_HUD_BLU.KeyValueFromFloat("fadeout", 0.01)
+KOTH_HUD_BLU.KeyValueFromFloat("fadein", 0.01)
+KOTH_HUD_BLU.KeyValueFromInt("channel", 6)
+KOTH_HUD_BLU.KeyValueFromFloat("x", KOTH_HUD_BLU_POS_X)
+KOTH_HUD_BLU.KeyValueFromFloat("y", KOTH_HUD_BLU_POS_Y)
+SetPropBool(KOTH_HUD_BLU, "m_bForcePurgeFixedupStrings", true)
+KOTH_HUD_BLU.AddEFlags(EFL_KILLME)
 
 MGE_Init()

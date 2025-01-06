@@ -1,7 +1,7 @@
 class MGE_Events
 {
 	chat_commands = {
-		"!add" : function(params) {
+		"add" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 
 			// todo remove
@@ -45,7 +45,7 @@ class MGE_Events
 				}
 			}
 		},
-		"!remove" : function(params) {
+		"remove" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 
@@ -80,16 +80,22 @@ class MGE_Events
 
 		function OnGameEvent_player_say(params)
 		{
-			local chatCommands = MGE_Events.chat_commands
-			local text = params.text.tolower()
+			local chat_commands = MGE_Events.chat_commands
 
-			local splitText = split(text, " ")
+			local split_text = split(params.text.tolower(), " ")
+			local command_only = split_text[0]
+			command_only = command_only.slice(1)
 
-			if (splitText[0][0] != 33) //ASCII for !
-				return
+			local valid_chars = {
+				[33] = "!",
+				[46] = ".",
+				[47] = "/",
+				[63] = "?",
+				[92] = "\\",
+			}
 
-			if (splitText[0] in chatCommands)
-				chatCommands[splitText[0]](params)
+			if (split_text[0][0] in valid_chars && command_only in chat_commands)
+				chat_commands[command_only](params)
 		}
 
 		function OnGameEvent_player_spawn(params)
@@ -127,9 +133,9 @@ class MGE_Events
 					local scope 	 = self.GetScriptScope()
 					local arena      = scope.arena_info.arena
 
-					if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)	
+					if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
 						EntFireByHandle(self, `RunScriptCode`, `SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)`, COUNTDOWN_START_DELAY, null, null)
-					
+
 				", arena_name), -1, null, null)
 
 				SetSpecialArena(player, arena_name)
@@ -139,7 +145,7 @@ class MGE_Events
 				player.SnapEyeAngles(arena.SpawnPoints[idx][1])
 
 				if (arena.State == AS_FIGHT)
-					EmitSoundEx({ 
+					EmitSoundEx({
 						sound_name = SPAWN_SOUND,
 						entity = player,
 						volume = SPAWN_SOUND_VOLUME,
@@ -147,14 +153,17 @@ class MGE_Events
 						sound_level = 65
 					})
 
-				scope.ThinkTable.ScoreThink <- function() {
-					// MGE_ClientPrint(player, 4, "RED Score: "+arena.Score[0]+" BLU Score: "+arena.Score[1]+"\nRed ELO: "+player.GetScriptScope().stats.elo+" BLU ELO: "+player.GetScriptScope().stats.elo)
-					
-					local _players = array(2)
-					foreach (p, _ in arena.CurrentPlayers) _players[p.GetTeam() - 2] = p
-					local str = _players[0] && _players[1] ? format("RED: %d (%d)\nBLU: %d (%d)", arena.Score[0], _players[0].GetScriptScope().stats.elo, arena.Score[1], _players[1].GetScriptScope().stats.elo) : ""
-					MGE_ClientPrint(player, 4, str)
+				local str = ""
+				foreach(p, _ in arena.CurrentPlayers)
+				{
+					local scope = p.GetScriptScope()
+					str += format("%s: %d (%d)\n", scope.Name, arena.Score[p.GetTeam() - 2], scope.stats.elo)
 				}
+				MGE_HUD.KeyValueFromString("message", str)
+				MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+				// MGE_HUD.AcceptInput("Display", "", player, player)
+				EntFireByHandle(MGE_HUD, "Display", "", 0.1, player, player)
+
 				if (arena.IsBBall)
 					EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", 0.1, null, null)
 			}
@@ -197,7 +206,7 @@ class MGE_Events
 				//first blood
 				if (!arena.Score[0] && !arena.Score[1] && !arena.IsBBall && !arena.IsKoth)
 				{
-					hud_str = MGE_Localization.FirstBlood
+					hud_str = GetLocalizedString("FirstBlood", attacker)
 					str = format("vo/announcer_am_firstblood0%d.mp3", RandomInt(1, 6))
 				}
 				//we've hit a killstreak threshold
@@ -206,24 +215,36 @@ class MGE_Events
 					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
 
 					foreach (p, _ in arena.CurrentPlayers)
-						MGE_ClientPrint(p, HUD_PRINTTALK, format(MGE_Localization.Killstreak, attacker_scope.Name, killstreak_total.tostring()))
+						MGE_ClientPrint(p, HUD_PRINTTALK, format(GetLocalizedString("Killstreak", attacker), attacker_scope.Name, killstreak_total.tostring()))
 				}
 				//we've hit an airshot
 				else if (params.rocket_jump && (params.damagebits & DMG_BLAST))
 				{
-					hud_str = MGE_Localization.Airshot
+					hud_str = GetLocalizedString("Airshot", attacker)
 					str = format("vo/announcer_am_killstreak%d.mp3", RandomInt(10, 11))
 				}
 			}
 			if (attacker && attacker != victim)
 			{
-				MGE_ClientPrint(victim, 3, format(MGE_Localization.HPLeft, attacker.GetHealth()))
+				MGE_ClientPrint(victim, 3, format(GetLocalizedString("HPLeft", attacker), attacker.GetHealth()))
 
 				if (str) PlayAnnouncer(attacker, str)
 				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)
+
+				local str = ""
+				foreach(p, _ in arena.CurrentPlayers)
+				{
+					local scope = p.GetScriptScope()
+					str += format("%s: %d (%d)\n", scope.Name, arena.Score[p.GetTeam() - 2], scope.stats.elo)
+				}
+				MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+				MGE_HUD.KeyValueFromString("message", str)
+
+				EntFireByHandle(MGE_HUD, "Display", "", 0.1, attacker, attacker)
+				EntFireByHandle(MGE_HUD, "Display", "", 0.1, victim, victim)
 			}
-			
-			
+
+
 			if (!arena.IsBBall)
 				foreach (p, _ in arena.CurrentPlayers)
 				{
@@ -255,9 +276,10 @@ class MGE_Events
 					BBall_SpawnBall(arena_name, victim.GetFlags() & FL_ONGROUND ? victim.EyePosition() : victim.GetOrigin())
 				}
 			}
-
-			printl("Respawn Time: " + (arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime))
-			EntFireByHandle(victim, "RunScriptCode", "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime, null, null)
+			if (!arena.IsAmmomod)
+				EntFireByHandle(victim, "RunScriptCode", "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime, null, null)
+			else
+				EntFire("bignet", "RunScriptCode", format("SetArenaState(%s, AS_COUNTDOWN)", arena_name), AMMOMOD_RESPAWN_DELAY)
 		}
 
 		function OnGameEvent_player_team(params)
@@ -286,7 +308,7 @@ class MGE_Events
 			// 		print("new velocity: " + victim.GetAbsVelocity())
 			// 	}
 
-				
+
 			if ("endif" in arena && arena.endif == "1")
 			{
 				if (attacker != victim && TraceLine(victim.GetOrigin(), victim.GetOrigin() - Vector(0, 0, ENDIF_HEIGHT_THRESHOLD), victim) == 1 && params.damage_type & DMG_BLAST)
@@ -303,7 +325,8 @@ class MGE_Events
 			local victim_scope = victim.GetScriptScope()
 			local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
 
-			//set this here instead of OnTakeDamage since damage_force isn't set until OnTakeDamage
+			//set this here instead of OnTakeDamage since damage_force isn't set until after damage is applied
+			//TODO: test this again, it wasn't working before due to multiplying vectors correctly and might work fine in OnTakeDamage
 			if ("endif" in arena && arena.endif == "1")
 			{
 				if (!("midair" in arena) || arena.midair == "0")

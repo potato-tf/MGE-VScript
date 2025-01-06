@@ -40,6 +40,7 @@
 	local toscope = {
 		ThinkTable = {},
 		Name       = Convars.GetClientConvarValue("name", player.entindex()),
+		Language   = Convars.GetClientConvarValue("cl_language", player.entindex()),
 		arena_info = null,
 		queue      = null,
 		stats      = { elo = -INT_MAX },
@@ -83,7 +84,7 @@
 	else
 		ForceChangeClass(player, ("scout" in classes) ? TF_CLASS_SCOUT : ArenaClasses.find(classes[0]))
 
-	ClientPrint(player, 3, format(MGE_Localization.ClassIsNotAllowed, newclass))
+	ClientPrint(player, 3, format(GetLocalizedString("ClassIsNotAllowed", player), newclass))
 }
 
 // tointeger() allows trailing garbage (e.g. "123abc")
@@ -149,6 +150,8 @@
 
 		if (datatable.IsBBall)
 		{
+			//alternative keyvalues for bball logic
+			//if you intend on adding > 8 spawns, you will need to replace your current "9" - "13" entries with these
 			local bball_points = {
 				neutral_home = "bball_home" in datatable ? datatable.bball_home : datatable["9"],
 				red_score_home = "bball_home_red" in datatable ? datatable.bball_home_red : datatable["10"],
@@ -171,12 +174,15 @@
 		}
 		if (datatable.IsKoth)
 		{
+			//alternative keyvalues for KOTH logic
+			//koth_radius is a new kv that you can set per-arena
 			local koth_points = {
-				cap_point = "koth_cap" in datatable ? datatable.koth_cap : datatable["7"]
+				//see BBall notes about adding more spawns, koth uses the final index for cap points
+				cap_point = "koth_cap" in datatable ? datatable.koth_cap : ""
 				cap_radius = "koth_radius" in datatable ? datatable.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
 
 				red_cap_time = KOTH_START_TIME_RED
-				blue_cap_time = KOTH_START_TIME_BLUE
+				blu_cap_time = KOTH_START_TIME_BLUE
 				owner_team = 0
 
 				blu_partial_cap_amount = 0.0
@@ -186,8 +192,6 @@
 
 				is_overtime = false
 			}
-			local split_cap = split(koth_points.cap_point, " ").apply( @(str) str.tofloat() )
-			koth_points.cap_point = Vector(split_cap[0], split_cap[1], split_cap[2])
 			datatable.Koth <- koth_points
 		}
 		// Grab spawn points
@@ -199,7 +203,7 @@
 				try
 				{
 
-					if (datatable.IsBBall && spawn_idx > BBALL_MAX_SPAWNS) continue
+					if ((datatable.IsBBall && spawn_idx > BBALL_MAX_SPAWNS) || (datatable.IsKoth && spawn_idx > KOTH_MAX_SPAWNS)) continue
 
 					local split_spawns = split(v, " ", true).apply( @(str) str.tofloat() )
 
@@ -222,6 +226,15 @@
 					printf("[VSCRIPT MGEMod] Warning: Data parsing for arena '%s' failed: %s\nkey: %s, val: %s\n", arena_name, e.tostring(), k, v.tostring())
 			}
 		}
+		local idx = (datatable.SpawnPoints.len() + 1).tostring()
+		if (datatable.IsKoth && idx in datatable)
+		{
+			// printl(arena_name)
+			printl(datatable.IsKoth && idx in datatable)
+			// printl(datatable.SpawnPoints.len())
+			local cap_point = split(datatable[idx], " ").apply( @(str) str.tofloat() )
+			datatable.Koth.cap_point = Vector(cap_point[0], cap_point[1], cap_point[2])
+		}
 	}
 }
 
@@ -231,24 +244,24 @@
 	local bball_points = arena.BBall
 	local last_score_team = arena.BBall.last_score_team
 
-	local ball_ground = CreateByClassname("tf_halloween_pickup")
+	local ground_ball = CreateByClassname("tf_halloween_pickup")
 
-	ball_ground.KeyValueFromString("pickup_sound", BBALL_PICKUP_SOUND)
-	ball_ground.KeyValueFromString("pickup_particle", BBALL_PARTICLE_PICKUP_GENERIC)
-	ball_ground.KeyValueFromString("powerup_model", BBALL_BALL_MODEL)
+	ground_ball.KeyValueFromString("pickup_sound", BBALL_PICKUP_SOUND)
+	ground_ball.KeyValueFromString("pickup_particle", BBALL_PARTICLE_PICKUP_GENERIC)
+	ground_ball.KeyValueFromString("powerup_model", BBALL_BALL_MODEL)
 
 	//I did this specifically to annoy mince
-	ball_ground.SetOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
+	ground_ball.SetOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
 
-	AddOutput(ball_ground, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self);", 0.0, 1)
-	AddOutput(ball_ground, "OnPlayerTouch", "!self", "Kill", "", SINGLE_TICK, 1)
+	AddOutput(ground_ball, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self);", 0.0, 1)
+	AddOutput(ground_ball, "OnPlayerTouch", "!self", "Kill", "", SINGLE_TICK, 1)
 
-	if ("ball_ground" in arena.BBall && arena.BBall.ball_ground.IsValid())
-		arena.BBall.ball_ground.Kill()
+	if ("ground_ball" in arena.BBall && arena.BBall.ground_ball.IsValid())
+		arena.BBall.ground_ball.Kill()
 
-	arena.BBall.ball_ground <- ball_ground
+	arena.BBall.ground_ball <- ground_ball
 
-	EntFireByHandle(ball_ground, "RunScriptCode", "DispatchSpawn(self)", 0.2, null, null)
+	EntFireByHandle(ground_ball, "RunScriptCode", "DispatchSpawn(self)", 0.2, null, null)
 }
 
 ::BBall_Pickup <- function(player)
@@ -402,13 +415,18 @@
 
 	RemovePlayer(player, false)
 
-	MGE_ClientPrint(player, 3, format(MGE_Localization.ChoseArena, arena_name))
+	MGE_ClientPrint(player, 3, GetLocalizedString("ChoseArena", player))
 
 	// Enough room, add to arena
 	if (current_players.len() < arena.MaxPlayers)
 	{
 		AddToArena(player, arena_name)
-		local str = ELO_TRACKING_MODE ? format(MGE_Localization.JoinsArena, scope.Name, scope.stats.elo.tostring(), arena_name) : format(MGE_Localization.JoinsArenaNoStats, scope.Name, arena_name)
+		local name = scope.Name
+		local elo = scope.stats.elo
+		printl(arena_name)
+		local str = ELO_TRACKING_MODE ?
+			format(GetLocalizedString("JoinsArena", player), name, elo.tostring(), arena_name) :
+			format(GetLocalizedString("JoinsArenaNoStats", player), scope.Name, arena_name)
 		MGE_ClientPrint(null, 3, str)
 	}
 	// Add to queue
@@ -418,7 +436,7 @@
 		scope.queue <- arena.Queue
 
 		local idx = arena.Queue.len() - 1
-		local str = (idx == 0) ? format(MGE_Localization.NextInLine, arena.Queue.len().tostring()) : format(MGE_Localization.InLine, arena.Queue.len().tostring())
+		local str = (idx == 0) ? format(GetLocalizedString("NextInLine", player), arena.Queue.len().tostring()) : format(GetLocalizedString("InLine", player), arena.Queue.len().tostring())
 		MGE_ClientPrint(player, 3, str)
 	}
 }
@@ -465,6 +483,7 @@
 	player.ForceRespawn()
 
 	current_players[player] <- scope.stats.elo
+	// EntFireByHandle(KOTH_HUD_BLU, "RunScriptCode", "DispatchSpawn(self); self.RemoveEFlags(EFL_KILLME)", 1.0, null, null)
 }
 
 ::RemovePlayer <- function(player, changeteam=true)
@@ -536,7 +555,7 @@
 	SetArenaState(arena_name, AS_IDLE)
 
 	foreach(i, p in queue)
-		MGE_ClientPrint(p, 3, format(MGE_Localization.InLine, (i + 1).tostring()))
+		MGE_ClientPrint(p, 3, format(GetLocalizedString("InLine", p), (i + 1).tostring()))
 }
 
 
@@ -651,7 +670,7 @@
 	loser_scope.won_last_match = false
 	winner_scope.won_last_match = true
 
-	MGE_ClientPrint(null, 3, format(MGE_Localization.XdefeatsY,
+	MGE_ClientPrint(null, 3, format(GetLocalizedString("XdefeatsY", null),
 		winner_scope.Name,
 		winner_scope.stats.elo.tostring(),
 		loser_scope.Name,
@@ -759,10 +778,7 @@
 
 	local arenaStates = {
 		[AS_IDLE] = function() {
-
-			//reset score
 			arena.Score <- array(2, 0)
-			return
 		},
 		[AS_COUNTDOWN] = function() {
 
@@ -770,8 +786,8 @@
 
 			if (arena.IsBBall)
 			{
-				if (arena.BBall.ball_ground.IsValid())
-					arena.BBall.ball_ground.SetOrigin(arena.BBall.neutral_home)
+				if (arena.BBall.ground_ball.IsValid())
+					arena.BBall.ground_ball.SetOrigin(arena.BBall.neutral_home)
 
 				if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
 					p.GetScriptScope().ball_ent.Kill()
@@ -794,6 +810,7 @@
 				DispatchSpawn(arena.BBall.bball_pickup_b)
 			}
 
+			local _players = array(arena.MaxPlayers, 0.0)
 			foreach(p, _ in arena.CurrentPlayers)
 			{
 
@@ -830,7 +847,7 @@
 						", arena_name, COUNTDOWN_SOUND, COUNTDOWN_SOUND_VOLUME), i, null, null)
 					}
 				}
-
+				_players[p.GetTeam() - 2] = p
 				EntFireByHandle(p, "RunScriptCode", format(@"
 
 					local arena_name = `%s`
@@ -853,6 +870,15 @@
 				", arena_name, round_start_sound, ROUND_START_SOUND_VOLUME), countdown_time, null, null)
 			}
 
+			local str = ""
+			foreach(_p in _players)
+				str += format("%s: %d (%d)\n", _p.GetScriptScope().Name, arena.Score[_p.GetTeam() - 2], _p.GetScriptScope().stats.elo)
+
+			MGE_HUD.KeyValueFromString("message", str)
+
+			foreach(_p in _players)
+				MGE_HUD.AcceptInput("Display", "", _p, _p)
+
 			if (arena.IsBBall)
 				BBall_SpawnBall(arena_name)
 
@@ -860,23 +886,15 @@
 		[AS_FIGHT] = function() {
 			foreach(p, _ in arena.CurrentPlayers)
 			{
-				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
+				local scope = p.GetScriptScope()
+				local round_start_sound = !ENABLE_ANNOUNCER || !scope.enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
 				PlayAnnouncer(p, round_start_sound)
 
 				if (arena.IsBBall)
 				{
-					if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
-						p.GetScriptScope().ball_ent.Kill()
+					if (scope.ball_ent && scope.ball_ent.IsValid())
+						scope.ball_ent.Kill()
 				}
-
-				// function UnfreezePlayer(player)
-				// {
-				// 	player.RemoveCustomAttribute("no_attack")
-				// 	player.RemoveCustomAttribute("no_jump")
-				// 	player.RemoveCustomAttribute("no_duck")
-				// 	player.RemoveFlags(FL_FROZEN|FL_ATCONTROLS)
-				// }
-				// UnfreezePlayer(p)
 			}
 		},
 		[AS_AFTERFIGHT] = function() {
@@ -885,7 +903,7 @@
 				//20-0
 				if (arena.Score.find(arena.fraglimit.tointeger()) && arena.Score.find(0))
 				{
-					local sound = p.GetScriptScope().won_last_match ? format("vo/announcer_am_flawlessvictory%d.mp3", RandomInt(1, 3)) : format("vo/announcer_am_flawlessdefeat%d.mp3", RandomInt(1, 4))
+					local sound = p.GetScriptScope().won_last_match ? format("vo/announcer_am_flawlessvictory0%d.mp3", RandomInt(1, 3)) : format("vo/announcer_am_flawlessdefeat0%d.mp3", RandomInt(1, 4))
 					PlayAnnouncer(p, sound)
 				}
 				//left early
@@ -898,10 +916,10 @@
 			{
 				EntFireByHandle(arena.BBall.bball_pickup_r, "Kill", "", -1, null, null)
 				EntFireByHandle(arena.BBall.bball_pickup_b, "Kill", "", -1, null, null)
-				EntFireByHandle(arena.BBall.ball_ground, "Kill", "", -1, null, null)
+				EntFireByHandle(arena.BBall.ground_ball, "Kill", "", -1, null, null)
 			}
 
-			EntFire("worldspawn", "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
+			EntFire("bignet", "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
 		},
 	}
 	arenaStates[state]()
@@ -920,34 +938,65 @@
 		{
 			local partial_cap_cooldowntime = 0.0
 			local cap_countdown_interval = 0.0
+			local cap_decay_interval = 0.0
 
 			local radius = arena.Koth.cap_radius
 			local point = arena.Koth.cap_point
 			local owner_team = arena.Koth.owner_team
 			local team = player.GetTeam()
+			local partial_cap_amount = team == TF_TEAM_RED ? "red_partial_cap_amount" : "blu_partial_cap_amount"
+			local enemy_partial_cap_amount = team == TF_TEAM_RED ? "blu_partial_cap_amount" : "red_partial_cap_amount"
+			local cap_amount = team == TF_TEAM_RED ? "red_cap_amount" : "blu_cap_amount"
 
-			scope.ThinkTable.KothThink <- function() {
-				if ((self.GetOrigin() - point).Length() < radius)
+			scope.ThinkTable.KothThink <- function()
+			{
+				if (owner_team != team && partial_cap_cooldowntime < Time() && (self.GetOrigin() - point).Length() < radius)
 				{
-					if (owner_team != team && partial_cap_cooldowntime < Time())
+					if (owner_team == 0 && arena.Koth.enemy_partial_cap_amount > 0.0)
 					{
-						arena.Koth[team == TF_TEAM_RED ? "red_partial_cap_amount" : "blu_partial_cap_amount"] += 1
-						partial_cap_cooldowntime = Time() + KOTH_PARTIAL_CAP_RATE
+						arena.Koth.enemy_partial_cap_amount -= KOTH_PARTIAL_CAP_RATE
+						return
 					}
+					arena.Koth.partial_cap_amount += KOTH_PARTIAL_CAP_RATE
 
-					else if (owner_team == team)
+					if (arena.Koth.partial_cap_amount >= 1.0)
 					{
-						if (cap_countdown_interval < Time())
-						{
-							arena.Koth[team == TF_TEAM_RED ? "red_cap_time" : "blue_cap_time"] -= 1
-							if (arena.Koth[team == TF_TEAM_RED ? "red_cap_time" : "blue_cap_time"] <= 0)
-							{
-								arena.Score[team == TF_TEAM_RED ? 1 : 0] += 1
-								CalcArenaScore(arena_name)
-							}
-							cap_countdown_interval = Time() + KOTH_COUNTDOWN_INTERVAL
-						}
+						owner_team = team
+						arena.Koth.partial_cap_amount = owner_team == self.GetTeam() ? 0.0 : 0.99
 					}
+					foreach(p, _ in arena.CurrentPlayers)
+					{
+						KOTH_HUD_RED.KeyValueFromString("message", "Capping: " + arena.Koth.red_partial_cap_amount)
+						KOTH_HUD_RED.AcceptInput("Display", "", p, p)
+						KOTH_HUD_BLU.KeyValueFromString("message", "Capping: " + arena.Koth.blu_partial_cap_amount)
+						KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
+
+					}
+					partial_cap_cooldowntime = Time() + KOTH_PARTIAL_CAP_INTERVAL
+					return
+				}
+				else if (cap_countdown_interval < Time() && owner_team == team)
+				{
+					arena.Koth.cap_amount -= KOTH_COUNTDOWN_RATE
+					if (arena.Koth.cap_amount == 0)
+					{
+						arena.Score[team == TF_TEAM_RED ? 0 : 1] += 1
+						CalcArenaScore(arena_name)
+					}
+					foreach(p, _ in arena.CurrentPlayers)
+					{
+						KOTH_HUD_RED.KeyValueFromString("message", "Cap Time: " + arena.Koth.red_cap_time)
+						KOTH_HUD_RED.AcceptInput("Display", "", p, p)
+						KOTH_HUD_BLU.KeyValueFromString("message", "Cap Time: " + arena.Koth.blu_cap_time)
+						KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
+					}
+					cap_countdown_interval = Time() + KOTH_COUNTDOWN_INTERVAL
+					return
+				}
+				else if (cap_decay_interval < Time() && partial_cap_amount > 0.0)
+				{
+					arena.Koth.partial_cap_amount -= KOTH_DECAY_RATE
+					cap_decay_interval = Time() + KOTH_DECAY_INTERVAL
 				}
 			}
 		}
@@ -1071,6 +1120,22 @@
 	})
 }
 
+::GetLocalizedString <-  function(string, player = null) {
+
+	local str = ""
+
+	local language = DEFAULT_LANGUAGE
+	local language_cvar = Convars.GetClientConvarValue("cl_language", player.entindex())
+	if (player && player.IsValid() && !player.IsFakeClient())
+	{
+		local scope = player.GetScriptScope()
+		language =  "Language" in scope ? scope.Language : language_cvar
+
+		str = MGE_Localization[language][string]
+	}
+	return str
+}
+
 ::MGE_ClientPrint <- function(player, target, localized_string) {
 	local str = localized_string in MGE_Localization ? MGE_Localization[localized_string] : localized_string
 	ClientPrint(player, target, str)
@@ -1118,11 +1183,11 @@
 			callback=function(response, error) {
 				if (typeof(response) != "array" || !response.len())
 				{
-					printf(MGE_Localization.VPI_ReadError, GetPropString(player, "m_szNetworkIDString"))
+					printf(GetLocalizedString("VPI_ReadError", player), GetPropString(player, "m_szNetworkIDString"))
 					return
 				}
 				scope.stats <- response[0]
-				printf(MGE_Localization.VPI_ReadSuccess, GetPropString(player, "m_szNetworkIDString"))
+				printf(GetLocalizedString("VPI_ReadSuccess", player), GetPropString(player, "m_szNetworkIDString"))
 			}
 		})
 	}
@@ -1136,7 +1201,7 @@
 
 	if (!("stats" in scope))
 	{
-		printf(MGE_Localization.Error_StatsNotFound, steam_id)
+		printf(GetLocalizedString("Error_StatsNotFound", player), steam_id)
 		GetStats(player)
 		return
 	}
@@ -1165,7 +1230,7 @@
 					additive=additive
 				},
 				callback=function(response, error) {
-					printf(MGE_Localization.VPI_WriteSuccess, GetPropString(player, "m_szNetworkIDString"))
+					printf(GetLocalizedString("VPI_WriteSuccess", player), GetPropString(player, "m_szNetworkIDString"))
 				}
 			})
 		break

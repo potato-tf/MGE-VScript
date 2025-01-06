@@ -6,24 +6,30 @@ A fully vanilla compatible rewrite of the MGEMod plugin.  No sourcemod plugins r
 | Feature | Status |
 |---------|--------|
 | [Legacy map support](https://github.com/sapphonie/MGEMod/blob/master/addons/sourcemod/configs/mgemod_spawns.cfg) | ✅ |
-| Quake-style announcer lines (toggleable) | ✅ |
 | Endif | ✅ |
 | Ammomod | ✅ |
 | Infammo | ✅ |
+| 4Player | ✅ |
 | Turris | ✅ |
 | BBall | ✅ |
-| Plain text ELO/stat tracking | ✅ |
-| Database stat tracking support | ❌ |
-| 4Player | ❌ |
 | Koth | ❌ |
+| Plain text ELO/stat tracking | ✅ |
+| Quake-style announcer lines (toggleable) | ✅ |
+| Localization* | ✅ |
+| Database tracking (MySQL) | ❌ |
+| Database tracking (SQLite) | ❌ |
 | Arena leader system for custom rulesets | ❌ |
 | Arbitrary team sizes | ❌ |
 | Player-configurable spawn ordering | ❌ |
 | In-Game map configuration tool | ❌ |
+* Only english is supported right now, PRs porting the [Chinese, German, and Russian translations](https://github.com/sapphonie/MGEMod/tree/master/addons/sourcemod/translations) would be appreciated
 
 ## Installation
 - Drop the mapspawn.nut file and mge folder in your tf/scripts/vscripts directory.
 - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
+
+## Configuration/Modifying game rules
+- Most arena rules can be configured at the top of the `mge/constants.nut` file
 
 ## Converting your map configs
 - Open a copy of `mgemod_spawns.cfg` in VSCode/NP++/any text editor that supports regex search/replace, enable regex
@@ -60,6 +66,7 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 ### Database
 - Database tracking uses [VScript-Python Interface](https://github.com/potato-tf/VPI) to send data from vscript to python through the filesystem.
     - Install Python 3.10 or newer if you don't already have it
+    - Install MySQL (SQLite is currently not supported)
     - Install the `aiomysql` module
     - Add your database credentials to `tf/scripts/mge_python/vpi.py` and run this script constantly in the background, this is your database connection
         - You should create a systemd service for this on linux, or whatever the windows equivalent is
@@ -79,3 +86,7 @@ Or for only one arena:
 ### WARNING:
 - This is very slow and will freeze your game for every arena
 - More "abstract" arenas (such as the ones on oihguy or chillypunch) will generate nav squares where you may not want them, and will take forever to generate.  Both oihguy and triumph take 30+ mins for every arena.  You have been warned.
+
+## Localization
+- Localization files are automatically detected by `cl_language` for per-player language settings, if a language is not localized it will default back to the DEFAULT_LANGUAGE constant.
+- **Non-English translations are machine translated**, please submit pull requests to fix any bad translations.

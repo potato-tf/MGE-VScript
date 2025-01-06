@@ -1,3 +1,4 @@
+
 ::CONST <- getconsttable()
 ::ROOT <- getroottable()
 
@@ -5,6 +6,8 @@ CONST.setdelegate({ _newslot = @(k, v) compilestring("const " + k + "=" + (typeo
 CONST.MAX_CLIENTS <- MaxClients().tointeger()
 
 //CONFIG CONSTANTS
+const DEFAULT_LANGUAGE = "english"
+
 const DEFAULT_FRAGLIMIT = 20
 const DEFAULT_ELO 		= 1600
 
@@ -27,28 +30,67 @@ const COUNTDOWN_SOUND_VOLUME = 0.5
 const ROUND_START_SOUND 	   = "ui/chime_rd_2base_neg.wav"
 const ROUND_START_SOUND_VOLUME = 0.5
 
+const MGE_HUD_POS_X = 0.2
+const MGE_HUD_POS_Y = 0.15
+const MGE_HUD_HOLDTIME = 5.0
+
+const AMMOMOD_RESPAWN_DELAY  = 2.0
+
 const TURRIS_REGEN_TIME 	 = 5.0
 
 const ENDIF_HEIGHT_THRESHOLD = 250
-ROOT. ENDIF_FORCE_MULT 		 <- Vector(1.1, 1.1, 1.31)
+ROOT. ENDIF_FORCE_MULT 		<- Vector(1.1, 1.1, 1.31) //don't look too hard I'm a constant I swear
 
-const BBALL_SHOW_CARRIER_BALL 		= false
+//NOTE:
+//Editing this constant alone is not enough to add more spawns to arenas with fixed spawn rotations like BBall
+//Ctrl + F for "bball_points" in functions.nut to see how you will need to update your map config to support this
+
+// BBall uses index 9-13 for round logic
+// based on the bball_points table, index "9" for example can be replaced with "bball_home",
+// the "9" index can now be used for a 9th spawn point
+
+//SourceMod MGE uses the same array for spawn points as it does for round logic
+//VScript MGE uses a table for arena data with descriptive names, allowing you to add more spawns without issue
+//For better legacy compatibility with existing map configs we still read the old indexes
 const BBALL_MAX_SPAWNS 				= 8
+
+
 const BBALL_HOOP_SIZE 				= 30
 const BBALL_PICKUP_SOUND_VOLUME 	= 1.0
 const BBALL_PICKUP_SOUND			= "ui/chime_rd_2base_neg.wav"
 const BBALL_BALL_MODEL				= "models/flag/ticket_case.mdl"
 const BBALL_PARTICLE_PICKUP_RED 	= "teleported_red"
 const BBALL_PARTICLE_PICKUP_BLUE 	= "teleported_blue"
-const BBALL_PARTICLE_PICKUP_GENERIC = "teleported_generic"
+const BBALL_PARTICLE_PICKUP_GENERIC = ""
 const BBALL_PARTICLE_TRAIL_RED 		= "player_intel_trail_red"
 const BBALL_PARTICLE_TRAIL_BLUE 	= "player_intel_trail_blue"
 
-const KOTH_DEFAULT_CAPTURE_POINT_RADIUS = 300
+//NOTE:
+//See BBall notes about adding more spawns
+
+// KOTH uses index 7 for the cap point, replace "7" with "koth_cap" to use a 7th spawn point
+const KOTH_MAX_SPAWNS 				 	= 6
+
+const KOTH_DEFAULT_CAPTURE_POINT_RADIUS = 256
+const KOTH_CAPTURE_POINT_MAX_HEIGHT		= 128
+
 const KOTH_PARTIAL_CAP_RATE 			= 0.1
+const KOTH_PARTIAL_CAP_INTERVAL 		= 0.1
+
+const KOTH_COUNTDOWN_RATE				= 1.0
 const KOTH_COUNTDOWN_INTERVAL 			= 1.0
+
 const KOTH_START_TIME_RED 				= 180
 const KOTH_START_TIME_BLUE 				= 180
+
+const KOTH_RED_HUD_COLOR				= "255 80 80"
+const KOTH_BLU_HUD_COLOR				= "80 80 255"
+
+const KOTH_HUD_RED_POS_X				= 0.6
+const KOTH_HUD_RED_POS_Y				= 0.4
+
+const KOTH_HUD_BLU_POS_X				= 0.6
+const KOTH_HUD_BLU_POS_Y				= 0.3
 
 //spawn shuffle modes
 //0 = none, spawns are iterated over in consistent order based on provided config
