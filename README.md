@@ -64,6 +64,7 @@ All chat commands can be prefixed with any of these characters: `/\.!?`
 | addbots/removebots | add/remove training bots from arena
 | teamsize | vote to change the team sizes for the current arena.  Syntax would be `!teamsize 2 1` for 2v1.
 | nostats | vote to disable stat tracking for the current arena
+|
 [Legacy map support]
 
 
