@@ -44,7 +44,7 @@ A fully vanilla compatible rewrite of the MGEMod plugin.  No sourcemod plugins r
     - Replace pattern: `$1"$2": "$3"`
     - Replace All
 
-- **CUSTOM MAPS NEED TO BE INDEXED MANUALLY!** See the `mgemod_spawns.cfg` file for an example of how to index your map
+- **CUSTOM MAPS NEED TO BE INDEXED MANUALLY!** See the `mge/cfg/mgemod_spawns.nut` file for an example of how to index your map
     - Failing to index your maps will result in !add being unordered, rendering everyone's !add binds useless
 
 ## ELO/Stat Tracking
