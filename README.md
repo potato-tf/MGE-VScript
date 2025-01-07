@@ -32,7 +32,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 
 ## Installation
 - Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.
-  - if you are using `mapspawn.nut` for something else, rename the `mapspawn.nut` file to something else, for example `mge_init`, and add `script_execute mge_init` to your `server.cfg` file 
+  - if you are using `mapspawn.nut` already, rename the MGE repository and add `script_execute new_filename_here` to your `server.cfg` file 
   - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
 
   
