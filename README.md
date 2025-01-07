@@ -31,7 +31,8 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 **See below for navmesh warning
 
 ## Installation
-- Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.
+- Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.  That's it
+
   - if you are using `mapspawn.nut` already, rename the mge mapspawn file and add `script_execute new_filename_here` to your `server.cfg` file 
   - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
 
