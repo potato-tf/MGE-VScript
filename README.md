@@ -31,8 +31,11 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 **See below for navmesh warning
 
 ## Installation
-- Drop the mapspawn.nut file and mge folder in your tf/scripts/vscripts directory.
-- If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
+- Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.
+  - if you are using `mapspawn.nut` for something else, rename the `mapspawn.nut` file to something else, for example `mge_init`, and add `script_execute mge_init` to your `server.cfg` file 
+  - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
+
+  
 
 ## Configuration/Modifying game rules
 - Most arena rules can be configured at the top of the `mge/constants.nut` file
