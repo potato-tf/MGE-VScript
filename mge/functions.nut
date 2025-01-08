@@ -935,17 +935,21 @@
 
 			local radius = arena.Koth.cap_radius
 			local point = arena.Koth.cap_point
-			local owner_team = arena.Koth.owner_team
 			local team = player.GetTeam()
 			local partial_cap_amount = team == TF_TEAM_RED ? "red_partial_cap_amount" : "blu_partial_cap_amount"
 			local enemy_partial_cap_amount = team == TF_TEAM_RED ? "blu_partial_cap_amount" : "red_partial_cap_amount"
 			local cap_amount = team == TF_TEAM_RED ? "red_cap_time" : "blu_cap_time"
+			local enemy_cap_amount = team == TF_TEAM_RED ? "blu_cap_time" : "red_cap_time"
 
 			scope.ThinkTable.KothThink <- function()
 			{
+				local owner_team = arena.Koth.owner_team
+
+				if (!player.IsAlive()) return
+
 				if (owner_team != team && partial_cap_cooldowntime < Time() && (self.GetOrigin() - point).Length() < radius)
 				{
-					if (arena.Koth[enemy_partial_cap_amount])
+					if (arena.Koth[enemy_partial_cap_amount] > 0.0)
 					{
 						arena.Koth[enemy_partial_cap_amount] -= KOTH_PARTIAL_CAP_RATE
 						partial_cap_cooldowntime = Time() + KOTH_PARTIAL_CAP_INTERVAL
@@ -956,15 +960,26 @@
 
 					if (arena.Koth[partial_cap_amount] >= 1.0)
 					{
-						owner_team = team
-						arena.Koth[partial_cap_amount] = owner_team == self.GetTeam() ? 0.0 : 0.99
+						arena.Koth.owner_team = team
+						// arena.Koth[partial_cap_amount] = owner_team == self.GetTeam() ? 0.0 : 0.99
+						arena.Koth[partial_cap_amount] = 0.0
 					}
 					foreach(p, _ in arena.CurrentPlayers)
 					{
-						KOTH_HUD_RED.KeyValueFromString("message", format("Capping: %.2f", arena.Koth.red_partial_cap_amount))
-						KOTH_HUD_RED.AcceptInput("Display", "", p, p)
-						KOTH_HUD_BLU.KeyValueFromString("message", format("Capping: %.2f", arena.Koth.blu_partial_cap_amount))
-						KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
+						local _team = p.GetTeam()
+						local ent = _team == TF_TEAM_RED ? KOTH_HUD_RED : KOTH_HUD_BLU
+						local str = ""
+
+						local _cap_time = arena.Koth[enemy_cap_amount] ? arena.Koth[enemy_cap_amount] : arena.Koth[enemy_partial_cap_amount]
+						if (owner_team == _team)
+						{
+							ent.KeyValueFromString("message", format("Cap Time: %.2f", arena.Koth[enemy_cap_amount]))
+							ent.AcceptInput("Display", "", p, p)
+							continue
+						}
+
+						ent.KeyValueFromString("message", format("Partial Cap: %.2f", arena.Koth[partial_cap_amount]))
+						ent.AcceptInput("Display", "", p, p)
 
 					}
 					partial_cap_cooldowntime = Time() + KOTH_PARTIAL_CAP_INTERVAL
@@ -972,10 +987,11 @@
 				}
 				else if (cap_countdown_interval < Time() && owner_team == team)
 				{
+					printl(owner_team + " : " + team + " : " + player.GetScriptScope().Name)
 					arena.Koth[cap_amount] -= KOTH_COUNTDOWN_RATE
 					if (arena.Koth[cap_amount] == 0)
 					{
-						arena.Score[team == TF_TEAM_RED ? 0 : 1] += 1
+						arena.Score[team == TF_TEAM_RED ? 0 : 1]++
 						CalcArenaScore(arena_name)
 					}
 					foreach(p, _ in arena.CurrentPlayers)

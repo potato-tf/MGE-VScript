@@ -184,6 +184,8 @@ class MGE_Events
 
 		function OnGameEvent_player_death(params)
 		{
+			if (REMOVE_DROPPED_WEAPONS) EntFire("tf_dropped_weapon", "Kill")
+			EntFire("tf_ammo_pack", "Kill")
 			local victim = GetPlayerFromUserID(params.userid)
 			local attacker = GetPlayerFromUserID(params.attacker)
 

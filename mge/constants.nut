@@ -1,25 +1,31 @@
-
-::CONST <- getconsttable()
 ::ROOT <- getroottable()
-
-CONST.setdelegate({ _newslot = @(k, v) compilestring("const " + k + "=" + (typeof(v) == "string" ? ("\"" + v + "\"") : v))() })
-CONST.MAX_CLIENTS <- MaxClients().tointeger()
 
 //CONFIG CONSTANTS
 const DEFAULT_LANGUAGE = "english"
 
+//general
 const DEFAULT_FRAGLIMIT = 20
 const DEFAULT_ELO 		= 1600
-
-const MAX_CLEAR_SPAWN_RETRIES = 10
-
+const REMOVE_DROPPED_WEAPONS = true
 const ELO_TRACKING_MODE = 1 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
+//spawn shuffle modes
+//0 = none, spawns are iterated over in consistent order based on provided config
+//1 = random shuffle, iterates over a randomly shuffled array of spawns (classic MGE plugin behavior)
+//2 = random except, picks a truly random spawn so long as it's not the last one we spawned at
+//3 = random, no shuffling (can repeat spawns)
+const SPAWN_SHUFFLE_MODE = 1
+const SPAWN_SOUND = "items/spawn_item.wav"
+const SPAWN_SOUND_VOLUME = 1.0
+const MAX_CLEAR_SPAWN_RETRIES = 10
 
+//announcer
 const ENABLE_ANNOUNCER = true //enable announcer quips (first blood airshots etc)
 const ANNOUNCER_VOLUME = 0.5 //volume of announcer quips
-
 const KILLSTREAK_ANNOUNCER_INTERVAL = 5 //how many kills before we play a killstreak sound
+
+//round misc
+const DEFAULT_CDTIME    = 3 //default countdown time
 
 const COUNTDOWN_START_DELAY = 1.0 //delay before countdown starts, additive to queue cycle delay
 const QUEUE_CYCLE_DELAY 	= 4.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
@@ -30,9 +36,10 @@ const COUNTDOWN_SOUND_VOLUME = 0.5
 const ROUND_START_SOUND 	   = "ui/chime_rd_2base_neg.wav"
 const ROUND_START_SOUND_VOLUME = 0.5
 
+//hud
+//see KOTH section for KOTH hud
 const MGE_HUD_POS_X = 0.2
 const MGE_HUD_POS_Y = 0.15
-const MGE_HUD_HOLDTIME = 5.0
 
 const AMMOMOD_RESPAWN_DELAY  = 2.0
 
@@ -44,7 +51,7 @@ ROOT. ENDIF_FORCE_MULT 		<- Vector(1.1, 1.1, 1.31) //don't look too hard I'm a c
 //NOTE:
 //Editing this constant alone is not enough to add more spawns to arenas with fixed spawn rotations like BBall
 //Ctrl + F for "bball_points" in functions.nut to see how you will need to update your map config to support this
-
+const BBALL_MAX_SPAWNS 				= 8
 // BBall uses index 9-13 for round logic
 // based on the bball_points table, index "9" for example can be replaced with "bball_home",
 // the "9" index can now be used for a 9th spawn point
@@ -52,8 +59,6 @@ ROOT. ENDIF_FORCE_MULT 		<- Vector(1.1, 1.1, 1.31) //don't look too hard I'm a c
 //SourceMod MGE uses the same array for spawn points as it does for round logic
 //VScript MGE uses a table for arena data with descriptive names, allowing you to add more spawns without issue
 //For better legacy compatibility with existing map configs we still read the old indexes
-const BBALL_MAX_SPAWNS 				= 8
-
 
 const BBALL_HOOP_SIZE 				= 30
 const BBALL_PICKUP_SOUND_VOLUME 	= 1.0
@@ -74,7 +79,7 @@ const KOTH_MAX_SPAWNS 				 	= 6
 const KOTH_DEFAULT_CAPTURE_POINT_RADIUS = 256
 const KOTH_CAPTURE_POINT_MAX_HEIGHT		= 128
 
-const KOTH_PARTIAL_CAP_RATE 			= 0.01
+const KOTH_PARTIAL_CAP_RATE 			= 0.05
 const KOTH_PARTIAL_CAP_INTERVAL 		= 0.1
 
 const KOTH_DECAY_RATE					= 0.01
@@ -95,17 +100,7 @@ const KOTH_HUD_RED_POS_Y				= 0.4
 const KOTH_HUD_BLU_POS_X				= 0.6
 const KOTH_HUD_BLU_POS_Y				= 0.3
 
-//spawn shuffle modes
-//0 = none, spawns are iterated over in consistent order based on provided config
-//1 = random shuffle, iterates over a randomly shuffled array of spawns (classic MGE plugin behavior)
-//2 = random except, picks a truly random spawn so long as it's not the last one we spawned at
-//3 = random, no shuffling (can repeat spawns)
-const SPAWN_SHUFFLE_MODE = 1
-const SPAWN_SOUND = "items/spawn_item.wav"
-const SPAWN_SOUND_VOLUME = 1.0
-
-const DEFAULT_CDTIME    = 3 //default countdown time
-
+//TODO: see if reducing the think interval makes any impact on 100 player
 const PLAYER_THINK_INTERVAL = -1
 
 //END CONFIG CONSTANTS
@@ -117,28 +112,6 @@ const AS_COUNTDOWN    = 2
 const AS_FIGHT        = 3
 const AS_AFTERFIGHT   = 4
 const AS_REPORTED     = 5
-
-//"reminder that constants are resolved at preprocessor level and not runtime"
-//"if you add them dynamically to the table they wont show up until you execute a new script as the preprocessor isnt aware yet"
-
-//fold into both const and root table to work around this.
-
-if (!("ConstantNamingConvention" in ROOT))
-{
-	foreach(a, b in Constants)
-	{
-		foreach(k, v in b)
-		{
-			CONST[k] <- v != null ? v : 0
-			ROOT[k] <- v != null ? v : 0
-		}
-	}
-}
-
-foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
-	foreach (k, v in i.getclass())
-		if (k != "IsValid" && !(k in ROOT))
-			ROOT[k] <- i[k].bindenv(i)
 
 const STRING_NETPROP_ITEMDEF = "m_AttributeManager.m_Item.m_iItemDefinitionIndex"
 const SINGLE_TICK = 0.015
@@ -274,3 +247,29 @@ PrecacheParticle(BBALL_PARTICLE_PICKUP_BLUE)
 PrecacheParticle(BBALL_PARTICLE_PICKUP_GENERIC)
 PrecacheParticle(BBALL_PARTICLE_TRAIL_RED)
 PrecacheParticle(BBALL_PARTICLE_TRAIL_BLUE)
+
+//"reminder that constants are resolved at preprocessor level and not runtime"
+//"if you add them dynamically to the table they wont show up until you execute a new script as the preprocessor isnt aware yet"
+
+//fold into both const and root table to work around this.
+
+::CONST <- getconsttable()
+
+CONST.setdelegate({ _newslot = @(k, v) compilestring("const " + k + "=" + (typeof(v) == "string" ? ("\"" + v + "\"") : v))() })
+CONST.MAX_CLIENTS <- MaxClients().tointeger()
+if (!("ConstantNamingConvention" in ROOT))
+{
+	foreach(a, b in Constants)
+	{
+		foreach(k, v in b)
+		{
+			CONST[k] <- v != null ? v : 0
+			ROOT[k] <- v != null ? v : 0
+		}
+	}
+}
+
+foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
+	foreach (k, v in i.getclass())
+		if (k != "IsValid" && !(k in ROOT))
+			ROOT[k] <- i[k].bindenv(i)
