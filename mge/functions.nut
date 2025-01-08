@@ -89,17 +89,17 @@
 
 // tointeger() allows trailing garbage (e.g. "123abc")
 // This will only allow strictly integers (also floats with only zeroes: e.g "1.00")
-::ToStrictInt <- function(str)
+::ToStrictNum <-  function(str, float = false)
 {
-	local rex = regexp(@"-?[0-9]+(\.0+)?") // [-](digit)[.(>0 zeroes)]
+//	local rex = regexp(@"-?[0-9]+(\.0+)?")  // [-](digit)[.(>0 zeroes)]
+	local rex = regexp(@"-?[0-9]+(\.[0-9]+)?")
 	if (!rex.match(str)) return
 
 	try
-		return str.tointeger()
+		return float ? str.tofloat() : str.tointeger()
 	catch (_)
 		return
 }
-
 ::LoadSpawnPoints <- function()
 {
 	local config = SpawnConfigs[GetMapName()]
@@ -176,9 +176,16 @@
 
 			foreach (k, v in bball_points)
 			{
-				if (k == "last_score_team") continue
-				local split_spawns = split(v, " ").apply( @(str) str.tofloat() )
-				bball_points[k] <- Vector(split_spawns[0], split_spawns[1], split_spawns[2])
+				if (typeof v != "string") continue
+				local split_spawns = split(v, " ")
+				split_spawns.apply( @(str) ToStrictNum(str, true) )
+				local spawn_lens = {
+					[3] = true,
+					[4] = true,
+					[6] = true,
+				}
+				if (split_spawns.len() in spawn_lens)
+					bball_points[k] <- Vector(split_spawns[0], split_spawns[1], split_spawns[2])
 			}
 
 			datatable.BBall <- bball_points
@@ -220,7 +227,7 @@
 		// Grab spawn points
 		foreach(k, v in datatable)
 		{
-			local spawn_idx = ToStrictInt(k)
+			local spawn_idx = ToStrictNum(k)
 			if (spawn_idx != null)
 			{
 				try
@@ -272,6 +279,8 @@
 	ground_ball.KeyValueFromString("pickup_sound", BBALL_PICKUP_SOUND)
 	ground_ball.KeyValueFromString("pickup_particle", BBALL_PARTICLE_PICKUP_GENERIC)
 	ground_ball.KeyValueFromString("powerup_model", BBALL_BALL_MODEL)
+
+	printl(bball_points.neutral_home)
 
 	//I did this specifically to annoy mince
 	ground_ball.SetOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
@@ -515,7 +524,7 @@
 
 	scope.ThinkTable.clear()
 
-	if (changeteam)
+	if (changeteam && player.GetTeam() != TEAM_SPECTATOR)
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
 
 	if (scope.queue)
@@ -666,35 +675,38 @@
 	local fraglimit = arena.fraglimit.tointeger()
 
 	//round over
-	local winner, loser
-
-	foreach(p, _ in arena.CurrentPlayers)
+	if (arena.Score[0] >= fraglimit || arena.Score[1] >= fraglimit)
 	{
-		if (arena.Score[0] >= fraglimit && p.GetTeam() == TF_TEAM_RED)
-			winner = p
-		else if (arena.Score[1] >= fraglimit && p.GetTeam() == TF_TEAM_BLUE)
-			winner = p
-		else
-			loser = p
+		local winner, loser
+
+		foreach(p, _ in arena.CurrentPlayers)
+		{
+			if (arena.Score[0] >= fraglimit && p.GetTeam() == TF_TEAM_RED)
+				winner = p
+			else if (arena.Score[1] >= fraglimit && p.GetTeam() == TF_TEAM_BLUE)
+				winner = p
+			else
+				loser = p
+		}
+
+		local loser_scope = loser ? loser.GetScriptScope() : false
+		local winner_scope = winner ? winner.GetScriptScope() : false
+
+		if (!winner || !loser) return
+
+		loser_scope.won_last_match = false
+		winner_scope.won_last_match = true
+
+		MGE_ClientPrint(null, 3, format(GetLocalizedString("XdefeatsY", null),
+			winner_scope.Name,
+			winner_scope.stats.elo.tostring(),
+			loser_scope.Name,
+			loser_scope.stats.elo.tostring(),
+			fraglimit.tostring(),
+		arena_name))
+		CalcELO(winner, loser)
+		SetArenaState(arena_name, AS_AFTERFIGHT)
 	}
-
-	local loser_scope = loser ? loser.GetScriptScope() : false
-	local winner_scope = winner ? winner.GetScriptScope() : false
-
-	if (!winner || !loser) return
-
-	loser_scope.won_last_match = false
-	winner_scope.won_last_match = true
-
-	MGE_ClientPrint(null, 3, format(GetLocalizedString("XdefeatsY", null),
-		winner_scope.Name,
-		winner_scope.stats.elo.tostring(),
-		loser_scope.Name,
-		loser_scope.stats.elo.tostring(),
-		fraglimit.tostring(),
-	arena_name))
-	CalcELO(winner, loser)
-	SetArenaState(arena_name, AS_AFTERFIGHT)
 }
 
 ::TryGetClearSpawnPoint <- function(player, arena_name)
@@ -1011,10 +1023,11 @@
 				else if (cap_countdown_interval < Time() && owner_team == team)
 				{
 					arena.Koth[cap_amount] -= arena.Koth.countdown_rate
-					if (arena.Koth[cap_amount] == 0)
+					if (!arena.Koth[cap_amount])
 					{
 						arena.Score[team == TF_TEAM_RED ? 0 : 1]++
 						CalcArenaScore(arena_name)
+						return
 					}
 					foreach(p, _ in arena.CurrentPlayers)
 					{
