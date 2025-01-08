@@ -131,6 +131,12 @@
 		datatable.IsEndif        <- "endif" in datatable && datatable.endif == "1"
 		datatable.IsMidair       <- "midair" in datatable && datatable.midair == "1"
 
+		//new keyvalues
+		datatable.countdown_sound <- "countdown_sound" in datatable ? datatable.countdown_sound : COUNTDOWN_SOUND
+		datatable.countdown_sound_volume <- "countdown_sound_volume" in datatable ? datatable.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
+		datatable.round_start_sound <- "round_start_sound" in datatable ? datatable.round_start_sound : ROUND_START_SOUND
+		datatable.round_start_sound_volume <- "round_start_sound_volume" in datatable ? datatable.round_start_sound_volume : ROUND_START_SOUND_VOLUME
+
 		local idx = ("idx" in datatable) ? datatable.idx.tointeger() : null
 		if (idx == null && !idx_failed)
 		{
@@ -158,6 +164,13 @@
 				blue_score_home = "bball_home_blue" in datatable ? datatable.bball_home_blue : datatable["11"],
 				red_hoop = "bball_hoop_red" in datatable ? datatable.bball_hoop_red : datatable["12"],
 				blue_hoop = "bball_hoop_blue" in datatable ? datatable.bball_hoop_blue : datatable["13"],
+				hoop_size = "bball_hoop_size" in datatable ? datatable.bball_hoop_size : BBALL_HOOP_SIZE,
+				pickup_model = "bball_pickup_model" in datatable ? datatable.bball_pickup_model : BBALL_BALL_MODEL,
+				particle_pickup_red = "bball_particle_pickup_red" in datatable ? datatable.bball_particle_pickup_red : BBALL_PARTICLE_PICKUP_RED,
+				particle_pickup_blue = "bball_particle_pickup_blue" in datatable ? datatable.bball_particle_pickup_blue : BBALL_PARTICLE_PICKUP_BLUE,
+				particle_pickup_generic = "bball_particle_pickup_generic" in datatable ? datatable.bball_particle_pickup_generic : BBALL_PARTICLE_PICKUP_GENERIC,
+				particle_trail_red = "bball_particle_trail_red" in datatable ? datatable.bball_particle_trail_red : BBALL_PARTICLE_TRAIL_RED,
+				particle_trail_blue = "bball_particle_trail_blue" in datatable ? datatable.bball_particle_trail_blue : BBALL_PARTICLE_TRAIL_BLUE,
 				last_score_team = -1
 			}
 
@@ -191,6 +204,16 @@
 				timeleft = 0.0
 
 				is_overtime = false
+
+				decay_rate = "koth_decay_rate" in datatable ? datatable.koth_decay_rate : KOTH_DECAY_RATE,
+				decay_interval = "koth_decay_interval" in datatable ? datatable.koth_decay_interval : KOTH_DECAY_INTERVAL,
+				countdown_rate = "koth_countdown_rate" in datatable ? datatable.koth_countdown_rate : KOTH_COUNTDOWN_RATE,
+				countdown_interval = "koth_countdown_interval" in datatable ? datatable.koth_countdown_interval : KOTH_COUNTDOWN_INTERVAL,
+				partial_cap_rate = "koth_partial_cap_rate" in datatable ? datatable.koth_partial_cap_rate : KOTH_PARTIAL_CAP_RATE,
+				partial_cap_interval = "koth_partial_cap_interval" in datatable ? datatable.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL,
+
+				capture_point_radius = "koth_capture_point_radius" in datatable ? datatable.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
+				capture_point_max_height = "koth_capture_point_max_height" in datatable ? datatable.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT,
 			}
 			datatable.Koth <- koth_points
 		}
@@ -807,7 +830,7 @@
 			foreach(p, _ in arena.CurrentPlayers)
 			{
 
-				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
+				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? arena.round_start_sound : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
 
 				if (arena.IsBBall)
 					if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
@@ -837,7 +860,7 @@
 								filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
 								entity = self
 							})
-						", arena_name, COUNTDOWN_SOUND, COUNTDOWN_SOUND_VOLUME), i, null, null)
+						", arena_name, arena.countdown_sound, arena.countdown_sound_volume), i, null, null)
 					}
 				}
 				_players[p.GetTeam() - 2] = p
@@ -860,7 +883,7 @@
 						filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
 						entity = self
 					})
-				", arena_name, round_start_sound, ROUND_START_SOUND_VOLUME), countdown_time, null, null)
+				", arena_name, arena.round_start_sound, arena.round_start_sound_volume), countdown_time, null, null)
 			}
 
 			local str = ""
@@ -951,12 +974,12 @@
 				{
 					if (arena.Koth[enemy_partial_cap_amount] > 0.0)
 					{
-						arena.Koth[enemy_partial_cap_amount] -= KOTH_PARTIAL_CAP_RATE
-						partial_cap_cooldowntime = Time() + KOTH_PARTIAL_CAP_INTERVAL
+						arena.Koth[enemy_partial_cap_amount] -= arena.Koth.partial_cap_rate
+						partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
 						return
 					}
 
-					arena.Koth[partial_cap_amount] += KOTH_PARTIAL_CAP_RATE
+					arena.Koth[partial_cap_amount] += arena.Koth.partial_cap_rate
 
 					if (arena.Koth[partial_cap_amount] >= 1.0)
 					{
@@ -982,13 +1005,12 @@
 						ent.AcceptInput("Display", "", p, p)
 
 					}
-					partial_cap_cooldowntime = Time() + KOTH_PARTIAL_CAP_INTERVAL
+					partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
 					return
 				}
 				else if (cap_countdown_interval < Time() && owner_team == team)
 				{
-					printl(owner_team + " : " + team + " : " + player.GetScriptScope().Name)
-					arena.Koth[cap_amount] -= KOTH_COUNTDOWN_RATE
+					arena.Koth[cap_amount] -= arena.Koth.countdown_rate
 					if (arena.Koth[cap_amount] == 0)
 					{
 						arena.Score[team == TF_TEAM_RED ? 0 : 1]++
@@ -1001,13 +1023,13 @@
 						KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
 						KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
 					}
-					cap_countdown_interval = Time() + KOTH_COUNTDOWN_INTERVAL
+					cap_countdown_interval = Time() + arena.Koth.countdown_interval
 					return
 				}
 				else if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount] && (self.GetOrigin() - point).Length() > radius)
 				{
-					arena.Koth[partial_cap_amount] -= KOTH_DECAY_RATE
-					cap_decay_interval = Time() + KOTH_DECAY_INTERVAL
+					arena.Koth[partial_cap_amount] -= arena.Koth.decay_rate
+					cap_decay_interval = Time() + arena.Koth.decay_interval
 				}
 			}
 		}
@@ -1019,7 +1041,7 @@
 				if (scope.ball_ent && scope.ball_ent.IsValid())
 				{
 					//bball score think
-					if ((self.GetOrigin() - goal).Length() < BBALL_HOOP_SIZE)
+					if ((self.GetOrigin() - goal).Length() < arena.BBall.hoop_size)
 					{
 						if (scope.ball_ent && scope.ball_ent.IsValid())
 						{

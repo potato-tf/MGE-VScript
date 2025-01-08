@@ -1,7 +1,7 @@
 # MGE-VScript
 A fully vanilla compatible rewrite of the MGEMod plugin.  No sourcemod plugins required.
 
-The existing MGE plugin is old, not fun to modify, and worst of all, written in SourcePawn (the incantations of the devil).  The goal of this project is to create a drop-in replacement for the SM version for better long term support/stability, ease of use, and generally expanding on the gamemode in ways that were prohibitively complicated before.  PRs and Issues are more than welcome.
+The goal of this project is to create a drop-in replacement for the SM version for better long term support/stability, ease of use, and generally expanding on the gamemode in ways that were prohibitively complicated before.  PRs and Issues are more than welcome.
 
 The biggest obstacle that obviously cannot be worked around is the lack of a proper database connector.  If stat tracking is set to database mode, this gamemode copes by using an external python script to read/write JSON from disk.  You should be EXTREMELY careful about using this alongside untrusted maps/scripts, see below to avoid malicious maps/scripts from tampering with player stats.
 
@@ -31,8 +31,12 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 **See below for navmesh warning
 
 ## Installation
-- Drop the mapspawn.nut file and mge folder in your tf/scripts/vscripts directory.
-- If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
+- Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.  That's it
+
+  - if you are using `mapspawn.nut` already, rename the mge mapspawn file and add `script_execute new_filename_here` to your `server.cfg` file 
+  - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
+
+  
 
 ## Configuration/Modifying game rules
 - Most arena rules can be configured at the top of the `mge/constants.nut` file
@@ -58,6 +62,37 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 - This isn't strictly necessary anymore, these arenas can now support any arbitrary number of spawn points (just make sure the number of spawns is divisible by 2)
 - If you'd like to modify spawn points for these arenas, see `constants.nut` and search for `BBALL_MAX_SPAWNS` to see how it works.
 
+- ### New optional arena keyvalues:
+If not specified, the default values can be found in `constants.nut`
+
+- `countdown_sound` - the sound played when the countdown starts
+- `countdown_sound_volume` - the volume of the countdown sound
+- `round_start_sound` - the sound played when the round starts
+- `round_start_sound_volume` - the volume of the round start sound
+
+- **BBall:**
+- `bball_hoop_size` - the radius of the hoop in hammer units
+- `bball_pickup_model` - the model of the ball pickup
+- `bball_pickup_sound` - the sound of the ball pickup
+- `bball_particle_pickup_red` - the particle effect of the ball pickup for the red team
+- `bball_particle_pickup_blue` - the particle effect of the ball pickup for the blue team
+- `bball_particle_pickup_generic` - the particle effect of the ball pickup for both teams
+- `bball_particle_trail_red` - the particle effect applied to players on pickup for the red team
+- `bball_particle_trail_blue` - the particle effect applied to players on pickup for the blue team
+
+- **Koth:**
+- `koth_capture_point_radius` - the radius of the capture point in hammer units, defaults to 30
+- `koth_capture_point_max_height` - the maximum height of the capture point in hammer units, defaults to 30
+
+- `koth_decay_rate` - the rate at which the capture point decays when not being capped in seconds, defaults to 1
+- `koth_decay_interval` - the interval at which the capture point decays in seconds, defaults to 1
+
+- `koth_countdown_rate` - the rate at which the capture point counts down in seconds, defaults to 1
+- `koth_countdown_interval` - the interval at which the capture point counts down in seconds, defaults to 1
+
+- `koth_partial_cap_rate` - the rate at which the capture point is capped in seconds, defaults to 1
+- `koth_partial_cap_interval` - the interval at which the capture point is capped in seconds, defaults to 1
+
 ## Chat Commands
 
 All chat commands can be prefixed with any of these characters: `/\.!?`
@@ -67,11 +102,10 @@ All chat commands can be prefixed with any of these characters: `/\.!?`
 | add | Add yourself to a given arena index
 | remove | Remove yourself from the arena you are currently in 
 | stats | view your stats breakdown
-| ruleset | Vote to change the current arenas ruleset, see below
+| ruleset | Vote to change the current arenas ruleset, for example enabling endif or ammomod
 | addbots/removebots | add/remove training bots from arena
 | teamsize | vote to change the team sizes for the current arena.  Syntax would be `!teamsize 2 1` for 2v1.
 | nostats | vote to disable stat tracking for the current arena
-|
 
 ## ELO/Stat Tracking
 ### SECURITY WARNING
