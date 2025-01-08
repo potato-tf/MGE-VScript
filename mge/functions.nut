@@ -214,6 +214,7 @@
 
 				decay_rate = "koth_decay_rate" in datatable ? datatable.koth_decay_rate : KOTH_DECAY_RATE,
 				decay_interval = "koth_decay_interval" in datatable ? datatable.koth_decay_interval : KOTH_DECAY_INTERVAL,
+				additive_decay = "koth_additive_decay" in datatable ? datatable.koth_additive_decay : KOTH_ADDITIVE_DECAY,
 				countdown_rate = "koth_countdown_rate" in datatable ? datatable.koth_countdown_rate : KOTH_COUNTDOWN_RATE,
 				countdown_interval = "koth_countdown_interval" in datatable ? datatable.koth_countdown_interval : KOTH_COUNTDOWN_INTERVAL,
 				partial_cap_rate = "koth_partial_cap_rate" in datatable ? datatable.koth_partial_cap_rate : KOTH_PARTIAL_CAP_RATE,
@@ -975,44 +976,53 @@
 			local enemy_partial_cap_amount = team == TF_TEAM_RED ? "blu_partial_cap_amount" : "red_partial_cap_amount"
 			local cap_amount = team == TF_TEAM_RED ? "red_cap_time" : "blu_cap_time"
 			local enemy_cap_amount = team == TF_TEAM_RED ? "blu_cap_time" : "red_cap_time"
+			local additive_decay = "koth_additive_decay" in arena.Koth ? arena.Koth.koth_additive_decay : KOTH_ADDITIVE_DECAYadditive_decay
 
+			//cap logic think
 			scope.ThinkTable.KothThink <- function()
 			{
 				local owner_team = arena.Koth.owner_team
 
 				if (!player.IsAlive()) return
 
+				//we don't own it, start capping point
 				if (owner_team != team && partial_cap_cooldowntime < Time() && (self.GetOrigin() - point).Length() < radius)
 				{
+					//revert enemy partial cap progress first
 					if (arena.Koth[enemy_partial_cap_amount] > 0.0)
 					{
-						arena.Koth[enemy_partial_cap_amount] -= arena.Koth.partial_cap_rate
-						partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
+						if (arena.Koth.additive_decay)
+							arena.Koth[enemy_partial_cap_amount] -= arena.Koth.partial_cap_rate
+
+						partial_cap_cooldowntime = Time() + additive_decay ? arena.Koth.partial_cap_interval : arena.Koth.
 						return
 					}
-
+					//add partial cap progress
 					arena.Koth[partial_cap_amount] += arena.Koth.partial_cap_rate
 
+					//finished capping, we own it now, reset our partial cap progress for next time
 					if (arena.Koth[partial_cap_amount] >= 1.0)
 					{
 						arena.Koth.owner_team = team
-						// arena.Koth[partial_cap_amount] = owner_team == self.GetTeam() ? 0.0 : 0.99
 						arena.Koth[partial_cap_amount] = 0.0
+						// arena.Koth[partial_cap_amount] = owner_team == self.GetTeam() ? 0.0 : 0.99
 					}
+
+					//hud stuff
 					foreach(p, _ in arena.CurrentPlayers)
 					{
 						local _team = p.GetTeam()
 						local ent = _team == TF_TEAM_RED ? KOTH_HUD_RED : KOTH_HUD_BLU
 						local str = ""
 
-						local _cap_time = arena.Koth[enemy_cap_amount] ? arena.Koth[enemy_cap_amount] : arena.Koth[enemy_partial_cap_amount]
+						//we own it, show cap time
 						if (owner_team == _team)
 						{
 							ent.KeyValueFromString("message", format("Cap Time: %.2f", arena.Koth[enemy_cap_amount]))
 							ent.AcceptInput("Display", "", p, p)
 							continue
 						}
-
+						//we don't own it, show partial cap progress
 						ent.KeyValueFromString("message", format("Partial Cap: %.2f", arena.Koth[partial_cap_amount]))
 						ent.AcceptInput("Display", "", p, p)
 
@@ -1020,15 +1030,22 @@
 					partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
 					return
 				}
+				//we own it, switch to standard countdown timer
 				else if (cap_countdown_interval < Time() && owner_team == team)
 				{
-					arena.Koth[cap_amount] -= arena.Koth.countdown_rate
+					//timer hit 0, we won this round
 					if (!arena.Koth[cap_amount])
 					{
 						arena.Score[team == TF_TEAM_RED ? 0 : 1]++
+						SetArenaState(arena_name, AS_COUNTDOWN)
 						CalcArenaScore(arena_name)
 						return
 					}
+
+					//decrease cap time
+					arena.Koth[cap_amount] -= arena.Koth.countdown_rate
+
+					//hud stuff
 					foreach(p, _ in arena.CurrentPlayers)
 					{
 						KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
@@ -1036,9 +1053,12 @@
 						KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
 						KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
 					}
+
 					cap_countdown_interval = Time() + arena.Koth.countdown_interval
 					return
 				}
+
+				//we stopped capping, start decaying partial cap
 				else if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount] && (self.GetOrigin() - point).Length() > radius)
 				{
 					arena.Koth[partial_cap_amount] -= arena.Koth.decay_rate

@@ -85,6 +85,9 @@ const KOTH_PARTIAL_CAP_INTERVAL 		= 0.1
 const KOTH_DECAY_RATE					= 0.01
 const KOTH_DECAY_INTERVAL				= 0.1
 
+//if true, reverting enemy cap progress will stack with passive decay
+const KOTH_ADDITIVE_DECAY				= true
+
 const KOTH_COUNTDOWN_RATE				= 1.0
 const KOTH_COUNTDOWN_INTERVAL 			= 1.0
 
