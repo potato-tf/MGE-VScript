@@ -2,6 +2,7 @@ class MGE_Events
 {
 	chat_commands = {
 		"add" : function(params) {
+
 			local player = GetPlayerFromUserID(params.userid)
 
 			// todo remove
@@ -9,15 +10,15 @@ class MGE_Events
 			// foreach (k, v in scope)
 				// printl(k)
 
-			local splitText = split(params.text, " ")
+			local split_text = split(params.text, " ")
 
 			local idx = null
 
 			try
-				idx = splitText[1].tointeger() - 1
+				idx = split_text[1].tointeger() - 1
 			catch(_) {}
 
-			if (splitText.len() < 2 || idx > Arenas_List.len() - 1 || idx < 0) {
+			if (split_text.len() < 2 || idx > Arenas_List.len() - 1 || idx < 0) {
 
 				ClientPrint(player, 3, "Valid arenas:")
 
@@ -37,7 +38,7 @@ class MGE_Events
 			{
 				foreach (arena_name, _ in Arenas)
 				{
-					if (startswith(arena_name, splitText[1]))
+					if (startswith(arena_name, split_text[1]))
 					{
 						AddPlayer(player, arena_name)
 						break
@@ -46,10 +47,27 @@ class MGE_Events
 			}
 		},
 		"remove" : function(params) {
+
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 
 			RemovePlayer(player)
+		}
+		"handicap" : function(params) {
+
+			local player = GetPlayerFromUserID(params.userid)
+			local scope = player.GetScriptScope()
+
+			local split_text = split(params.text, " ")
+			local mult = ToStrictNum(split_text[1], true)
+
+			if (split_text.len() > 1 && mult)
+			{
+				scope.handicap_hp_mult <- mult
+			}
+		}
+		"ruleset" : function(params) {
+
 		}
 	}
 	Events = {
@@ -68,6 +86,7 @@ class MGE_Events
 			if (player.IsFakeClient()) return
 
 			GetStats(player)
+			M
 		}
 
 		function OnGameEvent_player_disconnect(params)
@@ -217,7 +236,7 @@ class MGE_Events
 					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
 
 					foreach (p, _ in arena.CurrentPlayers)
-						MGE_ClientPrint(p, HUD_PRINTTALK, format(GetLocalizedString("Killstreak", attacker), attacker_scope.Name, killstreak_total.tostring()))
+						MGE_ClientPrint(p, HUD_PRINTTALK, "XDefeatsY", attacker_scope.Name, killstreak_total.tostring())
 				}
 				//we've hit an airshot
 				else if (params.rocket_jump && (params.damagebits & DMG_BLAST))
@@ -228,7 +247,7 @@ class MGE_Events
 			}
 			if (attacker && attacker != victim)
 			{
-				MGE_ClientPrint(victim, 3, format(GetLocalizedString("HPLeft", attacker), attacker.GetHealth()))
+				MGE_ClientPrint(victim, 3, "HPLeft", attacker, attacker.GetHealth())
 
 				if (str) PlayAnnouncer(attacker, str)
 				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)

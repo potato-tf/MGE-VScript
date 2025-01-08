@@ -9,6 +9,7 @@ const DEFAULT_ELO 		= 1600
 const REMOVE_DROPPED_WEAPONS = true
 const ELO_TRACKING_MODE = 1 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
+
 //spawn shuffle modes
 //0 = none, spawns are iterated over in consistent order based on provided config
 //1 = random shuffle, iterates over a randomly shuffled array of spawns (classic MGE plugin behavior)
@@ -28,7 +29,7 @@ const KILLSTREAK_ANNOUNCER_INTERVAL = 5 //how many kills before we play a killst
 const DEFAULT_CDTIME    = 3 //default countdown time
 
 const COUNTDOWN_START_DELAY = 1.0 //delay before countdown starts, additive to queue cycle delay
-const QUEUE_CYCLE_DELAY 	= 4.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
+const QUEUE_CYCLE_DELAY 	= 3.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
 
 const COUNTDOWN_SOUND		 = "ui/chime_rd_2base_pos.wav"
 const COUNTDOWN_SOUND_VOLUME = 0.5
@@ -110,11 +111,10 @@ const PLAYER_THINK_INTERVAL = -1
 
 // Arena status
 const AS_IDLE         = 0
-const AS_PRECOUNTDOWN = 1
-const AS_COUNTDOWN    = 2
-const AS_FIGHT        = 3
-const AS_AFTERFIGHT   = 4
-const AS_REPORTED     = 5
+const AS_COUNTDOWN    = 1
+const AS_FIGHT        = 2
+const AS_AFTERFIGHT   = 3
+const AS_REPORTED     = 4
 
 const STRING_NETPROP_ITEMDEF = "m_AttributeManager.m_Item.m_iItemDefinitionIndex"
 const SINGLE_TICK = 0.015

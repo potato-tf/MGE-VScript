@@ -13,13 +13,14 @@
 	if (player_manager)
 	{
 		player_manager.ValidateScriptScope()
+		local prop_array_size = GetPropArraySize(player_manager, "m_flNextRespawnTime")
 		player_manager.GetScriptScope().HideRespawnText <- function() {
 			for (local i = 1; i <= MAX_CLIENTS; i++)
 			{
 				local player = PlayerInstanceFromIndex(i)
-				if (!player || !player.IsValid() || player.IsFakeClient()) continue
+				if (!player || !player.IsValid() || player.IsFakeClient() || i > prop_array_size) continue
 
-				SetPropFloatArray(player_manager, "m_flNextRespawnTime", -1, player.entindex())
+				SetPropFloatArray(player_manager, "m_flNextRespawnTime", -1, i)
 			}
 			return -1
 		}
@@ -261,7 +262,7 @@
 		if (datatable.IsKoth && idx in datatable)
 		{
 			// printl(arena_name)
-			printl(datatable.IsKoth && idx in datatable)
+			// printl(datatable.IsKoth && idx in datatable)
 			// printl(datatable.SpawnPoints.len())
 			local cap_point = split(datatable[idx], " ").apply( @(str) str.tofloat() )
 			datatable.Koth.cap_point = Vector(cap_point[0], cap_point[1], cap_point[2])
@@ -281,7 +282,7 @@
 	ground_ball.KeyValueFromString("pickup_particle", BBALL_PARTICLE_PICKUP_GENERIC)
 	ground_ball.KeyValueFromString("powerup_model", BBALL_BALL_MODEL)
 
-	printl(bball_points.neutral_home)
+	// printl(bball_points.neutral_home)
 
 	//I did this specifically to annoy mince
 	ground_ball.SetOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
@@ -448,7 +449,7 @@
 
 	RemovePlayer(player, false)
 
-	MGE_ClientPrint(player, 3, GetLocalizedString("ChoseArena", player))
+	MGE_ClientPrint(player, 3, "ChoseArena")
 
 	// Enough room, add to arena
 	if (current_players.len() < arena.MaxPlayers)
@@ -456,7 +457,7 @@
 		AddToArena(player, arena_name)
 		local name = scope.Name
 		local elo = scope.stats.elo
-		printl(arena_name)
+		// printl(arena_name)
 		local str = ELO_TRACKING_MODE ?
 			format(GetLocalizedString("JoinsArena", player), name, elo.tostring(), arena_name) :
 			format(GetLocalizedString("JoinsArenaNoStats", player), scope.Name, arena_name)
@@ -588,7 +589,7 @@
 	SetArenaState(arena_name, AS_IDLE)
 
 	foreach(i, p in queue)
-		MGE_ClientPrint(p, 3, format(GetLocalizedString("InLine", p), (i + 1).tostring()))
+		MGE_ClientPrint(p, 3, "InLine", (i + 1))
 }
 
 
@@ -962,215 +963,10 @@
 	local scope = player.GetScriptScope()
 	local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
 	local maxhp = player.GetMaxHealth() * hpratio
-	local special_arenas = {
-		koth = function()
-		{
-			local partial_cap_cooldowntime = 0.0
-			local cap_countdown_interval = 0.0
-			local cap_decay_interval = 0.0
-
-			local radius = arena.Koth.cap_radius
-			local point = arena.Koth.cap_point
-			local team = player.GetTeam()
-			local partial_cap_amount = team == TF_TEAM_RED ? "red_partial_cap_amount" : "blu_partial_cap_amount"
-			local enemy_partial_cap_amount = team == TF_TEAM_RED ? "blu_partial_cap_amount" : "red_partial_cap_amount"
-			local cap_amount = team == TF_TEAM_RED ? "red_cap_time" : "blu_cap_time"
-			local enemy_cap_amount = team == TF_TEAM_RED ? "blu_cap_time" : "red_cap_time"
-			local additive_decay = "koth_additive_decay" in arena.Koth ? arena.Koth.koth_additive_decay : KOTH_ADDITIVE_DECAYadditive_decay
-
-			//cap logic think
-			scope.ThinkTable.KothThink <- function()
-			{
-				local owner_team = arena.Koth.owner_team
-
-				if (!player.IsAlive()) return
-
-				//we don't own it, start capping point
-				if (owner_team != team && partial_cap_cooldowntime < Time() && (self.GetOrigin() - point).Length() < radius)
-				{
-					//revert enemy partial cap progress first
-					if (arena.Koth[enemy_partial_cap_amount] > 0.0)
-					{
-						if (arena.Koth.additive_decay)
-							arena.Koth[enemy_partial_cap_amount] -= arena.Koth.partial_cap_rate
-
-						partial_cap_cooldowntime = Time() + additive_decay ? arena.Koth.partial_cap_interval : arena.Koth.
-						return
-					}
-					//add partial cap progress
-					arena.Koth[partial_cap_amount] += arena.Koth.partial_cap_rate
-
-					//finished capping, we own it now, reset our partial cap progress for next time
-					if (arena.Koth[partial_cap_amount] >= 1.0)
-					{
-						arena.Koth.owner_team = team
-						arena.Koth[partial_cap_amount] = 0.0
-						// arena.Koth[partial_cap_amount] = owner_team == self.GetTeam() ? 0.0 : 0.99
-					}
-
-					//hud stuff
-					foreach(p, _ in arena.CurrentPlayers)
-					{
-						local _team = p.GetTeam()
-						local ent = _team == TF_TEAM_RED ? KOTH_HUD_RED : KOTH_HUD_BLU
-						local str = ""
-
-						//we own it, show cap time
-						if (owner_team == _team)
-						{
-							ent.KeyValueFromString("message", format("Cap Time: %.2f", arena.Koth[enemy_cap_amount]))
-							ent.AcceptInput("Display", "", p, p)
-							continue
-						}
-						//we don't own it, show partial cap progress
-						ent.KeyValueFromString("message", format("Partial Cap: %.2f", arena.Koth[partial_cap_amount]))
-						ent.AcceptInput("Display", "", p, p)
-
-					}
-					partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
-					return
-				}
-				//we own it, switch to standard countdown timer
-				else if (cap_countdown_interval < Time() && owner_team == team)
-				{
-					//timer hit 0, we won this round
-					if (!arena.Koth[cap_amount])
-					{
-						arena.Score[team == TF_TEAM_RED ? 0 : 1]++
-						SetArenaState(arena_name, AS_COUNTDOWN)
-						CalcArenaScore(arena_name)
-						return
-					}
-
-					//decrease cap time
-					arena.Koth[cap_amount] -= arena.Koth.countdown_rate
-
-					//hud stuff
-					foreach(p, _ in arena.CurrentPlayers)
-					{
-						KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
-						KOTH_HUD_RED.AcceptInput("Display", "", p, p)
-						KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
-						KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
-					}
-
-					cap_countdown_interval = Time() + arena.Koth.countdown_interval
-					return
-				}
-
-				//we stopped capping, start decaying partial cap
-				else if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount] && (self.GetOrigin() - point).Length() > radius)
-				{
-					arena.Koth[partial_cap_amount] -= arena.Koth.decay_rate
-					cap_decay_interval = Time() + arena.Koth.decay_interval
-				}
-			}
-		}
-		bball = function()
-		{
-			local team = player.GetTeam()
-			local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
-			scope.ThinkTable.BBallThink <- function() {
-				if (scope.ball_ent && scope.ball_ent.IsValid())
-				{
-					//bball score think
-					if ((self.GetOrigin() - goal).Length() < arena.BBall.hoop_size)
-					{
-						if (scope.ball_ent && scope.ball_ent.IsValid())
-						{
-							scope.ball_ent.Kill()
-							scope.ball_ent = null
-						}
-						team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
-						CalcArenaScore(arena_name)
-
-						arena.BBall.last_score_team = team
-						BBall_SpawnBall(arena_name)
-
-						foreach(p, _ in arena.CurrentPlayers)
-							p.ForceRespawn()
-						return
-					}
-				}
-			}
-		}
-		//I have no idea what midair config is
-		//the sourcemod plugin provided CFG only has one midair-specific map and I don't have this map
-		//so I'm just using the endif config for now
-		midair = function()
-		{
-			special_arenas.endif()
-		}
-		turris = function()
-		{
-			scope.turris_cooldown <- 0.0
-			scope.ThinkTable.TurrisThink <- function() {
-				//redefine here to avoid reaching out of scope
-				local player = self
-				if (turris_cooldown < Time())
-				{
-					player.Regenerate(true)
-					turris_cooldown = Time() + TURRIS_REGEN_TIME
-				}
-			}
-		}
-		ammomod = function()
-		{
-			// printl("attr : " + player.GetCustomAttribute("hidden maxhealth non buffed", 0))
-
-			EntFireByHandle(player, "RunScriptCode", format(@"
-
-				local hp_ratio = Arenas[`%s`].hpratio.tofloat()
-				self.AddCustomAttribute(`max health additive bonus`,(self.GetMaxHealth() * hp_ratio) - self.GetMaxHealth(), -1)
-				self.AddCustomAttribute(`dmg taken increased`, 1 / hp_ratio, -1)
-				self.AddCustomAttribute(`dmg from ranged reduced`, hp_ratio, -1)
-				self.Regenerate(true)
-
-			", arena_name), 0.1, null, null)
-		}
-		endif = function()
-		{
-			scope.endif_base_origin <- Vector()
-			scope.endif_killme <- false
-
-			for (local child = player.FirstMoveChild(); child; child = child.NextMovePeer())
-				if (child instanceof CEconEntity && GetPropInt(child, STRING_NETPROP_ITEMDEF) == ID_MANTREADS)
-					EntFireByHandle(child, "Kill", "", -1, null, null)
-
-
-			// if (player.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
-			EntFireByHandle(player, "RunScriptCode", format(@"
-
-				self.AddCustomAttribute(`cancel falling damage`, 1, -1)
-				self.AddCustomAttribute(`hidden maxhealth non buffed`, %d - self.GetMaxHealth(), -1)
-				self.AddCustomAttribute(`health regen`, %d, -1)
-				self.Regenerate(true)
-
-			", 9999, 9999), -1, null, null)
-		}
-		infammo = function()
-		{
-
-			scope.ThinkTable.InfAmmoThink <- function() {
-				//redefine here to avoid reaching out of scope
-				local player = self
-				local weapon = player.GetActiveWeapon()
-				local itemid = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
-				if (weapon && weapon.Clip1() < weapon.GetMaxClip1() && itemid != ID_BEGGARS_BAZOOKA)
-					weapon.SetClip1(weapon.GetMaxClip1())
-
-				if (weapon && GetPropFloat(weapon, "m_flEnergy") != weapon.GetMaxClip1() && (itemid == ID_COW_MANGLER_5000 || itemid == ID_RIGHTEOUS_BISON || itemid == ID_POMSON_6000))
-					SetPropFloat(weapon, "m_flEnergy", 20)
-
-				SetPropIntArray(self, "m_iAmmo", 9999, 1)
-				SetPropIntArray(self, "m_iAmmo", 9999, 2)
-			}
-		}
-	}
 
 	foreach(k, func in special_arenas)
 		if (k in arena && arena[k] == "1")
-			func()
+			func.call(scope)
 }
 
 ::PlayAnnouncer <- function(player, sound_name) {
@@ -1191,12 +987,11 @@
 	local str = false
 
 	local language = DEFAULT_LANGUAGE
-	local language_cvar = Convars.GetClientConvarValue("cl_language", player.entindex())
 
 	if (player && player.IsValid() && !player.IsFakeClient())
 	{
 		local scope = player.GetScriptScope()
-		language =  "Language" in scope ? scope.Language : language_cvar
+		language =  "Language" in scope ? scope.Language : Convars.GetClientConvarValue("cl_language", player.entindex())
 
 		str = MGE_Localization[language][string]
 	}
@@ -1205,9 +1000,45 @@
 	return str
 }
 
-::MGE_ClientPrint <- function(player, target, localized_string) {
-	local str = localized_string in MGE_Localization ? MGE_Localization[localized_string] : localized_string
-	ClientPrint(player, target, str)
+::MGE_ClientPrint <-  function(...) {
+
+	local args = vargv
+	local player = args[0]
+	local target = args[1]
+	local localized_string = args[2]
+	local format_args = args.slice(3).apply(@(a) a.tostring())
+
+	local _players = []
+	if (!player) {
+		for (local i = 1; i < MAX_CLIENTS; i++)
+		{
+			local p = PlayerInstanceFromIndex(i)
+			if (!p || !p.IsValid() || p.IsFakeClient()) continue
+			_players.push(p)
+		}
+	}
+	else _players.push(player)
+
+	foreach (p in _players)
+	{
+		local str = ""
+		local temp = UniqueString()
+		local scope = p.GetScriptScope()
+		local language = "Language" in scope ? scope.Language : Convars.GetClientConvarValue("cl_language", p.entindex())
+		str = localized_string in MGE_Localization ? MGE_Localization[language][localized_string] : localized_string
+		if (args.len() > 3)
+		{
+			str = format("format(\"%s\"",  str)
+			foreach (a in format_args)
+				str += format(",\"%s\"", a)
+			str += ")"
+			compilestring("ROOT[\"%s\"] <- \"%s\"", temp, str)()
+			str = ROOT[temp]
+		}
+		ClientPrint(p, target, str)
+		if (temp in ROOT) delete ROOT[temp]
+	}
+
 }
 
 ::GetStats <- function(player) {
