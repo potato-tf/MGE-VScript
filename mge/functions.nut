@@ -137,23 +137,7 @@
 		datatable.countdown_sound_volume <- "countdown_sound_volume" in datatable ? datatable.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
 		datatable.round_start_sound <- "round_start_sound" in datatable ? datatable.round_start_sound : ROUND_START_SOUND
 		datatable.round_start_sound_volume <- "round_start_sound_volume" in datatable ? datatable.round_start_sound_volume : ROUND_START_SOUND_VOLUME
-
-		local idx = ("idx" in datatable) ? datatable.idx.tointeger() : null
-		if (idx == null && !idx_failed)
-		{
-			idx_failed = true
-
-			local new_list = []
-			foreach (arena in Arenas_List)
-				if (arena != null)
-					new_list.append(arena)
-			Arenas_List = new_list
-		}
-
-		if (idx_failed)
-			Arenas_List.append(arena_name)
-		else
-			Arenas_List[idx] = arena_name
+		datatable.airshot_height_threshold <- "airshot_height_threshold" in datatable ? datatable.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 
 		if (datatable.IsBBall)
 		{
@@ -201,31 +185,64 @@
 				//see BBall notes about adding more spawns, koth uses the final index for cap points
 				cap_point = "koth_cap" in datatable ? datatable.koth_cap : ""
 				cap_radius = "koth_radius" in datatable ? datatable.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
-
-				red_cap_time = KOTH_START_TIME_RED
-				blu_cap_time = KOTH_START_TIME_BLUE
 				owner_team = 0
 
 				blu_partial_cap_amount = 0.0
 				red_partial_cap_amount = 0.0
-				timelimit = 0.0
-				timeleft = 0.0
+				// timelimit = 0.0
+				// timeleft = 0.0
 
-				is_overtime = false
+				// is_overtime = false
 
-				decay_rate = "koth_decay_rate" in datatable ? datatable.koth_decay_rate : KOTH_DECAY_RATE,
-				decay_interval = "koth_decay_interval" in datatable ? datatable.koth_decay_interval : KOTH_DECAY_INTERVAL,
-				additive_decay = "koth_additive_decay" in datatable ? datatable.koth_additive_decay : KOTH_ADDITIVE_DECAY,
-				countdown_rate = "koth_countdown_rate" in datatable ? datatable.koth_countdown_rate : KOTH_COUNTDOWN_RATE,
-				countdown_interval = "koth_countdown_interval" in datatable ? datatable.koth_countdown_interval : KOTH_COUNTDOWN_INTERVAL,
-				partial_cap_rate = "koth_partial_cap_rate" in datatable ? datatable.koth_partial_cap_rate : KOTH_PARTIAL_CAP_RATE,
+				red_start_cap_time = "start_time_red" in datatable ? datatable.start_time_red : KOTH_START_TIME_RED
+				blu_start_cap_time = "start_time_blu" in datatable ? datatable.start_time_blu : KOTH_START_TIME_BLUE
+
+
+				decay_rate 		     = "koth_decay_rate" in datatable ? datatable.koth_decay_rate : KOTH_DECAY_RATE,
+				decay_interval	     = "koth_decay_interval" in datatable ? datatable.koth_decay_interval : KOTH_DECAY_INTERVAL,
+				additive_decay       = "koth_additive_decay" in datatable ? datatable.koth_additive_decay : KOTH_ADDITIVE_DECAY,
+				countdown_rate     	 = "koth_countdown_rate" in datatable ? datatable.koth_countdown_rate : KOTH_COUNTDOWN_RATE,
+				countdown_interval 	 = "koth_countdown_interval" in datatable ? datatable.koth_countdown_interval : KOTH_COUNTDOWN_INTERVAL,
+				partial_cap_rate   	 = "koth_partial_cap_rate" in datatable ? datatable.koth_partial_cap_rate : KOTH_PARTIAL_CAP_RATE,
 				partial_cap_interval = "koth_partial_cap_interval" in datatable ? datatable.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL,
 
-				capture_point_radius = "koth_capture_point_radius" in datatable ? datatable.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
+				capture_point_radius     = "koth_capture_point_radius" in datatable ? datatable.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
 				capture_point_max_height = "koth_capture_point_max_height" in datatable ? datatable.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT,
 			}
 			datatable.Koth <- koth_points
+			datatable.Koth.red_cap_time <- datatable.Koth.red_start_cap_time
+			datatable.Koth.blu_cap_time <- datatable.Koth.blu_start_cap_time
 		}
+
+		if (datatable.IsEndif)
+		{
+			datatable.Endif <- {
+				height_threshold = "endif_height_threshold" in datatable ? datatable.endif_height_threshold : ENDIF_HEIGHT_THRESHOLD
+			}
+		}
+		if (datatable.IsMidair)
+		{
+			datatable.Midair <- {
+				height_threshold = "midair_height_threshold" in datatable ? datatable.midair_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
+			}
+		}
+		local idx = ("idx" in datatable) ? datatable.idx.tointeger() : null
+		if (idx == null && !idx_failed)
+		{
+			idx_failed = true
+
+			local new_list = []
+			foreach (arena in Arenas_List)
+				if (arena != null)
+					new_list.append(arena)
+			Arenas_List = new_list
+		}
+
+		if (idx_failed)
+			Arenas_List.append(arena_name)
+		else
+			Arenas_List[idx] = arena_name
+
 		// Grab spawn points
 		foreach(k, v in datatable)
 		{
@@ -449,7 +466,7 @@
 
 	RemovePlayer(player, false)
 
-	MGE_ClientPrint(player, 3, "ChoseArena")
+	MGE_ClientPrint(player, 3, "ChoseArena", arena_name)
 
 	// Enough room, add to arena
 	if (current_players.len() < arena.MaxPlayers)
@@ -840,7 +857,21 @@
 				DispatchSpawn(arena.BBall.bball_pickup_b)
 			}
 
-			local _players = array(arena.MaxPlayers, 0.0)
+			if (arena.IsKoth)
+			{
+				local t = arena.Koth
+				t.owner_team = 0
+
+				t.red_cap_time = arena.Koth.red_start_cap_time
+				t.blu_cap_time = arena.Koth.blu_start_cap_time
+
+				t.red_partial_cap_amount = 0.0
+				t.blu_partial_cap_amount = 0.0
+
+				// t.is_overtime = false
+			}
+
+			local _players = array(arena.MaxPlayers, null)
 			foreach(p, _ in arena.CurrentPlayers)
 			{
 
@@ -900,14 +931,16 @@
 				", arena_name, arena.round_start_sound, arena.round_start_sound_volume), countdown_time, null, null)
 			}
 
-			local str = ""
+			local str = format("%s\n", arena_name)
 			foreach(_p in _players)
-				str += format("%s: %d (%d)\n", _p.GetScriptScope().Name, arena.Score[_p.GetTeam() - 2], _p.GetScriptScope().stats.elo)
+				if (_p && _p.IsValid())
+					str += format("%s: %d (%d)\n", _p.GetScriptScope().Name, arena.Score[_p.GetTeam() - 2], _p.GetScriptScope().stats.elo)
 
 			MGE_HUD.KeyValueFromString("message", str)
 
 			foreach(_p in _players)
-				MGE_HUD.AcceptInput("Display", "", _p, _p)
+				if (_p && _p.IsValid())
+					MGE_HUD.AcceptInput("Display", "", _p, _p)
 
 			if (arena.IsBBall)
 				BBall_SpawnBall(arena_name)
@@ -1021,20 +1054,29 @@
 
 	foreach (p in _players)
 	{
-		local str = ""
 		local temp = UniqueString()
+		local str = ""
 		local scope = p.GetScriptScope()
 		local language = "Language" in scope ? scope.Language : Convars.GetClientConvarValue("cl_language", p.entindex())
-		str = localized_string in MGE_Localization ? MGE_Localization[language][localized_string] : localized_string
+		str = localized_string in MGE_Localization[language] ? MGE_Localization[language][localized_string] : localized_string
+
+		// if (args.len() > 3)
+		// {
+		// 	str = format("format(\"%s\"",  str)
+		// 	foreach (a in format_args)
+		// 		str += format(",\"%s\"", a)
+		// 	str += ")"
+		// 	compilestring(format("ROOT[\"%s\"] <- %s", temp, str))()
+		// 	str = ROOT[temp]
+		// }
+
+		// local args = [this, str].extend(format_args)
+
+		// foreach(a in args)
+			// printl(typeof a)
 		if (args.len() > 3)
-		{
-			str = format("format(\"%s\"",  str)
-			foreach (a in format_args)
-				str += format(",\"%s\"", a)
-			str += ")"
-			compilestring("ROOT[\"%s\"] <- \"%s\"", temp, str)()
-			str = ROOT[temp]
-		}
+			str = format.acall([this, str].extend(format_args))
+
 		ClientPrint(p, target, str)
 		if (temp in ROOT) delete ROOT[temp]
 	}

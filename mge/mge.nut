@@ -1,10 +1,4 @@
 ::StockSounds <- [
-	"vo/announcer_ends_5sec.wav",
-	"vo/announcer_ends_4sec.wav",
-	"vo/announcer_ends_3sec.wav",
-	"vo/announcer_ends_2sec.wav",
-	"vo/announcer_ends_1sec.wav",
-	"vo/announcer_ends_10sec.wav",
 	"vo/announcer_control_point_warning.wav",
 	"vo/announcer_control_point_warning2.wav",
 	"vo/announcer_control_point_warning3.wav",
@@ -16,6 +10,18 @@
 	"vo/announcer_we_lost_control.wav",
 	"vo/announcer_victory.wav",
 	"vo/announcer_you_failed.wav"
+
+	"vo/announcer_ends_5min.mp3",
+	"vo/announcer_ends_2min.mp3",
+	"vo/announcer_ends_60sec.mp3"
+	"vo/announcer_ends_30sec.mp3"
+	"vo/announcer_ends_20sec.mp3"
+	"vo/announcer_ends_10sec.mp3",
+	"vo/announcer_ends_5sec.mp3",
+	"vo/announcer_ends_4sec.mp3",
+	"vo/announcer_ends_3sec.mp3",
+	"vo/announcer_ends_2sec.mp3",
+	"vo/announcer_ends_1sec.mp3",
 
 	"vo/announcer_am_roundstart01.mp3",
 	"vo/announcer_am_roundstart02.mp3",
@@ -72,12 +78,24 @@ foreach (sound in StockSounds)
 	"__vrefs" : null,
 }
 
+//player think functions applied to special arenas
 ::special_arenas <- {
-	koth = function()
+	function koth()
 	{
+
 		local player = self
 		local scope = player.GetScriptScope()
 		local arena = scope.arena_info.arena
+		local arena_name = scope.arena_info.name
+
+		if (arena.State == AS_IDLE)
+		{
+			if ("KothThink" in scope.ThinkTable)
+				delete scope.ThinkTable.KothThink
+
+			return
+		}
+
 		local partial_cap_cooldowntime = 0.0
 		local cap_countdown_interval = 0.0
 		local cap_decay_interval = 0.0
@@ -107,7 +125,7 @@ foreach (sound in StockSounds)
 					if (arena.Koth.additive_decay)
 						arena.Koth[enemy_partial_cap_amount] -= arena.Koth.partial_cap_rate
 
-					partial_cap_cooldowntime = Time() + additive_decay ? arena.Koth.partial_cap_interval : arena.Koth.cap_decay_interval
+					partial_cap_cooldowntime = Time() + (additive_decay ? arena.Koth.partial_cap_interval : arena.Koth.cap_decay_interval)
 					return
 				}
 				//add partial cap progress
@@ -146,6 +164,9 @@ foreach (sound in StockSounds)
 			//we own it, switch to standard countdown timer
 			else if (cap_countdown_interval < Time() && owner_team == team)
 			{
+				//decrease cap time
+				arena.Koth[cap_amount] -= arena.Koth.countdown_rate
+
 				//timer hit 0, we won this round
 				if (!arena.Koth[cap_amount])
 				{
@@ -155,9 +176,38 @@ foreach (sound in StockSounds)
 					return
 				}
 
-				//decrease cap time
-				arena.Koth[cap_amount] -= arena.Koth.countdown_rate
+				local _cap_amount = arena.Koth[cap_amount].tointeger()
 
+				if (!_cap_amount) return
+
+				//play countdown sound
+				local _announcer_sound =  {
+					[300] = "5min",
+					[120] = "2min",
+					[60] = "60sec",
+					[30] = "30sec",
+					[20] = "20sec",
+					[10] = "10sec"
+				}
+				if (_cap_amount in _announcer_sound)
+					foreach(p, _ in arena.CurrentPlayers)
+						EmitSoundEx({
+							sound_name = format("vo/announcer_ends_%s.mp3", _announcer_sound[_cap_amount]),
+							entity = p,
+							volume = 1.0,
+							channel = CHAN_STREAM,
+							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
+						})
+
+				else if (_cap_amount < 6)
+					foreach(p, _ in arena.CurrentPlayers)
+						EmitSoundEx({
+							sound_name = format("vo/announcer_ends_%dsec.mp3", _cap_amount),
+							entity = p,
+							volume = 1.0,
+							channel = CHAN_STREAM,
+							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
+						})
 				//hud stuff
 				foreach(p, _ in arena.CurrentPlayers)
 				{
@@ -179,10 +229,12 @@ foreach (sound in StockSounds)
 			}
 		}
 	}
-	bball = function()
+	function bball()
 	{
 		local player = self
 		local scope = player.GetScriptScope()
+		local arena = scope.arena_info.arena
+		local arena_name = scope.arena_info.name
 		local team = player.GetTeam()
 		local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
 		scope.ThinkTable.BBallThink <- function() {
@@ -209,15 +261,11 @@ foreach (sound in StockSounds)
 			}
 		}
 	}
-	//I have no idea what midair config is
-	//the sourcemod plugin provided CFG only has one midair-specific map and I don't have this map
-	//so I'm just using the endif config for now
-	midair = function()
+	function midair()
 	{
 		local player = self
-		special_arenas.endif()
 	}
-	turris = function()
+	function turris()
 	{
 		local player = self
 		local scope = player.GetScriptScope()
@@ -231,9 +279,12 @@ foreach (sound in StockSounds)
 			}
 		}
 	}
-	ammomod = function()
+	function ammomod()
 	{
 		local player = self
+		local scope = player.GetScriptScope()
+		local arena = scope.arena_info.arena
+		local arena_name = scope.arena_info.name
 		// printl("attr : " + player.GetCustomAttribute("hidden maxhealth non buffed", 0))
 
 		EntFireByHandle(player, "RunScriptCode", format(@"
@@ -246,12 +297,9 @@ foreach (sound in StockSounds)
 
 		", arena_name), 0.1, null, null)
 	}
-	endif = function()
+	function endif()
 	{
 		local player = self
-		local scope = player.GetScriptScope()
-		scope.endif_base_origin <- Vector()
-		scope.endif_killme <- false
 
 		for (local child = player.FirstMoveChild(); child; child = child.NextMovePeer())
 			if (child instanceof CEconEntity && GetPropInt(child, STRING_NETPROP_ITEMDEF) == ID_MANTREADS)
@@ -268,7 +316,7 @@ foreach (sound in StockSounds)
 
 		", 9999, 9999), -1, null, null)
 	}
-	infammo = function()
+	function infammo()
 	{
 		local player = self
 		local scope = player.GetScriptScope()

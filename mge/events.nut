@@ -86,7 +86,6 @@ class MGE_Events
 			if (player.IsFakeClient()) return
 
 			GetStats(player)
-			M
 		}
 
 		function OnGameEvent_player_disconnect(params)
@@ -172,7 +171,7 @@ class MGE_Events
 						sound_level = 65
 					})
 
-				local str = ""
+				local str = format("%s\n", arena_name)
 				foreach(p, _ in arena.CurrentPlayers)
 				{
 					local scope = p.GetScriptScope()
@@ -218,7 +217,7 @@ class MGE_Events
 
 			local respawntime = "respawntime" in arena && arena.respawntime != "0" ? arena.respawntime.tofloat() : 0.2
 			local fraglimit = arena.fraglimit.tointeger()
-
+			local trace_dist = arena.IsEndif ? arena.Endif.height_threshold : arena.IsMidair ? arena.Midair.height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 			local str = false, hud_str = false
 			// local rocket_jumping = (!(victim.GetFlags() & FL_ONGROUND) && victim.InCond(TF_COND_BLASTJUMPING)
 			if (ENABLE_ANNOUNCER && arena.State == AS_FIGHT && attacker && attacker.GetScriptScope().enable_announcer)
@@ -236,10 +235,10 @@ class MGE_Events
 					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
 
 					foreach (p, _ in arena.CurrentPlayers)
-						MGE_ClientPrint(p, HUD_PRINTTALK, "XDefeatsY", attacker_scope.Name, killstreak_total.tostring())
+						MGE_ClientPrint(p, HUD_PRINTTALK, "Killstreak", attacker_scope.Name, killstreak_total.tostring())
 				}
 				//we've hit an airshot
-				else if (params.rocket_jump && (params.damagebits & DMG_BLAST))
+				else if (params.rocket_jump && (params.damagebits & DMG_BLAST) && TraceLine(victim.GetOrigin(), victim.GetOrigin() - Vector(0, 0, trace_dist), victim) == 1)
 				{
 					hud_str = GetLocalizedString("Airshot", attacker)
 					str = format("vo/announcer_am_killstreak%d.mp3", RandomInt(10, 11))
@@ -247,12 +246,12 @@ class MGE_Events
 			}
 			if (attacker && attacker != victim)
 			{
-				MGE_ClientPrint(victim, 3, "HPLeft", attacker, attacker.GetHealth())
+				MGE_ClientPrint(victim, 3, "HPLeft", attacker.GetHealth())
 
 				if (str) PlayAnnouncer(attacker, str)
 				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)
 
-				local str = ""
+				local str = format("%s\n", arena_name)
 				foreach(p, _ in arena.CurrentPlayers)
 				{
 					local scope = p.GetScriptScope()
@@ -300,7 +299,7 @@ class MGE_Events
 			if (!arena.IsAmmomod)
 				EntFireByHandle(victim, "RunScriptCode", "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime, null, null)
 			else
-				EntFire("bignet", "RunScriptCode", format("SetArenaState(%s, AS_COUNTDOWN)", arena_name), AMMOMOD_RESPAWN_DELAY)
+				EntFire("bignet", "RunScriptCode", format("SetArenaState(`%s`, AS_COUNTDOWN)", arena_name), AMMOMOD_RESPAWN_DELAY)
 		}
 
 		function OnGameEvent_player_team(params)
@@ -329,10 +328,11 @@ class MGE_Events
 			// 		print("new velocity: " + victim.GetAbsVelocity())
 			// 	}
 
-
-			if ("endif" in arena && arena.endif == "1")
+			if (victim_scope && attacker != victim  && (arena.IsEndif || arena.IsMidair) && params.damage_type & DMG_BLAST && !(victim.GetFlags() & FL_ONGROUND))
 			{
-				if (attacker != victim && TraceLine(victim.GetOrigin(), victim.GetOrigin() - Vector(0, 0, ENDIF_HEIGHT_THRESHOLD), victim) == 1 && params.damage_type & DMG_BLAST)
+				local trace_dist = arena.IsEndif ? arena.Endif.height_threshold : arena.IsMidair ? arena.Midair.height_threshold : AIRSHOT_HEIGHT_THRESHOLD
+
+				if (TraceLine(victim.GetOrigin(), victim.GetOrigin() - Vector(0, 0, trace_dist), victim) == 1)
 				{
 					victim.SetHealth(1)
 					params.damage_type = params.damage_type | DMG_CRITICAL

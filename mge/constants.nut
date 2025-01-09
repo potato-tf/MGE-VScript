@@ -9,6 +9,7 @@ const DEFAULT_ELO 		= 1600
 const REMOVE_DROPPED_WEAPONS = true
 const ELO_TRACKING_MODE = 1 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
+const AIRSHOT_HEIGHT_THRESHOLD = 50
 
 //spawn shuffle modes
 //0 = none, spawns are iterated over in consistent order based on provided config
@@ -92,8 +93,8 @@ const KOTH_ADDITIVE_DECAY				= true
 const KOTH_COUNTDOWN_RATE				= 1.0
 const KOTH_COUNTDOWN_INTERVAL 			= 1.0
 
-const KOTH_START_TIME_RED 				= 10
-const KOTH_START_TIME_BLUE 				= 10
+const KOTH_START_TIME_RED 				= 60
+const KOTH_START_TIME_BLUE 				= 60
 
 const KOTH_RED_HUD_COLOR				= "255 80 80"
 const KOTH_BLU_HUD_COLOR				= "80 80 255"
