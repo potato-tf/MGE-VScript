@@ -1,3 +1,16 @@
+//Special thanks for the translation help:
+/*************************
+ * - Sntr (Finnish)      *
+ * - Hell-met (French)   *
+ * - DaanBox (Dutch)     *
+ * - Sgt Table (Spanish) *
+ * - Royal (Vietnamese)  *
+ * - Lyney (Thai)        *
+ * - B855 (Russian)      *
+ * - Eyes (Portuguese)   *
+ *************************/
+
+
 // Color codes:
 
 //classic MGE
@@ -307,64 +320,64 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_WriteError =			"\n\nVPI: Error writing data for user %s.\n\n"
 	}
 	spanish = {
-		MenuTitle  =			"Entrar en arena..."
-		MenuRemove  =			"Eliminar de la cola"
+		MenuTitle  =			"Salta a la palestra..."
+		MenuRemove  =			"Salir de la cola"
 		HPLeft =			"\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Tu oponente tiene \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF de vida restante."
-		Adv =			"\x07"+MGE_COLOR_MAIN+"Entrar en arena, escribe\x07FFFFFF!add\n\x07"+MGE_COLOR_MAIN+"Para ver los comandos, escribe !mgehelp"
-		JoinsArena =			"\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF (%s) entra en arena \x07"+MGE_COLOR_MAIN+"%s."
-		JoinsArenaNoStats =			"\x07"+MGE_COLOR_MAIN+"%s entra en arena \x07"+MGE_COLOR_SUBJECT+"%s."
-		// ChoseArena =			"You chose arena \x07"+MGE_COLOR_MAIN+" %s."
-		ChoseArena =			"Has elegido arena %s"
-		NextInLine =			"Estás \x07"+MGE_COLOR_MAIN+"en la cola."
-		InLine =			"Esperando en cola: Longitud de cola:\x07"+MGE_COLOR_MAIN+"%s."
+		Adv =			"\x07"+MGE_COLOR_MAIN+"Para asignarte un coliseo, escribe\x07FFFFFF!add\n\x07"+MGE_COLOR_MAIN+"Para ver los comandos, escribe !mgehelp"
+		JoinsArena =			"\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF (%s) ha sido asignado al mapa \x07"+MGE_COLOR_MAIN+"%s."
+		JoinsArenaNoStats =			"\x07"+MGE_COLOR_MAIN+"%s ha sido asignado al mapa \x07"+MGE_COLOR_SUBJECT+"%s."
+		// ChoseArena =			"Elegiste luchar en \x07"+MGE_COLOR_MAIN+" %s."
+		ChoseArena =			"Elegiste luchar en %s"
+		NextInLine =			"Eres el numero \x07"+MGE_COLOR_MAIN+"en la cola."
+		InLine =			"Esperando en la cola: Longitud de la cola:\x07"+MGE_COLOR_MAIN+"%s."
 		GainedPoints =			"Has ganado \x07"+MGE_COLOR_MAIN+"%s puntos."
 		LostPoints =			"Has perdido \x07"+MGE_COLOR_MAIN+"%s puntos."
 		MyRank =			"Tu clasificación es \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF. Victorias: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF, Derrotas: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
 		MyRankNoRating =			"Tienes \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF victorias y \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF derrotas."
-		ClassIsNotAllowed =			"\x07"+MGE_COLOR_BACKGROUND+"Esta clase (%s) no está permitida!"
+		ClassIsNotAllowed =			"\x07"+MGE_COLOR_BACKGROUND+"¡Esta clase (%s) no está permitida!"
 		LowRating =			"Tu clasificación \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF es demasiado baja, el mínimo es \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
 		HighRating =			"Tu clasificación \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF es demasiado alta, el máximo es \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
-		XdefeatsY =			"\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF derrota \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF en duelo a \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF en \x07"+MGE_COLOR_MAIN+"%s\x07"
-		XdefeatsYearly =			"\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF derrota \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF en un duelo en \x07"+MGE_COLOR_MAIN+"%s\x07"
-		SpecRemove =			"\x07"+MGE_COLOR_BACKGROUND+"No puedes entrar en espectador mientras estás en un duelo, eliminando de la cola."
-		ClassChangePoint =			"\x07"+MGE_COLOR_BACKGROUND+"Cambiaste de clase durante un duelo, dando a tu oponente un punto."
-		ClassChangePointOpponent =			"\x07"+MGE_COLOR_BACKGROUND+"Tu oponente cambió de clase durante un duelo, dando a ti un punto."
+		XdefeatsY =			"\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF ha derrotado a \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF en un duelo a \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF en \x07"+MGE_COLOR_MAIN+"%s\x07"
+		XdefeatsYearly =			"\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF ha derrotado a \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF en un duelo en \x07"+MGE_COLOR_MAIN+"%s\x07"
+		SpecRemove =			"\x07"+MGE_COLOR_BACKGROUND+"No puedes cambiarte a modo espectador mientras estás en un duelo, quitando de la cola."
+		ClassChangePoint =			"\x07"+MGE_COLOR_BACKGROUND+"Cambiaste de clase durante el duelo, tu oponente ha recibido un punto."
+		ClassChangePointOpponent =			"\x07"+MGE_COLOR_BACKGROUND+"Tu oponente cambió de clase durante el duelo, has recibido un punto."
 		Welcome1 =			"\x07"+MGE_COLOR_BACKGROUND+"Bienvenido a VScript MGE versión \x07"+MGE_COLOR_SUBJECT+"%s"
-		Welcome2 =			"\x07"+MGE_COLOR_BACKGROUND+"Rewrite by: \x07"+MGE_COLOR_SUBJECT+"Braindawg"
-		Welcome3 =			"\x07"+MGE_COLOR_BACKGROUND+"Original plugin by: \x07"+MGE_COLOR_SUBJECT+"Lange & Cprice\x07, based on \x07"+MGE_COLOR_SUBJECT+"kAmmomod"
-		Top5Title  =			"Top 5 Players"
+		Welcome2 =			"\x07"+MGE_COLOR_BACKGROUND+"Reescrito por: \x07"+MGE_COLOR_SUBJECT+"Braindawg"
+		Welcome3 =			"\x07"+MGE_COLOR_BACKGROUND+"Extension original por: \x07"+MGE_COLOR_SUBJECT+"Lange & Cprice\x07, based on \x07"+MGE_COLOR_SUBJECT+"kAmmomod"
+		Top5Title  =			"Los cinco mejores"
 		top5error =			"[VScript MGE] No hay suficientes jugadores en la base de datos."
-		bballdunk =			"\x07"+MGE_COLOR_SUBJECT+"Has DUNKED ON \x07"+MGE_COLOR_SUBJECT+"%s!"
-		Cmd_MGECmds =			"[VScript MGE] Ayuda: Información de comandos"
-		Cmd_SeeConsole =			"[VScript MGE] Ver consola para salida."
+		bballdunk =			"\x07"+MGE_COLOR_SUBJECT+"le ha ENCESTADO SEMEJANTE MATE a \x07"+MGE_COLOR_SUBJECT+"%s!"
+		Cmd_MGECmds =			"[VScript MGE] Ayuda: Información sobre comandos"
+		Cmd_SeeConsole =			"[VScript MGE] Abre la consola."
 		Cmd_MGEMod =			"[VScript MGE] mgemod\t - Menú"
-		Cmd_Add =			"[VScript MGE] add\t - Uso: add <número de arena/nombre de arena>. Añadir a una arena."
-		Cmd_Remove =			"[VScript MGE] remove\t - Eliminar de la arena actual."
-		Cmd_First =			"[VScript MGE] first\t - Entrar en la primera arena disponible."
+		Cmd_Add =			"[VScript MGE] add\t - Uso: add <número de arena/nombre de arena>. Entrar a un coliseo."
+		Cmd_Remove =			"[VScript MGE] remove\t - Salir del coliseo actual."
+		Cmd_First =			"[VScript MGE] first\t - Entrar en el primer coliseo disponible."
 		Cmd_Top5 =			"[VScript MGE] top5\t - Mostrar los 5 mejores jugadores."
-		Cmd_Rank =			"[VScript MGE] rank\t - Uso: rank <nombre del jugador>. Mostrar el rango de ese jugador."
+		Cmd_Rank =			"[VScript MGE] rank\t - Uso: rank <nombre del jugador>. Muestra el rango de ese jugador."
 		Cmd_HitBlip =			"[VScript MGE] hitblip - Activar/desactivar hitblip."
 		Cmd_Hud =			"[VScript MGE] hud\t - Activar/desactivar el HUD de texto."
-		Cmd_Handicap =			"[VScript MGE] handicap - Reduce your maximum HP. Type '!handicap off' to disable."
+		Cmd_Handicap =			"[VScript MGE] handicap - Reduce tus PVs maximos. Escribe '!handicap off' para desactivarlo."
 		NoClassChange =			"\x07"+MGE_COLOR_BACKGROUND+"No puedes cambiar de clase en este momento."
-		DatabaseDown =			"Conexión con la base de datos fallida, volviendo al almacenamiento de archivos.\nSe intentará reconectar en %s minutos."
+		DatabaseDown =			"Conexión con la base de datos ha fallado, utilizando los archivos locales.\nSe reintentará en %s minutos."
 		StatsRestored =			"Conexión con la base de datos restaurada, actualizando estadísticas...\nEstadísticas restauradas."
 		StatsRestoredDown =			"La base de datos está encendida, pero las estadísticas están administrativamente apagadas."
-		MustJoinArena =			"\x07"+MGE_COLOR_BACKGROUND+"Debes entrar en una arena para hacer eso."
+		MustJoinArena =			"\x07"+MGE_COLOR_BACKGROUND+"Debes entrar a un coliseo para hacer eso."
 		NoCurrentHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Actualmente no tienes un handicap."
-		CurrentHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Tu handicap actual es \x07"+MGE_COLOR_SUBJECT+"%s \x07"+MGE_COLOR_BACKGROUND+"máximo HP."
+		CurrentHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Tu handicap actual es de \x07"+MGE_COLOR_SUBJECT+"%s \x07"+MGE_COLOR_BACKGROUND+"máximo HP."
 		InvalidHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Tu handicap deseado es inválido. Deshabilitando handicap."
 		HandicapDisabled =			"\x07"+MGE_COLOR_BACKGROUND+"Handicap deshabilitado."
-		Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s está en una serie de victorias! (%s victorias)"
-		FirstBlood =            "\x07"+MGE_COLOR_SUBJECT+"First Blood!"
-		Airshot =               "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
+		Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s está en RACHA! (%s victorias)"
+		FirstBlood =            "\x07"+MGE_COLOR_SUBJECT+"¡Se ha derramado sangre!"
+		Airshot =               "\x07"+MGE_COLOR_SUBJECT+"¡En el blanco!"
 
-		Error_StatsNotFound =			"\n\nError: stats not found for %s! fetching again and skipping update...\n\n"
+		Error_StatsNotFound =			"\n\nError: estadisticas no encontradas para %s! buscando otra vez y oprimiendo actualización programada...\n\n"
 
-		VPI_ReadSuccess =			"\n\nVPI: Got data for user %s.\n\n"
-		VPI_ReadError =			"\n\nVPI: Error getting data for user %s.\n\n"
-		VPI_WriteSuccess =			"\n\nVPI: Wrote data for user %s.\n\n"
-		VPI_WriteError =			"\n\nVPI: Error writing data for user %s.\n\n"
+		VPI_ReadSuccess =			"\n\nVPI: Informacion encontrada para el usuario %s.\n\n"
+		VPI_ReadError =			"\n\nVPI: Error, no se ha podido conseguir la información del usuario %s.\n\n"
+		VPI_WriteSuccess =			"\n\nVPI: Informacion sobreescrita para el usuariou %s.\n\n"
+		VPI_WriteError =			"\n\nVPI: Error, no se ha podido sobreescribir la informacion del usuario %s.\n\n"
 	}
 	thai = {
 		MenuTitle  =			"เข้าสู่อาร์เรน..."
