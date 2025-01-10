@@ -18,6 +18,8 @@
 // - finnish
 // - german
 
+// Chinese translation adopted from original plugin
+
 // Color codes:
 
 //classic MGE
