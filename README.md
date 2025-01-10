@@ -16,7 +16,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | 4Player | ✅ |
 | Turris | ✅ |
 | BBall | ✅ |
-| Koth | ❌ |
+| Koth | ✅ |
 | Midair?*** |⚠️|
 | Plain text ELO/stat tracking | ✅ |
 | Quake-style announcer lines (toggleable) | ✅ |
