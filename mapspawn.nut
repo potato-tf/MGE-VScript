@@ -13,6 +13,7 @@ else
 {
 	Include("constants")
 	Include("itemdef_constants")
+	Include("cfg/localization")
 	Include("functions")
 	Include("events")
 	Include("mge")

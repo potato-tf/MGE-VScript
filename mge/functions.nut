@@ -1026,6 +1026,9 @@
 		local scope = player.GetScriptScope()
 		language =  "Language" in scope ? scope.Language : Convars.GetClientConvarValue("cl_language", player.entindex())
 
+		if (!(language in MGE_Localization))
+			language = DEFAULT_LANGUAGE
+
 		str = MGE_Localization[language][string]
 	}
 	if (!str) str = MGE_Localization[DEFAULT_LANGUAGE][string]
@@ -1058,6 +1061,10 @@
 		local str = ""
 		local scope = p.GetScriptScope()
 		local language = "Language" in scope ? scope.Language : Convars.GetClientConvarValue("cl_language", p.entindex())
+
+		if (!(language in MGE_Localization))
+			language = DEFAULT_LANGUAGE
+
 		str = localized_string in MGE_Localization[language] ? MGE_Localization[language][localized_string] : localized_string
 
 		// if (args.len() > 3)
