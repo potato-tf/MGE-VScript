@@ -11,7 +11,7 @@
  * - Eyes (Brazilian)    *
  *************************/
 
-// Chinese translation adopted from original plugin
+// Simplified Chinese translation adopted from original plugin, Traditional Chinese was machine translated from Simplified
 
 // Any language not credited above was machine translated by Claude 3.5
 // Please submit pull requests to fix any poor translations
