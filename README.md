@@ -30,7 +30,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | In-Game map configuration tool | ❌ |
 *Non-english translations are machine translated, PRs fixing bad translations + porting the [Chinese, German, and Russian translations](https://github.com/sapphonie/MGEMod/tree/master/addons/sourcemod/translations) would be appreciated
 **See below for navmesh warning
-***What the hell is midair? The public MGEMod plugin has a midair config but I don't have a midair map to test it on.  midair is just an alias for endif right now.
+***I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
 
 ## Installation
 - Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.  That's it
