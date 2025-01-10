@@ -7,8 +7,16 @@
  * - Royal (Vietnamese)  *
  * - Lyney (Thai)        *
  * - B855 (Russian)      *
- * - Eyes (Portuguese)   *
+ * - Eyes (Brazilian)    *
  *************************/
+
+// Machine translated by Claude 3.5
+// - polish
+// - latam
+// - french
+// - dutch
+// - finnish
+// - german
 
 // Color codes:
 
@@ -170,6 +178,65 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		Top5Title  =			"Top 5 Spelers"
 		top5error =			"[VScript MGE] Nog niet genoeg spelers in database."
 		bballdunk =			"\x07"+MGE_COLOR_SUBJECT+"Je hebt \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF gedunkt!"
+		Cmd_MGECmds =			"[VScript MGE] Help: Command Information"
+		Cmd_SeeConsole =			"[VScript MGE] Bekijk de console voor output."
+		Cmd_MGEMod =			"[VScript MGE] mgemod\t - Menu"
+		Cmd_Add =			"[VScript MGE] add\t - Gebruik: add <arena nummer/arena naam>. Voeg toe aan een arena."
+		Cmd_Remove =			"[VScript MGE] remove\t - Verwijder uit de huidige arena."
+		Cmd_First =			"[VScript MGE] first\t - Sluit je aan bij de eerste beschikbare arena."
+		Cmd_Top5 =			"[VScript MGE] top5\t - Toon de top 5 spelers."
+		Cmd_Rank =			"[VScript MGE] rank\t - Gebruik: rank <speler naam>. Toon de rating van een speler."
+		Cmd_HitBlip =			"[VScript MGE] hitblip - Schakel hitblip aan/uit."
+		Cmd_Hud =			"[VScript MGE] hud\t - Schakel tekst HUD aan/uit."
+		Cmd_Handicap =			"[VScript MGE] handicap - Verminder je maximale HP. Typ '!handicap off' om handicap uit te zetten."
+		NoClassChange =			"\x07"+MGE_COLOR_BACKGROUND+"Je kunt momenteel geen klasse wijzigen."
+		DatabaseDown =			"Databaseverbinding mislukt, terugvallen op bestandssysteemopslag.\nEen reconnect zal worden geprobeerd over %s minuten."
+		StatsRestored =			"Databaseverbinding hersteld, vernieuw stats...\nStats hersteld."
+		StatsRestoredDown =			"Database is up, but stats are administratively down."
+		MustJoinArena =			"\x07"+MGE_COLOR_BACKGROUND+"Je moet eerst een arena joinen om dit te doen."
+		NoCurrentHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Je hebt momenteel geen handicap."
+		CurrentHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Je huidige handicap is \x07"+MGE_COLOR_SUBJECT+"%s \x07"+MGE_COLOR_BACKGROUND+"maximum HP."
+		InvalidHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Je gewenste handicap is ongeldig, handicap is uitgeschakeld."
+		HandicapDisabled =			"\x07"+MGE_COLOR_BACKGROUND+"Handicap is uitgeschakeld."
+		Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s is op een killstreak! (%s kills)"
+		FirstBlood =            "\x07"+MGE_COLOR_SUBJECT+"First Blood!"
+		Airshot =               "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
+
+		Error_StatsNotFound =			"\n\nError: stats not found for %s! fetching again and skipping update...\n\n"
+
+		VPI_ReadSuccess =			"\n\nVPI: Got data for user %s.\n\n"
+		VPI_ReadError =			"\n\nVPI: Error getting data for user %s.\n\n"
+		VPI_WriteSuccess =			"\n\nVPI: Wrote data for user %s.\n\n"
+		VPI_WriteError =			"\n\nVPI: Error writing data for user %s.\n\n"
+	}
+	german = {
+		MenuTitle  =			"Schließe dich Arena an..."
+		MenuRemove  =			"Entferne aus Warteschlange"
+		HPLeft =			"\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Dein Gegner hat noch \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF Lebenspunkte."
+		Adv = "\x07"+MGE_COLOR_MAIN+"Schließe dich Arena an, tippe\x07FFFFFF!add\n\x07"+MGE_COLOR_MAIN+"Um die Befehle zu sehen, tippe !mgehelp"
+		JoinsArena = "\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF (%s) schließt sich Arena an \x07"+MGE_COLOR_MAIN+"%s."
+		JoinsArenaNoStats = "\x07"+MGE_COLOR_MAIN+"%s schließt sich Arena an \x07"+MGE_COLOR_SUBJECT+"%s."
+		ChoseArena = "\x07"+MGE_COLOR_MAIN+" %s."
+		NextInLine = "\x07"+MGE_COLOR_MAIN+"Erster in der Warteschlange."
+		InLine = "\x07"+MGE_COLOR_MAIN+"Warteschlange: Länge der Warteschlange:\x07"+MGE_COLOR_MAIN+"%s."
+		GainedPoints = "\x07"+MGE_COLOR_MAIN+"%s Punkte."
+		LostPoints = "\x07"+MGE_COLOR_MAIN+"%s Punkte."
+		MyRank = "\x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF. Siege: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF, Verluste: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
+		MyRankNoRating = "\x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF Siege und \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF Verluste."
+		ClassIsNotAllowed = "\x07"+MGE_COLOR_BACKGROUND+"Diese Klasse (%s) ist nicht erlaubt!"
+		LowRating = "\x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF ist zu niedrig, Minimum ist \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
+		HighRating = "\x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF ist zu hoch, Maximum ist \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
+		XdefeatsY = "\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF besiegt \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF in einem Duell auf \x07"+MGE_COLOR_MAIN+"%s\x7FFFFFFn \x07"+MGE_COLOR_MAIN+"%s\x7"
+		XdefeatsYearly = "\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF besiegt \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF in einem Duell auf \x07"+MGE_COLOR_MAIN+"%s\x7"
+		SpecRemove = "\x07"+MGE_COLOR_BACKGROUND+"Kann nicht in Spec gehen, während ein Spiel läuft, wird aus der Warteschlange entfernt."
+		ClassChangePoint = "\x07"+MGE_COLOR_BACKGROUND+"Du hast die Klasse während eines Spiels geändert, dein Gegner erhält 1 Punkt."
+		ClassChangePointOpponent = "\x07"+MGE_COLOR_BACKGROUND+"Dein Gegner hat die Klasse während eines Spiels geändert, du erhältst 1 Punkt."
+		Welcome1 = "\x07"+MGE_COLOR_BACKGROUND+"Willkommen bei VScript MGE Version \x07"+MGE_COLOR_SUBJECT+"%s"
+		Welcome2 = "\x07"+MGE_COLOR_BACKGROUND+"Rewrite by: \x07"+MGE_COLOR_SUBJECT+"Braindawg"
+		Welcome3 = "\x07"+MGE_COLOR_BACKGROUND+"Original plugin by: \x07"+MGE_COLOR_SUBJECT+"Lange & Cprice\x07, based on \x07"+MGE_COLOR_SUBJECT+"kAmmomod"
+		Top5Title  =			"Top 5 Spieler"
+		top5error =			"[VScript MGE] Noch nicht genug Spieler in der Datenbank."
+		bballdunk =			"\x07"+MGE_COLOR_SUBJECT+"Du hast \x07"+MGE_COLOR_SUBJECT+"%s\x7FFFFFF gedunkt!"
 		Cmd_MGECmds =			"[VScript MGE] Help: Command Information"
 		Cmd_SeeConsole =			"[VScript MGE] Bekijk de console voor output."
 		Cmd_MGEMod =			"[VScript MGE] mgemod\t - Menu"
