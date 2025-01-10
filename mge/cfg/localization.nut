@@ -6,6 +6,7 @@
  * - Sgt Table (Spanish) *
  * - Royal (Vietnamese)  *
  * - Lyney (Thai)        *
+ * - tïger (Ukranian)	 *
  * - B855 (Russian)      *
  * - Eyes (Brazilian)    *
  *************************/
@@ -685,6 +686,65 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_WriteSuccess =			"\n\nVPI: Записаны данные для пользователя %s.\n\n"
 		VPI_WriteError =			"\n\nVPI: Ошибка записи данных для пользователя %s.\n\n"
 
+	}
+	ukranian = {
+		MenuTitle  =			"Вступить в арену..."
+		MenuRemove  =			"Видалити з черги"
+		HPLeft =			"\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Ваш противник мав \x07"+MGE_COLOR_SUBJECT+"%d\x07FFFFFF здоров'я."
+		Adv =			"\x07"+MGE_COLOR_MAIN+"Вступити в арену, введіть\x07FFFFFF!add\n\x07"+MGE_COLOR_MAIN+"Для перегляду команд, введіть !mgehelp"
+		JoinsArena =			"\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF (%s) вступає в арену \x07"+MGE_COLOR_MAIN+"%s."
+		JoinsArenaNoStats =			"\x07"+MGE_COLOR_MAIN+"%s вступає в арену \x07"+MGE_COLOR_SUBJECT+"%s."
+		ChoseArena =			"Ви вибрали арену \x07"+MGE_COLOR_MAIN+" %s."
+		NextInLine =			"Ви \x07"+MGE_COLOR_MAIN+"наступний в черзі."
+		InLine =			"Очікування в черзі: Довжина черги:\x07"+MGE_COLOR_MAIN+"%s."
+		GainedPoints =			"Ви отримали \x07"+MGE_COLOR_MAIN+"%s очок."
+		LostPoints =			"Ви втратили \x07"+MGE_COLOR_MAIN+"%s очок."
+		MyRank =			"Ваш рейтинг \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF. Перемоги: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF, Перемоги: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
+		MyRankNoRating =			"Ви маєте \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF перемоги і \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF пораження."
+		ClassIsNotAllowed =			"\x07"+MGE_COLOR_BACKGROUND+"Цей клас (%s) не дозволений!"
+		LowRating =			"Ваш рейтинг \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF низький, мінімальний - \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
+		HighRating =			"Ваш рейтинг \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF високий, максимальний - \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
+		XdefeatsY =			"\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF перемагає \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF в дуелі для \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF на \x07"+MGE_COLOR_MAIN+"%s\x07"
+		XdefeatsYearly =			"\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF перемагає \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF в дуелі на \x07"+MGE_COLOR_MAIN+"%s\x07"
+		SpecRemove =			"\x07"+MGE_COLOR_BACKGROUND+"Не можете вступити в команду спостерігачів, поки ви в дуелі, видаляючи з черги."
+		ClassChangePoint =			"\x07"+MGE_COLOR_BACKGROUND+"Ви змінили клас під час дуелі, давши очко вашому опонентові."
+		ClassChangePointOpponent =			"\x07"+MGE_COLOR_BACKGROUND+"Ваш опонент змінив клас під час дуелі, давши вам очко."
+		Welcome1 =			"\x07"+MGE_COLOR_BACKGROUND+"Ласкаво просимо до VScript MGE версії \x07"+MGE_COLOR_SUBJECT+"%s"
+		Welcome2 =			"\x07"+MGE_COLOR_BACKGROUND+"Rewrite by: \x07"+MGE_COLOR_SUBJECT+"Braindawg"
+		Welcome3 =			"\x07"+MGE_COLOR_BACKGROUND+"Original plugin by: \x07"+MGE_COLOR_SUBJECT+"Lange & Cprice\x07, based on \x07"+MGE_COLOR_SUBJECT+"kAmmomod"
+		Top5Title  =			"Top 5 Players"
+		top5error =			"[VScript MGE] Недостатньо гравців у базі даних."
+		bballdunk =			"\x07"+MGE_COLOR_SUBJECT+"Ви забили м'яч \x07"+MGE_COLOR_SUBJECT+"%s!"
+		Cmd_MGECmds =			"[VScript MGE] Довідка: Команди"
+		Cmd_SeeConsole =			"[VScript MGE] Перегляньте консоль для виведення."
+		Cmd_MGEMod =			"[VScript MGE] mgemod\t - Меню"
+		Cmd_Add =			"[VScript MGE] add\t - Використання: add <номер арени/ім'я арени>. Додати в арену."
+		Cmd_Remove =			"[VScript MGE] remove\t - Видалити з теперішньої арени."
+		Cmd_First =			"[VScript MGE] first\t - Вступити в першу доступну арену."
+		Cmd_Top5 =			"[VScript MGE] top5\t - Показати 5 найкращих гравців."
+		Cmd_Rank =			"[VScript MGE] rank\t - Використання: rank <ім'я гравця>. Показати рейтинг гравця."
+		Cmd_HitBlip =			"[VScript MGE] hitblip - Включити/виключити hitblip."
+		Cmd_Hud =			"[VScript MGE] hud\t - Включити/виключити текстовий оверлей."
+		Cmd_Handicap =			"[VScript MGE] handicap - Зменшити ваш максимальний рівень здоров'я. Введіть '!handicap off' для відключення."
+		NoClassChange =			"\x07"+MGE_COLOR_BACKGROUND+"Ви не можете змінити клас в цей момент."
+		DatabaseDown =			"З'єднання з базою даних не вдалося, повертаючись до файлового зберігання.\nНовое з'єднання буде спробувано через %s хвилин."
+		StatsRestored =			"З'єднання з базою даних відновлено, оновлення статистики...\nСтатистика відновлена."
+		StatsRestoredDown =			"База даних працює, але статистика адміністративного відключена."
+		MustJoinArena =			"\x07"+MGE_COLOR_BACKGROUND+"Ви повинні вступити в арену, щоб зробити це."
+		NoCurrentHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"У вас немає поточного гандикапу."
+		CurrentHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Ваш поточний гандикап \x07"+MGE_COLOR_SUBJECT+"%s \x07"+MGE_COLOR_BACKGROUND+"максимальний HP."
+		InvalidHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Ваш бажаний гандикап недійсний, гандикап відключено."
+		HandicapDisabled =			"\x07"+MGE_COLOR_BACKGROUND+"Гандикап відключено."
+		Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF знаходиться в масі! (%s перемог)"
+		FirstBlood =			"\x07"+MGE_COLOR_SUBJECT+"Перша кров!"
+		Airshot =			"\x07"+MGE_COLOR_SUBJECT+"удар в повітрі!"
+
+		Error_StatsNotFound =			"\n\nПомилка: статистика не знайдена для %s! Повторне отримання і пропуск оновлення...\n\n"
+
+		VPI_ReadSuccess =			"\n\nVPI: Дані отримані для користувача %s.\n\n"
+		VPI_ReadError =			"\n\nVPI: Помилка отримання даних для користувача %s.\n\n"
+		VPI_WriteSuccess =			"\n\nVPI: Дані записані для користувача %s.\n\n"
+		VPI_WriteError =			"\n\nVPI: Помилка запису даних для користувача %s.\n\n"
 	}
 	brazilian = {
 		MenuTitle  =			"Entrar na arena..."
