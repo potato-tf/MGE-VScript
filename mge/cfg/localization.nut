@@ -5,6 +5,7 @@
  * - DaanBox (Dutch)     *
  * - Sgt Table (Spanish) *
  * - Royal (Vietnamese)  *
+ * - kubikill (Polish)   *
  * - tïger (Ukranian)	 *
  * - B855 (Russian)      *
  * - Eyes (Brazilian)    *
@@ -1510,7 +1511,67 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_WriteError =			"\n\nVPI: ユーザー %s のデータ書き込み中にエラーが発生しました。\n\n"
 	}
 
-	chinese = {
+	tchinese = {
+		MenuTitle =           "加入競技場……"
+		MenuRemove=           "退出隊列"
+		HPLeft=           "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF 您的對手還剩 \x07"+MGE_COLOR_SUBJECT+"%d\x07FFFFFF 生命值。"
+		Adv=           "\x07"+MGE_COLOR_MAIN+"鍵入 \0!add\x07FFFFFF 打開菜單並加入競技場，鍵入 "+MGE_COLOR_MAIN+"!mgehelp\x07FFFFFF 查看幫助。"
+		JoinsArena=           "\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF (%s) 加入了競技場：\x07"+MGE_COLOR_MAIN+"%s"
+		JoinsArenaNoStats=           "\x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF 加入了競技場：\x07"+MGE_COLOR_SUBJECT+"%s"
+		ChoseArena=           "您選擇了競技場：\x07"+MGE_COLOR_MAIN+"%s"
+		NextInLine=           "您排在\x07"+MGE_COLOR_MAIN+"下一位\x07FFFFFF上場。"
+		InLine=           "您排在隊列中第 \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF 位。"
+		GainedPoints=           "您得到了 \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF 分。"
+		LostPoints=           "您丟掉了 \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF 分。"
+		MyRank=           "您的排名：\x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF。勝場數：\x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF，負場數：\x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF。"
+		MyRankNoRating=           "您的勝場數：\x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF，負場數：\x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF。"
+		ClassIsNotAllowed=           "\x07"+MGE_COLOR_BACKGROUND+"不允許使用該職業。"
+		LowRating=           "您的排名 \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF 太低，最低為 \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
+		HighRating=           "您的排名 \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF 太高，最高為 \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
+		XdefeatsY=           "\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF (Score:%s) 打敗了 \x07"+MGE_COLOR_SUBJECT+"%s\x7FFFFFF (Score:%s) 在決鬥中 \x07"+MGE_COLOR_MAIN+"%s\x7FFFFFF（競技場：\x07"+MGE_COLOR_MAIN+"%s\x7FFFFFF）"
+		XdefeatsYearly=           "\x07"+MGE_COLOR_SUBJECT+"%s\x7FFFFFF (Score:%s) 打敗了 \x07"+MGE_COLOR_SUBJECT+"%s\x7FFFFFF（得分：%s）（競技場：\x07"+MGE_COLOR_MAIN+"%s\x7FFFFFF）"
+		SpecRemove=           "\x07"+MGE_COLOR_BACKGROUND+"對決時不能進入觀察員。您已被移出隊列。"
+		ClassChangePoint=           "\x07"+MGE_COLOR_BACKGROUND+"您在對決中更換了職業，因此罰您一分。"
+		ClassChangePointOpponent=           "\x07"+MGE_COLOR_BACKGROUND+"您的對手在對決中更換了職業，因此罰他一分。"
+		Welcome1=           "\x07"+MGE_COLOR_BACKGROUND+"歡迎來玩 MGE，插件版本：\x07"+MGE_COLOR_SUBJECT+"%s"
+		Welcome2=           "\x07"+MGE_COLOR_BACKGROUND+"地圖作者：\x07"+MGE_COLOR_SUBJECT+"Swaty\x07、\x07"+MGE_COLOR_SUBJECT+"CB"
+		Welcome3=           "\x07"+MGE_COLOR_BACKGROUND+"插件作者：\x07"+MGE_COLOR_SUBJECT+"Lange、Cprice\x07，漢化：\x07"+MGE_COLOR_SUBJECT+"888"
+		Top5Title =           "最頂尖的五名玩家"
+		top5error=           "[VScript MGE] 資料庫中尚無玩家資料。"
+		bballdunk=           "\x07"+MGE_COLOR_SUBJECT+"您\x07FFFFFF 在 \x07"+MGE_COLOR_SUBJECT+"%s\x7FFFFFF 成功投籃！"
+		Cmd_MGECmds=           "[VScript MGE] 幫助：命令簡介"
+		Cmd_SeeConsole=           "[VScript MGE] 請查看控制台輸出。"
+		Cmd_MGEMod=           "[VScript MGE] mgemod\t - 主菜單"
+		Cmd_Add=           "[VScript MGE] add\t - 格式:add <競技場號/競技場名稱> - 加入指定競技場"
+		Cmd_Remove=           "[VScript MGE] remove\t - 退出當前競技場。"
+		Cmd_First=           "[VScript MGE] first\t - 加入首個可用的競技場。"
+		Cmd_Top5=           "[VScript MGE] top5\t - 顯示總排名前五的玩家列表。"
+		Cmd_Rank=           "[VScript MGE] rank\t - 格式：rank <玩家名稱> - 顯示指定玩家的排名。"
+		Cmd_HitBlip=           "[VScript MGE] hitblip - 開啟或關閉命中聲音。"
+		Cmd_Hud=           "[VScript MGE] hud\t - 開啟或關閉 HUD 文字資訊。"
+		Cmd_Handicap=           "[VScript MGE] handicap - 開啟讓步，可以減少您的最大生命值。鍵入"!handicap off"可以關閉。"
+		NoClassChange=           "\x07"+MGE_COLOR_BACKGROUND+"當前您不能更換職業。"
+		DatabaseDown=           "資料庫連接失敗，禁用統計資料。\n將在 %s 分鐘後重試。"
+		StatsRestored=           "資料庫連接已恢復，刷新統計資料...\n統計資料已恢復。"
+		StatsRestoredDown=           "資料庫已啟動，但統計資料已禁用。"
+		MustJoinArena=           "\x07"+MGE_COLOR_BACKGROUND+"您必須先加入一個競技場！"
+		NoCurrentHandicap=           "\x07"+MGE_COLOR_BACKGROUND+"您目前還沒有開啟讓步呢。"
+		CurrentHandicap=           "\x07"+MGE_COLOR_BACKGROUND+"您當前的讓步方案：\x07"+MGE_COLOR_SUBJECT+"%s\x07"+MGE_COLOR_BACKGROUND+"最大生命值。"
+		InvalidHandicap=           "\x07"+MGE_COLOR_BACKGROUND+"您設定的讓步方案無效。讓步已關閉。"
+		HandicapDisabled=           "\x07"+MGE_COLOR_BACKGROUND+"讓步已關閉。"
+		Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s 在連勝中！ (%s 連勝)"
+		FirstBlood =			"\x07"+MGE_COLOR_SUBJECT+"First Blood!"
+		Airshot =			"\x07"+MGE_COLOR_SUBJECT+"Airshot!"
+
+		Error_StatsNotFound =			"\n\n錯誤：未找到 %s 的統計資料！正在重新獲取並跳過更新...\n\n"
+
+		VPI_ReadSuccess =			"\n\nVPI: 已獲取 %s 的資料。\n\n"
+		VPI_ReadError =			"\n\nVPI: 獲取 %s 的資料時出錯。\n\n"
+		VPI_WriteSuccess =			"\n\nVPI: 已寫入 %s 的資料。\n\n"
+		VPI_WriteError =			"\n\nVPI: 寫入 %s 的資料時出錯。\n\n"
+	}
+
+	schinese = {
 		MenuTitle =           "加入竞技场……"
 		MenuRemove=           "退出队列"
 		HPLeft=           "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF 您的对手还剩 \x07"+MGE_COLOR_SUBJECT+"%d\x07FFFFFF 生命值。"
