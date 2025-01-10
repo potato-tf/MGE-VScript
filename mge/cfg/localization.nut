@@ -27,7 +27,7 @@
 // 404EED - Green
 // 808000 - Olive
 
-//new MGEs
+//new MGE
 const MGE_COLOR_MAIN = "FFD700"
 const MGE_COLOR_SUBJECT = "edf781"
 const MGE_COLOR_BACKGROUND = "ad4800"
@@ -145,12 +145,12 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		FirstBlood =            "\x07"+MGE_COLOR_SUBJECT+"First Blood!"
 		Airshot =               "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
 
-		Error_StatsNotFound =			"\n\nError: stats not found for %s! fetching again and skipping update...\n\n"
+		Error_StatsNotFound =			"\n\nBłąd: statystyki dla %s nie znaleziono! ponowne pobieranie i pominięcie aktualizacji...\n\n"
 
-		VPI_ReadSuccess =			"\n\nVPI: Got data for user %s.\n\n"
-		VPI_ReadError =			"\n\nVPI: Error getting data for user %s.\n\n"
-		VPI_WriteSuccess =			"\n\nVPI: Wrote data for user %s.\n\n"
-		VPI_WriteError =			"\n\nVPI: Error writing data for user %s.\n\n"	
+		VPI_ReadSuccess =			"\n\nVPI: Pobrano dane dla użytkownika %s.\n\n"
+		VPI_ReadError =			"\n\nVPI: Błąd pobierania danych dla użytkownika %s.\n\n"
+		VPI_WriteSuccess =			"\n\nVPI: Zapisano dane dla użytkownika %s.\n\n"
+		VPI_WriteError =			"\n\nVPI: Błąd zapisu danych dla użytkownika %s.\n\n"
 	}
 	dutch = {
 		MenuTitle  =			"Sluit je aan bij arena..."
@@ -263,12 +263,12 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		FirstBlood =            "\x07"+MGE_COLOR_SUBJECT+"First Blood!"
 		Airshot =               "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
 
-		Error_StatsNotFound =			"\n\nError: stats not found for %s! fetching again and skipping update...\n\n"
+		Error_StatsNotFound =			"\n\nFehler: Statistiken für %s nicht gefunden! Hole erneut und überspringe Update...\n\n"
 
-		VPI_ReadSuccess =			"\n\nVPI: Got data for user %s.\n\n"
-		VPI_ReadError =			"\n\nVPI: Error getting data for user %s.\n\n"
-		VPI_WriteSuccess =			"\n\nVPI: Wrote data for user %s.\n\n"
-		VPI_WriteError =			"\n\nVPI: Error writing data for user %s.\n\n"
+		VPI_ReadSuccess =			"\n\nVPI: Daten für Benutzer %s erhalten.\n\n"
+		VPI_ReadError =			"\n\nVPI: Fehler beim Abrufen der Daten für Benutzer %s.\n\n"
+		VPI_WriteSuccess =			"\n\nVPI: Daten für Benutzer %s geschrieben.\n\n"
+		VPI_WriteError =			"\n\nVPI: Fehler beim Schreiben der Daten für Benutzer %s.\n\n"
 	}
 	finnish = {
 		MenuTitle  =			"Liity arenaan..."
@@ -439,12 +439,12 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		FirstBlood =            "\x07"+MGE_COLOR_SUBJECT+"First Blood!"
 		Airshot =               "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
 
-		Error_StatsNotFound =			"\n\nError: stats not found for %s! fetching again and skipping update...\n\n"
+		Error_StatsNotFound =			"\n\nErreur : statistiques non trouvées pour %s ! Récupération en cours et mise à jour ignorée...\n\n"
 
-		VPI_ReadSuccess =			"\n\nVPI: Got data for user %s.\n\n"
-		VPI_ReadError =			"\n\nVPI: Error getting data for user %s.\n\n"
-		VPI_WriteSuccess =			"\n\nVPI: Wrote data for user %s.\n\n"
-		VPI_WriteError =			"\n\nVPI: Error writing data for user %s.\n\n"
+		VPI_ReadSuccess =			"\n\nVPI : Données récupérées pour l'utilisateur %s.\n\n"
+		VPI_ReadError =			"\n\nVPI : Erreur lors de la récupération des données pour l'utilisateur %s.\n\n"
+		VPI_WriteSuccess =			"\n\nVPI : Données enregistrées pour l'utilisateur %s.\n\n"
+		VPI_WriteError =			"\n\nVPI : Erreur lors de l'enregistrement des données pour l'utilisateur %s.\n\n"
 	}
 	spanish = {
 		MenuTitle  =			"Salta a la palestra..."
@@ -616,13 +616,14 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		HandicapDisabled =			"\x07"+MGE_COLOR_BACKGROUND+"คะแนนสูงสุดปิด"
 		Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s อยู่ในชุดการชนะสะสม! (%s ชนะ)"
 		FirstBlood =			"\x07"+MGE_COLOR_SUBJECT+"การชนะครั้งแรก!"
+		Airshot = "\x07"+MGE_COLOR_SUBJECT+"การชนะครั้งแรก!"
 
-		Error_StatsNotFound =			"\n\nError: stats not found for %s! fetching again and skipping update...\n\n"
+		Error_StatsNotFound =			"\n\nข้อผิดพลาด: ไม่พบสถิติสำหรับ %s! กำลังดึงข้อมูลอีกครั้งและข้ามการอัปเดต...\n\n"
 
-		VPI_ReadSuccess =			"\n\nVPI: Got data for user %s.\n\n"
-		VPI_ReadError =			"\n\nVPI: Error getting data for user %s.\n\n"
-		VPI_WriteSuccess =			"\n\nVPI: Wrote data for user %s.\n\n"
-		VPI_WriteError =			"\n\nVPI: Error writing data for user %s.\n\n"
+		VPI_ReadSuccess =			"\n\nVPI: ได้รับข้อมูลสำหรับผู้ใช้ %s แล้ว\n\n"
+		VPI_ReadError =			"\n\nVPI: เกิดข้อผิดพลาดในการรับข้อมูลสำหรับผู้ใช้ %s\n\n"
+		VPI_WriteSuccess =			"\n\nVPI: เขียนข้อมูลสำหรับผู้ใช้ %s แล้ว\n\n"
+		VPI_WriteError =			"\n\nVPI: เกิดข้อผิดพลาดในการเขียนข้อมูลสำหรับผู้ใช้ %s\n\n"
 
 	}
 	russian = {
@@ -675,6 +676,7 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		HandicapDisabled =			"\x07"+MGE_COLOR_BACKGROUND+"Гандикап отключен."
 		Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s находится на серии! (%s убийств)"
 		FirstBlood =			"\x07"+MGE_COLOR_SUBJECT+"Первая кровь!"
+		Airshot =			"\x07"+MGE_COLOR_SUBJECT+"удар в воздухе!"
 
 		Error_StatsNotFound =			"\n\nОшибка: статистика не найдена для %s! Повторное получение и пропуск обновления...\n\n"
 
@@ -776,7 +778,7 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		Cmd_MGEMod=           "[VScript MGE] mgemod\t - 主菜单"
 		Cmd_Add=           "[VScript MGE] add\t - 格式:add <竞技场号/竞技场名称> - 加入指定竞技场"
 		Cmd_Remove=           "[VScript MGE] remove\t - 退出当前竞技场。"
-		Cmd_First=           "[VScript MGE] first\t - 加入首个可用的竞技场。"	
+		Cmd_First=           "[VScript MGE] first\t - 加入首个可用的竞技场。"
 		Cmd_Top5=           "[VScript MGE] top5\t - 显示总排名前五的玩家列表。"
 		Cmd_Rank=           "[VScript MGE] rank\t - 格式：rank <玩家名称> - 显示指定玩家的排名。"
 		Cmd_HitBlip=           "[VScript MGE] hitblip - 开启或关闭命中声音。"
