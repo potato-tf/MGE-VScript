@@ -555,8 +555,7 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_WriteError =			"\n\nVPI: Ошибка записи данных для пользователя %s.\n\n"
 
 	}
-	//this is brazilian portugese
-	portugese = {
+	brazilian = {
 		MenuTitle  =			"Entrar na arena..."
 		MenuRemove  =			"Remover da fila"
 		HPLeft =			"\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Seu oponente tinha \x07"+MGE_COLOR_SUBJECT+"%d\x07FFFFFF de vida restante."
