@@ -31,10 +31,8 @@
  * - Swedish                                                     *
  * - Norwegian                                                   *
  * - Latam (from verified Spanish translation)                   *
- * - Thai                                                        *
  * - Korean                                                      *
  * - Japanese                                                    *
- * - Chinese (Traditional, from original Simplified translation) *
  *****************************************************************/
 
 // Color codes:
