@@ -6,6 +6,7 @@
  * - Xybo (Swedish)		   *
  * - Sgt Table (Spanish)   *
  * - Royal (Vietnamese)    *
+ * - Lyney (Thai)		   *
  * - Toxicologist (Czech)  *
  * - kubikill (Polish)     *
  * - tïger (Ukranian)	   *
@@ -36,6 +37,7 @@
  * - Japanese                                                    *
  * - Chinese (Traditional, from original Simplified translation) *
  *****************************************************************/
+
 // Color codes:
 //classic MGE
 // 32CD32 - Light green
@@ -1103,59 +1105,56 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_WriteError             = "\n\nVPI: Error al guardar información del usuario %s.\n\n"
 	}
 	thai = {
-		MenuTitle                = "เข้าสู่อาร์เรน..."
+		MenuTitle                = "เข้าร่วม Arena"
 		MenuRemove               = "ลบออกจากคิว"
-		HPLeft                   = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF คุณติดต่อกับผู้เล่นที่มี \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF พลังชีวิตที่เหลือ"
-		Adv                      = "\x07"+MGE_COLOR_MAIN+"เข้าสู่อาร์เรน, พิมพ์\x07FFFFFF!add\n\x07"+MGE_COLOR_MAIN+"สำหรับดูคำสั่ง, พิมพ์ !mgehelp"
-		JoinsArena               = "\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF (%s) เข้าสู่อาร์เรน \x07"+MGE_COLOR_MAIN+"%s."
-		JoinsArenaNoStats        = "\x07"+MGE_COLOR_MAIN+"%s เข้าสู่อาร์เรน \x07"+MGE_COLOR_SUBJECT+"%s."
-		ChoseArena               = "คุณเลือกอาร์เรน \x07"+MGE_COLOR_MAIN+" %s."
+		HPLeft                   = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF คู่ต่อสู้ของคุณมีพลังชีวิตที่เหลือ \x07"+MGE_COLOR_SUBJECT+"%d\x07FFFFFF "
+		Adv                      = "\x07"+MGE_COLOR_MAIN+"เข้าร่วม Arena, พิมพ์\x07FFFFFF!add\n\x07"+MGE_COLOR_MAIN+"เมนูสำหรับดูคำสั่ง, พิมพ์ !mgehelp"
+		JoinsArena               = "\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF (%s) เข้าร่วม Arena \x07"+MGE_COLOR_MAIN+"%s."
+		JoinsArenaNoStats        = "\x07"+MGE_COLOR_MAIN+"%s เข้าร่วม Arena \x07"+MGE_COLOR_SUBJECT+"%s."
+		ChoseArena               = "คุณเลือก Arena \x07"+MGE_COLOR_MAIN+" %s."
 		NextInLine               = "คุณอยู่ \x07"+MGE_COLOR_MAIN+"ตำแหน่งที่ 1 ในคิว"
 		InLine                   = "รออยู่ในคิว: ความยาวของคิว:\x07"+MGE_COLOR_MAIN+"%s."
 		GainedPoints             = "คุณได้รับ \x07"+MGE_COLOR_MAIN+"%s คะแนน"
 		LostPoints               = "คุณสูญเสีย \x07"+MGE_COLOR_MAIN+"%s คะแนน"
-		MyRank                   = "คุณมีอันดับ \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF. ชัยชนะ: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF, แพ้: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
-		MyRankNoRating           = "คุณมี \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF ชัยชนะและ \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF แพ้"
+		MyRank                   = "คุณได้อันดับ \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF. ชนะ: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF ครั้ง, แพ้: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF ครั้ง"
+		MyRankNoRating           = "คุณได้ชนะ \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF ครั้งและแพ้ \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF ครั้ง"
 		ClassIsNotAllowed        = "\x07"+MGE_COLOR_BACKGROUND+"คลาสนี้ (%s) ไม่ได้รับอนุญาต"
 		LowRating                = "คุณมีอันดับ \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF ต่ำเกินไป, ต่ำสุดคือ \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
 		HighRating               = "คุณมีอันดับ \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF สูงเกินไป, สูงสุดคือ \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
 		XdefeatsY                = "\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF ชนะ \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF ในการต่อสู้สำหรับ \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF ใน \x07"+MGE_COLOR_MAIN+"%s\x07"
 		XdefeatsYearly           = "\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF ชนะ \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF ในการต่อสู้สำหรับ \x07"+MGE_COLOR_MAIN+"%s\x07"
-		SpecRemove               = "\x07"+MGE_COLOR_BACKGROUND+"คุณไม่สามารถเข้าสู่สถานที่สำหรับการต่อสู้ได้ในขณะนี้, ลบออกจากคิว"
-		ClassChangePoint         = "\x07"+MGE_COLOR_BACKGROUND+"คุณเปลี่ยนคลาสในขณะที่กำลังต่อสู้, กำหนดคะแนนให้กับผู้เล่นของคุณ"
-		ClassChangePointOpponent = "\x07"+MGE_COLOR_BACKGROUND+"ผู้เล่นของคุณเปลี่ยนคลาสในขณะที่กำลังต่อสู้, กำหนดคะแนนให้กับคุณ"
+		SpecRemove               = "\x07"+MGE_COLOR_BACKGROUND+"คุณไม่สามารถ Spectator ได้, ลบออกจากคิว"
+		ClassChangePoint         = "\x07"+MGE_COLOR_BACKGROUND+"คุณเปลี่ยนคลาสในขณะที่กำลังต่อสู้, คู่ต่อสู้ของคุณได้รับ 1 คะแนน"
+		ClassChangePointOpponent = "\x07"+MGE_COLOR_BACKGROUND+"คู่ต่อสู้ของคุณเปลี่ยนคลาสในขณะที่กำลังต่อสู้, คุณได้รับ 1 คะแนน"
 		Welcome1                 = "\x07"+MGE_COLOR_BACKGROUND+"ยินดีต้อนรับสู่ VScript MGE รุ่น \x07"+MGE_COLOR_SUBJECT+"%s"
 		Welcome2                 = "\x07"+MGE_COLOR_BACKGROUND+"Rewrite by: \x07"+MGE_COLOR_SUBJECT+"Braindawg"
 		Welcome3                 = "\x07"+MGE_COLOR_BACKGROUND+"Original plugin by: \x07"+MGE_COLOR_SUBJECT+"Lange & Cprice\x07, based on \x07"+MGE_COLOR_SUBJECT+"kAmmomod"
 		Top5Title                = "Top 5 Players"
 		top5error                = "[VScript MGE] ไม่มีผู้เล่นมากนักในฐานข้อมูล"
-		bballdunk                = "\x07"+MGE_COLOR_SUBJECT+"คุณทำคะแนนที่ดีมาก! \x07"+MGE_COLOR_SUBJECT+"%s!"
+		bballdunk                = "\x07"+MGE_COLOR_SUBJECT+"You DUNKED ON! \x07"+MGE_COLOR_SUBJECT+"%s!"
 		Cmd_MGECmds              = "[VScript MGE] คำสั่ง: ข้อมูล"
-		Cmd_SeeConsole           = "[VScript MGE] ดูคอนโซลสำหรับการส่งออก"
+		Cmd_SeeConsole           = "[VScript MGE] ดู Console สำหรับการส่งออก"
 		Cmd_MGEMod               = "[VScript MGE] mgemod\t - เมนู"
-		Cmd_Add                  = "[VScript MGE] add\t - ใช้งาน: add <หมายเลขอาร์เรน/ชื่ออาร์เรน>. เพิ่มอาร์เรน"
-		Cmd_Remove               = "[VScript MGE] remove\t - ลบออกจากอาร์เรนปัจจุบัน"
-		Cmd_First                = "[VScript MGE] first\t - เข้าสู่อาร์เรนที่มีอันดับที่ 1"
+		Cmd_Add                  = "[VScript MGE] add\t - ใช้งาน: add <หมายเลขอาร์เรน/ชื่ออาร์เรน>. เพิ่ม Arena"
+		Cmd_Remove               = "[VScript MGE] remove\t - ลบออกจาก Arena ปัจจุบัน"
+		Cmd_First                = "[VScript MGE] first\t - เข้าร่วม Arena อันแรกที่มีอยู่"
 		Cmd_Top5                 = "[VScript MGE] top5\t - แสดงผู้เล่นที่ดีที่สุด 5 คน"
 		Cmd_Rank                 = "[VScript MGE] rank\t - ใช้งาน: rank <ชื่อผู้เล่น>. แสดงอันดับของผู้เล่น"
 		Cmd_HitBlip              = "[VScript MGE] hitblip - เปิด/ปิด hitblip"
 		Cmd_Hud                  = "[VScript MGE] hud\t - เปิด/ปิดการแสดงข้อความบนหน้าจอ"
-		Cmd_Handicap             = "[VScript MGE] handicap - ลดคะแนนสูงสุดของคุณ. พิมพ์ '!handicap off' เพื่อปิด"
-		Cmd_Ruleset              = "[VScript MGE] ruleset\t - ใช้งาน: ruleset <ชื่อ ruleset>. เลือก ruleset"
-		Cmd_Language             = "[VScript MGE] language\t - ใช้งาน: language <ชื่อภาษา>. เลือกภาษา"
-		LanguageSet              = "ภาษาเปลี่ยนเป็น \x07"+MGE_COLOR_SUBJECT+"%s\x07"
+		Cmd_Handicap             = "[VScript MGE] handicap - ลดพลังชีวิตสูงสุดของคุณ. พิมพ์ '!handicap off' เพื่อปิด"
 		NoClassChange            = "\x07"+MGE_COLOR_BACKGROUND+"คุณไม่สามารถเปลี่ยนคลาสในขณะนี้"
-		DatabaseDown             = "การเชื่อมต่อกับฐานข้อมูลล้มเหลว, กลับไปที่การเก็บข้อมูลไฟล์.\nการเชื่อมต่อจะทำซ้ำใน %s นาที"
+		DatabaseDown             = "การเชื่อมต่อกับฐานข้อมูลล้มเหลว, กลับไปที่การเก็บข้อมูลไฟล์.\nจะเชื่อมต่ออีกครั้งใน %s นาที"
 		StatsRestored            = "การเชื่อมต่อกับฐานข้อมูลกลับมา, การอัปเดตข้อมูล...\nข้อมูลกลับมา"
 		StatsRestoredDown        = "ฐานข้อมูลทำงานอยู่, แต่ข้อมูลถูกปิดการอัปเดตอย่างองค์กร"
-		MustJoinArena            = "\x07"+MGE_COLOR_BACKGROUND+"คุณต้องเข้าสู่อาร์เรนเพื่อทำอย่างนั้น"
-		NoCurrentHandicap        = "\x07"+MGE_COLOR_BACKGROUND+"คุณไม่มีคะแนนสูงสุดปัจจุบัน"
-		CurrentHandicap          = "\x07"+MGE_COLOR_BACKGROUND+"คะแนนสูงสุดของคุณปัจจุบันคือ \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF"
-		InvalidHandicap          = "\x07"+MGE_COLOR_BACKGROUND+"คะแนนสูงสุดของคุณไม่ถูกต้อง, ปิดคะแนนสูงสุด"
-		HandicapDisabled         = "\x07"+MGE_COLOR_BACKGROUND+"คะแนนสูงสุดปิด"
+		MustJoinArena            = "\x07"+MGE_COLOR_BACKGROUND+"คุณต้องเข้าร่วม Arena เพื่อทำอย่างนั้น"
+		NoCurrentHandicap        = "\x07"+MGE_COLOR_BACKGROUND+"คุณไม่มีการใช้แต้มต่อ"
+		CurrentHandicap          = "\x07"+MGE_COLOR_BACKGROUND+"การใช้แต้มต่อของคุณในปัจจุบันคือ \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF"
+		InvalidHandicap          = "\x07"+MGE_COLOR_BACKGROUND+"การใช้แต้มต่อของคุณไม่ถูกต้อง, ปิดการ Handicap"
+		HandicapDisabled         = "\x07"+MGE_COLOR_BACKGROUND+"ปิดการใช้แต้มต่อ"
 		Killstreak               = "\x07"+MGE_COLOR_SUBJECT+"%s อยู่ในชุดการชนะสะสม! (%s ชนะ)"
-		FirstBlood               = "\x07"+MGE_COLOR_SUBJECT+"การชนะครั้งแรก!"
-		Airshot                  = "\x07"+MGE_COLOR_SUBJECT+"การชนะครั้งแรก!"
+		FirstBlood               = "\x07"+MGE_COLOR_SUBJECT+"FirstBlood!"
+		Airshot                  = "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
 
 		Error_StatsNotFound      = "\n\nข้อผิดพลาด: ไม่พบสถิติสำหรับ %s! กำลังดึงข้อมูลอีกครั้งและข้ามการอัปเดต...\n\n"
 
