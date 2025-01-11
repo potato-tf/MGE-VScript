@@ -291,11 +291,13 @@ foreach (sound in StockSounds)
 
 			local hp_ratio = Arenas[`%s`].hpratio.tofloat()
 			self.AddCustomAttribute(`max health additive bonus`,(self.GetMaxHealth() * hp_ratio) - self.GetMaxHealth(), -1)
+			self.AddCustomAttribute(`mod see enemy health`, 1, -1)
+			//this quirk is for reducing falldmg
 			self.AddCustomAttribute(`dmg taken increased`, 1 / hp_ratio, -1)
 			self.AddCustomAttribute(`dmg from ranged reduced`, hp_ratio, -1)
 			self.Regenerate(true)
 
-		", arena_name), 0.1, null, null)
+		", arena_name), GENERIC_DELAY, null, null)
 	}
 	function endif()
 	{
@@ -402,7 +404,7 @@ foreach (sound in StockSounds)
 				SendToConsole(`host_thread_mode -1`)
 				SendToConsole(`nav_generate_incremental`)
 				ClientPrint(null, 3, `Progress: ` + %d +`/`+ %d)
-			", progress,arenas_len), generate_delay + 0.1)
+			", progress,arenas_len), generate_delay + GENERIC_DELAY)
 
 			yield
 		}
@@ -426,7 +428,7 @@ foreach (sound in StockSounds)
 			ClientPrint(null, 3, `Generating nav...`)
 			SendToConsole(`host_thread_mode -1`)
 			SendToConsole(`nav_generate_incremental`)
-		", generate_delay + 0.1)
+		", generate_delay + GENERIC_DELAY)
 	}
 }
 

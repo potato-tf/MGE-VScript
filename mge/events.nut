@@ -190,7 +190,7 @@ class MGE_Events
 						child.ReapplyProvision()
 					}
 				}
-			", 0.1, null, null)
+			", GENERIC_DELAY, null, null)
 
 			if ("arena_info" in scope && scope.arena_info)
 			{
@@ -227,15 +227,20 @@ class MGE_Events
 				foreach(p, _ in arena.CurrentPlayers)
 				{
 					local scope = p.GetScriptScope()
-					str += format("%s: %d (%d)\n", scope.Name, arena.Score[p.GetTeam() - 2], scope.stats.elo)
+					local team = p.GetTeam()
+
+					//joined spectator directly without using !remove
+					if (team == TEAM_SPECTATOR) continue
+
+					str += format("%s: %d (%d)\n", scope.Name, arena.Score[team - 2], scope.stats.elo)
 				}
 				MGE_HUD.KeyValueFromString("message", str)
 				MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
 				// MGE_HUD.AcceptInput("Display", "", player, player)
-				EntFireByHandle(MGE_HUD, "Display", "", 0.1, player, player)
+				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, player, player)
 
 				if (arena.IsBBall)
-					EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", 0.1, null, null)
+					EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", GENERIC_DELAY, null, null)
 			}
 			else
 			{
@@ -314,16 +319,17 @@ class MGE_Events
 				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)
 
 				local str = format("%s\n", arena_name)
+
+				MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+				MGE_HUD.KeyValueFromString("message", str)
+
 				foreach(p, _ in arena.CurrentPlayers)
 				{
 					local scope = p.GetScriptScope()
 					str += format("%s: %d (%d)\n", scope.Name, arena.Score[p.GetTeam() - 2], scope.stats.elo)
+					EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
 				}
-				MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
-				MGE_HUD.KeyValueFromString("message", str)
 
-				EntFireByHandle(MGE_HUD, "Display", "", 0.1, attacker, attacker)
-				EntFireByHandle(MGE_HUD, "Display", "", 0.1, victim, victim)
 			}
 
 
@@ -376,7 +382,7 @@ class MGE_Events
 			if (team == TEAM_SPECTATOR)
 			{
 				local spec_cooldown_time = 0.0
-				if ("arena_info" in scope)
+				if ("arena_info" in scope && "arena" in scope.arena_info && scope.arena_info.arena.State == AS_FIGHT)
 				{
 
 					MGE_ClientPrint(player, 3, "SpecRemove")

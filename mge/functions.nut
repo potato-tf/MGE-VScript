@@ -104,6 +104,100 @@
 ::LoadSpawnPoints <- function()
 {
 	local config = SpawnConfigs[GetMapName()]
+
+	if (ELO_TRACKING_MODE)
+	{
+		::DoLeaderboardCam <- function()
+		{
+			//spawn our camera
+			local leaderboard_cam = CreateByClassname("info_observer_point")
+			leaderboard_cam.AddEFlags(EFL_KILLME)
+			leaderboard_cam.KeyValueFromString("targetname", "__mge_leaderboard_cam")
+			leaderboard_cam.KeyValueFromInt("fov",  120)
+			DispatchSpawn(leaderboard_cam)
+
+			local leaderboard_cam_pos = Vector()
+			local leaderboard_cam_angles = QAngle()
+
+			// this config has a leaderboard cam position set
+			if ("leaderboard_cam" in config)
+			{
+				local origin = split(config.leaderboard_cam, " ").apply( @(str) str.tofloat() )
+				local origin_len = origin.len()
+				leaderboard_cam_pos = Vector(origin[0], origin[1], origin[2])
+
+				if (origin_len == 4)
+					leaderboard_cam_angles = QAngle(origin[3], 0.0, 0.0)
+				else if (origin_len == 6)
+					leaderboard_cam_angles = QAngle(origin[3], origin[4], origin[5])
+
+				leaderboard_cam.SetOrigin(leaderboard_cam_pos)
+				leaderboard_cam.SetAbsAngles(leaderboard_cam_angles - QAngle(0, 180, 0))
+				return
+			}
+
+			//no config pos found, find a cam with a wall behind it
+			local cams = []
+			for (local cam; cam = FindByClassname(cam, "info_observer_point");)
+			{
+				cams.append(cam)
+				//check the welcome cam first
+				if (GetPropBool(cam, "m_bDefaultWelcome"))
+					cams.reverse()
+			}
+
+			//grab the first cam we find with a wall behind it
+			foreach (_cam in cams)
+			{
+				if (_cam.GetName() == "__mge_leaderboard_cam")
+					continue
+
+				printl(_cam)
+				// local trace = {
+				// 	start = _cam.GetOrigin(),
+				// 	end = (_cam.GetAbsAngles() - QAngle(0, 180, 0)).Forward() * 100000,
+				// 	mask = MASK_SOLID_BRUSHONLY,
+				// 	ignore = _cam
+				// }
+
+				// TraceLineEx(trace)
+				local trace = TraceLine(_cam.GetOrigin(), (_cam.GetAbsAngles() - QAngle(0, 180, 0)).Forward() * (LEADERBOARD_DISTANCE * 1.25), _cam)
+
+				if (trace && trace >= LEADERBOARD_DISTANCE * 0.01)
+				{
+
+					leaderboard_cam.SetOrigin(_cam.GetOrigin())
+					leaderboard_cam.SetAbsAngles(_cam.GetAbsAngles() - QAngle(0, 180, 0))
+
+
+					local leaderboard_pos = (_cam.GetOrigin() + leaderboard_cam.GetAbsAngles().Forward() * LEADERBOARD_DISTANCE) + Vector(0, 0, LEADERBOARD_VERTICAL_OFFSET)
+					local textsize = 10
+
+					// if (abs(leaderboard_pos.Length() - trace.endpos.Length()) < 50)
+					// {
+					// 	continue
+					// 	// leaderboard_pos = trace.endpos + Vector(0, 0, 35)
+					// 	// textsize = 10 * (leaderboard_pos.Length() - trace.endpos.Length()).tofloat() / 50
+					// 	// if (textsize < 5) textsize = 5
+					// }
+
+					local leaderboard_ent = CreateByClassname("point_worldtext")
+					leaderboard_ent.KeyValueFromString("message", "Leaderboard:\n")
+					leaderboard_ent.KeyValueFromInt("textsize", textsize)
+					leaderboard_ent.KeyValueFromString("color", "255 255 255")
+					leaderboard_ent.KeyValueFromInt("orientation", 1)
+					leaderboard_ent.SetOrigin(leaderboard_pos)
+					leaderboard_ent.AddEFlags(EFL_KILLME)
+					DispatchSpawn(leaderboard_ent)
+
+					break
+				}
+			}
+		}
+		//delay this until ents are spawned
+		EntFire("worldspawn", "CallScriptFunction", "DoLeaderboardCam", GENERIC_DELAY)
+	}
+
 	Arenas_List <- array(config.len(), null)
 
 	local idx_failed = false
@@ -358,7 +452,7 @@
 
 	EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
 	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
-	EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", 0.1, null, null)
+	EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", GENERIC_DELAY, null, null)
 
 	DispatchParticleEffect(player.GetTeam() == TF_TEAM_RED ? BBALL_PARTICLE_PICKUP_RED : BBALL_PARTICLE_PICKUP_BLUE, player.GetOrigin(), Vector(0, 90, 0))
 	EntFire(format("__mge_bball_trail_%d", player.GetTeam()), "StartTouch", "!activator", -1, player)
@@ -587,7 +681,7 @@
 			i++
 			RemovePlayer(p)
 			// AddPlayer(p, arena_name)
-			EntFireByHandle(p, "RunScriptCode", format("AddPlayer(self, `%s`)", arena_name), i * 0.1, null, null)
+			EntFireByHandle(p, "RunScriptCode", format("AddPlayer(self, `%s`)", arena_name), i * GENERIC_DELAY, null, null)
 			break
 		}
 		return

@@ -1,5 +1,30 @@
 const MGE_VERSION = "1.0.0"
 ::ROOT <- getroottable()
+::CONST <- getconsttable()
+
+//"reminder that constants are resolved at preprocessor level and not runtime"
+//"if you add them dynamically to the table they wont show up until you execute a new script as the preprocessor isnt aware yet"
+
+//fold into both const and root table to work around this.
+
+CONST.setdelegate({ _newslot = @(k, v) compilestring("const " + k + "=" + (typeof(v) == "string" ? ("\"" + v + "\"") : v))() })
+CONST.MAX_CLIENTS <- MaxClients().tointeger()
+if (!("ConstantNamingConvention" in ROOT))
+{
+	foreach(a, b in Constants)
+	{
+		foreach(k, v in b)
+		{
+			CONST[k] <- v != null ? v : 0
+			ROOT[k] <- v != null ? v : 0
+		}
+	}
+}
+
+foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
+	foreach (k, v in i.getclass())
+		if (k != "IsValid" && !(k in ROOT))
+			ROOT[k] <- i[k].bindenv(i)
 
 //CONFIG CONSTANTS
 const DEFAULT_LANGUAGE = "english"
@@ -11,12 +36,19 @@ const REMOVE_DROPPED_WEAPONS = true
 const ELO_TRACKING_MODE = 1 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
 const AIRSHOT_HEIGHT_THRESHOLD = 50
+const SPECTATOR_MESSAGE_COOLDOWN = 25.0
 
-//spawn shuffle modes
-//0 = none, spawns are iterated over in consistent order based on provided config
-//1 = random shuffle, iterates over a randomly shuffled array of spawns (classic MGE plugin behavior)
-//2 = random except, picks a truly random spawn so long as it's not the last one we spawned at
-//3 = random, no shuffling (can repeat spawns)
+//leaderboard
+const LEADERBOARD_DISTANCE = 75
+const LEADERBOARD_VERTICAL_OFFSET = 35
+
+/*******************************************************************************************************
+ * spawn shuffle modes                                                                                 *
+ * 0 = none, spawns are iterated over in consistent order based on provided config                     *
+ * 1 = random shuffle, iterates over a randomly shuffled array of spawns (classic MGE plugin behavior) *
+ * 2 = random except, picks a truly random spawn so long as it's not the last one we spawned at        *
+ * 3 = random, no shuffling (can repeat spawns)                                                        *
+ *******************************************************************************************************/
 const SPAWN_SHUFFLE_MODE = 1
 const SPAWN_SOUND = "items/spawn_item.wav"
 const SPAWN_SOUND_VOLUME = 1.0
@@ -25,7 +57,7 @@ const MAX_CLEAR_SPAWN_RETRIES = 10
 //announcer
 const ENABLE_ANNOUNCER = true //enable announcer quips (first blood airshots etc)
 const ANNOUNCER_VOLUME = 0.5 //volume of announcer quips
-const KILLSTREAK_ANNOUNCER_INTERVAL = 5 //how many kills before we play a killstreak sound
+const KILLSTREAK_ANNOUNCER_INTERVAL = 5 //airshot announcer will play every KILLSTREAK_ANNOUNCER_INTERVAL number of kills
 
 //round misc
 const DEFAULT_CDTIME    = 3 //default countdown time
@@ -49,7 +81,12 @@ const AMMOMOD_RESPAWN_DELAY  = 2.0
 const TURRIS_REGEN_TIME 	 = 5.0
 
 const ENDIF_HEIGHT_THRESHOLD = 250
-ROOT. ENDIF_FORCE_MULT 		<- Vector(1.1, 1.1, 1.31) //don't look too hard I'm a constant I swear
+
+//this is absolutely not the value that the .sp plugin implies it uses, 2.15 is way too high
+//on the majority of mge servers, endif force mult only barely pushes you over the threshold with a single non-DH shot to the toes
+//2.15 here is pinball mode
+//if someone wants to do a deep dive with side-by-side comparisons of the original plugin velocity vs this, I would love to see it
+::ENDIF_FORCE_MULT <- Vector(1.1, 1.1, 1.31) //no vector constants :(
 
 //NOTE:
 //Editing this constant alone is not enough to add more spawns to arenas with fixed spawn rotations like BBall
@@ -79,14 +116,15 @@ const BBALL_PARTICLE_TRAIL_BLUE 	= "player_intel_trail_blue"
 // KOTH uses index 7 for the cap point, replace "7" with "koth_cap" to use a 7th spawn point
 const KOTH_MAX_SPAWNS 				 	= 6
 
+//both of these can be overridden in mgemod_spawns.nut
 const KOTH_DEFAULT_CAPTURE_POINT_RADIUS = 256
 const KOTH_CAPTURE_POINT_MAX_HEIGHT		= 128
 
-const KOTH_PARTIAL_CAP_RATE 			= 0.05
-const KOTH_PARTIAL_CAP_INTERVAL 		= 0.1
+const KOTH_PARTIAL_CAP_RATE 			= 0.05 //how much progress we gain per KOTH_PARTIAL_CAP_INTERVAL
+const KOTH_PARTIAL_CAP_INTERVAL 		= 0.1 //partial cap increment in seconds
 
-const KOTH_DECAY_RATE					= 0.01
-const KOTH_DECAY_INTERVAL				= 0.1
+const KOTH_DECAY_RATE					= 0.01 //how much the cap decays per KOTH_DECAY_INTERVAL
+const KOTH_DECAY_INTERVAL				= 0.1 //decay decrement in seconds
 
 //if true, reverting enemy cap progress will stack with passive decay
 const KOTH_ADDITIVE_DECAY				= true
@@ -106,8 +144,12 @@ const KOTH_HUD_RED_POS_Y				= 0.4
 const KOTH_HUD_BLU_POS_X				= 0.6
 const KOTH_HUD_BLU_POS_Y				= 0.3
 
-//TODO: see if reducing the think interval makes any impact on 100 player
+//TODO: see if reducing the think interval makes any impact on 100 player?
+//we need maps that can support this many players in the first place
+//look into "infinite" maps with propper arenas
 const PLAYER_THINK_INTERVAL = -1
+
+const GENERIC_DELAY = 0.1 //many things are delayed by this amount on player spawn and other important EntFires
 
 //END CONFIG CONSTANTS
 
@@ -213,6 +255,11 @@ const CHAN_VOICE2     =  7
 const CHAN_VOICE_BASE =  8
 const CHAN_USER_BASE  =  136
 
+//masks
+CONST.MASK_OPAQUE      <- (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_OPAQUE)
+CONST.MASK_PLAYERSOLID <- (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_MONSTER|CONTENTS_GRATE)
+CONST.MASK_SOLID_BRUSHONLY <- (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_WINDOW|CONTENTS_GRATE)
+
 // Numbers
 const FLT_SMALL = 0.0000001
 const FLT_MIN   = 1.175494e-38
@@ -252,29 +299,3 @@ PrecacheParticle(BBALL_PARTICLE_PICKUP_BLUE)
 PrecacheParticle(BBALL_PARTICLE_PICKUP_GENERIC)
 PrecacheParticle(BBALL_PARTICLE_TRAIL_RED)
 PrecacheParticle(BBALL_PARTICLE_TRAIL_BLUE)
-
-//"reminder that constants are resolved at preprocessor level and not runtime"
-//"if you add them dynamically to the table they wont show up until you execute a new script as the preprocessor isnt aware yet"
-
-//fold into both const and root table to work around this.
-
-::CONST <- getconsttable()
-
-CONST.setdelegate({ _newslot = @(k, v) compilestring("const " + k + "=" + (typeof(v) == "string" ? ("\"" + v + "\"") : v))() })
-CONST.MAX_CLIENTS <- MaxClients().tointeger()
-if (!("ConstantNamingConvention" in ROOT))
-{
-	foreach(a, b in Constants)
-	{
-		foreach(k, v in b)
-		{
-			CONST[k] <- v != null ? v : 0
-			ROOT[k] <- v != null ? v : 0
-		}
-	}
-}
-
-foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
-	foreach (k, v in i.getclass())
-		if (k != "IsValid" && !(k in ROOT))
-			ROOT[k] <- i[k].bindenv(i)
