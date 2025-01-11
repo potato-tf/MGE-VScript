@@ -3,7 +3,7 @@
  * - Sntr (Finnish)        *
  * - Hell-met (French)     *
  * - DaanBox (Dutch)       *
- * - Seelpit (Dutch)       *
+ * - Xybo (Swedish)		   *
  * - Sgt Table (Spanish)   *
  * - Royal (Vietnamese)    *
  * - Toxicologist (Czech)  *
@@ -14,6 +14,7 @@
  * - Eyes (Brazilian)      *
  * - NextinHKRY (Italian)  *
  * - Gregarious (Romanian) *
+ * - Snowy (Romanian) 	   *
  ***************************/
 
 // German + Simplified Chinese translations adopted from original plugin
