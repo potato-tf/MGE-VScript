@@ -103,6 +103,7 @@ class MGE_Events
 		}
 
 		"help" : function(params) {
+			local player = GetPlayerFromUserID(params.userid)
 			MGE_ClientPrint(player, 3, "Cmd_MGECmds")
 			MGE_ClientPrint(player, 3, "Cmd_SeeConsole")
 			MGE_ClientPrint(player, 2, "Cmd_MGEMod")
@@ -117,6 +118,7 @@ class MGE_Events
 			MGE_ClientPrint(player, 2, "Cmd_Ruleset")
 			MGE_ClientPrint(player, 2, "Cmd_Language")
 		}
+		"mgehelp": @(params) this["help"](params)
 	}
 	Events = {
 		function OnGameEvent_teamplay_round_start(params)
@@ -282,6 +284,9 @@ class MGE_Events
 			local arena = victim_scope.arena_info.arena
 			local arena_name = victim_scope.arena_info.name
 
+			attacker && "deaths" in attacker_scope.stats ? attacker_scope.stats.deaths++ : attacker_scope.stats.deaths <- 1
+			victim && "kills" in victim_scope.stats ? victim_scope.stats.kills++ : victim_scope.stats.kills <- 1
+
 			local respawntime = "respawntime" in arena && arena.respawntime != "0" ? arena.respawntime.tofloat() : 0.2
 			local fraglimit = arena.fraglimit.tointeger()
 			local trace_dist = arena.IsEndif ? arena.Endif.height_threshold : arena.IsMidair ? arena.Midair.height_threshold : AIRSHOT_HEIGHT_THRESHOLD
@@ -309,6 +314,14 @@ class MGE_Events
 				{
 					hud_str = GetLocalizedString("Airshot", attacker)
 					str = format("vo/announcer_am_killstreak%d.mp3", RandomInt(10, 11))
+					"airshots" in attacker_scope.stats ? attacker_scope.stats.airshots++ : attacker_scope.stats.airshots <- 1
+				}
+				//we've hit a market garden
+				else if (attacker.GetActiveWeapon().GetAttribute("mod crit while airborne", 0) && attacker.InCond(TF_COND_BLASTJUMPING) && params.damagebits & DMG_CRITICAL)
+				{
+					hud_str = GetLocalizedString("MarketGareden", attacker)
+					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
+					"market_gardens" in attacker_scope.stats ? attacker_scope.stats.market_gardens++ : attacker_scope.stats.market_gardens <- 1
 				}
 			}
 			if (attacker && attacker != victim)
@@ -381,10 +394,11 @@ class MGE_Events
 
 			if (team == TEAM_SPECTATOR)
 			{
+				SetPropEntity(player, "m_hObserverTarget", MGE_LeaderboardCam)
+
 				local spec_cooldown_time = 0.0
 				if ("arena_info" in scope && "arena" in scope.arena_info && scope.arena_info.arena.State == AS_FIGHT)
 				{
-
 					MGE_ClientPrint(player, 3, "SpecRemove")
 					RemovePlayer(player)
 				}
@@ -433,6 +447,11 @@ class MGE_Events
 			local victim = GetPlayerFromUserID(params.userid)
 			local victim_scope = victim.GetScriptScope()
 			local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
+			local attacker = GetPlayerFromUserID(params.attacker)
+			local attacker_scope = attacker ? attacker.GetScriptScope() : {}
+
+			"damage_taken" in victim_scope.stats ? victim_scope.stats.damage_taken += params.damage : victim_scope.stats.damage_taken <- params.damage
+			"damage_dealt" in attacker_scope.stats ? attacker_scope.stats.damage_dealt += params.damage : attacker_scope.stats.damage_dealt <- params.damage
 
 			//set this here instead of OnTakeDamage since damage_force isn't set until after damage is applied
 			//TODO: test this again, it wasn't working before due to multiplying vectors correctly and might work fine in OnTakeDamage

@@ -34,13 +34,17 @@ const DEFAULT_FRAGLIMIT = 20
 const DEFAULT_ELO 		= 1600
 const REMOVE_DROPPED_WEAPONS = true
 const ELO_TRACKING_MODE = 1 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
+const ENABLE_LEADERBOARD = true //set this to false if you are disabling ELO tracking as well
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
 const AIRSHOT_HEIGHT_THRESHOLD = 50
 const SPECTATOR_MESSAGE_COOLDOWN = 25.0
 
 //leaderboard
-const LEADERBOARD_DISTANCE = 75
-const LEADERBOARD_VERTICAL_OFFSET = 35
+const LEADERBOARD_FORWARD_OFFSET = 12
+const LEADERBOARD_VERTICAL_OFFSET = 6
+const LEADERBOARD_TEXT_SIZE = 1.0
+const LEADERBOARD_UPDATE_INTERVAL = 30
+const MAX_LEADERBOARD_ENTRIES = 100
 
 /*******************************************************************************************************
  * spawn shuffle modes                                                                                 *

@@ -70,6 +70,27 @@ foreach (sound in StockSounds)
 ::Arenas      <- {}
 ::Arenas_List <- [] // Need ordered arenas for selection with client commands like !add
 
+if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
+	::MGE_LEADERBOARD_DATA <- {
+		"Airshots"			 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Koth Points Capped" : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Hoops Scored" 		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Ammomod Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Endif Wins"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Market Gardens" 	 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Scout Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Soldier Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Demoman Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Arenas Played"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Deaths"			 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Damage Dealt"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Damage Taken"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Healing Done"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Healing Taken"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Revives"			 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Backstabs"			 : array(MAX_LEADERBOARD_ENTRIES, null),
+	}
+
 ::ArenaClasses <- ["", "scout", "sniper", "soldier", "demoman", "medic", "heavy", "pyro", "spy", "engineer", "civilian"]
 
 ::default_scope <- {
@@ -171,6 +192,7 @@ foreach (sound in StockSounds)
 				if (!arena.Koth[cap_amount])
 				{
 					arena.Score[team == TF_TEAM_RED ? 0 : 1]++
+					"koth_points_capped" in scope.stats ? scope.stats.koth_points_capped++ : scope.stats.koth_points_capped <- 1
 					CalcArenaScore(arena_name)
 					SetArenaState(arena_name, AS_COUNTDOWN)
 					return
@@ -249,6 +271,7 @@ foreach (sound in StockSounds)
 						scope.ball_ent = null
 					}
 					team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
+					"hoops_scored" in scope.stats ? scope.stats.hoops_scored++ : scope.stats.hoops_scored <- 1
 					CalcArenaScore(arena_name)
 
 					arena.BBall.last_score_team = team

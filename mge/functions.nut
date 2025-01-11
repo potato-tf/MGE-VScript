@@ -105,16 +105,20 @@
 {
 	local config = SpawnConfigs[GetMapName()]
 
-	if (ELO_TRACKING_MODE)
+	// if (ELO_TRACKING_MODE == 2 && ENABLE_LEADERBOARD)
+	if (ENABLE_LEADERBOARD)
 	{
+		//MGE_LEADERBOARD_DATA
+		compilestring(FileToString("leaderboard.nut"))()
 		::DoLeaderboardCam <- function()
 		{
 			//spawn our camera
-			local leaderboard_cam = CreateByClassname("info_observer_point")
-			leaderboard_cam.AddEFlags(EFL_KILLME)
-			leaderboard_cam.KeyValueFromString("targetname", "__mge_leaderboard_cam")
-			leaderboard_cam.KeyValueFromInt("fov",  120)
-			DispatchSpawn(leaderboard_cam)
+			::MGE_LeaderboardCam <- CreateByClassname("info_observer_point")
+			SetPropBool(MGE_LeaderboardCam, "m_bForcePurgeFixedUpStrings", true)
+			MGE_LeaderboardCam.AddEFlags(EFL_KILLME)
+			MGE_LeaderboardCam.KeyValueFromString("targetname", "__mge_leaderboard_cam")
+			MGE_LeaderboardCam.KeyValueFromInt("fov",  120)
+			DispatchSpawn(MGE_LeaderboardCam)
 
 			local leaderboard_cam_pos = Vector()
 			local leaderboard_cam_angles = QAngle()
@@ -131,68 +135,89 @@
 				else if (origin_len == 6)
 					leaderboard_cam_angles = QAngle(origin[3], origin[4], origin[5])
 
-				leaderboard_cam.SetOrigin(leaderboard_cam_pos)
-				leaderboard_cam.SetAbsAngles(leaderboard_cam_angles - QAngle(0, 180, 0))
+				MGE_LeaderboardCam.SetOrigin(leaderboard_cam_pos)
+				MGE_LeaderboardCam.SetAbsAngles(leaderboard_cam_angles - QAngle(0, 180, 0))
 				return
 			}
 
 			//no config pos found, find a cam with a wall behind it
 			local cams = []
+			local welcome_cams = []
 			for (local cam; cam = FindByClassname(cam, "info_observer_point");)
 			{
-				cams.append(cam)
 				//check the welcome cam first
-				if (GetPropBool(cam, "m_bDefaultWelcome"))
-					cams.reverse()
+				GetPropBool(cam, "m_bDefaultWelcome") ? welcome_cams.append(cam) : cams.append(cam)
 			}
 
-			//grab the first cam we find with a wall behind it
+			if (welcome_cams.len())
+				cams = welcome_cams.extend(cams)
+
+			local valid_cams = []
 			foreach (_cam in cams)
 			{
+				//this shouldn't happen but whatever
 				if (_cam.GetName() == "__mge_leaderboard_cam")
 					continue
 
-				printl(_cam)
-				// local trace = {
-				// 	start = _cam.GetOrigin(),
-				// 	end = (_cam.GetAbsAngles() - QAngle(0, 180, 0)).Forward() * 100000,
-				// 	mask = MASK_SOLID_BRUSHONLY,
-				// 	ignore = _cam
-				// }
+				local cam_angle_inverse = (_cam.GetAbsAngles() - QAngle(0, 180, 0))
+				local endpos = _cam.GetOrigin() + cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET
+				local trace = TraceLine(_cam.GetOrigin(), endpos, _cam)
 
-				// TraceLineEx(trace)
-				local trace = TraceLine(_cam.GetOrigin(), (_cam.GetAbsAngles() - QAngle(0, 180, 0)).Forward() * (LEADERBOARD_DISTANCE * 1.25), _cam)
+				// DebugDrawLine(_cam.GetOrigin(), endpos, 255, 100, 255, true, 10)
 
-				if (trace && trace >= LEADERBOARD_DISTANCE * 0.01)
-				{
-
-					leaderboard_cam.SetOrigin(_cam.GetOrigin())
-					leaderboard_cam.SetAbsAngles(_cam.GetAbsAngles() - QAngle(0, 180, 0))
-
-
-					local leaderboard_pos = (_cam.GetOrigin() + leaderboard_cam.GetAbsAngles().Forward() * LEADERBOARD_DISTANCE) + Vector(0, 0, LEADERBOARD_VERTICAL_OFFSET)
-					local textsize = 10
-
-					// if (abs(leaderboard_pos.Length() - trace.endpos.Length()) < 50)
-					// {
-					// 	continue
-					// 	// leaderboard_pos = trace.endpos + Vector(0, 0, 35)
-					// 	// textsize = 10 * (leaderboard_pos.Length() - trace.endpos.Length()).tofloat() / 50
-					// 	// if (textsize < 5) textsize = 5
-					// }
-
-					local leaderboard_ent = CreateByClassname("point_worldtext")
-					leaderboard_ent.KeyValueFromString("message", "Leaderboard:\n")
-					leaderboard_ent.KeyValueFromInt("textsize", textsize)
-					leaderboard_ent.KeyValueFromString("color", "255 255 255")
-					leaderboard_ent.KeyValueFromInt("orientation", 1)
-					leaderboard_ent.SetOrigin(leaderboard_pos)
-					leaderboard_ent.AddEFlags(EFL_KILLME)
-					DispatchSpawn(leaderboard_ent)
-
-					break
-				}
+				if (trace && trace == 1)
+					valid_cams.append(_cam)
 			}
+			local random_cam = valid_cams.len() == 1 ? valid_cams[0] : valid_cams[RandomInt(0, valid_cams.len() - 1)]
+			local random_cam_angle_inverse = (random_cam.GetAbsAngles() - QAngle(0, 180, 0))
+
+			MGE_LeaderboardCam.SetOrigin(random_cam.GetOrigin())
+			MGE_LeaderboardCam.SetAbsAngles(random_cam_angle_inverse)
+
+			local leaderboard_pos = (random_cam.GetOrigin() + (random_cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET)) + Vector(0, 0, LEADERBOARD_VERTICAL_OFFSET)
+
+			::MGE_Leaderboard <- CreateByClassname("point_worldtext")
+			MGE_Leaderboard.KeyValueFromString("targetname", "__mge_leaderboard_text")
+			MGE_Leaderboard.KeyValueFromString("message", "      Placeholder:\n       #305 | aaaa\n")
+			MGE_Leaderboard.KeyValueFromInt("textsize", LEADERBOARD_TEXT_SIZE)
+			MGE_Leaderboard.KeyValueFromString("color", "255 255 255")
+			MGE_Leaderboard.KeyValueFromInt("orientation", 1)
+			MGE_Leaderboard.SetOrigin(leaderboard_pos)
+			SetPropBool(MGE_Leaderboard, "m_bForcePurgeFixedUpStrings", true)
+			MGE_Leaderboard.AddEFlags(EFL_KILLME)
+			DispatchSpawn(MGE_Leaderboard)
+			// MGE_Leaderboard.ValidateScriptScope()
+			// MGE_Leaderboard.GetScriptScope().UpdateLeaderboard <- function() {
+			// 	foreach(stat, steamid_list in MGE_LEADERBOARD_DATA)
+			// 	{
+			// 	local message = format("          %s:\n", stat)
+			// 		foreach(i, user_info in steamid_list)
+			// 			message += format("\n          %d | %s | %d\n", i + 1, user_info.name, user_info.amount)
+			// 		yield
+			// 	}
+			// 	//refresh data
+			// 	VPI.AsyncCall({
+			// 		func="VPI_MGE_PopulateLeaderboard",
+			// 		kwargs= {},
+			// 		callback=function(response, error) {
+			// 			if (typeof(response) != "array" || !response.len())
+			// 			{
+			// 				MGE_ClientPrint(player, 3, "VPI_ReadError", "Could not populate leaderboard")
+			// 				MGE_ClientPrint(player, 2, "VPI_ReadError", "Could not populate leaderboard")
+			// 				return
+			// 			}
+			// 			MGE_LEADERBOARD_DATA <- response[0]
+			// 			MGE_ClientPrint(player, 3, "VPI_ReadSuccess",  "Populated leaderboard")
+			// 			MGE_ClientPrint(player, 2, "VPI_ReadSuccess",  "Populated leaderboard")
+			// 		}
+			// 	})
+			// }
+			// MGE_Leaderboard.GetScriptScope().LeaderboardThink <- function() {
+			// 	local gen = UpdateLeaderboard()
+			// 	resume gen
+			// 	return LEADERBOARD_UPDATE_INTERVAL
+			// }
+			// AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
 		}
 		//delay this until ents are spawned
 		EntFire("worldspawn", "CallScriptFunction", "DoLeaderboardCam", GENERIC_DELAY)
@@ -732,6 +757,10 @@
 	winner_stats.elo = winner_elo + winner_gain
 	loser_stats.elo = loser_elo - loser_loss
 
+	//update W/L
+	"wins" in winner_stats ? winner_stats.wins++ : winner_stats.wins <- 1
+	"losses" in loser_stats ? loser_stats.losses++ : loser_stats.losses <- 1
+
 	// Print results to players
 	if (winner.IsValid())
 		MGE_ClientPrint(winner, 3, "GainedPoints", winner_gain.tostring())
@@ -1218,7 +1247,7 @@
 	else if (ELO_TRACKING_MODE == 2 && "VPI" in getroottable())
 	{
 		VPI.AsyncCall({
-			func="VPI_DB_MGE_ReadWritePlayerStats",
+			func="VPI_MGE_ReadWritePlayerStats",
 			kwargs= {
 				query_mode="read",
 				network_id=steam_id_slice
@@ -1265,7 +1294,7 @@
 		break
 		case 2:
 			VPI.AsyncCall({
-				func="VPI_DB_MGE_ReadWritePlayerStats",
+				func="VPI_MGE_ReadWritePlayerStats",
 				kwargs= {
 					query_mode="write",
 					network_id=steam_id_slice,
