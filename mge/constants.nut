@@ -1,3 +1,4 @@
+const MGE_VERSION = "1.0.0"
 ::ROOT <- getroottable()
 
 //CONFIG CONSTANTS

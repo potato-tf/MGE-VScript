@@ -85,7 +85,7 @@
 	else
 		ForceChangeClass(player, ("scout" in classes) ? TF_CLASS_SCOUT : ArenaClasses.find(classes[0]))
 
-	ClientPrint(player, 3, format(GetLocalizedString("ClassIsNotAllowed", player), newclass))
+	MGE_ClientPrint(player, 3, "ClassIsNotAllowed", newclass)
 }
 
 // tointeger() allows trailing garbage (e.g. "123abc")
@@ -640,9 +640,9 @@
 
 	// Print results to players
 	if (winner.IsValid())
-		ClientPrint(winner, 3, format("You gained %d points!", winner_gain))
+		MGE_ClientPrint(winner, 3, "GainedPoints", winner_gain.tostring())
 	if (loser.IsValid())
-		ClientPrint(loser, 3, format("You lost %d points!", loser_loss))
+		MGE_ClientPrint(loser, 3, "LostPoints", loser_loss.tostring())
 
 	// Update stats in database/file
 	UpdateStats(winner, winner_stats, false)
@@ -716,13 +716,13 @@
 		loser_scope.won_last_match = false
 		winner_scope.won_last_match = true
 
-		MGE_ClientPrint(null, 3, format(GetLocalizedString("XdefeatsY", null),
+		MGE_ClientPrint(null, 3, "XdefeatsY",
 			winner_scope.Name,
 			winner_scope.stats.elo.tostring(),
 			loser_scope.Name,
 			loser_scope.stats.elo.tostring(),
 			fraglimit.tostring(),
-		arena_name))
+		arena_name)
 		CalcELO(winner, loser)
 		SetArenaState(arena_name, AS_AFTERFIGHT)
 	}

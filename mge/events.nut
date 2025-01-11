@@ -59,15 +59,63 @@ class MGE_Events
 			local scope = player.GetScriptScope()
 
 			local split_text = split(params.text, " ")
+			local split_text_len = split_text.len()
 			local mult = ToStrictNum(split_text[1], true)
-
-			if (split_text.len() > 1 && mult)
+			if (split_text_len > 1 && mult)
 			{
+				if (!mult || mult > 0.9)
+				{
+					MGE_ClientPrint(player, 3, !mult ? "HandicapDisabled" : "InvalidHandicap")
+					if ("handicap_hp_mult" in scope)
+						delete scope.handicap_hp_mult
+					return
+				}
 				scope.handicap_hp_mult <- mult
 			}
+			else if (!("handicap_hp_mult" in scope))
+			{
+				MGE_ClientPrint(player, 3, "NoCurrentHandicap")
+				return
+			}
+
+			MGE_ClientPrint(player, 3, "CurrentHandicap", scope.handicap_hp_mult)
 		}
 		"ruleset" : function(params) {
 
+		}
+		"language" : function(params) {
+			local lang = split(params.text, " ")[1]
+			local player = GetPlayerFromUserID(params.userid)
+			if (lang in MGE_Localization)
+			{
+				MGE_ClientPrint(player, 3, "LanguageSet", lang)
+				player.GetScriptScope().Language <- lang
+			}
+		}
+		"rank" : function(params) {
+			local player = GetPlayerFromUserID(params.userid)
+			local scope = player.GetScriptScope()
+			local rank = scope.stats.elo
+			if (ELO_TRACKING_MODE)
+				MGE_ClientPrint(player, 3, "MyRank", rank.tostring(), scope.stats.wins.tostring(), scope.stats.losses.tostring())
+			else
+				MGE_ClientPrint(player, 3, "MyRankNoRating", scope.stats.wins.tostring(), scope.stats.losses.tostring())
+		}
+
+		"help" : function(params) {
+			MGE_ClientPrint(player, 3, "Cmd_MGECmds")
+			MGE_ClientPrint(player, 3, "Cmd_SeeConsole")
+			MGE_ClientPrint(player, 2, "Cmd_MGEMod")
+			MGE_ClientPrint(player, 2, "Cmd_Add")
+			MGE_ClientPrint(player, 2, "Cmd_Remove")
+			MGE_ClientPrint(player, 2, "Cmd_First")
+			MGE_ClientPrint(player, 2, "Cmd_Top5")
+			MGE_ClientPrint(player, 2, "Cmd_Rank")
+			MGE_ClientPrint(player, 2, "Cmd_HitBlip")
+			MGE_ClientPrint(player, 2, "Cmd_Hud")
+			MGE_ClientPrint(player, 2, "Cmd_Handicap")
+			MGE_ClientPrint(player, 2, "Cmd_Ruleset")
+			MGE_ClientPrint(player, 2, "Cmd_Language")
 		}
 	}
 	Events = {
@@ -86,6 +134,10 @@ class MGE_Events
 			if (player.IsFakeClient()) return
 
 			GetStats(player)
+
+			MGE_ClientPrint(player, 3, "Welcome1", MGE_VERSION)
+			MGE_ClientPrint(player, 3, "Welcome2")
+			MGE_ClientPrint(player, 3, "Welcome3")
 		}
 
 		function OnGameEvent_player_disconnect(params)
@@ -198,6 +250,16 @@ class MGE_Events
 			local player = GetPlayerFromUserID(params.userid)
 			// printl(player)
 			ValidatePlayerClass(player, params["class"], true)
+
+			local scope = player.GetScriptScope()
+			local arena = scope.arena_info.arena
+
+			if (arena.State != AS_FIGHT || arena.IsBBall || arena.IsKoth) return
+
+			foreach(p, _ in arena.CurrentPlayers)
+				MGE_ClientPrint(p, 3, player == p ? "ClassChangePoint" : "ClassChangePointOpponent")
+
+
 		}
 
 		function OnGameEvent_player_death(params)
@@ -305,10 +367,30 @@ class MGE_Events
 		function OnGameEvent_player_team(params)
 		{
 			local player = GetPlayerFromUserID(params.userid)
+			local scope = player.GetScriptScope()
 			local team = params.team
 
+			if ("ThinkTable" in scope && "SpecThink" in scope.ThinkTable)
+				delete scope.ThinkTable.SpecThink
+
 			if (team == TEAM_SPECTATOR)
-				RemovePlayer(player)
+			{
+				local spec_cooldown_time = 0.0
+				if ("arena_info" in scope)
+				{
+
+					MGE_ClientPrint(player, 3, "SpecRemove")
+					RemovePlayer(player)
+				}
+				scope.ThinkTable.SpecThink <-  function()
+				{
+					if (spec_cooldown_time < Time())
+					{
+						MGE_ClientPrint(player, 3, "Adv")
+						spec_cooldown_time = Time() + SPECTATOR_MESSAGE_COOLDOWN
+					}
+				}
+			}
 		}
 
 		function OnScriptHook_OnTakeDamage(params)
