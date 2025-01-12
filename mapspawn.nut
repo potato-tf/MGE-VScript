@@ -14,6 +14,7 @@ else
 	Include("constants")
 	Include("itemdef_constants")
 	Include("cfg/localization")
+	Include("vpi/vpi")
 	Include("functions")
 	Include("events")
 	Include("mge")

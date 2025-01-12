@@ -174,18 +174,47 @@ async def VPI_DB_UserSelect(info, cursor):
 
 	return await cursor.fetchall()
 
+@WrapDB
+async def VPI_MGE_DBInit(info, cursor):
+	print("Initializing MGE database...")
+	# await cursor.execute("CREATE TABLE IF NOT EXISTS mge_leaderboard (steam_id TEXT PRIMARY KEY, elo INTEGER)")
+	await cursor.execute("CREATE TABLE IF NOT EXISTS mge_playerdata (steam_id INTEGER PRIMARY KEY, elo BIGINT, wins BIGINT, losses BIGINT, kills BIGINT, deaths BIGINT, damage_taken BIGINT, damage_dealt BIGINT, airshots BIGINT, market_gardens BIGINT, hoops_scored BIGINT, koth_points_capped BIGINT)")
+
+	return await cursor.fetchall()
+
+@WrapDB
 async def VPI_MGE_PopulateLeaderboard(info, cursor):
 	await cursor.execute("SELECT * FROM mge_leaderboard")
 
 	return await cursor.fetchall()
 
+@WrapDB
 async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     kwargs = info["kwargs"]
-    query_mode = kwargs["query_mode"]
-	network_id = kwargs["network_id"]
- 
+    query_mode = kwargs["query_mode"] 
+    network_id = kwargs["network_id"]
+    default_elo = kwargs["default_elo"]
+    
     if (query_mode == "read" or query_mode == 0):
-        await cursor.execute("SELECT * FROM user_mge_playerstats")
-
-	return await cursor.fetchall()
+        await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
+        result = await cursor.fetchall()
+        
+        # If no record exists, create one with default values
+        if not result:
+            print(f"No record exists for steam ID {network_id}, adding...")
+            await cursor.execute(f"""
+                INSERT INTO mge_playerdata (
+                    steam_id, elo, wins, losses, kills, deaths, 
+                    damage_taken, damage_dealt, airshots, market_gardens,
+                    hoops_scored, koth_points_capped
+                ) VALUES (
+                    {network_id}, {default_elo}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                )
+            """)
+            await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
+            result = await cursor.fetchall()
+            
+        return result
+        
+    return await cursor.fetchall()
 

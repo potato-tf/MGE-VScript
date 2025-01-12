@@ -30,10 +30,10 @@ genv = os.environ.get
 
 # Modify VPI_* with your environment variables if you named them something else
 DB_HOST     = args.host     if args.host     else genv("VPI_HOST",      "localhost")
-DB_USER     = args.user     if args.user     else genv("VPI_USER",      "user")
+DB_USER     = args.user     if args.user     else genv("VPI_USER",      "root")
 DB_PORT	    = args.port     if args.port     else int(genv("VPI_PORT",  3306))
-DB_DATABASE	= args.database if args.database else genv("VPI_INTERFACE", "interface")
-DB_PASSWORD	= args.password if args.password else genv("VPI_PASSWORD")
+DB_DATABASE	= args.database if args.database else genv("VPI_INTERFACE", "mge")
+DB_PASSWORD	= args.password if args.password else genv("VPI_PASSWORD", "")
 
 SCRIPTDATA_DIR = genv("VPI_SCRIPTDATA_DIR", r"C:\Program Files (x86)\Steam\steamapps\common\Team Fortress 2\tf\scriptdata")
 

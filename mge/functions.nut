@@ -44,7 +44,19 @@
 		Language   = Convars.GetClientConvarValue("cl_language", player.entindex()),
 		arena_info = null,
 		queue      = null,
-		stats      = { elo = -INT_MAX },
+		stats      = {
+			elo = -INT_MAX
+			wins = -INT_MAX,
+			losses = -INT_MAX,
+			kills = -INT_MAX,
+			deaths = -INT_MAX,
+			damage_taken = -INT_MAX,
+			damage_dealt = -INT_MAX,
+			airshots = -INT_MAX,
+			market_gardens = -INT_MAX,
+			hoops_scored = -INT_MAX,
+			koth_points_capped = -INT_MAX
+		},
 		enable_announcer = true,
 		enable_countdown = true,
 		won_last_match = false,
@@ -1224,6 +1236,7 @@
 
 	if (ELO_TRACKING_MODE == 1)
 	{
+		//load stats from file
 		if (FileToString(filename))
 		{
 			compilestring(FileToString(filename))()
@@ -1232,8 +1245,15 @@
 		}
 		else
 		{
+			//first time player
 			if (scope.stats.elo == -INT_MAX)
+			{
 				scope.stats.elo <- DEFAULT_ELO
+				foreach(k, v in scope.stats)
+					if (k != "elo")
+						scope.stats[k] = 0
+			}
+			//save default stats to file
 			local str = format("ROOT[\"%s\"]<-{\n", steam_id_slice)
 
 			foreach(k, v in scope.stats)
@@ -1250,7 +1270,8 @@
 			func="VPI_MGE_ReadWritePlayerStats",
 			kwargs= {
 				query_mode="read",
-				network_id=steam_id_slice
+				network_id=steam_id_slice,
+				default_elo=DEFAULT_ELO
 			},
 			callback=function(response, error) {
 				if (typeof(response) != "array" || !response.len())
@@ -1258,7 +1279,21 @@
 					printf(GetLocalizedString("VPI_ReadError", player), GetPropString(player, "m_szNetworkIDString"))
 					return
 				}
-				scope.stats <- response[0]
+
+				local r = response[0]
+				scope.stats <- {
+					elo = r[1],
+					wins = r[2],
+					losses = r[3],
+					kills = r[4],
+					deaths = r[5],
+					damage_taken = r[6],
+					damage_dealt = r[7],
+					airshots = r[8],
+					market_gardens = r[9],
+					hoops_scored = r[10],
+					koth_points_capped = r[11]
+				}
 				printf(GetLocalizedString("VPI_ReadSuccess", player), GetPropString(player, "m_szNetworkIDString"))
 			}
 		})
@@ -1302,7 +1337,7 @@
 					additive=additive
 				},
 				callback=function(response, error) {
-					printf(GetLocalizedString("VPI_WriteSuccess", player), GetPropString(player, "m_szNetworkIDString"))
+					printf(GetLocalizedString(error ? "VPI_WriteError" : "VPI_WriteSuccess", player), GetPropString(player, "m_szNetworkIDString"))
 				}
 			})
 		break

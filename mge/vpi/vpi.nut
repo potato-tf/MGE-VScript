@@ -10,7 +10,7 @@
 // If they do not return this secret when prompted the program will abort
 // Do not put this token into a variable as error locals traces can give away its value
 local function GetSecret() {
-	return "<Your token goes here>";
+	return "8f4e9d2c7b6a1530";
 }
 
 // Note: This only works to ensure security if vpi.nut is executed within mapspawn.nut
@@ -23,6 +23,8 @@ local PROTECTED_FILE_FUNCTIONS = true;
 // { "source.nut" : [ "VPI_InterfaceFunctionName", @"/VPI_DB_User.*/" ] }
 local SOURCE_WHITELIST = {
 	"vpi.nut": null, // Null or empty list denotes uninhibited access
+	"mge.nut": null,
+	"functions.nut": null,
 };
 
 // How often we normally write to file (in ticks)
@@ -43,7 +45,7 @@ local urgent_write_count     = 0;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-if (GetSecret() == "<Your token goes here>") throw "[VPI ERROR] Please set your secret token";
+if (GetSecret() == "") throw "[VPI ERROR] Please set your secret token";
 
 local lateload = (Entities.FindByName(null, "bignet") != null);
 if (lateload)

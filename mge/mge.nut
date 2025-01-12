@@ -380,6 +380,17 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 		*/
 	}
 
+	if (ELO_TRACKING_MODE == 2)
+	{
+		printl("Initializing database")
+		VPI.AsyncCall({
+			func = "VPI_MGE_DBInit",
+			callback = function(response, error) {
+				printl("DB Init: " + response + " " + error)
+			}
+		})
+	}
+
 	HandleRoundStart()
 	LoadSpawnPoints()
 
