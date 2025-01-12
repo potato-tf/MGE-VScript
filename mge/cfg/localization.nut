@@ -20,6 +20,7 @@
  * - pepper_1656 (Chinese)		*
  * - bonkthequality (Chinese)	*
  ********************************/
+
 // Any language not credited above was translated using Claude 3.5
 // Please submit pull requests to fix any poor translations
 
@@ -37,9 +38,9 @@
 
 // Color codes:
 //classic MGE
-// 32CD32 - Light green
-// 404EED - Green
-// 808000 - Olive
+//const MGE_COLOR_MAIN 404EED - Green
+//const MGE_COLOR_SUBJECT 32CD32 - Light green
+//const MGE_COLOR_BACKGROUND 808000 - Olive
 
 //new MGE
 const MGE_COLOR_MAIN = "FFD700"
@@ -70,8 +71,8 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		ClassChangePoint           = "\x07"+MGE_COLOR_BACKGROUND+"You changed class during a fight, giving your opponent one point."
 		ClassChangePointOpponent   = "\x07"+MGE_COLOR_BACKGROUND+"Your opponent changed class during a fight, giving you one point."
 		Welcome1                   = "\x07"+MGE_COLOR_BACKGROUND+"Welcome to VScript MGE version \x07"+MGE_COLOR_SUBJECT+"%s"
-		Welcome2                   = "\x07"+MGE_COLOR_BACKGROUND+"Rewrite by: \x07"+MGE_COLOR_SUBJECT+"Braindawg"
-		Welcome3                   = "\x07"+MGE_COLOR_BACKGROUND+"Original plugin by: \x07"+MGE_COLOR_SUBJECT+"Lange & Cprice\x07, based on \x07"+MGE_COLOR_SUBJECT+"kAmmomod"
+		Welcome2 = "\x07" + MGE_COLOR_BACKGROUND + "Rewrite by: \x07" + MGE_COLOR_SUBJECT + "Braindawg, with help from \x07" + MGE_COLOR_SUBJECT + "Mince"
+		Welcome3                   = "\x07"+MGE_COLOR_BACKGROUND+"Original plugin by: \x07"+MGE_COLOR_SUBJECT+"Lange & Cprice, based on \x07"+MGE_COLOR_SUBJECT+"kAmmomod"
 		Top5Title                  = "Top 5 Players"
 		top5error                  = "[VScript MGE] Not enough players in database yet."
 		bballdunk                  = "\x07"+MGE_COLOR_SUBJECT+"You DUNKED ON \x07"+MGE_COLOR_SUBJECT+"%s!"
@@ -101,76 +102,86 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		Killstreak                 = "\x07"+MGE_COLOR_SUBJECT+"%s is on a killstreak! (%s kills)"
 		FirstBlood                 = "\x07"+MGE_COLOR_SUBJECT+"First Blood!"
 		Airshot                    = "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
+		MarketGarden               = "\x07"+MGE_COLOR_SUBJECT+"Market Garden!"
 
 		Error_StatsNotFound        = "\n\nError: stats not found for %s! fetching again and skipping update...\n\n"
 
-		VPI_ReadSuccess            = "\n\nVPI: Got data for user %s.\n\n"
-		VPI_ReadError              = "\n\nVPI: Error getting data for user %s.\n\n"
-		VPI_WriteSuccess           = "\n\nVPI: Wrote data for user %s.\n\n"
-		VPI_WriteError             = "\n\nVPI: Error writing data for user %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Initializing database..."
+		VPI_DBInitError 		   = "[VPI]: ERROR: DATABASE CONNECTION FAILED! View vpi.py output for more information."
+		VPI_DBInitSuccess          = "[VPI]: Database initialized successfully."
+		VPI_ReadSuccess            = "[VPI]: Got data for user %s.\n"
+		VPI_ReadError              = "[VPI]: Error getting data for user %s.\n"
+		VPI_WriteSuccess           = "[VPI]: Wrote data for user %s.\n"
+		VPI_WriteError             = "[VPI]: Error writing data for user %s.\n"
+		VPI_AutoUpdateError 	   = "[VPI]: Autoupdate failed, couldn't clone repository.\n[VPI]: Repository: %s"
+		VPI_AutoUpdateSuccess      = "[VPI]: Autoupdate successful! sending changelevel..."
 	}
-	polish = {
-		MenuTitle              =	"Dołącz do areny..."
-		MenuRemove             =	"Usuń z kolejki"
-		HPLeft                 =	"\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Twój przeciwnik miał \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF HP."
-		Adv                    =	"\x07"+MGE_COLOR_MAIN+"Dołącz do areny, wpisz\x07FFFFFF !add\n\x07"+MGE_COLOR_MAIN+"Aby zobaczyć listę komend, wpisz !mgehelp"
-		JoinsArena             =	"\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF (%s) dołączył do areny \x07"+MGE_COLOR_MAIN+"%s."
-		JoinsArenaNoStats      =	"\x07"+MGE_COLOR_MAIN+"%s dołączył do areny \x07"+MGE_COLOR_SUBJECT+"%s."
-		ChoseArena             =	"\x07"+MGE_COLOR_MAIN+" %s."
-		NextInLine             =	"Jesteś \x07"+MGE_COLOR_MAIN+"pierwszy w kolejce."
-		InLine                 =	"W kolejce: Długość kolejki:\x07"+MGE_COLOR_MAIN+"%s."
-		GainedPoints           =	"Zdobyłeś \x07"+MGE_COLOR_MAIN+"%s punktów."
-		LostPoints             =	"Straciłeś \x07"+MGE_COLOR_MAIN+"%s punktów."
-		MyRank                 =	"Twoja pozycja to \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF. Wygrane: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF, Przegrane: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
-		MyRankNoRating         =	"Masz \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF wygranych i \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF przegranych."
-		ClassIsNotAllowed      =	"\x07"+MGE_COLOR_BACKGROUND+"Ta klasa (%s) nie jest dozwolona!"
-		LowRating              =	"Twoja pozycja to \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF. Maksymalna pozycja to \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
-		HighRating             =	"Twoja pozycja to \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF. Minimalna pozycja to \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
-		XdefeatsY              =	"\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF pokonał \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF w duelsie \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF na \x07"+MGE_COLOR_MAIN+"%s\x07"
-		XdefeatsYearly         =	"\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF pokonał \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF w duelsie na \x07"+MGE_COLOR_MAIN+"%s\x07"
-		SpecRemove             =	"\x07"+MGE_COLOR_BACKGROUND+"Nie możesz być w specie podczas duelsu, usuwam z kolejki."
-		ClassChangePoint       =	"\x07"+MGE_COLOR_BACKGROUND+"Zmieniłeś klasę podczas duelsu, przeciwnik otrzymuje 1 punkt."
-		ClassChangePointOpponent =	"\x07"+MGE_COLOR_BACKGROUND+"Przeciwnik zmienił klasę podczas duelsu, otrzymujesz 1 punkt."
-		Welcome1               =	"\x07"+MGE_COLOR_BACKGROUND+"Witaj w VScript MGE wersji \x07"+MGE_COLOR_SUBJECT+"%s"
-		Welcome2               =	"\x07"+MGE_COLOR_BACKGROUND+"Rewrite by: \x07"+MGE_COLOR_SUBJECT+"Braindawg"
-		Welcome3               =	"\x07"+MGE_COLOR_BACKGROUND+"Original plugin by: \x07"+MGE_COLOR_SUBJECT+"Lange & Cprice\x07, based on \x07"+MGE_COLOR_SUBJECT+"kAmmomod"
-		Top5Title              =	"Top 5 Graczy"
-		top5error              =	"[VScript MGE] Nie ma wystarczającej liczby graczy w bazie danych."
-		bballdunk              =	"\x07"+MGE_COLOR_SUBJECT+"%s\x7FFFFFF gedunkt!"
-		Cmd_MGECmds            =	"[VScript MGE] Help: Command Information"
-		Cmd_SeeConsole         =	"[VScript MGE] Zobacz konsolę dla wyjścia."
-		Cmd_MGEMod             =	"[VScript MGE] mgemod\t - Menu"
-		Cmd_Add                =	"[VScript MGE] add\t - Użycie: add <numer areny/nazwa areny>. Dodaj do areny."
-		Cmd_Remove             =	"[VScript MGE] remove\t - Usuń z bieżącej areny."
-		Cmd_First              =	"[VScript MGE] first\t - Dołącz do pierwszej dostępnej areny."
-		Cmd_Top5               =	"[VScript MGE] top5\t - Wyświetl top 5 graczy."
-		Cmd_Rank               =	"[VScript MGE] rank\t - Użycie: rank <nazwa gracza>. Pokaż pozycję gracza."
-		Cmd_HitBlip            =	"[VScript MGE] hitblip - Włącz/wyłącz hitblip."
-		Cmd_Hud                =	"[VScript MGE] hud\t - Włącz/wyłącz tekstowy HUD."
-		Cmd_Handicap           =	"[VScript MGE] handicap - Zmniejsz maksymalny HP. Użyj '!handicap off', aby wyłączyć handicap."
-		Cmd_Ruleset            =	"[VScript MGE] ruleset\t - Użycie: ruleset <nazwa rulesetu>. Ustaw ruleset."
-		Cmd_Language           =	"[VScript MGE] language\t - Użycie: language <nazwa języka>. Ustaw język."
-		LanguageSet            =	"Język ustawiony na \x07"+MGE_COLOR_SUBJECT+"%s\x07"
-		NoClassChange          =	"\x07"+MGE_COLOR_BACKGROUND+"Nie możesz zmienić klasy w tym czasie."
-		DatabaseDown           =	"Baza danych nie jest dostępna, przechodzimy na magazyn plików.\nPróba ponownej połączenia nastąpi za %s minut."
-		StatsRestored          =	"Baza danych jest dostępna, odświeżanie statystyk...\nStatystyki odświeżone."
-		StatsRestoredDown      =	"Baza danych jest dostępna, ale statystyki są administracyjnie wyłączone."
-		MustJoinArena          =	"\x07"+MGE_COLOR_BACKGROUND+"Musisz najpierw dołączyć do areny, aby to zrobić."
-		NoCurrentHandicap      =	"\x07"+MGE_COLOR_BACKGROUND+"Nie masz obecnie handicapu."
-		CurrentHandicap        =	"\x07"+MGE_COLOR_BACKGROUND+"Twój obecny handicap to \x07"+MGE_COLOR_SUBJECT+"%s \x07"+MGE_COLOR_BACKGROUND+"maksymalny HP."
-		InvalidHandicap        =	"\x07"+MGE_COLOR_BACKGROUND+"Podany handicap jest nieprawidłowy, handicap został wyłączony."
-		HandicapDisabled       =	"\x07"+MGE_COLOR_BACKGROUND+"Handicap wyłączony."
-		Killstreak             =	"\x07"+MGE_COLOR_SUBJECT+"%s jest na killstreaku! (%s kills)"
-		FirstBlood             =	"\x07"+MGE_COLOR_SUBJECT+"First Blood!"
-		Airshot                =	"\x07"+MGE_COLOR_SUBJECT+"Airshot!"
+}
+polish = {
+	MenuTitle  =			"Dołącz do areny..."
+	MenuRemove  =			"Wyjdź z kolejki"
+	HPLeft =			"\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Twój przeciwnik miał \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF HP."
+	Adv =			"\x07"+MGE_COLOR_MAIN+"Dołącz do areny, wpisz\x07FFFFFF!add\n\x07"+MGE_COLOR_MAIN+"Aby zobaczyć listę komend, wpisz !mgehelp"
+	JoinsArena =			"\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF (%s) dołączył do areny \x07"+MGE_COLOR_MAIN+"%s."
+	JoinsArenaNoStats =			"\x07"+MGE_COLOR_MAIN+"%s dołączył do areny \x07"+MGE_COLOR_SUBJECT+"%s."
+	ChoseArena =			"Wybrałeś arenę %s"
+	NextInLine =			"Jesteś \x07"+MGE_COLOR_MAIN+"pierwszy w kolejce."
+	InLine =			"W kolejce: Długość kolejki:\x07"+MGE_COLOR_MAIN+"%s."
+	GainedPoints =			"Zdobyłeś \x07"+MGE_COLOR_MAIN+"%s punktów."
+	LostPoints =			"Straciłeś \x07"+MGE_COLOR_MAIN+"%s punktów."
+	MyRank =			"Twój rank to \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF. Wygrane: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF, Przegrane: \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
+	MyRankNoRating =			"Masz \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF wygranych i \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF przegranych."
+	ClassIsNotAllowed =			"\x07"+MGE_COLOR_BACKGROUND+"Ta klasa (%s) nie jest dozwolona!"
+	LowRating =			"Twój rank \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF jest za niski, mimimum to \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
+	HighRating =			"Twój rank \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF jest za wysoki, maksymalny rank to \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF"
+	XdefeatsY =			"\x07"+MGE_COLOR_SUBJECT+"%s (Wynik:%s)\x07FFFFFF pokonał \x07"+MGE_COLOR_SUBJECT+"%s (Wynik:%s)\x07FFFFFF w pojedynku \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF na \x07"+MGE_COLOR_MAIN+"%s\x07"
+	XdefeatsYearly =			"\x07"+MGE_COLOR_SUBJECT+"%s (Wynik:%s)\x07FFFFFF pokonał \x07"+MGE_COLOR_SUBJECT+"%s (Wynik:%s)\x07FFFFFF w pojedynku na \x07"+MGE_COLOR_MAIN+"%s\x07"
+	SpecRemove =			"\x07"+MGE_COLOR_BACKGROUND+"Nie możesz być spectem podczas pojedynku, zostajesz usunięty z kolejki."
+	ClassChangePoint =			"\x07"+MGE_COLOR_BACKGROUND+"Zmieniłeś klasę podczas pojedynku - przeciwnik otrzymuje 1 punkt."
+	ClassChangePointOpponent =			"\x07"+MGE_COLOR_BACKGROUND+"Przeciwnik zmienił klasę podczas pojedynku - otrzymujesz 1 punkt."
+	Welcome1 =			"\x07"+MGE_COLOR_BACKGROUND+"Witaj w VScript MGE wersji \x07"+MGE_COLOR_SUBJECT+"%s"
+	Welcome2 =			"\x07"+MGE_COLOR_BACKGROUND+"Rewrite stworzony przez: \x07"+MGE_COLOR_SUBJECT+"Braindawg"
+	Welcome3 =			"\x07"+MGE_COLOR_BACKGROUND+"Twórcy oryginalnego pluginu: \x07"+MGE_COLOR_SUBJECT+"Lange i Cprice\x07, na podstawie \x07"+MGE_COLOR_SUBJECT+"kAmmomod"
+	Top5Title  =			"Top 5 Graczy"
+	top5error =			"[VScript MGE] Nie ma wystarczającej liczby graczy w bazie danych."
+	bballdunk =			"\x07"+MGE_COLOR_SUBJECT+"Ty ZAORAŁEŚ \x07"+MGE_COLOR_SUBJECT+"%s!"
+	Cmd_MGECmds =			"[VScript MGE] Pomoc: Informacje o komendach"
+	Cmd_SeeConsole =			"[VScript MGE] Wynik komendy znajduje się w konsoli."
+	Cmd_MGEMod =			"[VScript MGE] mgemod\t - Menu"
+	Cmd_Add =			"[VScript MGE] add\t - Użycie: add <numer areny/nazwa areny>. Dodaj do areny."
+	Cmd_Remove =			"[VScript MGE] remove\t - Usuń z bieżącej areny."
+	Cmd_First =			"[VScript MGE] first\t - Dołącz do pierwszej dostępnej areny."
+	Cmd_Top5 =			"[VScript MGE] top5\t - Wyświetl top 5 graczy."
+	Cmd_Rank =			"[VScript MGE] rank\t - Użycie: rank <nazwa gracza>. Pokaż rank gracza."
+	Cmd_HitBlip =			"[VScript MGE] hitblip - Włącz/wyłącz hitblip."
+	Cmd_Hud =			"[VScript MGE] hud\t - Włącz/wyłącz tekstowy HUD."
+	Cmd_Handicap =			"[VScript MGE] handicap - Zmniejsz swoje maksymalne HP. Użyj '!handicap off', aby wyłączyć handicap."
+	NoClassChange =			"\x07"+MGE_COLOR_BACKGROUND+"Nie możesz teraz zmienić klasy."
+	DatabaseDown =			"Nieudane połączenie z bazą danych, fallbackujemy do przechowywania jako pliki.\nPróba ponownego połączenia nastąpi za %s minut."
+	StatsRestored =			"Przywrócono połączenie z bazą danych, odświeżanie statystyk...\nStatystyki odświeżone."
+	StatsRestoredDown =			"Baza danych jest dostępna, ale statystyki są wyłączone przez admina."
+	MustJoinArena =			"\x07"+MGE_COLOR_BACKGROUND+"Musisz najpierw dołączyć do areny, aby to zrobić."
+	NoCurrentHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Nie masz obecnie handicapu."
+	CurrentHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Twój obecny handicap to \x07"+MGE_COLOR_SUBJECT+"%s \x07"+MGE_COLOR_BACKGROUND+"maksymalnego HP."
+	InvalidHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Podany handicap jest nieprawidłowy. Handicap został wyłączony."
+	HandicapDisabled =			"\x07"+MGE_COLOR_BACKGROUND+"Handicap wyłączony."
+	Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s jest na killstreaku! (%s zabójstw)"
+	FirstBlood =            "\x07"+MGE_COLOR_SUBJECT+"Pierwsza krew!"
+	Airshot =               "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
 
-		Error_StatsNotFound    =	"\n\nBłąd: statystyki dla %s nie znaleziono! ponowne pobieranie i pominięcie aktualizacji...\n\n"
+	Error_StatsNotFound =			"\n\nBłąd: nie znaleziono statystyk dla %s! Pobieram staty od nowa i pomijam aktualizację...\n\n"
 
-		VPI_ReadSuccess        =	"\n\nVPI: Pobrano dane dla użytkownika %s.\n\n"
-		VPI_ReadError          =	"\n\nVPI: Błąd pobierania danych dla użytkownika %s.\n\n"
-		VPI_WriteSuccess       =	"\n\nVPI: Zapisano dane dla użytkownika %s.\n\n"
-		VPI_WriteError         =	"\n\nVPI: Błąd zapisu danych dla użytkownika %s.\n\n"
-	}
+	VPI_ReadSuccess =			"\n\nVPI: Pobrano dane dla użytkownika %s.\n\n"
+	VPI_ReadError =			"\n\nVPI: Błąd pobierania danych dla użytkownika %s.\n\n"
+	VPI_WriteSuccess =			"\n\nVPI: Zapisano dane dla użytkownika %s.\n\n"
+	VPI_WriteError =			"\n\nVPI: Błąd zapisu danych dla użytkownika %s.\n\n"
+	VPI_InitDB                    = "[VPI]: Inicjowanie bazy danych..."
+    VPI_DBInitError            = "[VPI]: BŁĄD: NIE UDAŁO SIĘ POŁĄCZYĆ Z BAZĄ DANYCH! Sprawdź wynik vpi.py, aby dowiedzieć się więcej."
+    VPI_DBInitSuccess          = "[VPI]: Pomyślnie zainicjowano bazę danych."
+    VPI_AutoUpdateError        = "[VPI]: Błąd automatycznej aktualizacji, nie udało się sklonować repozytorium.\n[VPI]: Repozytorium: %s"
+    VPI_AutoUpdateSuccess      = "[VPI]: Automatyczna aktualizacja wykonana! Wykonuję changelevel..."
+
+}
 	dutch = {
 		MenuTitle               = "Sluit je aan bij arena..."
 		MenuRemove              = "Verwijder uit wachtrij"
@@ -228,10 +239,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound     = "\n\nError: stats niet gevonden %s! opnieuw ophalen en update overslaan...\n\n"
 
-		VPI_ReadSuccess         = "\n\nVPI: Data gevonden voor gebruiker %s.\n\n"
-		VPI_ReadError           = "\n\nVPI: Error data vinden voor gebruiker %s.\n\n"
-		VPI_WriteSuccess        = "\n\nVPI: Data geschreven voor gebruiker %s.\n\n"
-		VPI_WriteError          = "\n\nVPI: Error data schrijven voor gebruiker %s.\n\n"
+		VPI_InitDB 				= "[VPI]: Database initialiseren..."
+		VPI_ReadSuccess         = "[VPI]: Data gevonden voor gebruiker %s.\n"
+		VPI_ReadError           = "[VPI]: Error data vinden voor gebruiker %s.\n"
+		VPI_WriteSuccess        = "[VPI]: Data geschreven voor gebruiker %s.\n"
+		VPI_WriteError          = "[VPI]: Error data schrijven voor gebruiker %s.\n"
 	}
 	german = {
 		MenuTitle                 = "Arena betreten..."
@@ -274,7 +286,7 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		Cmd_Handicap              = "[VScript MGE] handicap - Setzt deine maxmimale HP herab. Schreibe '!handicap off' um es zu deaktvieren."
 		Cmd_Ruleset               = "[VScript MGE] ruleset\t - Użycie: ruleset <nazwa rulesetu>. Ustaw ruleset."
 		Cmd_Language              = "[VScript MGE] language\t - Użycie: language <nazwa języka>. Ustaw język."
-		LanguageSet                = "Sprache wurde zu \x07"+MGE_COLOR_SUBJECT+"%s\x07 geändert"
+		LanguageSet               = "Sprache wurde zu \x07"+MGE_COLOR_SUBJECT+"%s\x07 geändert"
 		NoClassChange             = "\x07"+MGE_COLOR_BACKGROUND+"Klasse wechseln jetzt nicht möglich."
 		DatabaseDown              = "Datenbankverbindung fehlgeschlagen, Statistiken sind deaktiviert.\n Wiederherstellung der Verbindung wird versucht in %s Minuten."
 		StatsRestored             = "Datenbankverbindung wiederhergestellt, aktualisiere Statistiken...\nStatistiken wiederhergestellt."
@@ -290,10 +302,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound       =	"\n\nFehler: Statistiken für %s nicht gefunden! Hole erneut und überspringe Update...\n\n"
 
-		VPI_ReadSuccess           =	"\n\nVPI: Daten für Benutzer %s erhalten.\n\n"
-		VPI_ReadError             =	"\n\nVPI: Fehler beim Abrufen der Daten für Benutzer %s.\n\n"
-		VPI_WriteSuccess          =	"\n\nVPI: Daten für Benutzer %s geschrieben.\n\n"
-		VPI_WriteError            =	"\n\nVPI: Fehler beim Schreiben der Daten für Benutzer %s.\n\n"
+		VPI_InitDB 				  = "[VPI]: Initialisiere Datenbank..."
+		VPI_ReadSuccess           =	"[VPI]: Daten für Benutzer %s erhalten.\n\n"
+		VPI_ReadError             =	"[VPI]: Fehler beim Abrufen der Daten für Benutzer %s.\n"
+		VPI_WriteSuccess          =	"[VPI]: Daten für Benutzer %s geschrieben.\n\n"
+		VPI_WriteError            =	"[VPI]: Fehler beim Schreiben der Daten für Benutzer %s.\n"
 	}
 	danish = {
 		MenuTitle               =			"Tilslut arena..."
@@ -316,7 +329,7 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		XdefeatsYearly          =			"\x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF vinder \x07"+MGE_COLOR_SUBJECT+"%s (Score:%s)\x07FFFFFF i en duel på \x07"+MGE_COLOR_MAIN+"%s\x7"
 		SpecRemove              =			"\x07"+MGE_COLOR_BACKGROUND+"Kan ikke komme tilbage til spilleren under en kamp, fjernes fra køen."
 		ClassChangePoint        =			"\x07"+MGE_COLOR_BACKGROUND+"Du har ændret klasse under en kamp, din modstander får 1 point."
-		ClassChangePointOpponent =			"\x07"+MGE_COLOR_BACKGROUND+"Din modstander har ændret klasse under en kamp, du får 1 point."
+		ClassChangePointOpponent=			"\x07"+MGE_COLOR_BACKGROUND+"Din modstander har ændret klasse under en kamp, du får 1 point."
 		Welcome1                =			"\x07"+MGE_COLOR_BACKGROUND+"Velkommen til VScript MGE version \x07"+MGE_COLOR_SUBJECT+"%s"
 		Welcome2                =			"\x07"+MGE_COLOR_BACKGROUND+"Rewrite by: \x07"+MGE_COLOR_SUBJECT+"Braindawg"
 		Welcome3                =			"\x07"+MGE_COLOR_BACKGROUND+"Original plugin by: \x07"+MGE_COLOR_SUBJECT+"Lange & Cprice\x07, based on \x07"+MGE_COLOR_SUBJECT+"kAmmomod"
@@ -352,10 +365,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound     =			"\n\nFehler: Statistiken für %s nicht gefunden! Hole erneut und überspringe Update...\n\n"
 
-		VPI_ReadSuccess         =			"\n\nVPI: Daten für Benutzer %s erhalten.\n\n"
-		VPI_ReadError           =			"\n\nVPI: Fehler beim Abrufen der Daten für Benutzer %s.\n\n"
-		VPI_WriteSuccess        =			"\n\nVPI: Daten für Benutzer %s geschrieben.\n\n"
-		VPI_WriteError          =			"\n\nVPI: Fehler beim Schreiben der Daten für Benutzer %s.\n\n"
+		VPI_InitDB 				= 			"[VPI]: Initialiserer database..."
+		VPI_ReadSuccess         =			"[VPI]: Daten für Benutzer %s erhalten.\n\n"
+		VPI_ReadError           =			"[VPI]: Fehler beim Abrufen der Daten für Benutzer %s.\n"
+		VPI_WriteSuccess        =			"[VPI]: Daten für Benutzer %s geschrieben.\n\n"
+		VPI_WriteError          =			"[VPI]: Fehler beim Schreiben der Daten für Benutzer %s.\n"
 	}
 	greek = {
 		MenuTitle                = "Είσοδος στην αρένα..."
@@ -414,10 +428,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound      = "\n\nΣφάλμα: δεν βρέθηκαν στατιστικά για τον %s! γίνεται νέα λήψη και παράλειψη ενημέρωσης...\n\n"
 
-		VPI_ReadSuccess          = "\n\nVPI: Ελήφθησαν δεδομένα για τον χρήστη %s.\n\n"
-		VPI_ReadError            = "\n\nVPI: Σφάλμα κατά τη λήψη δεδομένων για τον χρήστη %s.\n\n"
-		VPI_WriteSuccess         = "\n\nVPI: Εγγράφηκαν δεδομένα για τον χρήστη %s.\n\n"
-		VPI_WriteError           = "\n\nVPI: Σφάλμα κατά την εγγραφή δεδομένων για τον χρήστη %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Αρχικοποίηση βάσης δεδομένων..."
+		VPI_ReadSuccess          = "[VPI]: Ελήφθησαν δεδομένα για τον χρήστη %s.\n"
+		VPI_ReadError            = "[VPI]: Σφάλμα κατά τη λήψη δεδομένων για τον χρήστη %s.\n"
+		VPI_WriteSuccess         = "[VPI]: Εγγράφηκαν δεδομένα για τον χρήστη %s.\n"
+		VPI_WriteError           = "[VPI]: Σφάλμα κατά την εγγραφή δεδομένων για τον χρήστη %s.\n"
 	}
 	turkish = {
 		MenuTitle                  = "Arenaya katıl..."
@@ -476,10 +491,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound        = "\n\nHata: %s için istatistikler bulunamadı! Yeniden alınıyor ve güncelleme atlanıyor...\n\n"
 
-		VPI_ReadSuccess            = "\n\nVPI: %s kullanıcısının verileri alındı.\n\n"
-		VPI_ReadError              = "\n\nVPI: %s kullanıcısının verileri alınırken hata oluştu.\n\n"
-		VPI_WriteSuccess           = "\n\nVPI: %s kullanıcısının verileri yazıldı.\n\n"
-		VPI_WriteError             = "\n\nVPI: %s kullanıcısının verileri yazılırken hata oluştu.\n\n"
+		VPI_InitDB 				   = "[VPI]: Veritabanı başlatılıyor..."
+		VPI_ReadSuccess            = "[VPI]: %s kullanıcısının verileri alındı.\n\n"
+		VPI_ReadError              = "[VPI]: %s kullanıcısının verileri alınırken hata oluştu.\n\n"
+		VPI_WriteSuccess           = "[VPI]: %s kullanıcısının verileri yazıldı.\n\n"
+		VPI_WriteError             = "[VPI]: %s kullanıcısının verileri yazılırken hata oluştu.\n\n"
 	}
 	romanian = {
         MenuTitle              =            "Arena comuna "
@@ -538,10 +554,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
         Error_StatsNotFound        = "\n\nError: statistici nu au fost găsite pentru %s! se preia din nou și se omite actualizarea...\n\n"
 
-        VPI_ReadSuccess            = "\n\nVPI: Am date pentru utilizator %s.\n\n"
-        VPI_ReadError              = "\n\nVPI: Eroare la obținerea datelor pentru playerul %s.\n\n"
-        VPI_WriteSuccess           = "\n\nVPI: Am scris date pentru playerul %s.\n\n"
-        VPI_WriteError             = "\n\nVPI: Eroare la scrierea datelor pentru playerul %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Se inițializează baza de date..."
+        VPI_ReadSuccess            = "[VPI]: Am date pentru utilizator %s.\n"
+        VPI_ReadError              = "[VPI]: Eroare la obținerea datelor pentru playerul %s.\n"
+        VPI_WriteSuccess           = "[VPI]: Am scris date pentru playerul %s.\n"
+        VPI_WriteError             = "[VPI]: Eroare la scrierea datelor pentru playerul %s.\n"
 	}
 	czech = {
 		MenuTitle            = "Připojit se k aréně..."
@@ -600,10 +617,12 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound   = "\n\nChyba: statistiky pro %s nenalezeny! Stahuji znovu a přeskakuji aktualizaci...\n\n"
 
-		VPI_ReadSuccess      = "\n\nVPI: Získána data pro uživatele %s.\n\n"
-		VPI_ReadError        = "\n\nVPI: Chyba při získávání dat pro uživatele %s.\n\n"
-		VPI_WriteSuccess     = "\n\nVPI: Zapsána data pro uživatele %s.\n\n"
-		VPI_WriteError       = "\n\nVPI: Chyba při zápisu dat pro uživatele %s.\n\n"
+
+		VPI_InitDB 				   = "[VPI]: Inicializace databáze..."
+		VPI_ReadSuccess      = "[VPI]: Získána data pro uživatele %s.\n"
+		VPI_ReadError        = "[VPI]: Chyba při získávání dat pro uživatele %s.\n"
+		VPI_WriteSuccess     = "[VPI]: Zapsána data pro uživatele %s.\n"
+		VPI_WriteError       = "[VPI]: Chyba při zápisu dat pro uživatele %s.\n"
 	}
 	hungarian = {
 		MenuTitle                =			"Csatlakozás az arénához..."
@@ -662,10 +681,12 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound      =			"\n\nHiba: %s statisztikái nem találhatók! újralekérdezés és frissítés kihagyása...\n\n"
 
-		VPI_ReadSuccess          =			"\n\nVPI: %s felhasználó adatai lekérve.\n\n"
-		VPI_ReadError            =			"\n\nVPI: Hiba %s felhasználó adatainak lekérésekor.\n\n"
-		VPI_WriteSuccess         =			"\n\nVPI: %s felhasználó adatai elmentve.\n\n"
-		VPI_WriteError           =			"\n\nVPI: Hiba %s felhasználó adatainak mentésekor.\n\n"
+
+		VPI_InitDB 				   = 		"[VPI]: Inicializace databáze..."
+		VPI_ReadSuccess          =			"[VPI]: %s felhasználó adatai lekérve.\n\n"
+		VPI_ReadError            =			"[VPI]: Hiba %s felhasználó adatainak lekérésekor.\n\n"
+		VPI_WriteSuccess         =			"[VPI]: %s felhasználó adatai elmentve.\n\n"
+		VPI_WriteError           =			"[VPI]: Hiba %s felhasználó adatainak mentésekor.\n\n"
 	}
 	swedish = {
 		MenuTitle               =			"Ansluts till arenan..."
@@ -724,10 +745,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound     =			"\n\nFel: statistik hittades inte för %s! hämtar igen och hoppar över uppdatering...\n\n"
 
-		VPI_ReadSuccess         =			"\n\nVPI: Fick data för användare %s.\n\n"
-		VPI_ReadError           =			"\n\nVPI: Fel vid hämtning av data för användare %s.\n\n"
-		VPI_WriteSuccess        =			"\n\nVPI: Skrev data för användare %s.\n\n"
-		VPI_WriteError          =			"\n\nVPI: Fel vid skrivning av data för användare %s.\n\n"
+		VPI_InitDB 				= 			"[VPI]: Initialiserar databas..."
+		VPI_ReadSuccess         =			"[VPI]: Fick data för användare %s.\n"
+		VPI_ReadError           =			"[VPI]: Fel vid hämtning av data för användare %s.\n"
+		VPI_WriteSuccess        =			"[VPI]: Skrev data för användare %s.\n"
+		VPI_WriteError          =			"[VPI]: Fel vid skrivning av data för användare %s.\n"
 	}
 	norwegian = {
 		MenuTitle               =			"Bli med i arena..."
@@ -786,10 +808,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound     =			"\n\nFeil: statistikk ikke funnet for %s! henter på nytt og hopper over oppdatering...\n\n"
 
-		VPI_ReadSuccess         =			"\n\nVPI: Hentet data for bruker %s.\n\n"
-		VPI_ReadError           =			"\n\nVPI: Feil ved henting av data for bruker %s.\n\n"
-		VPI_WriteSuccess        =			"\n\nVPI: Skrev data for bruker %s.\n\n"
-		VPI_WriteError          =			"\n\nVPI: Feil ved skriving av data for bruker %s.\n\n"
+		VPI_InitDB 				= 			"[VPI]: Initialiserer database..."
+		VPI_ReadSuccess         =			"[VPI]: Hentet data for bruker %s.\n"
+		VPI_ReadError           =			"[VPI]: Feil ved henting av data for bruker %s.\n"
+		VPI_WriteSuccess        =			"[VPI]: Skrev data for bruker %s.\n"
+		VPI_WriteError          =			"[VPI]: Feil ved skriving av data for bruker %s.\n"
 	}
 	finnish = {
 		MenuTitle                  = "Liity areenalle..."
@@ -848,10 +871,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound        = "\n\nVirhe: tilastoja ei löytynyt pelaajalle %s! haetaan uudelleen ja ohitetaan päivitys...\n\n"
 
-		VPI_ReadSuccess            = "\n\nVPI: Haettiin tiedot käyttäjälle %s.\n\n"
-		VPI_ReadError              = "\n\nVPI: Virhe haettaessa tietoja käyttäjälle %s.\n\n"
-		VPI_WriteSuccess           = "\n\nVPI: Kirjoitettiin tiedot käyttäjälle %s.\n\n"
-		VPI_WriteError             = "\n\nVPI: Virhe kirjoitettaessa tietoja käyttäjälle %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Alustetaan tietokantaa..."
+		VPI_ReadSuccess            = "[VPI]: Haettiin tiedot käyttäjälle %s.\n"
+		VPI_ReadError              = "[VPI]: Virhe haettaessa tietoja käyttäjälle %s.\n"
+		VPI_WriteSuccess           = "[VPI]: Kirjoitettiin tiedot käyttäjälle %s.\n"
+		VPI_WriteError             = "[VPI]: Virhe kirjoitettaessa tietoja käyttäjälle %s.\n"
 	}
 	vietnamese = {
 		MenuTitle                = "Tham gia đấu trường..."
@@ -910,10 +934,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound      = "\n\nLỗi: không tìm thấy thống kê cho %s! đang lấy lại và bỏ qua cập nhật...\n\n"
 
-		VPI_ReadSuccess          = "\n\nVPI: Đã tìm thấy dữ liệu cho người dùng %s.\n\n"
-		VPI_ReadError            = "\n\nVPI: Đã gặp lỗi khi cố lấy dữ liệu cho người dùng %s.\n\n"
-		VPI_WriteSuccess         = "\n\nVPI: Đã viết dữ liệu cho người dùng %s.\n\n"
-		VPI_WriteError           = "\n\nVPI: Đã gặp lỗi khi cố viết dữ liệu cho người dùng %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Đang khởi tạo cơ sở dữ liệu..."
+		VPI_ReadSuccess          = "[VPI]: Đã tìm thấy dữ liệu cho người dùng %s.\n"
+		VPI_ReadError            = "[VPI]: Đã gặp lỗi khi cố lấy dữ liệu cho người dùng %s.\n"
+		VPI_WriteSuccess         = "[VPI]: Đã viết dữ liệu cho người dùng %s.\n"
+		VPI_WriteError           = "[VPI]: Đã gặp lỗi khi cố viết dữ liệu cho người dùng %s.\n"
 	}
 	french = {
 		MenuTitle               = "Sélectionnez une arène..."
@@ -972,10 +997,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound    = "\n\nErreur: statistiques non trouvées pour %s! essai à nouveau et ignore la mise à jour...\n\n"
 
-		VPI_ReadSuccess        = "\n\nVPI: Reçu données pour joueur %s.\n\n"
-		VPI_ReadError          = "\n\nVPI: Erreur de données pour joueur %s.\n\n"
-		VPI_WriteSuccess       = "\n\nVPI: Données sauvegardées pour joueur %s.\n\n"
-		VPI_WriteError         = "\n\nVPI: Erreur de sauvegarde pour joueur %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Initialisation de la base de données..."
+		VPI_ReadSuccess        = "[VPI]: Reçu données pour joueur %s.\n"
+		VPI_ReadError          = "[VPI]: Erreur de données pour joueur %s.\n"
+		VPI_WriteSuccess       = "[VPI]: Données sauvegardées pour joueur %s.\n"
+		VPI_WriteError         = "[VPI]: Erreur de sauvegarde pour joueur %s.\n"
 	}
 	spanish = {
 		MenuTitle                  = "Salta a la palestra..."
@@ -1034,10 +1060,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound        = "\n\nError: estadisticas no encontradas para %s! buscando otra vez y oprimiendo actualización programada...\n\n"
 
-		VPI_ReadSuccess            = "\n\nVPI: Informacion encontrada para el usuario %s.\n\n"
-		VPI_ReadError              = "\n\nVPI: Error, no se ha podido conseguir la información del usuario %s.\n\n"
-		VPI_WriteSuccess           = "\n\nVPI: Informacion sobreescrita para el usuariou %s.\n\n"
-		VPI_WriteError             = "\n\nVPI: Error, no se ha podido sobreescribir la informacion del usuario %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Inicializando base de datos..."
+		VPI_ReadSuccess            = "[VPI]: Informacion encontrada para el usuario %s.\n"
+		VPI_ReadError              = "[VPI]: Error, no se ha podido conseguir la información del usuario %s.\n"
+		VPI_WriteSuccess           = "[VPI]: Informacion sobreescrita para el usuariou %s.\n"
+		VPI_WriteError             = "[VPI]: Error, no se ha podido sobreescribir la informacion del usuario %s.\n"
 	}
 	latam = {
 		MenuTitle                  = "Unirse a la arena..."
@@ -1096,10 +1123,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound        = "\n\nError: ¡estadísticas no encontradas para %s! buscando de nuevo y omitiendo actualización programada...\n\n"
 
-		VPI_ReadSuccess            = "\n\nVPI: Información encontrada para el usuario %s.\n\n"
-		VPI_ReadError              = "\n\nVPI: Error al obtener información del usuario %s.\n\n"
-		VPI_WriteSuccess           = "\n\nVPI: Información guardada para el usuario %s.\n\n"
-		VPI_WriteError             = "\n\nVPI: Error al guardar información del usuario %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Inicializando base de datos..."
+		VPI_ReadSuccess            = "[VPI]: Información encontrada para el usuario %s.\n"
+		VPI_ReadError              = "[VPI]: Error al obtener información del usuario %s.\n"
+		VPI_WriteSuccess           = "[VPI]: Información guardada para el usuario %s.\n"
+		VPI_WriteError             = "[VPI]: Error al guardar información del usuario %s.\n"
 	}
 	thai = {
 		MenuTitle                = "เข้าร่วม Arena"
@@ -1155,10 +1183,12 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound      = "\n\nข้อผิดพลาด: ไม่พบสถิติสำหรับ %s! กำลังดึงข้อมูลอีกครั้งและข้ามการอัปเดต...\n\n"
 
-		VPI_ReadSuccess          = "\n\nVPI: ได้รับข้อมูลสำหรับผู้ใช้ %s แล้ว\n\n"
-		VPI_ReadError            = "\n\nVPI: เกิดข้อผิดพลาดในการรับข้อมูลสำหรับผู้ใช้ %s\n\n"
-		VPI_WriteSuccess         = "\n\nVPI: เขียนข้อมูลสำหรับผู้ใช้ %s แล้ว\n\n"
-		VPI_WriteError           = "\n\nVPI: เกิดข้อผิดพลาดในการเขียนข้อมูลสำหรับผู้ใช้ %s\n\n"
+
+		VPI_InitDB 				 = "[VPI]: กำลังเริ่มต้นฐานข้อมูล..."
+		VPI_ReadSuccess          = "[VPI]: ได้รับข้อมูลสำหรับผู้ใช้ %s แล้ว\n\n"
+		VPI_ReadError            = "[VPI]: เกิดข้อผิดพลาดในการรับข้อมูลสำหรับผู้ใช้ %s\n\n"
+		VPI_WriteSuccess         = "[VPI]: เขียนข้อมูลสำหรับผู้ใช้ %s แล้ว\n\n"
+		VPI_WriteError           = "[VPI]: เกิดข้อผิดพลาดในการเขียนข้อมูลสำหรับผู้ใช้ %s\n\n"
 
 	}
 	russian = {
@@ -1220,17 +1250,19 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound       =  "\n\nОшибка: статистика не найдена для %s! Повторное получение и пропуск обновления...\n\n"
 
-		VPI_ReadSuccess           =  "\n\nVPI: Получены данные для пользователя %s.\n\n"
-		VPI_ReadError             =  "\n\nVPI: Ошибка получения данных для пользователя %s.\n\n"
-		VPI_WriteSuccess          =  "\n\nVPI: Записаны данные для пользователя %s.\n\n"
-		VPI_WriteError            =  "\n\nVPI: Ошибка записи данных для пользователя %s.\n\n"
+
+		VPI_InitDB 				   = "[VPI]: Инициализация базы данных..."
+		VPI_ReadSuccess           =  "[VPI]: Получены данные для пользователя %s.\n"
+		VPI_ReadError             =  "[VPI]: Ошибка получения данных для пользователя %s.\n"
+		VPI_WriteSuccess          =  "[VPI]: Записаны данные для пользователя %s.\n"
+		VPI_WriteError            =  "[VPI]: Ошибка записи данных для пользователя %s.\n"
 
 	}
 	ukranian = {
 		MenuTitle  =			"Приєднатися до арени..."
 		MenuRemove  =			"Вилучити з черги"
-		HPLeft =			"\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF У вашого опонента залишилося  \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF здоров'я."
-		Adv =			"\x07"+MGE_COLOR_MAIN+"Щоб приєднатися до арени, введіть\x07FFFFFF !add\n\x07"+MGE_COLOR_MAIN+"Для отримання списку команд введіть !mgehelp"
+		HPLeft =			"\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF У вашого опонента залишилося  \x07"+MGE_COLOR_SUBJECT+"%d\x07FFFFFF здоров'я."
+		Adv =			"\x07"+MGE_COLOR_MAIN+"Щоб приєднатися до арени, введіть\x07FFFFFF!add\n\x07"+MGE_COLOR_MAIN+"Для отримання списку команд введіть !mgehelp"
 		JoinsArena =			"\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF (%s) приєднується до арени \x07"+MGE_COLOR_MAIN+"%s."
 		JoinsArenaNoStats =			"\x07"+MGE_COLOR_MAIN+"%s приєднується до арени \x07"+MGE_COLOR_SUBJECT+"%s."
 		ChoseArena =			"Ви обрали арену \x07"+MGE_COLOR_MAIN+" %s."
@@ -1265,9 +1297,6 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		Cmd_HitBlip =			"[VScript MGE] hitblip - Увімкнути/вимкнути hitblip."
 		Cmd_Hud =			"[VScript MGE] hud\t - Увімкнути/вимкнути текстовий оверлей."
 		Cmd_Handicap =			"[VScript MGE] handicap - Зменшує ваш максимальний рівень здоров'я. Щоб вимкнути, введіть '!handicap off'."
-		Cmd_Ruleset =			"[VScript MGE] ruleset\t - Використання: ruleset <ім'я ruleset>. Виберіть ruleset."
-		Cmd_Language =			"[VScript MGE] language\t - Використання: language <ім'я мови>. Виберіть мову."
-		LanguageSet =			"Мова встановлена на \x07"+MGE_COLOR_SUBJECT+"%s\x07"
 		NoClassChange =			"\x07"+MGE_COLOR_BACKGROUND+"Наразі ви не можете змінити клас."
 		DatabaseDown =			"Не вдалося з'єднатися з базою даних, повертаємося до файлового сховища.\nПовторне з'єднання буде виконано за %s хвилин."
 		StatsRestored =			"Відновлено з'єднання з базою даних, оновлено статистику...\nСтатистику відновлено."
@@ -1277,16 +1306,17 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		CurrentHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Ваш поточний гандикап \x07"+MGE_COLOR_SUBJECT+"%s \x07"+MGE_COLOR_BACKGROUND+"максимальний HP."
 		InvalidHandicap =			"\x07"+MGE_COLOR_BACKGROUND+"Ваш бажаний гандикап недійсний. Відключення гандикапу."
 		HandicapDisabled =			"\x07"+MGE_COLOR_BACKGROUND+"Гандикап відключено."
-		Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF у серії! (%s вбивств)"
+		Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF має серію! (%s вбивств)"
 		FirstBlood =			"\x07"+MGE_COLOR_SUBJECT+"Перша кров!"
 		Airshot =			"\x07"+MGE_COLOR_SUBJECT+"Влучення в повітрі!"
 
 		Error_StatsNotFound =			"\n\nПомилка: статистика не знайдена для %s! Повторне отримання та пропуск оновлення...\n\n"
 
-		VPI_ReadSuccess =			"\n\nVPI: Дані отримані для користувача %s.\n\n"
-		VPI_ReadError =			"\n\nVPI: Помилка отримання даних для користувача %s.\n\n"
-		VPI_WriteSuccess =			"\n\nVPI: Дані записані для користувача %s.\n\n"
-		VPI_WriteError =			"\n\nVPI: Помилка запису даних для користувача %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Ініціалізація бази даних..."
+		VPI_ReadSuccess =			"[VPI]: Дані отримані для користувача %s.\n"
+		VPI_ReadError =			"[VPI]: Помилка отримання даних для користувача %s.\n"
+		VPI_WriteSuccess =			"[VPI]: Дані записані для користувача %s.\n"
+		VPI_WriteError =			"[VPI]: Помилка запису даних для користувача %s.\n"
 	}
 	brazilian = {
 		MenuTitle                = "Entrar na arena..."
@@ -1345,10 +1375,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound      = "\n\nErro: dados não encontrados para %s! buscando novamente e pulando atualização...\n\n"
 
-		VPI_ReadSuccess          = "\n\nVPI: Dados obtidos para o usuário %s.\n\n"
-		VPI_ReadError            = "\n\nVPI: Erro ao obter dados para o usuário %s.\n\n"
-		VPI_WriteSuccess         = "\n\nVPI: Dados escritos para o usuário %s.\n\n"
-		VPI_WriteError           = "\n\nVPI: Erro ao escrever dados para o usuário %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Inicializando banco de dados..."
+		VPI_ReadSuccess          = "[VPI]: Dados obtidos para o usuário %s.\n"
+		VPI_ReadError            = "[VPI]: Erro ao obter dados para o usuário %s.\n"
+		VPI_WriteSuccess         = "[VPI]: Dados escritos para o usuário %s.\n"
+		VPI_WriteError           = "[VPI]: Erro ao escrever dados para o usuário %s.\n"
 	}
 	italian = {
 		MenuTitle            = "Entra nell'arena..."
@@ -1407,10 +1438,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound  = "\n\nErrore: dati non trovati per %s! cercando di nuovo e saltando aggiornamento...\n\n"
 
-		VPI_ReadSuccess      = "\n\nVPI: Dati ottenuti per l'utente %s.\n\n"
-		VPI_ReadError        = "\n\nVPI: Errore nel ricevere i dati dell'utente %s.\n\n"
-		VPI_WriteSuccess     = "\n\nVPI: Dati scritti per l'utente %s.\n\n"
-		VPI_WriteError       = "\n\nVPI: Errore nella scrittura dei dati per l'utente %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Inizializzazione database..."
+		VPI_ReadSuccess      = "[VPI]: Dati ottenuti per l'utente %s.\n"
+		VPI_ReadError        = "[VPI]: Errore nel ricevere i dati dell'utente %s.\n"
+		VPI_WriteSuccess     = "[VPI]: Dati scritti per l'utente %s.\n"
+		VPI_WriteError       = "[VPI]: Errore nella scrittura dei dati per l'utente %s.\n"
 	}
 	korean = {
 		MenuTitle            = "아레나 참가..."
@@ -1469,10 +1501,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound  = "\n\n오류: %s의 통계를 찾을 수 없습니다! 다시 가져오는 중이며 업데이트를 건너뜁니다...\n\n"
 
-		VPI_ReadSuccess      = "\n\nVPI: 사용자 %s의 데이터를 가져왔습니다.\n\n"
-		VPI_ReadError        = "\n\nVPI: 사용자 %s의 데이터를 가져오는 중 오류가 발생했습니다.\n\n"
-		VPI_WriteSuccess     = "\n\nVPI: 사용자 %s의 데이터를 기록했습니다.\n\n"
-		VPI_WriteError       = "\n\nVPI: 사용자 %s의 데이터를 기록하는 중 오류가 발생했습니다.\n\n"
+		VPI_InitDB 				   = "[VPI]: 데이터베이스 초기화 중..."
+		VPI_ReadSuccess      = "[VPI]: 사용자 %s의 데이터를 가져왔습니다.\n\n"
+		VPI_ReadError        = "[VPI]: 사용자 %s의 데이터를 가져오는 중 오류가 발생했습니다.\n\n"
+		VPI_WriteSuccess     = "[VPI]: 사용자 %s의 데이터를 기록했습니다.\n\n"
+		VPI_WriteError       = "[VPI]: 사용자 %s의 데이터를 기록하는 중 오류가 발생했습니다.\n\n"
 	}
 	japanese = {
 		MenuTitle                 = "アリーナに参加..."
@@ -1531,10 +1564,12 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound       = "\n\nエラー: %sの統計が見つかりません! 再取得中でアップデートをスキップします...\n\n"
 
-		VPI_ReadSuccess           = "\n\nVPI: ユーザー %s のデータを取得しました。\n\n"
-		VPI_ReadError             = "\n\nVPI: ユーザー %s のデータ取得中にエラーが発生しました。\n\n"
-		VPI_WriteSuccess          = "\n\nVPI: ユーザー %s のデータを書き込みました。\n\n"
-		VPI_WriteError            = "\n\nVPI: ユーザー %s のデータ書き込み中にエラーが発生しました。\n\n"
+
+		VPI_InitDB 				   = "[VPI]: データベースを初期化中..."
+		VPI_ReadSuccess           = "[VPI]: ユーザー %s のデータを取得しました。\n\n"
+		VPI_ReadError             = "[VPI]: ユーザー %s のデータ取得中にエラーが発生しました。\n\n"
+		VPI_WriteSuccess          = "[VPI]: ユーザー %s のデータを書き込みました。\n\n"
+		VPI_WriteError            = "[VPI]: ユーザー %s のデータ書き込み中にエラーが発生しました。\n\n"
 	}
 	tchinese = {
 		MenuTitle           = "加入競技場……"
@@ -1593,10 +1628,11 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound = "\n\n錯誤：未找到 %s 的統計資料！正在重新獲取並跳過更新...\n\n"
 
-		VPI_ReadSuccess     = "\n\nVPI: 已獲取 %s 的資料。\n\n"
-		VPI_ReadError       = "\n\nVPI: 獲取 %s 的資料時出錯。\n\n"
-		VPI_WriteSuccess    = "\n\nVPI: 已寫入 %s 的資料。\n\n"
-		VPI_WriteError      = "\n\nVPI: 寫入 %s 的資料時出錯。\n\n"
+		VPI_InitDB 				   = "[VPI]: 初始化數據庫..."
+		VPI_ReadSuccess     = "[VPI]: 已獲取 %s 的資料。\n\n"
+		VPI_ReadError       = "[VPI]: 獲取 %s 的資料時出錯。\n\n"
+		VPI_WriteSuccess    = "[VPI]: 已寫入 %s 的資料。\n\n"
+		VPI_WriteError      = "[VPI]: 寫入 %s 的資料時出錯。\n\n"
 	}
 	schinese = {
 		MenuTitle =                "加入竞技场……"
@@ -1655,10 +1691,12 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound =      "\n\n错误：未找到 %s 的统计数据！正在重新获取并跳过更新...\n\n"
 
-		VPI_ReadSuccess =          "\n\nVPI: 已获取 %s 的数据。\n\n"
-		VPI_ReadError =            "\n\nVPI: 获取 %s 的数据时出错。\n\n"
-		VPI_WriteSuccess =         "\n\nVPI: 已写入 %s 的数据。\n\n"
-		VPI_WriteError =           "\n\nVPI: 写入 %s 的数据时出错。\n\n"
+
+		VPI_InitDB 				   = "[VPI]: 正在初始化数据库..."
+		VPI_ReadSuccess =          "[VPI]: 已获取 %s 的数据。\n\n"
+		VPI_ReadError =            "[VPI]: 获取 %s 的数据时出错。\n\n"
+		VPI_WriteSuccess =         "[VPI]: 已写入 %s 的数据。\n\n"
+		VPI_WriteError =           "[VPI]: 写入 %s 的数据时出错。\n\n"
 	}
 	pirate = {
 		MenuTitle                  = "Choose yer arena, matey..."
@@ -1717,9 +1755,10 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound        = "\n\nBlimey: stats not found for %s! searchin' again and skippin' update...\n\n"
 
-		VPI_ReadSuccess            = "\n\nVPI: Got the records for sailor %s.\n\n"
-		VPI_ReadError              = "\n\nVPI: Error readin' the records for sailor %s.\n\n"
-		VPI_WriteSuccess           = "\n\nVPI: Wrote in the logbook for sailor %s.\n\n"
-		VPI_WriteError             = "\n\nVPI: Error writin' in the logbook for sailor %s.\n\n"
+		VPI_InitDB 				   = "[VPI]: Fetchin' logbook..."
+		VPI_ReadSuccess            = "[VPI]: Got the records for sailor %s.\n"
+		VPI_ReadError              = "[VPI]: Error readin' the records for sailor %s.\n"
+		VPI_WriteSuccess           = "[VPI]: Wrote in the logbook for sailor %s.\n"
+		VPI_WriteError             = "[VPI]: Error writin' in the logbook for sailor %s.\n"
 	}
 }

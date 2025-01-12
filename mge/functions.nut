@@ -403,7 +403,7 @@
 					datatable.SpawnPoints.append(spawn)
 				}
 				catch(e)
-					printf("[VSCRIPT MGEMod] Warning: Data parsing for arena '%s' failed: %s\nkey: %s, val: %s\n", arena_name, e.tostring(), k, v.tostring())
+					printf("[VSCRIPT MGE] Warning: Data parsing for arena '%s' failed: %s\nkey: %s, val: %s\n", arena_name, e.tostring(), k, v.tostring())
 			}
 		}
 		local idx = (datatable.SpawnPoints.len() + 1).tostring()
@@ -464,7 +464,7 @@
 	scope.ball_ent <- ball_ent
 
 	local arena = scope.arena_info.arena
-	local visbit = 0
+	// local visbit = 0
 	foreach (p, _ in arena.CurrentPlayers)
 	{
 		// visbit = 1 << p.entindex() | visbit
@@ -672,7 +672,8 @@
 {
 	local scope = player.GetScriptScope()
 
-	scope.ThinkTable.clear()
+	if ("ThinkTable" in scope)
+		scope.ThinkTable.clear()
 
 	if (changeteam && player.GetTeam() != TEAM_SPECTATOR)
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
@@ -1010,6 +1011,8 @@
 			foreach(p, _ in arena.CurrentPlayers)
 			{
 
+				if (p.GetTeam() == TEAM_SPECTATOR) continue
+
 				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? arena.round_start_sound : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
 
 				if (arena.IsBBall)
@@ -1164,7 +1167,10 @@
 		if (!(language in MGE_Localization))
 			language = DEFAULT_LANGUAGE
 
-		str = MGE_Localization[language][string]
+		if (string in MGE_Localization[language])
+			str = MGE_Localization[language][string]
+		else
+			printf("[MGE VScript] Cannot localize string %s, reverting to default language...\n", string)
 	}
 	if (!str) str = MGE_Localization[DEFAULT_LANGUAGE][string]
 

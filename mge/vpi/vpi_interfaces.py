@@ -1,6 +1,9 @@
 import asyncio
 import functools
 import re
+import git
+import os
+import tempfile
 
 # Note:
 # All interface functions should be decorated with either WrapDB or WrapInterface
@@ -193,9 +196,10 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     kwargs = info["kwargs"]
     query_mode = kwargs["query_mode"] 
     network_id = kwargs["network_id"]
-    default_elo = kwargs["default_elo"]
+    default_elo = kwargs["default_elo"] if "default_elo" in kwargs else 1000
     
     if (query_mode == "read" or query_mode == 0):
+        print(f"Fetching player data for steam ID {network_id}")
         await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
         result = await cursor.fetchall()
         
@@ -215,6 +219,75 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
             result = await cursor.fetchall()
             
         return result
+    elif (query_mode == "write" or query_mode == 1):
+        # Build SET clause from stats dictionary
+        set_clauses = []
+        for key, value in kwargs['stats'].items():
+            set_clauses.append(f"{key} = {value}")
+        set_clause = ", ".join(set_clauses)
         
-    return await cursor.fetchall()
+        print(f"Updating player data for steam ID {network_id} with stats: {set_clause}")
+        await cursor.execute(f"UPDATE mge_playerdata SET {set_clause} WHERE steam_id = {network_id}")
+        return await cursor.fetchall()
 
+@WrapInterface
+async def VPI_MGE_AutoUpdate(info):
+    """
+    Git clones a repository and returns a list of changed files
+    
+    Args:
+        kwargs (dict): Dictionary containing:
+            repo (str): Repository URL to clone
+            branch (str): Branch to clone (optional, defaults to main)
+            
+    Returns:
+        list: List of changed files, or empty list if no changes/error
+    """
+    try:
+        # Get repo URL and branch from kwargs
+        kwargs = info["kwargs"]
+        repo_url = kwargs["repo"]
+        branch = kwargs["branch"] if "branch" in kwargs else "main"
+        clone_dir = kwargs["clone_dir"] if "clone_dir" in kwargs else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if not repo_url:
+            print("[VPI] Error: No repository URL provided")
+            return []
+            
+        # Create temp directory for clone
+        temp_dir = tempfile.mkdtemp()
+        
+        # Clone the repository using GitPython
+        repo = git.Repo.clone_from(repo_url, temp_dir, branch=branch)
+        
+        # Get list of changed files by comparing with current directory
+        changed_files = []
+        current_dir = clone_dir
+        
+        for root, _, files in os.walk(temp_dir):
+            for file in files:
+                # Skip .git directory
+                if ".git" in root:
+                    continue
+                    
+                temp_path = os.path.join(root, file)
+                relative_path = os.path.relpath(temp_path, temp_dir)
+                current_path = os.path.join(current_dir, relative_path)
+                
+                # Check if file exists and has different content
+                if not os.path.exists(current_path):
+                    changed_files.append(relative_path)
+                else:
+                    with open(temp_path, 'rb') as f1, open(current_path, 'rb') as f2:
+                        if f1.read() != f2.read():
+                            changed_files.append(relative_path)
+        
+        return await changed_files
+        
+    except Exception as e:
+        print(f"[VPI] Error during auto-update: {str(e)}")
+        return []
+    
+    finally:
+        # Cleanup temp directory
+        if 'temp_dir' in locals():
+            os.rmdir(temp_dir)

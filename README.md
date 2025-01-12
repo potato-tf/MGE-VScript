@@ -18,6 +18,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | BBall | ✅ |
 | Koth* | ⚠️ |
 | Midair?* |⚠️|
+| Ultiduo | ❌ |
 | Plain text ELO/stat tracking | ✅ |
 | Quake-style announcer lines (toggleable) | ✅ |
 | Localization* | ⚠️ |
@@ -27,16 +28,15 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | Custom rulesets | ❌ |
 | Arbitrary team sizes | ❌ |
 | Custom spawn ordering | ❌ |
-| In-Game map configuration tool | ❌ 
-|
-
-*Theres a few AI translations in here. PRs fixing the AI translations listed in `mge/cfg/localization.nut`  would be appreciated
-
-*See below for navmesh warning
+| In-Game map configuration tool | ❌ |
 
 *KOTH works but the logic is super janky right now, is Turris even that popular?
 
 *I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
+
+*Theres a few AI translations in here. PRs fixing the AI translations listed in `mge/cfg/localization.nut`  would be appreciated
+
+*See below for navmesh warning
 
 ## Installation
 - Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.  That's it
@@ -158,3 +158,11 @@ Or for only one arena:
 ## Localization
 - Localization files are automatically detected by `cl_language` for per-player language settings, if a string is not localized it will default back to the DEFAULT_LANGUAGE constant.
 - **Some translations are machine translated**, please submit pull requests to fix any bad ones.
+
+
+## Credits
+*Localization credits can be found at the top of `mge/cfg/localization.nut`*
+- Braindawg - Most of it.
+- Mince - Database interface tool (VPI), misc cleanup, bot stuff.
+- [MGEMod](https://github.com/sapphonie/MGEMod) - The most recent version of the original MGEMod plugin.
+- CPrice, Lange - Original MGEMod/Ammomod developers.

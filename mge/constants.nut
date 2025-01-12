@@ -29,6 +29,16 @@ foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
 //CONFIG CONSTANTS
 const DEFAULT_LANGUAGE = "english"
 
+//if repo is not "" AND vpi is running, VPI will periodically git clone the repo
+//if VPI detects a change it will trigger a callback function to reload the map
+//if VPI is not running this will just do nothing
+const GAMEMODE_AUTOUPDATE_REPO = "https://github.com/potato-tf/MGE-VScript.git" //the repo to clone
+const GAMEMODE_AUTOUPDATE_BRANCH = "main" //the branch to clone
+const GAMEMODE_AUTOUPDATE_CLONE_DIR = "../" //the directory to clone to
+
+ //how often to check for updates in seconds (30 minutes 30*60=1800).  GitHub will rate limit you if you try to abuse this
+const GAMEMODE_AUTOUPDATE_INTERVAL = 1800
+
 //general
 const DEFAULT_FRAGLIMIT = 20
 const DEFAULT_ELO 		= 1600
@@ -36,7 +46,7 @@ const REMOVE_DROPPED_WEAPONS = true
 const ELO_TRACKING_MODE = 2 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
 const ENABLE_LEADERBOARD = true //set this to false if you are disabling ELO tracking as well
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
-const AIRSHOT_HEIGHT_THRESHOLD = 50
+const AIRSHOT_HEIGHT_THRESHOLD = 100
 const SPECTATOR_MESSAGE_COOLDOWN = 25.0
 
 //leaderboard

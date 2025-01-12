@@ -85,10 +85,6 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 		"Deaths"			 : array(MAX_LEADERBOARD_ENTRIES, null),
 		"Damage Dealt"		 : array(MAX_LEADERBOARD_ENTRIES, null),
 		"Damage Taken"		 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Healing Done"		 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Healing Taken"		 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Revives"			 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Backstabs"			 : array(MAX_LEADERBOARD_ENTRIES, null),
 	}
 
 ::ArenaClasses <- ["", "scout", "sniper", "soldier", "demoman", "medic", "heavy", "pyro", "spy", "engineer", "civilian"]
@@ -362,7 +358,7 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 
 ::MGE_Init <- function()
 {
-	printl("[VScript MGEMod] Loaded, moving all active players to spectator")
+	printl("[VScript MGE] Loaded, moving all active players to spectator")
 
 	for (local i = 1; i <= MAX_CLIENTS; i++)
 	{
@@ -382,11 +378,11 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 
 	if (ELO_TRACKING_MODE == 2)
 	{
-		printl("Initializing database")
+		printl(GetLocalizedString("VPI_InitDB"))
 		VPI.AsyncCall({
 			func = "VPI_MGE_DBInit",
 			callback = function(response, error) {
-				printl("DB Init: " + response + " " + error)
+				printl(GetLocalizedString(error ? "VPI_DBInitError" : "VPI_DBInitSuccess"))
 			}
 		})
 	}
@@ -547,5 +543,27 @@ KOTH_HUD_BLU.KeyValueFromFloat("x", KOTH_HUD_BLU_POS_X)
 KOTH_HUD_BLU.KeyValueFromFloat("y", KOTH_HUD_BLU_POS_Y)
 SetPropBool(KOTH_HUD_BLU, "m_bForcePurgeFixedupStrings", true)
 KOTH_HUD_BLU.AddEFlags(EFL_KILLME)
+
+::MGE_CHANGELEVEL <- CreateByClassname("point_intermission")
+MGE_CHANGELEVEL.AddEFlags(EFL_KILLME)
+
+if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
+{
+	MGE_CHANGELEVEL.ValidateScriptScope()
+	MGE_CHANGELEVEL.GetScriptScope().AutoUpdate <- function() {
+		VPI.AsyncCall({
+			func = "VPI_MGE_AutoUpdate",
+			kwargs = {
+				repo = GAMEMODE_AUTOUPDATE_REPO,
+				branch = GAMEMODE_AUTOUPDATE_BRANCH,
+				clone_dir = GAMEMODE_AUTOUPDATE_CLONE_DIR
+			},
+			callback = function(response, error) {
+				printl(GetLocalizedString(error ? "VPI_AutoUpdateError" : "VPI_AutoUpdateSuccess"))
+			}
+		})
+	}
+	AddThinkToEnt(MGE_CHANGELEVEL, "AutoUpdate")
+}
 
 MGE_Init()

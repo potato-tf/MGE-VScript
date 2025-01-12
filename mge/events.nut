@@ -248,7 +248,7 @@ class MGE_Events
 			{
 				local team = player.GetTeam()
 				if (!player.IsFakeClient() && (team == TF_TEAM_BLUE || team == TF_TEAM_RED))
-					MGE_ClientPrint(null, 3, "[VScript MGEMod] Warning: "+player+" spawned outside of arena!")
+					MGE_ClientPrint(null, 3, "\x07FF0000[VScript MGE] WARNING: "+player+" spawned outside of arena!")
 			}
 		}
 
@@ -284,8 +284,11 @@ class MGE_Events
 			local arena = victim_scope.arena_info.arena
 			local arena_name = victim_scope.arena_info.name
 
-			attacker && "deaths" in attacker_scope.stats ? attacker_scope.stats.deaths++ : attacker_scope.stats.deaths <- 1
-			victim && "kills" in victim_scope.stats ? victim_scope.stats.kills++ : victim_scope.stats.kills <- 1
+			if (arena.State == AS_FIGHT)
+			{
+				attacker && "kills" in attacker_scope.stats ? attacker_scope.stats.kills++ : attacker_scope.stats.kills <- 1
+				victim && "deaths" in victim_scope.stats ? victim_scope.stats.deaths++ : victim_scope.stats.deaths <- 1
+			}
 
 			local respawntime = "respawntime" in arena && arena.respawntime != "0" ? arena.respawntime.tofloat() : 0.2
 			local fraglimit = arena.fraglimit.tointeger()
@@ -319,7 +322,7 @@ class MGE_Events
 				//we've hit a market garden
 				else if (attacker.GetActiveWeapon().GetAttribute("mod crit while airborne", 0) && attacker.InCond(TF_COND_BLASTJUMPING) && params.damagebits & DMG_CRITICAL)
 				{
-					hud_str = GetLocalizedString("MarketGareden", attacker)
+					hud_str = GetLocalizedString("MarketGarden", attacker)
 					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
 					"market_gardens" in attacker_scope.stats ? attacker_scope.stats.market_gardens++ : attacker_scope.stats.market_gardens <- 1
 				}
@@ -334,15 +337,14 @@ class MGE_Events
 				local str = format("%s\n", arena_name)
 
 				MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
-				MGE_HUD.KeyValueFromString("message", str)
 
 				foreach(p, _ in arena.CurrentPlayers)
-				{
-					local scope = p.GetScriptScope()
-					str += format("%s: %d (%d)\n", scope.Name, arena.Score[p.GetTeam() - 2], scope.stats.elo)
-					EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
-				}
+					str += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo)
 
+				MGE_HUD.KeyValueFromString("message", str)
+
+				foreach (p, _ in arena.CurrentPlayers)
+					EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
 			}
 
 
@@ -450,8 +452,12 @@ class MGE_Events
 			local attacker = GetPlayerFromUserID(params.attacker)
 			local attacker_scope = attacker ? attacker.GetScriptScope() : {}
 
-			"damage_taken" in victim_scope.stats ? victim_scope.stats.damage_taken += params.damage : victim_scope.stats.damage_taken <- params.damage
-			"damage_dealt" in attacker_scope.stats ? attacker_scope.stats.damage_dealt += params.damage : attacker_scope.stats.damage_dealt <- params.damage
+			if (arena.State == AS_FIGHT)
+			{
+				"damage_taken" in victim_scope.stats ? victim_scope.stats.damage_taken += params.damageamount : victim_scope.stats.damage_taken <- params.damageamount
+				if (attacker)
+					"damage_dealt" in attacker_scope.stats ? attacker_scope.stats.damage_dealt += params.damageamount : attacker_scope.stats.damage_dealt <- params.damageamount
+			}
 
 			//set this here instead of OnTakeDamage since damage_force isn't set until after damage is applied
 			//TODO: test this again, it wasn't working before due to multiplying vectors correctly and might work fine in OnTakeDamage
