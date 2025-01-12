@@ -16,21 +16,24 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | 4Player | ✅ |
 | Turris | ✅ |
 | BBall | ✅ |
-| Koth | ✅ |
-| Midair?*** |⚠️|
+| Koth* | ⚠️ |
+| Midair?* |⚠️|
 | Plain text ELO/stat tracking | ✅ |
 | Quake-style announcer lines (toggleable) | ✅ |
 | Localization* | ⚠️ |
-| NavMesh Generation** | ⚠️ |
-| Database tracking (MySQL) | ❌ |
+| NavMesh Generation* | ⚠️ |
+| Database tracking (MySQL) | ✅ |
 | Database tracking (SQLite) | ❌ |
 | Custom rulesets | ❌ |
 | Arbitrary team sizes | ❌ |
 | Custom spawn ordering | ❌ |
-| In-Game map configuration tool | ❌ |
-*Non-english translations are machine translated, PRs fixing bad translations + porting the [Chinese, German, and Russian translations](https://github.com/sapphonie/MGEMod/tree/master/addons/sourcemod/translations) would be appreciated
-**See below for navmesh warning
-***I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
+| In-Game map configuration tool | ❌ 
+|
+
+*Theres a few AI translations in here. PRs fixing the AI translations listed in `mge/cfg/localization.nut`  would be appreciated
+*See below for navmesh warning
+*KOTH works but the logic is super janky right now, is Turris even that popular?
+*I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
 
 ## Installation
 - Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.  That's it
@@ -38,7 +41,6 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
   - if you are using `mapspawn.nut` already, rename the mge mapspawn file and add `script_execute new_filename_here` to your `server.cfg` file 
   - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
 
-  
 
 ## Configuration/Modifying game rules
 - Most arena rules can be configured at the top of the `mge/constants.nut` file
@@ -152,4 +154,4 @@ Or for only one arena:
 
 ## Localization
 - Localization files are automatically detected by `cl_language` for per-player language settings, if a string is not localized it will default back to the DEFAULT_LANGUAGE constant.
-- **Non-English translations are machine translated**, please submit pull requests to fix any bad translations.
+- **Some translations are machine translated**, please submit pull requests to fix any bad ones.
