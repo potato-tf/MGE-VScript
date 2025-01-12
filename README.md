@@ -31,8 +31,11 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 |
 
 *Theres a few AI translations in here. PRs fixing the AI translations listed in `mge/cfg/localization.nut`  would be appreciated
+
 *See below for navmesh warning
+
 *KOTH works but the logic is super janky right now, is Turris even that popular?
+
 *I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
 
 ## Installation
