@@ -35,7 +35,7 @@ DB_PORT	    = args.port     if args.port     else int(genv("VPI_PORT",  3306))
 DB_DATABASE	= args.database if args.database else genv("VPI_INTERFACE", "mge")
 DB_PASSWORD	= args.password if args.password else genv("VPI_PASSWORD", "")
 
-SCRIPTDATA_DIR = genv("VPI_SCRIPTDATA_DIR", r"C:\Program Files (x86)\Steam\steamapps\common\Team Fortress 2\tf\scriptdata")
+SCRIPTDATA_DIR = genv("VPI_SCRIPTDATA_DIR", r"..\..\..\..\scriptdata")
 
 # ----
 
