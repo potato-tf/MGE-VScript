@@ -1,4 +1,4 @@
-const MGE_VERSION = "1.0.0"
+const MGE_VERSION = "0.1.0"
 ::ROOT <- getroottable()
 ::CONST <- getconsttable()
 
@@ -34,7 +34,8 @@ const DEFAULT_LANGUAGE = "english"
 //if VPI is not running this will just do nothing
 const GAMEMODE_AUTOUPDATE_REPO = "https://github.com/potato-tf/MGE-VScript.git" //the repo to clone
 const GAMEMODE_AUTOUPDATE_BRANCH = "main" //the branch to clone
-const GAMEMODE_AUTOUPDATE_CLONE_DIR = "../" //the directory to clone to
+const GAMEMODE_AUTOUPDATE_CLONE_DIR = "../.." //the directory to clone to
+const GAMEMODE_AUTOUPDATE_RESTART_TIME = 300.0 //the time to wait before restarting the map in seconds
 
  //how often to check for updates in seconds (30 minutes 30*60=1800).  GitHub will rate limit you if you try to abuse this
 const GAMEMODE_AUTOUPDATE_INTERVAL = 1800

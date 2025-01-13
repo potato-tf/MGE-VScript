@@ -200,15 +200,36 @@ class MGE_Events
 				local arena      = scope.arena_info.arena
 				local arena_name = scope.arena_info.name
 				//spawned into arena with waiting player, start countdown
-				EntFireByHandle(player, "RunScriptCode", format(@"
+				// EntFireByHandle(player, "RunScriptCode", format(@"
 
-					local scope 	 = self.GetScriptScope()
-					local arena      = scope.arena_info.arena
+				// 	local scope 	 = self.GetScriptScope()
+				// 	local arena      = scope.arena_info.arena
 
-					if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
-						EntFireByHandle(self, `RunScriptCode`, `SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)`, COUNTDOWN_START_DELAY, null, null)
+				// 	if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
+				// 		EntFireByHandle(self, `RunScriptCode`, `SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)`, COUNTDOWN_START_DELAY, null, null)
 
-				", arena_name), -1, null, null)
+				// ", arena_name), -1, null, null)
+
+				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
+					if (!arena.IsUltiduo)
+						EntFireByHandle(self, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
+					else
+					{
+						local current_medics = arena.Ultiduo.CurrentMedics
+						foreach(p, _ in arena.CurrentPlayers)
+							if (p.GetPlayerClass() == TF_CLASS_MEDIC)
+								current_medics[p.GetTeam() - 2] = p
+
+						if (current_medics[0] && current_medics[1])
+							EntFireByHandle(self, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
+						else
+						{
+							foreach(p_, _ in arena.CurrentPlayers)
+								MGE_ClientPrint(p, HUD_PRINTTALK, "UltiduoNotEnoughMedics")
+
+							arena.Ultiduo.CurrentMedics <- array(2, null)
+						}
+					}
 
 				SetSpecialArena(player, arena_name)
 

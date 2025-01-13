@@ -11,6 +11,7 @@ import importlib
 import asyncio
 import aiomysql
 import argparse
+from dotenv import load_dotenv
 
 import vpi_interfaces
 
@@ -26,17 +27,25 @@ args = PARSER.parse_args()
 ############################################ ENV VARS #############################################
 # Server owners modify this section
 
+if os.path.exists("../.env"):
+	load_dotenv('../.env')
+
 genv = os.environ.get
 
 # Modify VPI_* with your environment variables if you named them something else
-DB_HOST     = args.host     if args.host     else genv("VPI_HOST",      "localhost")
-DB_USER     = args.user     if args.user     else genv("VPI_USER",      "root")
+# DB_HOST     = args.host     if args.host     else genv("VPI_HOST",      "localhost")
+# DB_USER     = args.user     if args.user     else genv("VPI_USER",      "root")
+# DB_PORT	    = args.port     if args.port     else int(genv("VPI_PORT",  3306))
+# DB_DATABASE	= args.database if args.database else genv("VPI_INTERFACE", "mge")
+# DB_PASSWORD	= args.password if args.password else genv("VPI_PASSWORD", "")
+DB_HOST     = args.host     if args.host     else genv("VPI_HOST",      "")
+DB_USER     = args.user     if args.user     else genv("VPI_USER",      "")
 DB_PORT	    = args.port     if args.port     else int(genv("VPI_PORT",  3306))
-DB_DATABASE	= args.database if args.database else genv("VPI_INTERFACE", "mge")
-DB_PASSWORD	= args.password if args.password else genv("VPI_PASSWORD", "")
+DB_DATABASE	= args.database if args.database else genv("VPI_NAME", "")
+DB_PASSWORD	= args.password if args.password else genv("VPI_PASS", "")
 
-SCRIPTDATA_DIR = genv("VPI_SCRIPTDATA_DIR", r"..\..\..\..\scriptdata")
-
+SCRIPTDATA_DIR = genv("VPI_SCRIPTDATA_DIR", r"../../../../scriptdata")
+# SCRIPTDATA_DIR = r"..\..\..\..\scriptdata"
 # ----
 
 # Validation

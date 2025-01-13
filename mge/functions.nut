@@ -256,6 +256,7 @@
 
 		//do this instead of checking both of these everywhere
 		datatable.IsMGE          <- "mge" in datatable && datatable.mge == "1"
+		datatable.IsUltiduo       <- "ultiduo" in datatable && datatable.ultiduo == "1"
 		datatable.IsKoth         <- "koth" in datatable && datatable.koth == "1"
 		datatable.IsBBall        <- "bball" in datatable && datatable.bball == "1"
 		datatable.IsAmmomod      <- "ammomod" in datatable && datatable.ammomod == "1"
@@ -270,6 +271,12 @@
 		datatable.round_start_sound_volume <- "round_start_sound_volume" in datatable ? datatable.round_start_sound_volume : ROUND_START_SOUND_VOLUME
 		datatable.airshot_height_threshold <- "airshot_height_threshold" in datatable ? datatable.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 
+		if (datatable.IsUltiduo)
+		{
+			datatable.Ultiduo <- {
+				CurrentMedics = array(2, null)
+			}
+		}
 		if (datatable.IsBBall)
 		{
 			//alternative keyvalues for bball logic
@@ -1280,6 +1287,7 @@
 				default_elo=DEFAULT_ELO
 			},
 			callback=function(response, error) {
+
 				if (typeof(response) != "array" || !response.len())
 				{
 					printf(GetLocalizedString("VPI_ReadError", player), GetPropString(player, "m_szNetworkIDString"))
@@ -1348,4 +1356,22 @@
 			})
 		break
 	}
+}
+
+::SendUsermessage <-  function(usermessage, input, player = null)
+{
+	local dummy = CreateByClassname("prop_dynamic")
+
+	dummy.KeyValueFromString("model", "models/player/heavy.mdl")
+	dummy.KeyValueFromString("BreakModelMessage", usermessage)
+	dummy.KeyValueFromInt("disablebonefollowers", 1)
+	dummy.KeyValueFromInt("modelindex", input[0])
+	if (input.len() > 1) dummy.KeyValueFromString("origin", input[1].tostring())
+	if (input.len() > 2) dummy.KeyValueFromString("angles", input[2].tostring())
+
+	if (player && player.IsValid())
+		player.SetOrigin(dummy.GetOrigin())
+
+	DispatchSpawn(dummy)
+	dummy.AcceptInput("Break", "", player, player)
 }

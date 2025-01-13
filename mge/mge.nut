@@ -551,17 +551,28 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 {
 	MGE_CHANGELEVEL.ValidateScriptScope()
 	MGE_CHANGELEVEL.GetScriptScope().AutoUpdate <- function() {
-		VPI.AsyncCall({
-			func = "VPI_MGE_AutoUpdate",
-			kwargs = {
-				repo = GAMEMODE_AUTOUPDATE_REPO,
-				branch = GAMEMODE_AUTOUPDATE_BRANCH,
-				clone_dir = GAMEMODE_AUTOUPDATE_CLONE_DIR
-			},
-			callback = function(response, error) {
-				printl(GetLocalizedString(error ? "VPI_AutoUpdateError" : "VPI_AutoUpdateSuccess"))
-			}
-		})
+		if (!RESTART_SCHEDULED) {
+			VPI.AsyncCall({
+				func = "VPI_MGE_AutoUpdate",
+				kwargs = {
+					repo = GAMEMODE_AUTOUPDATE_REPO,
+					branch = GAMEMODE_AUTOUPDATE_BRANCH,
+					clone_dir = GAMEMODE_AUTOUPDATE_CLONE_DIR
+				},
+				callback = function(response, error) {
+					printl(GetLocalizedString(error ? "VPI_AutoUpdateError" : "VPI_AutoUpdateSuccess"))
+
+					if (!error && response.len()) {
+						MGE_ClientPrint(null, 3, "GamemodeUpdate", GAMEMODE_AUTOUPDATE_RESTART_TIME)
+						printl("Files changed:")
+						foreach(file in response) {
+							printl(file)
+						}
+					}
+				}
+			})
+			return GAMEMODE_AUTOUPDATE_INTERVAL
+		}
 	}
 	AddThinkToEnt(MGE_CHANGELEVEL, "AutoUpdate")
 }
