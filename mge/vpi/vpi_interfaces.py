@@ -220,7 +220,7 @@ async def VPI_MGE_AutoUpdate(info, test=False):
         for root, _, files in os.walk(temp_dir):
             for file in files:
                 # Skip .git directory
-                if any(banned in file for banned in banned_files) or ".git" in root:
+                if any(banned in file for banned in banned_files) or any(banned in root for banned in banned_files):
                     continue
                     
                 temp_path = os.path.join(root, file)
