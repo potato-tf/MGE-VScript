@@ -558,7 +558,7 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 			kwargs = {
 				repo = GAMEMODE_AUTOUPDATE_REPO,
 				branch = GAMEMODE_AUTOUPDATE_BRANCH,
-				clone_dir = GAMEMODE_AUTOUPDATE_CLONE_DIR
+				clone_dir = GAMEMODE_AUTOUPDATE_TARGET_DIR
 			},
 			callback = function(response, error) {
 				if (!error && response.len()) {
