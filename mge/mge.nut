@@ -561,7 +561,7 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 				clone_dir = GAMEMODE_AUTOUPDATE_CLONE_DIR
 			},
 			callback = function(response, error) {
-				printl(GetLocalizedString(error ? "VPI_AutoUpdateError" : "VPI_AutoUpdateSuccess", GAMEMODE_AUTOUPDATE_REPO))
+				printl(error)
 
 				if (!error && response.len()) {
 					MGE_ClientPrint(null, 3, "GamemodeUpdate", GAMEMODE_AUTOUPDATE_RESTART_TIME)
