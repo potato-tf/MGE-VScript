@@ -44,7 +44,7 @@ const GAMEMODE_AUTOUPDATE_CLONE_DIR = "D:/dedicatedtf/tf/scripts/vscripts" //the
 const GAMEMODE_AUTOUPDATE_RESTART_TIME = 300.0 //the time to wait before restarting the map in seconds
 
  //how often to check for updates in seconds (30 minutes 30*60=1800).  GitHub will rate limit you if you try to abuse this
-const GAMEMODE_AUTOUPDATE_INTERVAL = 1800
+const GAMEMODE_AUTOUPDATE_INTERVAL = 120
 
 //general
 const DEFAULT_FRAGLIMIT = 20
