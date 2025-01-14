@@ -361,6 +361,13 @@ class MGE_Events
 			}
 		}
 
+		// function OnGameEvent_projectile_removed(params)
+		// {
+		// 	printl(params.attacker)
+		// 	printl(params.num_hit)
+		// 	printl(params.num_direct_hit)
+		// }
+
 		function OnGameEvent_player_changeclass(params)
 		{
 			local player = GetPlayerFromUserID(params.userid)
@@ -374,8 +381,6 @@ class MGE_Events
 
 			foreach(p, _ in arena.CurrentPlayers)
 				MGE_ClientPrint(p, 3, player == p ? "ClassChangePoint" : "ClassChangePointOpponent")
-
-
 		}
 
 		function OnGameEvent_player_death(params)

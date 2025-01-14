@@ -391,13 +391,14 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 	LoadSpawnPoints()
 
 	Convars.SetValue("mp_humans_must_join_team", "spectator")
-	Convars.SetValue("mp_autoteambalance", 0);
-	Convars.SetValue("mp_teams_unbalance_limit", 0);
-	Convars.SetValue("mp_scrambleteams_auto", 0);
-	Convars.SetValue("mp_tournament", 0);
+	Convars.SetValue("mp_autoteambalance", 0)
+	Convars.SetValue("mp_teams_unbalance_limit", 0)
+	Convars.SetValue("mp_scrambleteams_auto", 0)
+	Convars.SetValue("mp_tournament", 0)
+	Convars.SetValue("mp_chattime", 1.0)
 
-	Convars.SetValue("tf_weapon_criticals", 0);
-	Convars.SetValue("tf_fall_damage_disablespread", 1);
+	Convars.SetValue("tf_weapon_criticals", 0)
+	Convars.SetValue("tf_fall_damage_disablespread", 1)
 }
 //assumes spawn config exists
 
@@ -552,28 +553,28 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 {
 	MGE_CHANGELEVEL.ValidateScriptScope()
 	MGE_CHANGELEVEL.GetScriptScope().AutoUpdate <- function() {
-		if (!RESTART_SCHEDULED) {
-			VPI.AsyncCall({
-				func = "VPI_MGE_AutoUpdate",
-				kwargs = {
-					repo = GAMEMODE_AUTOUPDATE_REPO,
-					branch = GAMEMODE_AUTOUPDATE_BRANCH,
-					clone_dir = GAMEMODE_AUTOUPDATE_CLONE_DIR
-				},
-				callback = function(response, error) {
-					printl(GetLocalizedString(error ? "VPI_AutoUpdateError" : "VPI_AutoUpdateSuccess"))
+		VPI.AsyncCall({
+			func = "VPI_MGE_AutoUpdate",
+			kwargs = {
+				repo = GAMEMODE_AUTOUPDATE_REPO,
+				branch = GAMEMODE_AUTOUPDATE_BRANCH,
+				clone_dir = GAMEMODE_AUTOUPDATE_CLONE_DIR
+			},
+			callback = function(response, error) {
+				printl(GetLocalizedString(error ? "VPI_AutoUpdateError" : "VPI_AutoUpdateSuccess", GAMEMODE_AUTOUPDATE_REPO))
 
-					if (!error && response.len()) {
-						MGE_ClientPrint(null, 3, "GamemodeUpdate", GAMEMODE_AUTOUPDATE_RESTART_TIME)
-						printl("Files changed:")
-						foreach(file in response) {
-							printl(file)
-						}
+				if (!error && response.len()) {
+					MGE_ClientPrint(null, 3, "GamemodeUpdate", GAMEMODE_AUTOUPDATE_RESTART_TIME)
+					printl("Files changed:")
+					foreach(file in response) {
+						printl(file)
 					}
+				} else if (!response.len()) {
+					printl("No updates found")
 				}
-			})
-			return GAMEMODE_AUTOUPDATE_INTERVAL
-		}
+			}
+		})
+		return GAMEMODE_AUTOUPDATE_INTERVAL
 	}
 	AddThinkToEnt(MGE_CHANGELEVEL, "AutoUpdate")
 }
@@ -588,7 +589,6 @@ SetPropBool(MGE_TIMER, "m_bShowTimeRemaining", true)
 SetPropBool(MGE_TIMER, "m_bAutoCountdown", true)
 SetPropBool(MGE_TIMER, "m_bStartPaused", false)
 
-MGE_TIMER.AddEFlags(EFL_KILLME)
 
 //doesn't fire due to EFL_KILLME
 AddOutput(MGE_TIMER, "OnFinished", "!self", "CallScriptFunction", "MGE_DoChangelevel", 1.0, -1)
@@ -596,29 +596,53 @@ AddOutput(MGE_TIMER, "OnFinished", "!self", "CallScriptFunction", "MGE_DoChangel
 DispatchSpawn(MGE_TIMER)
 MGE_TIMER.AcceptInput("Resume", "", null, null)
 
-EntFireByHandle(MGE_TIMER, "CallScriptFunction", "MGE_DoChangelevel", MAP_RESTART_TIMER, null, null)
+local counter = MAP_RESTART_TIMER
+MGE_TIMER.ValidateScriptScope()
+MGE_TIMER.GetScriptScope().TimerThink <- function() 
+{
+	counter--
+	if (counter)
+	{
+		if (counter > 60 || counter % 5)
+			return 1
 
+		SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", counter)})
+	}
+
+	MGE_DoChangelevel()
+}
+// AddThinkToEnt(MGE_TIMER, "TimerThink")
+
+MGE_TIMER.AddEFlags(EFL_KILLME)
 ::MGE_DoChangelevel <- function() {
 	
 	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL) 
 	{
-		local client_command = CreateByClassname("point_clientcommand")
-		DispatchSpawn(client_command)
-		for (local i = 1; i <= MAX_CLIENTS; i++) 
-		{
-			local player = PlayerInstanceFromIndex(i)
-			if (!player || !player.IsValid()) continue
-			client_command.AcceptInput("Command", "retry", player, player)
-		}
+		// for (local i = 1; i <= MAX_CLIENTS; i++) 
+		// {
+			// local player = PlayerInstanceFromIndex(i)
+			// if (!player || !player.IsValid()) continue
+			// client_command.AcceptInput("Command", "retry", player, player)
+		// }
 		//called too early, retry doesn't get sent in time
 		// First().Kill()
 		
-		EntFire("worldspawn", "Kill", "", 0.1)
+		local client_command = CreateByClassname("point_clientcommand")
+		DispatchSpawn(client_command)
+		Convars.SetValue("mp_chattime", 9999.0)
+		EntFire("__mge_changelevel", "Activate")
+		EntFire("player", "RunScriptCode", "EntFire(`point_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
+		EntFire("worldspawn", "Kill", "", 1.015)
 		return
 	}
-	
-	Convars.SetValue("mp_chattime", 1.0);
 	EntFire("__mge_changelevel", "Activate")
 }
 
+::ReplayTest <- function() {
+	SendGlobalGameEvent("training_complete", {
+		text = format("MAP RESTART IN %d SECONDS", 30)
+		map = "tr_target"
+		next_map = ""
+	})
+}
 MGE_Init()

@@ -4,13 +4,14 @@ import re
 import git
 import os
 import tempfile
+import shutil
 
 os.system('')  # enables ansi escape characters in terminal
 
 COLOR = {
     'CYAN': '\033[96m',
     'HEADER': '\033[95m',
-    'BLUE': '\033[94m',
+    'GREEN2': '\033[32m',
     'YELLOW': '\033[93m',
     'GREEN': '\033[92m',
     'RED': '\033[91m',
@@ -182,7 +183,7 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
         return await cursor.fetchall()
 
 @WrapInterface
-async def VPI_MGE_AutoUpdate(info):
+async def VPI_MGE_AutoUpdate(info, test=False):
     """
     Git clones a repository and returns a list of changed files
     
@@ -207,6 +208,7 @@ async def VPI_MGE_AutoUpdate(info):
         # Create temp directory for clone
         temp_dir = tempfile.mkdtemp()
         
+        print(COLOR['GREEN2'], f"Cloning repository {repo_url} into {temp_dir}", COLOR['ENDC'])
         # Clone the repository using GitPython
         repo = git.Repo.clone_from(repo_url, temp_dir, branch=branch)
         
@@ -232,7 +234,7 @@ async def VPI_MGE_AutoUpdate(info):
                         if f1.read() != f2.read():
                             changed_files.append(relative_path)
         
-        return await changed_files
+        return changed_files
         
     except Exception as e:
         print(COLOR['RED'], f"[VPI] Error during auto-update: {str(e)}", COLOR['ENDC'])
@@ -241,4 +243,7 @@ async def VPI_MGE_AutoUpdate(info):
     finally:
         # Cleanup temp directory
         if 'temp_dir' in locals():
-            os.rmdir(temp_dir)
+            try:
+                shutil.rmtree(temp_dir, ignore_errors=True)
+            except Exception as e:
+                print(COLOR['YELLOW'], f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}", COLOR['ENDC'])
