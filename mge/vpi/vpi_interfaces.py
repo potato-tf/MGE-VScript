@@ -5,6 +5,17 @@ import git
 import os
 import tempfile
 
+os.system('')  # enables ansi escape characters in terminal
+
+COLOR = {
+    'CYAN': '\033[96m',
+    'HEADER': '\033[95m',
+    'BLUE': '\033[94m',
+    'YELLOW': '\033[93m',
+    'GREEN': '\033[92m',
+    'RED': '\033[91m',
+    "ENDC": '\033[0m',
+}
 # Note:
 # All interface functions should be decorated with either WrapDB or WrapInterface
 # Otherwise any errors that occur will not be handled gracefully and brick the entire program
@@ -100,97 +111,45 @@ def WrapInterface(func):
 
 	return inner
 
-
-# Arbitrary SQL execution
-# *** DO NOT GIVE USERS ACCESS TO THIS ***
-# kwargs:
-# 	required:
-#		query  (string) -- Query to execute
-# 	optional:
-#		format (array)  -- Values to insert into query on %s as '<val>'
-@WrapDB
-async def VPI_DB_RawExecute(info, cursor):
-	# While we already defined a whitelist on the client, this is here
-	# to ensure this is not exposed unintentionally (e.g. from empty client whitelist)
-	source_whitelist = ["vpi.nut"] # Script names go here
-	if (not len(source_whitelist)): raise PermissionError
-	if (info["script"] not in source_whitelist): raise PermissionError
-
-	kwargs = info["kwargs"]
-	query  = kwargs["query"]
-	form   = kwargs["format"] if "format" in kwargs else None
-
-	if (type(query) is not str or (form is not None and type(form) is not list)): raise ValueError
-
-	await cursor.execute(query, form)
-
-	return await cursor.fetchall()
-
-
-########################################## USER FUNCTIONS #########################################
-# Admin or server owner will need to create DB tables as needed by users manually
-# (or define interface functions for such a purpose themselves, but it is recommended to do it manually for security and DB integrity)
-
-# User tables must follow a specific name format to be accessible by user interface functions: user_<script_name>_<name> (See: ValidateUserTable)
-# E.g. user_contracts_players for client user script contracts.nut
-
-# This is to isolate client scripts to only accessing their associated tables
-# As a result you may also have tables in the same database that do not start with 'user' for administrative or other purposes
-
-
-# Simple SELECT statement wrapper for users
-# kwargs:
-# 	required:
-# 		table (string) -- String table name to select from
-# 	optional:
-# 		columns       (array)      -- Columns to select, * if not provided
-# 		filter_column (string)     -- Column to filter results by (WHERE)
-# 		filter_op     (string)     -- Operator for value (> < >= <= = != <>)
-# 		filter_value  (string|int) -- Value for filter
-@WrapDB
-async def VPI_DB_UserSelect(info, cursor):
-	kwargs = SanitizeObj(info["kwargs"])
-
-	# FROM
-	table = ValidateUserTable(info, kwargs["table"])
-
-	# SELECT
-	columns = kwargs["columns"] if "columns" in kwargs else []
-
-	# WHERE
-	filter_column = kwargs["filter_column"] if "filter_column" in kwargs else None
-	filter_op     = kwargs["filter_op"]     if "filter_op"     in kwargs else "="
-	filter_value  = kwargs["filter_value"]  if "filter_value"  in kwargs else None
-
-	# Construct query
-	s_columns = "*"
-	if (type(columns) is list and len(columns)):
-		s_columns = ','.join([s for s in columns if type(s) is str])
-
-	s_filter = ""
-	# We only care if all of them are specified
-	# filter_value can be something other than str (e.g. int 0) so we check against None instead of truthy
-	if (filter_column and filter_op and filter_value is not None):
-		s_filter = f"WHERE {filter_column} {filter_op} '{filter_value}'"
-
-	await cursor.execute(f"SELECT {s_columns} FROM {table} {s_filter}")
-
-	return await cursor.fetchall()
-
+player_data_columns = "steam_id, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped"
 @WrapDB
 async def VPI_MGE_DBInit(info, cursor):
-	print("Initializing MGE database...")
+	print(COLOR['HEADER'], "Initializing MGE database...", COLOR['ENDC'])
 	# await cursor.execute("CREATE TABLE IF NOT EXISTS mge_leaderboard (steam_id TEXT PRIMARY KEY, elo INTEGER)")
-	await cursor.execute("CREATE TABLE IF NOT EXISTS mge_playerdata (steam_id INTEGER PRIMARY KEY, elo BIGINT, wins BIGINT, losses BIGINT, kills BIGINT, deaths BIGINT, damage_taken BIGINT, damage_dealt BIGINT, airshots BIGINT, market_gardens BIGINT, hoops_scored BIGINT, koth_points_capped BIGINT)")
 
+	try:
+		await cursor.execute(f"SELECT {player_data_columns} FROM mge_playerdata LIMIT 1")
+	except Exception as e:
+		print(COLOR['YELLOW'], "No mge_playerdata table found, creating...", COLOR['ENDC'])
+		await cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
+			steam_id INTEGER PRIMARY KEY, 
+			elo BIGINT, 
+			wins BIGINT, 
+			losses BIGINT, 
+			kills BIGINT, 
+			deaths BIGINT, 
+			damage_taken BIGINT, 
+			damage_dealt BIGINT, 
+			airshots BIGINT, 
+			market_gardens BIGINT, 
+			hoops_scored BIGINT, 
+			koth_points_capped BIGINT)"""
+		)
+	finally:
+		print(COLOR['GREEN'], "MGE database initialized, check server console for '[VPI]: Database initialized successfully'", COLOR['ENDC'])
 	return await cursor.fetchall()
 
+DEFAULT_MAX_LEADERBOARD_ENTRIES = 25
 @WrapDB
 async def VPI_MGE_PopulateLeaderboard(info, cursor):
-	await cursor.execute("SELECT * FROM mge_leaderboard")
+	kwargs = info["kwargs"]
+	order_filter = kwargs["order_filter"] if "order_filter" in kwargs else "elo"
+	max_leaderboard_entries = kwargs["max_leaderboard_entries"] if "max_leaderboard_entries" in kwargs else DEFAULT_MAX_LEADERBOARD_ENTRIES
+	await cursor.execute(f"SELECT steam_id FROM mge_playerdata ORDER BY {order_filter} DESC LIMIT {max_leaderboard_entries}")
 
 	return await cursor.fetchall()
 
+default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 2))
 @WrapDB
 async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     kwargs = info["kwargs"]
@@ -199,23 +158,15 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     default_elo = kwargs["default_elo"] if "default_elo" in kwargs else 1000
     
     if (query_mode == "read" or query_mode == 0):
-        print(f"Fetching player data for steam ID {network_id}")
-        await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
+        print(COLOR['CYAN'], f"Fetching player data for steam ID {network_id}", COLOR['ENDC'])
+        await cursor.execute(f"SELECT {player_data_columns} FROM mge_playerdata WHERE steam_id = {network_id}")
         result = await cursor.fetchall()
         
         # If no record exists, create one with default values
         if not result:
-            print(f"No record exists for steam ID {network_id}, adding...")
-            await cursor.execute(f"""
-                INSERT INTO mge_playerdata (
-                    steam_id, elo, wins, losses, kills, deaths, 
-                    damage_taken, damage_dealt, airshots, market_gardens,
-                    hoops_scored, koth_points_capped
-                ) VALUES (
-                    {network_id}, {default_elo}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-                )
-            """)
-            await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
+            print(COLOR['YELLOW'], f"No record exists for steam ID {network_id}, adding...", COLOR['ENDC'])
+            await cursor.execute(f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES ({network_id}, {default_elo}, {default_zeroes})")
+            await cursor.execute(f"SELECT {player_data_columns} FROM mge_playerdata WHERE steam_id = {network_id}")
             result = await cursor.fetchall()
             
         return result
@@ -226,7 +177,7 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
             set_clauses.append(f"{key} = {value}")
         set_clause = ", ".join(set_clauses)
         
-        print(f"Updating player data for steam ID {network_id} with stats: {set_clause}")
+        print(COLOR['CYAN'], f"Updating player data for steam ID {network_id} with stats: {set_clause}", COLOR['ENDC'])
         await cursor.execute(f"UPDATE mge_playerdata SET {set_clause} WHERE steam_id = {network_id}")
         return await cursor.fetchall()
 
@@ -250,7 +201,7 @@ async def VPI_MGE_AutoUpdate(info):
         branch = kwargs["branch"] if "branch" in kwargs else "main"
         clone_dir = kwargs["clone_dir"] if "clone_dir" in kwargs else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if not repo_url:
-            print("[VPI] Error: No repository URL provided")
+            print(COLOR['RED'], "[VPI] Error: No repository URL provided", COLOR['ENDC'])
             return []
             
         # Create temp directory for clone
@@ -284,7 +235,7 @@ async def VPI_MGE_AutoUpdate(info):
         return await changed_files
         
     except Exception as e:
-        print(f"[VPI] Error during auto-update: {str(e)}")
+        print(COLOR['RED'], f"[VPI] Error during auto-update: {str(e)}", COLOR['ENDC'])
         return []
     
     finally:

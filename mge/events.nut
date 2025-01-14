@@ -81,15 +81,103 @@ class MGE_Events
 			MGE_ClientPrint(player, 3, "CurrentHandicap", scope.handicap_hp_mult)
 		}
 		"ruleset" : function(params) {
+			local player = GetPlayerFromUserID(params.userid)
+			local scope = player.GetScriptScope()
+			local arena = scope.arena_info.arena
 
+			if (arena.State != AS_IDLE)
+			{
+				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetNotInIdle")
+				return
+			}
+
+			local arena_name = scope.arena_info.name
+			local ruleset = split(params.text, " ")
+
+			if (ruleset.len() > 1 && ruleset[1] in special_arenas)
+			{
+				arena.IsCustomRuleset <- true
+				arena[ruleset[1]] <- "1"
+				local ruleset_inits = {
+					function bball(player) {
+						local scope = player.GetScriptScope()
+						if ("ghost_hoop" in scope)
+							EntFireByHandle(scope.ghost_hoop, "Kill", "", -1, null, null)
+
+						local ghost_hoop = CreateByClassname("prop_dynamic")
+						ghost_hoop.SetModel(BBALL_HOOP_MODEL)
+
+						ghost_hoop.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+						ghost_hoop.SetSolid(SOLID_NONE)
+
+						ghost_hoop.SetAbsOrigin(player.EyePosition())
+
+						ghost_hoop.AcceptInput("Color", player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR, null, null)
+
+						DispatchSpawn(ghost_hoop)
+
+						local visbit = 1 << player.entindex()
+						SendGlobalGameEvent("show_annotation", {
+							visibilityBitfield = visbit,
+							text = format("MOUSE2: Place Hoop"),
+							lifetime = 5.0,
+							play_sound = BBALL_PICKUP_SOUND,
+							follow_entindex = ghost_hoop.entindex(),
+							show_distance = true,
+							show_effect = true
+						})
+						
+						scope.ghost_hoop <- ghost_hoop
+					}
+				}
+				local ruleset_thinks = {
+					function bball() {
+						local hoop_trace = {
+
+							start = player.EyePosition(),
+							end = (player.EyeAngles().Forward() * INT_MAX),
+							mask = MASK_PLAYERSOLID,
+							ignore = player
+						}
+				
+						TraceLineEx(hoop_trace)
+
+						if (!hoop_trace.hit || (player.EyePosition() - hoop_trace.pos).Length() > MAX_BBALL_HOOP_DIST) return
+				
+						ghost_hoop.KeyValueFromVector("origin", hoop_trace.pos)
+
+						local yaw = player.EyeAngles().y
+						local snapped_yaw = floor((yaw + 45) / 90) * 90
+
+						ghost_hoop.SetAbsAngles(QAngle(0, (snapped_yaw + 180), 0))
+					}
+				}
+
+				foreach (p, _ in arena.CurrentPlayers)
+				{
+					printl(ruleset_inits[ruleset[1]])
+					ruleset_inits[ruleset[1]](p)
+					p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset[1]]
+					for(local child = p.FirstMoveChild(); child != null; child = child.NextMovePeer())
+						if (startswith(child.GetClassname(), "tf_weapon"))
+						{
+							SetPropInt(child, "m_nRenderMode", kRenderTransColor)
+							SetPropInt(child, "m_clrRender", 0)
+						}
+					p.AddCustomAttribute("no_attack", 1, -1)
+					p.AddCustomAttribute("disable weapon switch", 1, -1)
+				}
+				return
+			}
+			MGE_ClientPrint(player, HUD_PRINTTALK, "InvalidRuleset", ruleset[1])
 		}
 		"language" : function(params) {
-			local lang = split(params.text, " ")[1]
+			local lang = split(params.text, " ")
 			local player = GetPlayerFromUserID(params.userid)
-			if (lang in MGE_Localization)
+			if (lang.len() > 1 && lang[1] in MGE_Localization)
 			{
-				MGE_ClientPrint(player, 3, "LanguageSet", lang)
-				player.GetScriptScope().Language <- lang
+				MGE_ClientPrint(player, 3, "LanguageSet", lang[1])
+				player.GetScriptScope().Language <- lang[1]
 			}
 		}
 		"rank" : function(params) {
@@ -212,7 +300,7 @@ class MGE_Events
 
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
 					if (!arena.IsUltiduo)
-						EntFireByHandle(self, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
+						EntFireByHandle(player, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
 					else
 					{
 						local current_medics = arena.Ultiduo.CurrentMedics
@@ -221,7 +309,7 @@ class MGE_Events
 								current_medics[p.GetTeam() - 2] = p
 
 						if (current_medics[0] && current_medics[1])
-							EntFireByHandle(self, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
+							EntFireByHandle(player, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
 						else
 						{
 							foreach(p_, _ in arena.CurrentPlayers)

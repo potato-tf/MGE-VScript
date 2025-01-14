@@ -71,7 +71,7 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		ClassChangePoint           = "\x07"+MGE_COLOR_BACKGROUND+"You changed class during a fight, giving your opponent one point."
 		ClassChangePointOpponent   = "\x07"+MGE_COLOR_BACKGROUND+"Your opponent changed class during a fight, giving you one point."
 		Welcome1                   = "\x07"+MGE_COLOR_BACKGROUND+"Welcome to VScript MGE version \x07"+MGE_COLOR_SUBJECT+"%s"
-		Welcome2 = "\x07" + MGE_COLOR_BACKGROUND + "Rewrite by: \x07" + MGE_COLOR_SUBJECT + "Braindawg, with help from \x07" + MGE_COLOR_SUBJECT + "Mince"
+		Welcome2 				   = "\x07" + MGE_COLOR_BACKGROUND + "Rewrite by: \x07" + MGE_COLOR_SUBJECT + "Braindawg, with help from \x07" + MGE_COLOR_SUBJECT + "Mince"
 		Welcome3                   = "\x07"+MGE_COLOR_BACKGROUND+"Original plugin by: \x07"+MGE_COLOR_SUBJECT+"Lange & Cprice, based on \x07"+MGE_COLOR_SUBJECT+"kAmmomod"
 		Top5Title                  = "Top 5 Players"
 		top5error                  = "[VScript MGE] Not enough players in database yet."
@@ -104,6 +104,9 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		FirstBlood                 = "\x07"+MGE_COLOR_SUBJECT+"First Blood!"
 		Airshot                    = "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
 		MarketGarden               = "\x07"+MGE_COLOR_SUBJECT+"Market Garden!"
+
+		InvalidRuleset             = "\x07"+MGE_COLOR_BACKGROUND+"Invalid ruleset: %s"
+		RulesetNotInIdle          = "\x07"+MGE_COLOR_BACKGROUND+"You can only set rulesets for idle arenas."
 
 		Error_StatsNotFound        = "\n\nError: stats not found for %s! fetching again and skipping update...\n\n"
 

@@ -29,6 +29,12 @@ foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
 //CONFIG CONSTANTS
 const DEFAULT_LANGUAGE = "english"
 
+const MAP_RESTART_TIMER = 30 //how long to wait before restarting the map in seconds
+
+//setting this to true will send a retry command to every player and kill worldspawn
+//this obviously assumes you use a watchdog/systemd/etc to restart the server
+const SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL = true
+
 //if repo is not "" AND vpi is running, VPI will periodically git clone the repo
 //if VPI detects a change it will trigger a callback function to reload the map
 //if VPI is not running this will just do nothing
@@ -45,6 +51,7 @@ const DEFAULT_FRAGLIMIT = 20
 const DEFAULT_ELO 		= 1600
 const REMOVE_DROPPED_WEAPONS = true
 const ELO_TRACKING_MODE = 2 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
+const DEBUG_ALLOW_LATE_LOADING = true
 const ENABLE_LEADERBOARD = true //set this to false if you are disabling ELO tracking as well
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
 const AIRSHOT_HEIGHT_THRESHOLD = 100
@@ -125,6 +132,10 @@ const BBALL_PARTICLE_PICKUP_GENERIC = ""
 const BBALL_PARTICLE_TRAIL_RED 		= "player_intel_trail_red"
 const BBALL_PARTICLE_TRAIL_BLUE 	= "player_intel_trail_blue"
 
+//these are for custom ruleset bball only
+const BBALL_HOOP_MODEL				= "models/props_forest/basketball_hoop.mdl"
+const MAX_BBALL_HOOP_DIST			= 750
+
 //NOTE:
 //See BBall notes about adding more spawns
 
@@ -159,6 +170,8 @@ const KOTH_HUD_RED_POS_Y				= 0.4
 const KOTH_HUD_BLU_POS_X				= 0.6
 const KOTH_HUD_BLU_POS_Y				= 0.3
 
+const ULTIDUO_MAX_SPAWNS				= 4
+
 //TODO: see if reducing the think interval makes any impact on 100 player?
 //we need maps that can support this many players in the first place
 //look into "infinite" maps with propper arenas
@@ -177,14 +190,6 @@ const AS_REPORTED     = 4
 
 const STRING_NETPROP_ITEMDEF = "m_AttributeManager.m_Item.m_iItemDefinitionIndex"
 const SINGLE_TICK = 0.015
-
-// Clientprint chat colors
-const COLOR_LIME       = "22FF22"
-const COLOR_YELLOW     = "FFFF66"
-const TF_COLOR_RED     = "FF3F3F"
-const TF_COLOR_BLUE    = "99CCFF"
-const TF_COLOR_SPEC    = "CCCCCC"
-const TF_COLOR_DEFAULT = "FBECCB"
 
 const INT_COLOR_WHITE = 16777215
 
@@ -302,7 +307,9 @@ PrecacheModel(MODEL_POINT)
 PrecacheModel(MODEL_BRIEFCASE)
 PrecacheModel(MODEL_AMMOPACK)
 PrecacheModel(MODEL_LARGE_AMMOPACK)
+
 PrecacheModel(BBALL_BALL_MODEL)
+PrecacheModel(BBALL_HOOP_MODEL)
 
 PrecacheSound(COUNTDOWN_SOUND)
 PrecacheSound(ROUND_START_SOUND)

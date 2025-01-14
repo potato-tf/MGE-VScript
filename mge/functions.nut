@@ -113,10 +113,185 @@
 	catch (_)
 		return
 }
-::LoadSpawnPoints <- function()
+ //calling this function with no arena argument passed will
+ //load spawn points for all arenas
+ //configure rulesets (bball koth etc)
+ //load arena indexes for !add
+ //this should only be called with no args once at script load
+
+ //passing a specific arena will refresh the rulesets temporarily for use in !rulesets
+ //it does NOT initialize anything, only modifies the existing data
+::LoadSpawnPoints <-  function(arena_name = null)
 {
 	local config = SpawnConfigs[GetMapName()]
 
+	if (arena_name)
+	{
+		_arena = Arenas[arena_name]
+		_arena.Score          <- array(2, 0)
+		//0 breaks our countdown system, default to 1
+		_arena.cdtime         <- "cdtime" in _arena ? _arena.cdtime != "0" ? _arena.cdtime : 1 : DEFAULT_CDTIME
+		_arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
+		_arena.classes        <- "classes" in _arena ? split(_arena.classes, " ", true) : []
+		_arena.fraglimit      <- "fraglimit" in _arena ? _arena.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
+		_arena.SpawnIdx       <- 0
+
+		//do this instead of checking both of these everywhere
+		_arena.IsMGE          <- "mge" in _arena && _arena.mge == "1"
+		_arena.IsUltiduo       <- "ultiduo" in _arena && _arena.ultiduo == "1"
+		_arena.IsKoth         <- "koth" in _arena && _arena.koth == "1"
+		_arena.IsBBall        <- "bball" in _arena && _arena.bball == "1"
+		_arena.IsAmmomod      <- "ammomod" in _arena && _arena.ammomod == "1"
+		_arena.IsTurris       <- "turris" in _arena && _arena.turris == "1"
+		_arena.IsEndif        <- "endif" in _arena && _arena.endif == "1"
+		_arena.IsMidair       <- "midair" in _arena && _arena.midair == "1"
+
+		//new keyvalues
+		_arena.countdown_sound <- "countdown_sound" in _arena ? _arena.countdown_sound : COUNTDOWN_SOUND
+		_arena.countdown_sound_volume <- "countdown_sound_volume" in _arena ? _arena.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
+		_arena.round_start_sound <- "round_start_sound" in _arena ? _arena.round_start_sound : ROUND_START_SOUND
+		_arena.round_start_sound_volume <- "round_start_sound_volume" in _arena ? _arena.round_start_sound_volume : ROUND_START_SOUND_VOLUME
+		_arena.airshot_height_threshold <- "airshot_height_threshold" in _arena ? _arena.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
+
+		if (_arena.IsUltiduo)
+		{
+			_arena.Ultiduo <- {
+				CurrentMedics = array(2, null)
+			}
+		}
+		if (_arena.IsBBall)
+		{
+			//alternative keyvalues for bball logic
+			//if you intend on adding > 8 spawns, you will need to replace your current "9" - "13" entries with these
+			local bball_points = {
+				neutral_home = "bball_home" in _arena ? _arena.bball_home : _arena["9"],
+				red_score_home = "bball_home_red" in _arena ? _arena.bball_home_red : _arena["10"],
+				blue_score_home = "bball_home_blue" in _arena ? _arena.bball_home_blue : _arena["11"],
+				red_hoop = "bball_hoop_red" in _arena ? _arena.bball_hoop_red : _arena["12"],
+				blue_hoop = "bball_hoop_blue" in _arena ? _arena.bball_hoop_blue : _arena["13"],
+				hoop_size = "bball_hoop_size" in _arena ? _arena.bball_hoop_size : BBALL_HOOP_SIZE,
+				pickup_model = "bball_pickup_model" in _arena ? _arena.bball_pickup_model : BBALL_BALL_MODEL,
+				particle_pickup_red = "bball_particle_pickup_red" in _arena ? _arena.bball_particle_pickup_red : BBALL_PARTICLE_PICKUP_RED,
+				particle_pickup_blue = "bball_particle_pickup_blue" in _arena ? _arena.bball_particle_pickup_blue : BBALL_PARTICLE_PICKUP_BLUE,
+				particle_pickup_generic = "bball_particle_pickup_generic" in _arena ? _arena.bball_particle_pickup_generic : BBALL_PARTICLE_PICKUP_GENERIC,
+				particle_trail_red = "bball_particle_trail_red" in _arena ? _arena.bball_particle_trail_red : BBALL_PARTICLE_TRAIL_RED,
+				particle_trail_blue = "bball_particle_trail_blue" in _arena ? _arena.bball_particle_trail_blue : BBALL_PARTICLE_TRAIL_BLUE,
+				last_score_team = -1
+			}
+
+			foreach (k, v in bball_points)
+			{
+				if (typeof v != "string") continue
+				local split_spawns = split(v, " ")
+				split_spawns.apply( @(str) ToStrictNum(str, true) )
+				local spawn_lens = {
+					[3] = true,
+					[4] = true,
+					[6] = true,
+				}
+				if (split_spawns.len() in spawn_lens)
+					bball_points[k] <- Vector(split_spawns[0], split_spawns[1], split_spawns[2])
+			}
+
+			_arena.BBall <- bball_points
+			BBall_SpawnBall(arena_name)
+
+		}
+		if (_arena.IsKoth)
+		{
+			//alternative keyvalues for KOTH logic
+			//koth_radius is a new kv that you can set per-arena
+			_arena.Koth <- {
+				//see BBall notes about adding more spawns, koth uses the final index for cap points
+				cap_point = "koth_cap" in _arena ? _arena.koth_cap : ""
+				cap_radius = "koth_radius" in _arena ? _arena.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
+				owner_team = 0
+
+				blu_partial_cap_amount = 0.0
+				red_partial_cap_amount = 0.0
+				// timelimit = 0.0
+				// timeleft = 0.0
+
+				// is_overtime = false
+
+				red_start_cap_time = "start_time_red" in _arena ? _arena.start_time_red : KOTH_START_TIME_RED
+				blu_start_cap_time = "start_time_blu" in _arena ? _arena.start_time_blu : KOTH_START_TIME_BLUE
+
+
+				decay_rate 		     = "koth_decay_rate" in _arena ? _arena.koth_decay_rate : KOTH_DECAY_RATE,
+				decay_interval	     = "koth_decay_interval" in _arena ? _arena.koth_decay_interval : KOTH_DECAY_INTERVAL,
+				additive_decay       = "koth_additive_decay" in _arena ? _arena.koth_additive_decay : KOTH_ADDITIVE_DECAY,
+				countdown_rate     	 = "koth_countdown_rate" in _arena ? _arena.koth_countdown_rate : KOTH_COUNTDOWN_RATE,
+				countdown_interval 	 = "koth_countdown_interval" in _arena ? _arena.koth_countdown_interval : KOTH_COUNTDOWN_INTERVAL,
+				partial_cap_rate   	 = "koth_partial_cap_rate" in _arena ? _arena.koth_partial_cap_rate : KOTH_PARTIAL_CAP_RATE,
+				partial_cap_interval = "koth_partial_cap_interval" in _arena ? _arena.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL,
+
+				capture_point_radius     = "koth_capture_point_radius" in _arena ? _arena.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
+				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT,
+			}
+			_arena.Koth.red_cap_time <- _arena.Koth.red_start_cap_time
+			_arena.Koth.blu_cap_time <- _arena.Koth.blu_start_cap_time
+		}
+
+		if (_arena.IsEndif)
+		{
+			_arena.Endif <- {
+				height_threshold = "endif_height_threshold" in _arena ? _arena.endif_height_threshold : ENDIF_HEIGHT_THRESHOLD
+			}
+		}
+		if (_arena.IsMidair)
+		{
+			_arena.Midair <- {
+				height_threshold = "midair_height_threshold" in _arena ? _arena.midair_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
+			}
+		}
+		// Grab spawn points
+		foreach(k, v in _arena)
+		{
+			local spawn_idx = ToStrictNum(k)
+			if (spawn_idx != null)
+			{
+				try
+				{
+
+					if (
+						(_arena.IsBBall && spawn_idx > BBALL_MAX_SPAWNS) ||
+						(_arena.IsKoth && spawn_idx > KOTH_MAX_SPAWNS) 	||
+						(_arena.IsUltiduo && spawn_idx > ULTIDUO_MAX_SPAWNS)
+					) continue
+
+					local split_spawns = split(v, " ", true).apply( @(str) str.tofloat() )
+
+					local origin = Vector(split_spawns[0], split_spawns[1], split_spawns[2])
+
+					local angles = QAngle()
+					if (split_spawns.len() == 4)
+						angles = QAngle(0, split_spawns[3], 0) // Yaw only
+					else if (split_spawns.len() == 6)
+						angles = QAngle(split_spawns[3], split_spawns[4], split_spawns[5])
+
+					local spawn = [origin, angles, TEAM_UNASSIGNED]
+
+					if (_arena.MaxPlayers > 2)
+						spawn[2] = spawn_idx < 4 ? TF_TEAM_RED : TF_TEAM_BLUE
+
+					_arena.SpawnPoints.append(spawn)
+				}
+				catch(e)
+					printf("[VSCRIPT MGE] Warning: Data parsing for arena '%s' failed: %s\nkey: %s, val: %s\n", arena_name, e.tostring(), k, v.tostring())
+			}
+		}
+		local idx = (_arena.SpawnPoints.len() + 1).tostring()
+		if (_arena.IsKoth && idx in _arena)
+		{
+			// printl(arena_name)
+			// printl(_arena.IsKoth && idx in _arena)
+			// printl(_arena.SpawnPoints.len())
+			local cap_point = split(_arena[idx], " ").apply( @(str) str.tofloat() )
+			_arena.Koth.cap_point = Vector(cap_point[0], cap_point[1], cap_point[2])
+		}
+		return
+	}
 	// if (ELO_TRACKING_MODE == 2 && ENABLE_LEADERBOARD)
 	if (ENABLE_LEADERBOARD)
 	{
@@ -238,62 +413,62 @@
 	Arenas_List <- array(config.len(), null)
 
 	local idx_failed = false
-	foreach(arena_name, datatable in config)
+	foreach(arena_name, _arena in config)
 	{
-		Arenas[arena_name] <- datatable
+		Arenas[arena_name] <- _arena
 
-		datatable.CurrentPlayers <- {}
-		datatable.Queue          <- []
-		datatable.SpawnPoints    <- []
-		datatable.Score          <- array(2, 0)
-		datatable.State          <- AS_IDLE
+		_arena.CurrentPlayers <- {}
+		_arena.Queue          <- []
+		_arena.SpawnPoints    <- []
+		_arena.Score          <- array(2, 0)
+		_arena.State          <- AS_IDLE
 		//0 breaks our countdown system, default to 1
-		datatable.cdtime         <- "cdtime" in datatable ? datatable.cdtime != "0" ? datatable.cdtime : 1 : DEFAULT_CDTIME
-		datatable.MaxPlayers     <- "4player" in datatable && datatable["4player"] == "1" ? 4 : 2
-		datatable.classes        <- ("classes" in datatable) ? split(datatable.classes, " ", true) : []
-		datatable.fraglimit      <- "fraglimit" in datatable ? datatable.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
-		datatable.SpawnIdx       <- 0
+		_arena.cdtime         <- "cdtime" in _arena ? _arena.cdtime != "0" ? _arena.cdtime : 1 : DEFAULT_CDTIME
+		_arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
+		_arena.classes        <- "classes" in _arena ? split(_arena.classes, " ", true) : []
+		_arena.fraglimit      <- "fraglimit" in _arena ? _arena.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
+		_arena.SpawnIdx       <- 0
 
 		//do this instead of checking both of these everywhere
-		datatable.IsMGE          <- "mge" in datatable && datatable.mge == "1"
-		datatable.IsUltiduo       <- "ultiduo" in datatable && datatable.ultiduo == "1"
-		datatable.IsKoth         <- "koth" in datatable && datatable.koth == "1"
-		datatable.IsBBall        <- "bball" in datatable && datatable.bball == "1"
-		datatable.IsAmmomod      <- "ammomod" in datatable && datatable.ammomod == "1"
-		datatable.IsTurris       <- "turris" in datatable && datatable.turris == "1"
-		datatable.IsEndif        <- "endif" in datatable && datatable.endif == "1"
-		datatable.IsMidair       <- "midair" in datatable && datatable.midair == "1"
+		_arena.IsMGE          <- "mge" in _arena && _arena.mge == "1"
+		_arena.IsUltiduo       <- "ultiduo" in _arena && _arena.ultiduo == "1"
+		_arena.IsKoth         <- "koth" in _arena && _arena.koth == "1"
+		_arena.IsBBall        <- "bball" in _arena && _arena.bball == "1"
+		_arena.IsAmmomod      <- "ammomod" in _arena && _arena.ammomod == "1"
+		_arena.IsTurris       <- "turris" in _arena && _arena.turris == "1"
+		_arena.IsEndif        <- "endif" in _arena && _arena.endif == "1"
+		_arena.IsMidair       <- "midair" in _arena && _arena.midair == "1"
 
 		//new keyvalues
-		datatable.countdown_sound <- "countdown_sound" in datatable ? datatable.countdown_sound : COUNTDOWN_SOUND
-		datatable.countdown_sound_volume <- "countdown_sound_volume" in datatable ? datatable.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
-		datatable.round_start_sound <- "round_start_sound" in datatable ? datatable.round_start_sound : ROUND_START_SOUND
-		datatable.round_start_sound_volume <- "round_start_sound_volume" in datatable ? datatable.round_start_sound_volume : ROUND_START_SOUND_VOLUME
-		datatable.airshot_height_threshold <- "airshot_height_threshold" in datatable ? datatable.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
+		_arena.countdown_sound <- "countdown_sound" in _arena ? _arena.countdown_sound : COUNTDOWN_SOUND
+		_arena.countdown_sound_volume <- "countdown_sound_volume" in _arena ? _arena.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
+		_arena.round_start_sound <- "round_start_sound" in _arena ? _arena.round_start_sound : ROUND_START_SOUND
+		_arena.round_start_sound_volume <- "round_start_sound_volume" in _arena ? _arena.round_start_sound_volume : ROUND_START_SOUND_VOLUME
+		_arena.airshot_height_threshold <- "airshot_height_threshold" in _arena ? _arena.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 
-		if (datatable.IsUltiduo)
+		if (_arena.IsUltiduo)
 		{
-			datatable.Ultiduo <- {
+			_arena.Ultiduo <- {
 				CurrentMedics = array(2, null)
 			}
 		}
-		if (datatable.IsBBall)
+		if (_arena.IsBBall)
 		{
 			//alternative keyvalues for bball logic
 			//if you intend on adding > 8 spawns, you will need to replace your current "9" - "13" entries with these
 			local bball_points = {
-				neutral_home = "bball_home" in datatable ? datatable.bball_home : datatable["9"],
-				red_score_home = "bball_home_red" in datatable ? datatable.bball_home_red : datatable["10"],
-				blue_score_home = "bball_home_blue" in datatable ? datatable.bball_home_blue : datatable["11"],
-				red_hoop = "bball_hoop_red" in datatable ? datatable.bball_hoop_red : datatable["12"],
-				blue_hoop = "bball_hoop_blue" in datatable ? datatable.bball_hoop_blue : datatable["13"],
-				hoop_size = "bball_hoop_size" in datatable ? datatable.bball_hoop_size : BBALL_HOOP_SIZE,
-				pickup_model = "bball_pickup_model" in datatable ? datatable.bball_pickup_model : BBALL_BALL_MODEL,
-				particle_pickup_red = "bball_particle_pickup_red" in datatable ? datatable.bball_particle_pickup_red : BBALL_PARTICLE_PICKUP_RED,
-				particle_pickup_blue = "bball_particle_pickup_blue" in datatable ? datatable.bball_particle_pickup_blue : BBALL_PARTICLE_PICKUP_BLUE,
-				particle_pickup_generic = "bball_particle_pickup_generic" in datatable ? datatable.bball_particle_pickup_generic : BBALL_PARTICLE_PICKUP_GENERIC,
-				particle_trail_red = "bball_particle_trail_red" in datatable ? datatable.bball_particle_trail_red : BBALL_PARTICLE_TRAIL_RED,
-				particle_trail_blue = "bball_particle_trail_blue" in datatable ? datatable.bball_particle_trail_blue : BBALL_PARTICLE_TRAIL_BLUE,
+				neutral_home = "bball_home" in _arena ? _arena.bball_home : _arena["9"],
+				red_score_home = "bball_home_red" in _arena ? _arena.bball_home_red : _arena["10"],
+				blue_score_home = "bball_home_blue" in _arena ? _arena.bball_home_blue : _arena["11"],
+				red_hoop = "bball_hoop_red" in _arena ? _arena.bball_hoop_red : _arena["12"],
+				blue_hoop = "bball_hoop_blue" in _arena ? _arena.bball_hoop_blue : _arena["13"],
+				hoop_size = "bball_hoop_size" in _arena ? _arena.bball_hoop_size : BBALL_HOOP_SIZE,
+				pickup_model = "bball_pickup_model" in _arena ? _arena.bball_pickup_model : BBALL_BALL_MODEL,
+				particle_pickup_red = "bball_particle_pickup_red" in _arena ? _arena.bball_particle_pickup_red : BBALL_PARTICLE_PICKUP_RED,
+				particle_pickup_blue = "bball_particle_pickup_blue" in _arena ? _arena.bball_particle_pickup_blue : BBALL_PARTICLE_PICKUP_BLUE,
+				particle_pickup_generic = "bball_particle_pickup_generic" in _arena ? _arena.bball_particle_pickup_generic : BBALL_PARTICLE_PICKUP_GENERIC,
+				particle_trail_red = "bball_particle_trail_red" in _arena ? _arena.bball_particle_trail_red : BBALL_PARTICLE_TRAIL_RED,
+				particle_trail_blue = "bball_particle_trail_blue" in _arena ? _arena.bball_particle_trail_blue : BBALL_PARTICLE_TRAIL_BLUE,
 				last_score_team = -1
 			}
 
@@ -311,18 +486,18 @@
 					bball_points[k] <- Vector(split_spawns[0], split_spawns[1], split_spawns[2])
 			}
 
-			datatable.BBall <- bball_points
+			_arena.BBall <- bball_points
 			BBall_SpawnBall(arena_name)
 
 		}
-		if (datatable.IsKoth)
+		if (_arena.IsKoth)
 		{
 			//alternative keyvalues for KOTH logic
 			//koth_radius is a new kv that you can set per-arena
-			local koth_points = {
+			_arena.Koth <- {
 				//see BBall notes about adding more spawns, koth uses the final index for cap points
-				cap_point = "koth_cap" in datatable ? datatable.koth_cap : ""
-				cap_radius = "koth_radius" in datatable ? datatable.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
+				cap_point = "koth_cap" in _arena ? _arena.koth_cap : ""
+				cap_radius = "koth_radius" in _arena ? _arena.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
 				owner_team = 0
 
 				blu_partial_cap_amount = 0.0
@@ -332,39 +507,39 @@
 
 				// is_overtime = false
 
-				red_start_cap_time = "start_time_red" in datatable ? datatable.start_time_red : KOTH_START_TIME_RED
-				blu_start_cap_time = "start_time_blu" in datatable ? datatable.start_time_blu : KOTH_START_TIME_BLUE
+				red_start_cap_time = "start_time_red" in _arena ? _arena.start_time_red : KOTH_START_TIME_RED
+				blu_start_cap_time = "start_time_blu" in _arena ? _arena.start_time_blu : KOTH_START_TIME_BLUE
 
 
-				decay_rate 		     = "koth_decay_rate" in datatable ? datatable.koth_decay_rate : KOTH_DECAY_RATE,
-				decay_interval	     = "koth_decay_interval" in datatable ? datatable.koth_decay_interval : KOTH_DECAY_INTERVAL,
-				additive_decay       = "koth_additive_decay" in datatable ? datatable.koth_additive_decay : KOTH_ADDITIVE_DECAY,
-				countdown_rate     	 = "koth_countdown_rate" in datatable ? datatable.koth_countdown_rate : KOTH_COUNTDOWN_RATE,
-				countdown_interval 	 = "koth_countdown_interval" in datatable ? datatable.koth_countdown_interval : KOTH_COUNTDOWN_INTERVAL,
-				partial_cap_rate   	 = "koth_partial_cap_rate" in datatable ? datatable.koth_partial_cap_rate : KOTH_PARTIAL_CAP_RATE,
-				partial_cap_interval = "koth_partial_cap_interval" in datatable ? datatable.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL,
+				decay_rate 		     = "koth_decay_rate" in _arena ? _arena.koth_decay_rate : KOTH_DECAY_RATE,
+				decay_interval	     = "koth_decay_interval" in _arena ? _arena.koth_decay_interval : KOTH_DECAY_INTERVAL,
+				additive_decay       = "koth_additive_decay" in _arena ? _arena.koth_additive_decay : KOTH_ADDITIVE_DECAY,
+				countdown_rate     	 = "koth_countdown_rate" in _arena ? _arena.koth_countdown_rate : KOTH_COUNTDOWN_RATE,
+				countdown_interval 	 = "koth_countdown_interval" in _arena ? _arena.koth_countdown_interval : KOTH_COUNTDOWN_INTERVAL,
+				partial_cap_rate   	 = "koth_partial_cap_rate" in _arena ? _arena.koth_partial_cap_rate : KOTH_PARTIAL_CAP_RATE,
+				partial_cap_interval = "koth_partial_cap_interval" in _arena ? _arena.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL,
 
-				capture_point_radius     = "koth_capture_point_radius" in datatable ? datatable.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
-				capture_point_max_height = "koth_capture_point_max_height" in datatable ? datatable.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT,
+				capture_point_radius     = "koth_capture_point_radius" in _arena ? _arena.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
+				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT,
 			}
-			datatable.Koth <- koth_points
-			datatable.Koth.red_cap_time <- datatable.Koth.red_start_cap_time
-			datatable.Koth.blu_cap_time <- datatable.Koth.blu_start_cap_time
+
+			_arena.Koth.red_cap_time <- _arena.Koth.red_start_cap_time
+			_arena.Koth.blu_cap_time <- _arena.Koth.blu_start_cap_time
 		}
 
-		if (datatable.IsEndif)
+		if (_arena.IsEndif)
 		{
-			datatable.Endif <- {
-				height_threshold = "endif_height_threshold" in datatable ? datatable.endif_height_threshold : ENDIF_HEIGHT_THRESHOLD
+			_arena.Endif <- {
+				height_threshold = "endif_height_threshold" in _arena ? _arena.endif_height_threshold : ENDIF_HEIGHT_THRESHOLD
 			}
 		}
-		if (datatable.IsMidair)
+		if (_arena.IsMidair)
 		{
-			datatable.Midair <- {
-				height_threshold = "midair_height_threshold" in datatable ? datatable.midair_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
+			_arena.Midair <- {
+				height_threshold = "midair_height_threshold" in _arena ? _arena.midair_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 			}
 		}
-		local idx = ("idx" in datatable) ? datatable.idx.tointeger() : null
+		local idx = ("idx" in _arena) ? _arena.idx.tointeger() : null
 		if (idx == null && !idx_failed)
 		{
 			idx_failed = true
@@ -382,7 +557,7 @@
 			Arenas_List[idx] = arena_name
 
 		// Grab spawn points
-		foreach(k, v in datatable)
+		foreach(k, v in _arena)
 		{
 			local spawn_idx = ToStrictNum(k)
 			if (spawn_idx != null)
@@ -390,7 +565,11 @@
 				try
 				{
 
-					if ((datatable.IsBBall && spawn_idx > BBALL_MAX_SPAWNS) || (datatable.IsKoth && spawn_idx > KOTH_MAX_SPAWNS)) continue
+					if (
+						(_arena.IsBBall && spawn_idx > BBALL_MAX_SPAWNS) ||
+						(_arena.IsKoth && spawn_idx > KOTH_MAX_SPAWNS) 	||
+						(_arena.IsUltiduo && spawn_idx > ULTIDUO_MAX_SPAWNS)
+					) continue
 
 					local split_spawns = split(v, " ", true).apply( @(str) str.tofloat() )
 
@@ -404,23 +583,23 @@
 
 					local spawn = [origin, angles, TEAM_UNASSIGNED]
 
-					if (datatable.MaxPlayers > 2)
+					if (_arena.MaxPlayers > 2)
 						spawn[2] = spawn_idx < 4 ? TF_TEAM_RED : TF_TEAM_BLUE
 
-					datatable.SpawnPoints.append(spawn)
+					_arena.SpawnPoints.append(spawn)
 				}
 				catch(e)
 					printf("[VSCRIPT MGE] Warning: Data parsing for arena '%s' failed: %s\nkey: %s, val: %s\n", arena_name, e.tostring(), k, v.tostring())
 			}
 		}
-		local idx = (datatable.SpawnPoints.len() + 1).tostring()
-		if (datatable.IsKoth && idx in datatable)
+		local idx = (_arena.SpawnPoints.len() + 1).tostring()
+		if (_arena.IsKoth && idx in _arena)
 		{
 			// printl(arena_name)
-			// printl(datatable.IsKoth && idx in datatable)
-			// printl(datatable.SpawnPoints.len())
-			local cap_point = split(datatable[idx], " ").apply( @(str) str.tofloat() )
-			datatable.Koth.cap_point = Vector(cap_point[0], cap_point[1], cap_point[2])
+			// printl(_arena.IsKoth && idx in _arena)
+			// printl(_arena.SpawnPoints.len())
+			local cap_point = split(_arena[idx], " ").apply( @(str) str.tofloat() )
+			_arena.Koth.cap_point = Vector(cap_point[0], cap_point[1], cap_point[2])
 		}
 	}
 }
@@ -914,6 +1093,8 @@
 			end = KOTH_MAX_SPAWNS
 		else if (arena.IsBBall)
 			end = BBALL_MAX_SPAWNS
+		else if (arena.IsUltiduo)
+			end = ULTIDUO_MAX_SPAWNS
 
 		local team = player.GetTeam()
 		if (team == TF_TEAM_RED)

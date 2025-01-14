@@ -38,10 +38,10 @@ genv = os.environ.get
 # DB_PORT	    = args.port     if args.port     else int(genv("VPI_PORT",  3306))
 # DB_DATABASE	= args.database if args.database else genv("VPI_INTERFACE", "mge")
 # DB_PASSWORD	= args.password if args.password else genv("VPI_PASSWORD", "")
-DB_HOST     = args.host     if args.host     else genv("VPI_HOST",      "")
-DB_USER     = args.user     if args.user     else genv("VPI_USER",      "")
+DB_HOST     = args.host     if args.host     else genv("VPI_HOST",      "localhost")
+DB_USER     = args.user     if args.user     else genv("VPI_USER",      "root")
 DB_PORT	    = args.port     if args.port     else int(genv("VPI_PORT",  3306))
-DB_DATABASE	= args.database if args.database else genv("VPI_NAME", "")
+DB_DATABASE	= args.database if args.database else genv("VPI_NAME", "mge")
 DB_PASSWORD	= args.password if args.password else genv("VPI_PASS", "")
 
 SCRIPTDATA_DIR = genv("VPI_SCRIPTDATA_DIR", r"../../../../scriptdata")

@@ -545,6 +545,7 @@ SetPropBool(KOTH_HUD_BLU, "m_bForcePurgeFixedupStrings", true)
 KOTH_HUD_BLU.AddEFlags(EFL_KILLME)
 
 ::MGE_CHANGELEVEL <- CreateByClassname("point_intermission")
+MGE_CHANGELEVEL.KeyValueFromString("targetname", "__mge_changelevel")
 MGE_CHANGELEVEL.AddEFlags(EFL_KILLME)
 
 if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
@@ -575,6 +576,49 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 		}
 	}
 	AddThinkToEnt(MGE_CHANGELEVEL, "AutoUpdate")
+}
+
+MGE_TIMER <- CreateByClassname("team_round_timer")
+MGE_TIMER.KeyValueFromString("targetname", "__mge_timer")
+SetPropInt(MGE_TIMER, "m_nTimerMaxLength", MAP_RESTART_TIMER)
+SetPropInt(MGE_TIMER, "m_nTimerInitialLength", MAP_RESTART_TIMER)
+SetPropInt(MGE_TIMER, "m_nTimerLength", MAP_RESTART_TIMER)
+SetPropBool(MGE_TIMER, "m_bShowInHUD", true)
+SetPropBool(MGE_TIMER, "m_bShowTimeRemaining", true)
+SetPropBool(MGE_TIMER, "m_bAutoCountdown", true)
+SetPropBool(MGE_TIMER, "m_bStartPaused", false)
+
+MGE_TIMER.AddEFlags(EFL_KILLME)
+
+//doesn't fire due to EFL_KILLME
+AddOutput(MGE_TIMER, "OnFinished", "!self", "CallScriptFunction", "MGE_DoChangelevel", 1.0, -1)
+
+DispatchSpawn(MGE_TIMER)
+MGE_TIMER.AcceptInput("Resume", "", null, null)
+
+EntFireByHandle(MGE_TIMER, "CallScriptFunction", "MGE_DoChangelevel", MAP_RESTART_TIMER, null, null)
+
+::MGE_DoChangelevel <- function() {
+	
+	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL) 
+	{
+		local client_command = CreateByClassname("point_clientcommand")
+		DispatchSpawn(client_command)
+		for (local i = 1; i <= MAX_CLIENTS; i++) 
+		{
+			local player = PlayerInstanceFromIndex(i)
+			if (!player || !player.IsValid()) continue
+			client_command.AcceptInput("Command", "retry", player, player)
+		}
+		//called too early, retry doesn't get sent in time
+		// First().Kill()
+		
+		EntFire("worldspawn", "Kill", "", 0.1)
+		return
+	}
+	
+	Convars.SetValue("mp_chattime", 1.0);
+	EntFire("__mge_changelevel", "Activate")
 }
 
 MGE_Init()
