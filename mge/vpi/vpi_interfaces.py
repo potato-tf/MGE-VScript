@@ -233,7 +233,14 @@ async def VPI_MGE_AutoUpdate(info, test=False):
                     with open(temp_path, 'rb') as f1, open(current_path, 'rb') as f2:
                         if f1.read() != f2.read():
                             changed_files.append(relative_path)
+	
+        print(COLOR['GREEN'], f"Changed files: {changed_files}", COLOR['ENDC'])
         
+        #move changed files to the clone directory
+        for file in changed_files:
+            shutil.move(os.path.join(temp_dir, file), os.path.join(clone_dir, file))
+        
+
         return changed_files
         
     except Exception as e:
