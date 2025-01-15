@@ -35,10 +35,11 @@ const MAP_RESTART_TIMER = 7200 //how long to wait before restarting the map in s
 //this obviously assumes you use a watchdog/systemd/etc to restart the server
 const SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL = true
 
-//if repo is not "" AND vpi is running, VPI will periodically git clone the repo
+//if repo is not false or "" AND vpi is running, VPI will periodically git clone the repo
 //if VPI detects a change it will trigger a callback function to reload the map
 //if VPI is not running this will just do nothing
-const GAMEMODE_AUTOUPDATE_REPO = "https://github.com/potato-tf/MGE-VScript.git" //the repo to clone
+// const GAMEMODE_AUTOUPDATE_REPO = "https://github.com/potato-tf/MGE-VScript.git" //the repo to clone
+const GAMEMODE_AUTOUPDATE_REPO = false //the repo to clone
 const GAMEMODE_AUTOUPDATE_BRANCH = "main" //the branch to clone
 const GAMEMODE_AUTOUPDATE_TARGET_DIR = "D:/dedicatedtf/tf/scripts/vscripts" //the directory to clone to
 const GAMEMODE_AUTOUPDATE_RESTART_TIME = 300.0 //the time to wait before restarting the map in seconds
