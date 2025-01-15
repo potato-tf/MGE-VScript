@@ -39,7 +39,17 @@
 			delete scope[k]
 
 	local toscope = {
-		ThinkTable = {},
+		ThinkTable = {
+			//potentially useful for fake custom cvars in vscript
+			//read some cvar like cl_class in a think and watch for changes
+			//cl_class vscript_cvar_here 5 then split the string in GetClientConvarValue to get `vscript_cvar_here 5`
+			// function ConCommandHijack()
+			// {
+
+			// }
+
+		},
+		cvarhijack =  Convars.GetClientConvarValue("cl_class", player.entindex())
 		Name       = Convars.GetClientConvarValue("name", player.entindex()),
 		Language   = Convars.GetClientConvarValue("cl_language", player.entindex()),
 		arena_info = null,
@@ -125,20 +135,22 @@
 {
 	local config = SpawnConfigs[GetMapName()]
 
+	//custom ruleset handling
 	if (arena_name)
 	{
-		_arena = Arenas[arena_name]
+		local _arena = Arenas[arena_name]
 		_arena.Score          <- array(2, 0)
+
 		//0 breaks our countdown system, default to 1
-		_arena.cdtime         <- "cdtime" in _arena ? _arena.cdtime != "0" ? _arena.cdtime : 1 : DEFAULT_CDTIME
+		// _arena.cdtime         <- "cdtime" in _arena ? _arena.cdtime != "0" ? _arena.cdtime : 1 : DEFAULT_CDTIME
 		_arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
-		_arena.classes        <- "classes" in _arena ? split(_arena.classes, " ", true) : []
-		_arena.fraglimit      <- "fraglimit" in _arena ? _arena.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
-		_arena.SpawnIdx       <- 0
+		// _arena.classes        <- "classes" in _arena ? split(_arena.classes, " ", true) : []
+		// _arena.fraglimit      <- "fraglimit" in _arena ? _arena.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
+		// _arena.SpawnIdx       <- 0
 
 		//do this instead of checking both of these everywhere
 		_arena.IsMGE          <- "mge" in _arena && _arena.mge == "1"
-		_arena.IsUltiduo       <- "ultiduo" in _arena && _arena.ultiduo == "1"
+		_arena.IsUltiduo      <- "ultiduo" in _arena && _arena.ultiduo == "1"
 		_arena.IsKoth         <- "koth" in _arena && _arena.koth == "1"
 		_arena.IsBBall        <- "bball" in _arena && _arena.bball == "1"
 		_arena.IsAmmomod      <- "ammomod" in _arena && _arena.ammomod == "1"
@@ -147,11 +159,15 @@
 		_arena.IsMidair       <- "midair" in _arena && _arena.midair == "1"
 
 		//new keyvalues
-		_arena.countdown_sound <- "countdown_sound" in _arena ? _arena.countdown_sound : COUNTDOWN_SOUND
-		_arena.countdown_sound_volume <- "countdown_sound_volume" in _arena ? _arena.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
-		_arena.round_start_sound <- "round_start_sound" in _arena ? _arena.round_start_sound : ROUND_START_SOUND
+		_arena.countdown_sound 		  	<- "countdown_sound" in _arena ? _arena.countdown_sound : COUNTDOWN_SOUND
+		_arena.countdown_sound_volume 	<- "countdown_sound_volume" in _arena ? _arena.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
+		_arena.round_start_sound 		<- "round_start_sound" in _arena ? _arena.round_start_sound : ROUND_START_SOUND
 		_arena.round_start_sound_volume <- "round_start_sound_volume" in _arena ? _arena.round_start_sound_volume : ROUND_START_SOUND_VOLUME
 		_arena.airshot_height_threshold <- "airshot_height_threshold" in _arena ? _arena.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
+
+		_arena.RulesetVote <- {}
+		foreach(k, _ in special_arenas)
+			_arena.RulesetVote[k] <- 0
 
 		if (_arena.IsUltiduo)
 		{
@@ -159,6 +175,7 @@
 				CurrentMedics = array(2, null)
 			}
 		}
+
 		if (_arena.IsBBall)
 		{
 			//alternative keyvalues for bball logic
@@ -290,8 +307,19 @@
 			local cap_point = split(_arena[idx], " ").apply( @(str) str.tofloat() )
 			_arena.Koth.cap_point = Vector(cap_point[0], cap_point[1], cap_point[2])
 		}
+
+		//rulset updated, re-add everyone to the arena
+		Arenas[arena_name] <- _arena
+		foreach(p, _ in _arena.CurrentPlayers)
+		{
+			RemovePlayer(p, arena_name)
+			AddPlayer(p, arena_name)
+		}
 		return
 	}
+
+
+
 	// if (ELO_TRACKING_MODE == 2 && ENABLE_LEADERBOARD)
 	if (ENABLE_LEADERBOARD)
 	{
@@ -424,7 +452,8 @@
 		_arena.State          <- AS_IDLE
 		//0 breaks our countdown system, default to 1
 		_arena.cdtime         <- "cdtime" in _arena ? _arena.cdtime != "0" ? _arena.cdtime : 1 : DEFAULT_CDTIME
-		_arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
+		// _arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
+		_arena.MaxPlayers     <- 1
 		_arena.classes        <- "classes" in _arena ? split(_arena.classes, " ", true) : []
 		_arena.fraglimit      <- "fraglimit" in _arena ? _arena.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
 		_arena.SpawnIdx       <- 0
@@ -445,6 +474,13 @@
 		_arena.round_start_sound <- "round_start_sound" in _arena ? _arena.round_start_sound : ROUND_START_SOUND
 		_arena.round_start_sound_volume <- "round_start_sound_volume" in _arena ? _arena.round_start_sound_volume : ROUND_START_SOUND_VOLUME
 		_arena.airshot_height_threshold <- "airshot_height_threshold" in _arena ? _arena.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
+
+		if (_arena.IsMGE)
+		{
+			_arena.RulesetVote <- {}
+			foreach(k, _ in special_arenas)
+				_arena.RulesetVote[k] <- 0
+		}
 
 		if (_arena.IsUltiduo)
 		{
@@ -604,11 +640,11 @@
 	}
 }
 
-::BBall_SpawnBall <- function(arena_name, origin_override = null)
+::BBall_SpawnBall <-  function(arena_name, origin_override = null, custom_ruleset_arena = false)
 {
 	local arena = Arenas[arena_name]
-	local bball_points = arena.BBall
-	local last_score_team = arena.BBall.last_score_team
+	local bball_points = custom_ruleset_arena ? {} : arena.BBall
+	local last_score_team = custom_ruleset_arena ? -1 : arena.BBall.last_score_team
 
 	local ground_ball = CreateByClassname("tf_halloween_pickup")
 
@@ -624,10 +660,18 @@
 	AddOutput(ground_ball, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self);", 0.0, 1)
 	AddOutput(ground_ball, "OnPlayerTouch", "!self", "Kill", "", SINGLE_TICK, 1)
 
-	if ("ground_ball" in arena.BBall && arena.BBall.ground_ball.IsValid())
+	if (!custom_ruleset_arena)
+	{
+		if ("ground_ball" in arena.BBall && arena.BBall.ground_ball.IsValid())
 		arena.BBall.ground_ball.Kill()
 
-	arena.BBall.ground_ball <- ground_ball
+		arena.BBall.ground_ball <- ground_ball
+	} else {
+		if ("ground_ball" in arena.RulesetVote && arena.RulesetVote.ground_ball.IsValid())
+			arena.RulesetVote.ground_ball.Kill()
+
+		arena.RulesetVote.ground_ball <- ground_ball
+	}
 
 	EntFireByHandle(ground_ball, "RunScriptCode", "DispatchSpawn(self)", 0.2, null, null)
 }
@@ -1160,9 +1204,6 @@
 				if (arena.BBall.ground_ball.IsValid())
 					arena.BBall.ground_ball.SetOrigin(arena.BBall.neutral_home)
 
-				if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
-					p.GetScriptScope().ball_ent.Kill()
-
 
 				arena.BBall.bball_pickup_r <- CreateByClassname("trigger_particle")
 				arena.BBall.bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_2")
@@ -1557,26 +1598,27 @@
 	dummy.AcceptInput("Break", "", player, player)
 }
 
-::ShowModelToPlayer <- function(player, model = ["models/player/heavy.mdl", 0], pos = Vector(), ang = QAngle(), duration = 9999.0)
+::ShowModelToPlayer <-  function(_player, model = ["models/player/heavy.mdl", 0, 0], pos = Vector(), ang = QAngle(), duration = 9999.0)
 {
     PrecacheModel(model[0])
-    local proxy_entity = CreateByClassname("obj_teleporter"); // not using SpawnEntityFromTable as that creates spawning noises
-    proxy_entity.SetAbsOrigin(pos);
-    proxy_entity.SetAbsAngles(ang);
-    DispatchSpawn(proxy_entity);
+    local proxy_entity = CreateByClassname("obj_teleporter") // not using SpawnEntityFromTable as that creates spawning noises
+    proxy_entity.SetAbsOrigin(pos)
+    proxy_entity.SetAbsAngles(ang)
+    DispatchSpawn(proxy_entity)
 
-    proxy_entity.SetModel(model[0]);
-    proxy_entity.SetSkin(model[1]);
+    proxy_entity.SetModel(model[0])
+    proxy_entity.SetSkin(model[1])
     proxy_entity.AddEFlags(EFL_NO_THINK_FUNCTION); // EFL_NO_THINK_FUNCTION prevents the entity from disappearing
-    proxy_entity.SetSolid(SOLID_NONE);
-	proxy_entity.SetTeam(player.GetTeam()) // for glows
+    proxy_entity.SetSolid(SOLID_NONE)
+	proxy_entity.SetTeam(model[2]) // for glows
 
-    SetPropBool(proxy_entity, "m_bPlacing", true);
-    SetPropInt(proxy_entity, "m_fObjectFlags", 2); // sets "attachment" flag, prevents entity being snapped to player feet
+    SetPropBool(proxy_entity, "m_bPlacing", true)
+    SetPropInt(proxy_entity, "m_fObjectFlags", 2) // sets "attachment" flag, prevents entity being snapped to player feet
 
     // m_hBuilder is the player who the entity will be networked to only
-    SetPropEntity(proxy_entity, "m_hBuilder", player);
-    EntFireByHandle(proxy_entity, "Kill", "", duration, player, player);
+    SetPropEntity(proxy_entity, "m_hBuilder", _player)
+    EntFireByHandle(proxy_entity, "Kill", "", duration, _player, _player)
+	_player.GetScriptScope()[format("__showmodel_%d", _player.entindex(), proxy_entity.entindex())] <- proxy_entity
     return proxy_entity;
 }
 //taken from popext (originally made by fellen)
@@ -1599,4 +1641,12 @@
 	}
 
 	return QAngle(pitch, yaw, 0.0)
+}
+
+::SwitchWeaponSlot <-  function(player, slot, delay = -2) {
+
+	if (delay == -2)
+		MGE_CLIENTCOMMAND.AcceptInput("Command", format("slot%d", slot), player, player)
+	else
+		EntFireByHandle(MGE_CLIENTCOMMAND, "Command", format("slot%d", slot), delay, player, player)
 }

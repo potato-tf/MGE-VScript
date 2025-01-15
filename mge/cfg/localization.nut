@@ -107,8 +107,12 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		InvalidRuleset             = "\x07"+MGE_COLOR_BACKGROUND+"Invalid ruleset: %s"
 		RulesetCannotSet 		   = "\x07" + MGE_COLOR_BACKGROUND + "You cannot set custom rulesets for this arena at this time."
+		RulesetVote                = "\x07" + MGE_COLOR_BACKGROUND + "You voted to enable %s for this arena, waiting for other players to vote..."
+		RulesetVoteArena	       = "\x07" + MGE_COLOR_BACKGROUND + "%s wants to enable %s mode for this arena, type !ruleset %s to vote."
 
 		Error_StatsNotFound        = "\n\nError: stats not found for %s! fetching again and skipping update...\n\n"
+
+		GamemodeUpdate 			   = "\x07" + MGE_COLOR_BACKGROUND + "Gamemode has been updated, the map will restart in %s seconds..."
 
 		VPI_InitDB 				   = "[VPI]: Initializing database..."
 		VPI_DBInitError 		   = "[VPI]: ERROR: DATABASE CONNECTION FAILED! View vpi.py output for more information."

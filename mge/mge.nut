@@ -498,7 +498,6 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 }
 
 ::MGE_HUD <- CreateByClassname("game_text")
-
 MGE_HUD.KeyValueFromString("targetname", "__mge_hud")
 MGE_HUD.KeyValueFromInt("effect", 2)
 MGE_HUD.KeyValueFromString("color", "255 254 255")
@@ -514,10 +513,11 @@ SetPropBool(MGE_HUD, "m_bForcePurgeFixedupStrings", true)
 
 //EFL_KILLME effectively acts as a way to make any entity act like a preserved entity
 //something somewhere keeps cleaning up our entities on player spawn
+//this is not a good solution and causes a myriad of unintended side effects
+//notably team_round_timer does not fire its OnFinished output
 MGE_HUD.AddEFlags(EFL_KILLME)
 
 ::KOTH_HUD_RED <- CreateByClassname("game_text")
-
 KOTH_HUD_RED.KeyValueFromString("targetname", "__mge_hud_koth_red")
 KOTH_HUD_RED.KeyValueFromInt("effect", 2)
 KOTH_HUD_RED.KeyValueFromString("color", KOTH_RED_HUD_COLOR)
@@ -531,8 +531,8 @@ KOTH_HUD_RED.KeyValueFromFloat("x", KOTH_HUD_RED_POS_X)
 KOTH_HUD_RED.KeyValueFromFloat("y", KOTH_HUD_RED_POS_Y)
 SetPropBool(KOTH_HUD_RED, "m_bForcePurgeFixedupStrings", true)
 KOTH_HUD_RED.AddEFlags(EFL_KILLME)
-::KOTH_HUD_BLU <- CreateByClassname("game_text")
 
+::KOTH_HUD_BLU <- CreateByClassname("game_text")
 KOTH_HUD_BLU.KeyValueFromString("targetname", "__mge_hud_koth_blu")
 KOTH_HUD_BLU.KeyValueFromInt("effect", 2)
 KOTH_HUD_BLU.KeyValueFromString("color", KOTH_BLU_HUD_COLOR)
@@ -563,12 +563,25 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 				clone_dir = GAMEMODE_AUTOUPDATE_TARGET_DIR
 			},
 			callback = function(response, error) {
+				//gamemode has been updated
 				if (!error && response.len()) {
-					MGE_ClientPrint(null, 3, "GamemodeUpdate", GAMEMODE_AUTOUPDATE_RESTART_TIME)
+
+					MGE_ClientPrint(null, 3, "GamemodeUpdate", counter > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : counter)
+
 					printl("Files changed:")
-					foreach(file in response) {
+
+					foreach(file in response)
 						printl(file)
+
+					printl("[MGE VScript] Got new gamemode version via git")
+
+					if (counter > GAMEMODE_AUTOUPDATE_RESTART_TIME)
+					{
+						printl("[MGE VScript] updating map restart time...")
+						counter = GAMEMODE_AUTOUPDATE_RESTART_TIME
+						EntFire("__mge_timer", "SetTime", format("%d", GAMEMODE_AUTOUPDATE_RESTART_TIME))
 					}
+
 				} else if (!response.len()) {
 					printl("No updates found")
 				}
@@ -579,7 +592,12 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 	AddThinkToEnt(MGE_CHANGELEVEL, "AutoUpdate")
 }
 
-MGE_TIMER <- CreateByClassname("team_round_timer")
+::MGE_CLIENTCOMMAND <- CreateByClassname("point_clientcommand")
+MGE_CLIENTCOMMAND.KeyValueFromString("targetname", "__mge_clientcommand")
+MGE_CLIENTCOMMAND.AddEFlags(EFL_KILLME)
+DispatchSpawn(MGE_CLIENTCOMMAND)
+
+::MGE_TIMER <- CreateByClassname("team_round_timer")
 MGE_TIMER.KeyValueFromString("targetname", "__mge_timer")
 SetPropInt(MGE_TIMER, "m_nTimerMaxLength", MAP_RESTART_TIMER)
 SetPropInt(MGE_TIMER, "m_nTimerInitialLength", MAP_RESTART_TIMER)
@@ -596,8 +614,9 @@ AddOutput(MGE_TIMER, "OnFinished", "!self", "CallScriptFunction", "MGE_DoChangel
 DispatchSpawn(MGE_TIMER)
 MGE_TIMER.AcceptInput("Resume", "", null, null)
 
-local counter = MAP_RESTART_TIMER
 MGE_TIMER.ValidateScriptScope()
+
+MGE_TIMER.GetScriptScope().counter <- MAP_RESTART_TIMER
 MGE_TIMER.GetScriptScope().TimerThink <- function()
 {
 	counter--
@@ -619,14 +638,13 @@ MGE_TIMER.AddEFlags(EFL_KILLME)
 
 	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)
 	{
-		local client_command = CreateByClassname("point_clientcommand")
-		DispatchSpawn(client_command)
 		Convars.SetValue("mp_chattime", 9999.0)
 		EntFire("__mge_changelevel", "Activate") //do this anyway just to bring up the scoreboard/"end the round" instead of suddenly kicking everyone out
-		EntFire("player", "RunScriptCode", "EntFire(`point_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
+		EntFire("player", "RunScriptCode", "EntFire(`__mge_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
 		EntFire("worldspawn", "Kill", "", 1.03)
 		return
 	}
+	Convars.SetValue("mp_chattime", 1.0)
 	EntFire("__mge_changelevel", "Activate")
 }
 MGE_Init()

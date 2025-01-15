@@ -26,7 +26,18 @@ const GAMEMODE_AUTOUPDATE_INTERVAL = 120
 //general
 const DEFAULT_FRAGLIMIT = 20
 const DEFAULT_ELO 		= 1600
-const ELO_TRACKING_MODE = 2 //0 = none, 1 = file (tf/scriptdata/mge_playerdata), 2 = database (requires VPI)
+
+// 0 = none - No ELO or stat tracking at all
+// 1 = file (tf/scriptdata/mge_playerdata) - Recommended for servers hosted on a single physical machine
+// 2 = database (requires VPI) - Recommended for multi-region server networks
+// if VPI is not running this will just do nothing and accumulate junk in your scriptdata folder xd
+const ELO_TRACKING_MODE = 2
+// due to the lack of a proper database connector I generally recommend sticking to the file-based tracking if you don't care about a leaderboard
+// I've done everything I can to make the database integration stuff as smooth as possible and mince has done a great job with VPI
+// but there's only so much you can do when forced to juggle a completely separate third party script
+// even for multi-server networks, this just means your EU players will only have their stats/ELO on EU servers
+// you could argue that ping diffs are actually a good reason to separate stats by region and turn this limitation into a feature lole
+
 const ENABLE_LEADERBOARD = true //This only works if ELO_TRACKING_MODE is set to 2, file-based leaderboards don't exist yet
 const REMOVE_DROPPED_WEAPONS = true
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
@@ -120,6 +131,7 @@ const BBALL_HOOP_POS_OFFSET 		= 60
  //setting this to 360 will allow placing hoops on the floor/ceiling.
  //Some angle forgiveness (<15) means the wall doesn't need to be perfectly flat
 const BBALL_HOOP_MAX_ANGLE_X		= 5.0
+const BBALL_BALL_ANGLE_X			= 360.0
 
 //NOTE:
 //See BBall notes about adding more spawns
