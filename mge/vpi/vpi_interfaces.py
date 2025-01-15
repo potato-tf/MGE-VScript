@@ -182,7 +182,7 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
         await cursor.execute(f"UPDATE mge_playerdata SET {set_clause} WHERE steam_id = {network_id}")
         return await cursor.fetchall()
     
-banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup.bat"]
+banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup.bat", "config.nut"]
 @WrapInterface
 async def VPI_MGE_AutoUpdate(info, test=False):
     """

@@ -93,14 +93,14 @@ class MGE_Events
 
 			if (arena.State != AS_IDLE)
 			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetNotInIdle")
+				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetCannotSet")
 				return
 			}
 
 			local arena_name = scope.arena_info.name
 			local ruleset = split(params.text, " ")
 
-			if (ruleset.len() > 1 && ruleset[1] in special_arenas && !arena.IsMGE)
+			if (arena.IsMGE && ruleset.len() > 1 && ruleset[1] in special_arenas)
 			{
 				arena.IsCustomRuleset <- true
 				arena[ruleset[1]] <- "1"
@@ -248,8 +248,9 @@ class MGE_Events
 					p.AddCustomAttribute("disable weapon switch", 1, -1)
 				}
 				return
+			} else if (!arena.IsMGE) {
+				MGE_ClientPrint(player, HUD_PRINTTALK, "InvalidRuleset", ruleset[1])
 			}
-			MGE_ClientPrint(player, HUD_PRINTTALK, "InvalidRuleset", ruleset[1])
 		}
 		"language" : function(params) {
 			local lang = split(params.text, " ")

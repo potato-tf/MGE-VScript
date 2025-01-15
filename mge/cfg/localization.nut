@@ -106,7 +106,7 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		MarketGarden               = "\x07"+MGE_COLOR_SUBJECT+"Market Garden!"
 
 		InvalidRuleset             = "\x07"+MGE_COLOR_BACKGROUND+"Invalid ruleset: %s"
-		RulesetNotInIdle          = "\x07"+MGE_COLOR_BACKGROUND+"You can only set rulesets for idle arenas."
+		RulesetCannotSet 		   = "\x07" + MGE_COLOR_BACKGROUND + "You cannot set custom rulesets for this arena at this time."
 
 		Error_StatsNotFound        = "\n\nError: stats not found for %s! fetching again and skipping update...\n\n"
 

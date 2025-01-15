@@ -13,6 +13,7 @@ else
 {
 	Include("constants")
 	Include("itemdef_constants")
+	Include("cfg/config")
 	Include("cfg/localization")
 	Include("vpi/vpi")
 	Include("functions")
