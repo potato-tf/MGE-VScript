@@ -1556,3 +1556,47 @@
 	DispatchSpawn(dummy)
 	dummy.AcceptInput("Break", "", player, player)
 }
+
+::ShowModelToPlayer <- function(player, model = ["models/player/heavy.mdl", 0], pos = Vector(), ang = QAngle(), duration = 9999.0)
+{
+    PrecacheModel(model[0])
+    local proxy_entity = CreateByClassname("obj_teleporter"); // not using SpawnEntityFromTable as that creates spawning noises
+    proxy_entity.SetAbsOrigin(pos);
+    proxy_entity.SetAbsAngles(ang);
+    DispatchSpawn(proxy_entity);
+
+    proxy_entity.SetModel(model[0]);
+    proxy_entity.SetSkin(model[1]);
+    proxy_entity.AddEFlags(EFL_NO_THINK_FUNCTION); // EFL_NO_THINK_FUNCTION prevents the entity from disappearing
+    proxy_entity.SetSolid(SOLID_NONE);
+	proxy_entity.SetTeam(player.GetTeam()) // for glows
+
+    SetPropBool(proxy_entity, "m_bPlacing", true);
+    SetPropInt(proxy_entity, "m_fObjectFlags", 2); // sets "attachment" flag, prevents entity being snapped to player feet
+
+    // m_hBuilder is the player who the entity will be networked to only
+    SetPropEntity(proxy_entity, "m_hBuilder", player);
+    EntFireByHandle(proxy_entity, "Kill", "", duration, player, player);
+    return proxy_entity;
+}
+//taken from popext (originally made by fellen)
+::VectorAngles <- function(forward) {
+	local yaw, pitch
+	if ( forward.y == 0.0 && forward.x == 0.0 ) {
+		yaw = 0.0
+		if (forward.z > 0.0)
+			pitch = 270.0
+		else
+			pitch = 90.0
+	}
+	else {
+		yaw = (atan2(forward.y, forward.x) * 180.0 / Pi)
+		if (yaw < 0.0)
+			yaw += 360.0
+		pitch = (atan2(-forward.z, forward.Length2D()) * 180.0 / Pi)
+		if (pitch < 0.0)
+			pitch += 360.0
+	}
+
+	return QAngle(pitch, yaw, 0.0)
+}

@@ -33,7 +33,7 @@ const MAP_RESTART_TIMER = 7200 //how long to wait before restarting the map in s
 
 //setting this to true will send a retry command to every player and kill worldspawn
 //this obviously assumes you use a watchdog/systemd/etc to restart the server
-const SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL = false
+const SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL = true
 
 //if repo is not "" AND vpi is running, VPI will periodically git clone the repo
 //if VPI detects a change it will trigger a callback function to reload the map
@@ -43,7 +43,7 @@ const GAMEMODE_AUTOUPDATE_BRANCH = "main" //the branch to clone
 const GAMEMODE_AUTOUPDATE_TARGET_DIR = "D:/dedicatedtf/tf/scripts/vscripts" //the directory to clone to
 const GAMEMODE_AUTOUPDATE_RESTART_TIME = 300.0 //the time to wait before restarting the map in seconds
 
- //how often to check for updates in seconds (30 minutes 30*60=1800).  
+ //how often to check for updates in seconds (30 minutes 30*60=1800).
  //GitHub will rate limit you if you try to abuse this
 const GAMEMODE_AUTOUPDATE_INTERVAL = 120
 
@@ -135,8 +135,10 @@ const BBALL_PARTICLE_TRAIL_BLUE 	= "player_intel_trail_blue"
 
 //these are for custom ruleset bball only
 const BBALL_HOOP_MODEL				= "models/props_forest/basketball_hoop.mdl"
-const MAX_BBALL_HOOP_DIST			= 750
-
+const BBALL_MAX_HOOP_DIST			= 1000
+const BBALL_HOOP_PLACEMENT_COOLDOWN	= 2.0
+const BBALL_HOOP_POS_OFFSET			=  60
+const BBALL_HOOP_MAX_ANGLE_X			= 5.0
 //NOTE:
 //See BBall notes about adding more spawns
 

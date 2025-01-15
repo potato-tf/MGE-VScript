@@ -497,7 +497,6 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 	nav_generation_state.is_running = true
 }
 
-//EFL_KILLME effectively acts as a way to make any entity act like a preserved entity
 ::MGE_HUD <- CreateByClassname("game_text")
 
 MGE_HUD.KeyValueFromString("targetname", "__mge_hud")
@@ -512,6 +511,9 @@ MGE_HUD.KeyValueFromInt("channel", 4)
 MGE_HUD.KeyValueFromFloat("x", MGE_HUD_POS_X)
 MGE_HUD.KeyValueFromFloat("y", MGE_HUD_POS_Y)
 SetPropBool(MGE_HUD, "m_bForcePurgeFixedupStrings", true)
+
+//EFL_KILLME effectively acts as a way to make any entity act like a preserved entity
+//something somewhere keeps cleaning up our entities on player spawn
 MGE_HUD.AddEFlags(EFL_KILLME)
 
 ::KOTH_HUD_RED <- CreateByClassname("game_text")
@@ -596,7 +598,7 @@ MGE_TIMER.AcceptInput("Resume", "", null, null)
 
 local counter = MAP_RESTART_TIMER
 MGE_TIMER.ValidateScriptScope()
-MGE_TIMER.GetScriptScope().TimerThink <- function() 
+MGE_TIMER.GetScriptScope().TimerThink <- function()
 {
 	counter--
 	if (counter)
@@ -605,6 +607,7 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 			return 1
 
 		SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", counter)})
+		return 1
 	}
 
 	MGE_DoChangelevel()
@@ -613,34 +616,17 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 
 MGE_TIMER.AddEFlags(EFL_KILLME)
 ::MGE_DoChangelevel <- function() {
-	
-	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL) 
+
+	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)
 	{
-		// for (local i = 1; i <= MAX_CLIENTS; i++) 
-		// {
-			// local player = PlayerInstanceFromIndex(i)
-			// if (!player || !player.IsValid()) continue
-			// client_command.AcceptInput("Command", "retry", player, player)
-		// }
-		//called too early, retry doesn't get sent in time
-		// First().Kill()
-		
 		local client_command = CreateByClassname("point_clientcommand")
 		DispatchSpawn(client_command)
 		Convars.SetValue("mp_chattime", 9999.0)
-		EntFire("__mge_changelevel", "Activate")
+		EntFire("__mge_changelevel", "Activate") //do this anyway just to bring up the scoreboard/"end the round" instead of suddenly kicking everyone out
 		EntFire("player", "RunScriptCode", "EntFire(`point_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
-		EntFire("worldspawn", "Kill", "", 1.015)
+		EntFire("worldspawn", "Kill", "", 1.03)
 		return
 	}
 	EntFire("__mge_changelevel", "Activate")
-}
-
-::ReplayTest <- function() {
-	SendGlobalGameEvent("training_complete", {
-		text = format("MAP RESTART IN %d SECONDS", 30)
-		map = "tr_target"
-		next_map = ""
-	})
 }
 MGE_Init()

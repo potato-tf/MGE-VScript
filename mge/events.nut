@@ -83,6 +83,12 @@ class MGE_Events
 		"ruleset" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
+
+			if (!("arena" in scope.arena_info))
+			{
+				MGE_ClientPrint(player, HUD_PRINTTALK, "MustJoinArena")
+				return
+			}
 			local arena = scope.arena_info.arena
 
 			if (arena.State != AS_IDLE)
@@ -94,62 +100,136 @@ class MGE_Events
 			local arena_name = scope.arena_info.name
 			local ruleset = split(params.text, " ")
 
-			if (ruleset.len() > 1 && ruleset[1] in special_arenas)
+			if (ruleset.len() > 1 && ruleset[1] in special_arenas && !arena.IsMGE)
 			{
 				arena.IsCustomRuleset <- true
 				arena[ruleset[1]] <- "1"
 				local ruleset_inits = {
 					function bball(player) {
 						local scope = player.GetScriptScope()
-						if ("ghost_hoop" in scope)
-							EntFireByHandle(scope.ghost_hoop, "Kill", "", -1, null, null)
+						if ("hoop" in scope)
+							EntFireByHandle(scope.hoop, "Kill", "", -1, null, null)
 
-						local ghost_hoop = CreateByClassname("prop_dynamic")
-						ghost_hoop.SetModel(BBALL_HOOP_MODEL)
+						local hoop = CreateByClassname("prop_dynamic")
+						hoop.SetModel(BBALL_HOOP_MODEL)
+						hoop.SetSolid(SOLID_VPHYSICS)
+						hoop.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+						hoop.SetTeam(player.GetTeam())
 
-						ghost_hoop.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-						ghost_hoop.SetSolid(SOLID_NONE)
+						//save basket pos in prop scope
+						hoop.ValidateScriptScope()
+						hoop.GetScriptScope().basket <- hoop.GetOrigin() + hoop.GetAbsAngles().Forward() * BBALL_HOOP_POS_OFFSET
 
-						ghost_hoop.SetAbsOrigin(player.EyePosition())
+						hoop.SetAbsOrigin(player.EyePosition())
 
-						ghost_hoop.AcceptInput("Color", player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR, null, null)
+						hoop.AcceptInput("Color", player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR, null, null)
 
-						DispatchSpawn(ghost_hoop)
+						DispatchSpawn(hoop)
 
-						local visbit = 1 << player.entindex()
-						SendGlobalGameEvent("show_annotation", {
-							visibilityBitfield = visbit,
-							text = format("MOUSE2: Place Hoop"),
-							lifetime = 5.0,
-							play_sound = BBALL_PICKUP_SOUND,
-							follow_entindex = ghost_hoop.entindex(),
-							show_distance = true,
-							show_effect = true
-						})
-						
-						scope.ghost_hoop <- ghost_hoop
+						scope.hoop <- hoop
+						scope.hoop_set <- false
+						scope.hoop_cooldown <- 0.0
+
+						EntFireByHandle(player, "RunScriptCode", @"
+							local visbit = 1 << self.entindex()
+							SendGlobalGameEvent(`show_annotation`, {
+								visibilityBitfield = visbit,
+								text = format(`MOUSE2: Place Hoop`),
+								lifetime = 5.0,
+								play_sound = BBALL_PICKUP_SOUND,
+								follow_entindex = self.GetScriptScope().hoop.entindex(),
+								show_distance = true,
+								show_effect = true
+							})
+						", GENERIC_DELAY, null, null)
 					}
 				}
 				local ruleset_thinks = {
 					function bball() {
+
+						if (hoop_cooldown > Time()) return
+
 						local hoop_trace = {
 
 							start = player.EyePosition(),
 							end = (player.EyeAngles().Forward() * INT_MAX),
-							mask = MASK_PLAYERSOLID,
+							mask = hoop_set ? -1 : MASK_PLAYERSOLID,
 							ignore = player
 						}
-				
+
 						TraceLineEx(hoop_trace)
 
-						if (!hoop_trace.hit || (player.EyePosition() - hoop_trace.pos).Length() > MAX_BBALL_HOOP_DIST) return
-				
-						ghost_hoop.KeyValueFromVector("origin", hoop_trace.pos)
+						//move hoop somewhere else
+						if (hoop_set)
+						{
+							if (
+								GetPropInt(player, "m_nButtons") & IN_ATTACK2 &&
+								hoop_trace.hit &&
+								(hoop_trace.endpos - hoop.GetOrigin()).Length() < 100.0
+							) {
 
-						local yaw = player.EyeAngles().y
-						local snapped_yaw = floor((yaw + 45) / 90) * 90
+								scope.hoop_set = false
+								hoop.AcceptInput("Color", player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR, null, null)
+								hoop.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 
-						ghost_hoop.SetAbsAngles(QAngle(0, (snapped_yaw + 180), 0))
+								for (local glows; glows = FindByClassnameWithin(glows, "obj_teleporter", hoop.GetOrigin(), 32.0);)
+									EntFireByHandle(glows, "Kill", "", -1, null, null)
+							}
+
+							return
+						}
+
+						if (!hoop_trace.hit) return
+
+						hoop.KeyValueFromVector("origin", hoop_trace.pos)
+
+						// Convert the plane normal to angles that face away from the wall
+						local normal_angles = VectorAngles(hoop_trace.plane_normal)
+
+						// Set the hoop angles perpendicular to the wall
+						hoop.SetAbsAngles(QAngle(normal_angles.x, normal_angles.y, normal_angles.z))
+
+						//TODO should this be inlined here?
+						//where else would it be used?
+						function CanPlaceHoop() {
+
+							if (!(GetPropInt(player, "m_nButtons") & IN_ATTACK))
+								return false
+
+							if ((player.EyePosition() - hoop_trace.pos).Length() > BBALL_MAX_HOOP_DIST)
+								return false
+
+							if (abs(hoop.GetAbsAngles().x) > BBALL_HOOP_MAX_ANGLE_X)
+								return false
+
+							return true
+						}
+
+						//place hoop
+						if (!hoop_set && CanPlaceHoop())
+						{
+							hoop_set = true
+							hoop.SetCollisionGroup(COLLISION_GROUP_PLAYER)
+							hoop.AcceptInput("Color", "255 255 255 255", null, null)
+							foreach(p, _ in arena.CurrentPlayers)
+							{
+								SendGlobalGameEvent("show_annotation", {
+									visibilityBitfield = 1 << p.entindex(),
+									text = format("Hoop placed by %s", player.GetScriptScope().Name),
+									lifetime = 5.0,
+									play_sound = COUNTDOWN_SOUND,
+									follow_entindex = hoop.entindex(),
+									show_distance = true,
+									show_effect = true
+								})
+								local glow_dummy = ShowModelToPlayer(p, [BBALL_HOOP_MODEL, 0], hoop.GetOrigin(), hoop.GetAbsAngles(), 9999.0)
+								glow_dummy.AcceptInput("SetParent", "!activator", hoop, hoop)
+								SetPropBool(glow_dummy, "m_bGlowEnabled", true)
+								hoop_cooldown = Time() + BBALL_HOOP_PLACEMENT_COOLDOWN
+								// p.SetOrigin(hoop.GetOrigin() + hoop.GetAbsAngles().Forward() * BBALL_HOOP_POS_OFFSET)
+							}
+							return
+						}
 					}
 				}
 

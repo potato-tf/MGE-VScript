@@ -47,9 +47,9 @@ local urgent_write_count     = 0;
 
 if (GetSecret() == "") throw "[VPI ERROR] Please set your secret token";
 
-local lateload = (Entities.FindByName(null, "bignet") != null);
-if (lateload)
-	throw "[VPI ERROR] Late loading is not permitted as it is a security risk, please load in mapspawn.nut"
+// local lateload = (Entities.FindByName(null, "bignet") != null);
+// if (lateload)
+// 	throw "[VPI ERROR] Late loading is not permitted as it is a security risk, please load in mapspawn.nut"
 
 local ROOT = getroottable();
 
