@@ -98,33 +98,37 @@ class MGE_Events
 			}
 
 			local arena_name = scope.arena_info.name
-			local ruleset = split(params.text, " ")
+			local ruleset_split = split(params.text, " ")
+			local ruleset = ruleset_split[1]
 
-			ruleset[1] in arena.RulesetVote ? arena.RulesetVote[ruleset[1]]++ : arena.RulesetVote[ruleset[1]] <- 1
+			local votes = arena.RulesetVote[ruleset]
+			votes[player.GetTeam() - 2]++
 
-			if (arena.RulesetVote[ruleset[1]] != arena.MaxPlayers)
+			printl(votes[0] + " : " + votes[1])
+			if (votes[0] + votes[1] < arena.MaxPlayers)
 			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetVote", ruleset[1])
+				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetVote", ruleset)
 
 				foreach(p, _ in arena.CurrentPlayers)
 				{
 					if (p == player) continue
 
-					MGE_ClientPrint(p, HUD_PRINTTALK, "RulesetVoteArena", scope.Name, ruleset[1], ruleset[1])
+					MGE_ClientPrint(p, HUD_PRINTTALK, "RulesetVoteArena", scope.Name, ruleset, ruleset)
 				}
 				return
 			}
 
-			if (arena.IsMGE && ruleset.len() > 1 && ruleset[1] in special_arenas)
+			if (arena.IsMGE && ruleset.len() > 1 && ruleset in special_arenas)
 			{
 				arena.RulesetVote.clear()
 
-				arena[ruleset[1]] <- "1"
+				arena[ruleset] <- "1"
+				arena.IsCustomRuleset <- true
+				SetArenaState(arena_name, AS_IDLE)
 				delete arena.mge
 
 				local ruleset_inits = {
 					function bball() {
-						arena.IsBBall <- true
 						if (!("validatedhoops" in arena.RulesetVote))
 						{
 							arena.RulesetVote.ballvote_pos <- array(2, null)
@@ -175,7 +179,8 @@ class MGE_Events
 				}
 				local ruleset_thinks = {
 					function bball() {
-
+						// printl(arena.RulesetVote.validatedhoops)
+						// printl("temp_ball" in self.GetScriptScope())
 						local scope = self.GetScriptScope()
 						if (hoop_cooldown > Time()) return
 
@@ -220,22 +225,27 @@ class MGE_Events
 							}
 							if (arena.RulesetVote.validatedhoops == arena.MaxPlayers)
 							{
-								scope.temp_ball <- ShowModelToPlayer(self, [BBALL_BALL_MODEL, 0, 0], hoop_trace.endpos, QAngle(), 9999.0)
-								EntFireByHandle(self, "RunScriptCode", format(@"
-									SendGlobalGameEvent(`show_annotation`, {
-										visibilityBitfield = 1 << self.entindex(),
-										id = self.entindex() + BBALL_HOOP_SIZE,
-										text = `MOUSE1: Set ball respawn point`,
-										lifetime = 5.0,
-										play_sound = BBALL_PICKUP_SOUND,
-										follow_entindex = %d,
-										show_distance = true,
-										show_effect = true
-									})
-								", scope.temp_ball.entindex()), GENERIC_DELAY, null, null)
+								foreach(p, _ in arena.CurrentPlayers)
+								{
+									local _scope = p.GetScriptScope()
+									_scope.temp_ball <- ShowModelToPlayer(p, [BBALL_BALL_MODEL, 0, 0], hoop_trace.endpos, QAngle(), 9999.0)
+									EntFireByHandle(p, "RunScriptCode", format(@"
+										SendGlobalGameEvent(`show_annotation`, {
+											visibilityBitfield = 1 << self.entindex(),
+											id = self.entindex() + BBALL_HOOP_SIZE,
+											text = `MOUSE1: Set ball respawn point`,
+											lifetime = 5.0,
+											play_sound = BBALL_PICKUP_SOUND,
+											follow_entindex = %d,
+											show_distance = true,
+											show_effect = true
+										})
+									", _scope.temp_ball.entindex()), GENERIC_DELAY, null, null)
+								}
 							}
 							return
-						} else if (hoop_validated && arena.RulesetVote.validatedhoops == arena.MaxPlayers && "temp_ball" in scope) {
+						} else if (hoop_validated && arena.RulesetVote.validatedhoops == arena.MaxPlayers && "temp_ball" in scope)
+						{
 
 							local ball = scope.temp_ball
 							ball.KeyValueFromVector("origin", hoop_trace.pos + Vector(0, 0, 10))
@@ -244,15 +254,14 @@ class MGE_Events
 
 							if (CanPlaceHoop(ball))
 							{
-								// arena.RulesetVote.ballvote_pos[self.GetTeam() - 2] = ball.GetOrigin()
-								arena.RulesetVote.ballvote_pos[0] = ball.GetOrigin()
-								arena.RulesetVote.ballvote_pos[1] = ball.GetOrigin()
+								arena.RulesetVote.ballvote_pos[self.GetTeam() - 2] = ball.GetOrigin()
+								// arena.RulesetVote.ballvote_pos[0] = ball.GetOrigin()
+								// arena.RulesetVote.ballvote_pos[1] = ball.GetOrigin()
 
 								//we both picked an area close enough to eachother, start the game
 								local votepos = arena.RulesetVote.ballvote_pos
-								if (votepos[0] && votepos[1] && (votepos[0] - votepos[1]).Length() < 50.0)
+								if (votepos[0] && votepos[1] && (votepos[0] - votepos[1]).Length() < 200.0)
 								{
-
 									arena.RulesetVote.ground_ball.SetOrigin(ball.GetOrigin())
 									arena.RulesetVote.ground_ball.SetAbsAngles(ball.GetAbsAngles())
 
@@ -264,32 +273,37 @@ class MGE_Events
 									// arena.bball_hoop_blue <- scope.hoop.GetScriptScope().basket.ToKVString()
 									arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
+									arena.fraglimit /= 2
 									LoadSpawnPoints(arena_name)
 
-									printl("\n\n" + arena.IsBBall + "\n\n")
+									//set by BBall_SpawnBall
 
 									arena.BBall.ground_ball <- arena.RulesetVote.ground_ball
 
-									arena.IsCustomRuleset <- true
 									arena.RulesetVote.clear()
 									SetArenaState(arena_name, AS_COUNTDOWN)
 
-									ball.Kill()
-									delete scope.temp_ball
-									if ("CustomRulesetThink" in scope.ThinkTable)
-										delete scope.ThinkTable.CustomRulesetThink
+									foreach(p, _ in arena.CurrentPlayers)
+									{
+										if (scope.temp_ball && scope.temp_ball.IsValid())
+											EntFireByHandle(scope.temp_ball, "Kill", "", -1, null, null)
+										if ("CustomRulesetThink" in scope.ThinkTable)
+											delete scope.ThinkTable.CustomRulesetThink
+										p.RemoveCustomAttribute("no_attack")
+										p.RemoveCustomAttribute("disable weapon switch")
+									}
 									return
 								}
 
 								foreach (p, _ in arena.CurrentPlayers)
 								{
 									SendGlobalGameEvent("show_annotation", {
-										visibilityBitfield = 1 << self.entindex(),
+										visibilityBitfield = 1 << p.entindex(),
 										id = self.entindex() + BBALL_HOOP_SIZE,
-										text = format("%s wants to spawn the ball here", p.GetScriptScope().Name),
+										text = format("%s wants to spawn the ball here", scope.Name),
 										lifetime = 3.0,
 										play_sound = BBALL_PICKUP_SOUND,
-										follow_entindex = ball.entindex(),
+										follow_entindex = scope.temp_ball.entindex(),
 										show_distance = true,
 										show_effect = true
 									})
@@ -339,17 +353,19 @@ class MGE_Events
 							hoop.GetScriptScope().basket <- (hoop.GetOrigin() + hoop.GetAbsAngles().Forward() * BBALL_HOOP_POS_OFFSET)
 							hoop.GetScriptScope().hoop_validated <- false
 							local readytovalidate = 0
+							local hoops = []
 							foreach(p, _ in arena.CurrentPlayers)
 							{
 								local _scope = p.GetScriptScope()
-								local _hoop = _scope.hoop
+								hoops.append(_scope.hoop)
+
 								SendGlobalGameEvent("show_annotation", {
 									visibilityBitfield = 1 << p.entindex(),
 									id = p.entindex() + BBALL_HOOP_SIZE, //add some constant to this value to singify it's a bball annotation
-									text = format("Hoop placed by %s", self.GetScriptScope().Name),
+									text = format("Hoop placed by %s", scope.Name),
 									lifetime = 5.0,
 									play_sound = COUNTDOWN_SOUND,
-									follow_entindex = _hoop.entindex(),
+									follow_entindex = scope.hoop.entindex(),
 									show_distance = true,
 									show_effect = true
 								})
@@ -357,13 +373,18 @@ class MGE_Events
 								if (p.entindex() in arena.RulesetVote && arena.RulesetVote[p.entindex()])
 									readytovalidate++
 
-
-								local glow_dummy = ShowModelToPlayer(p, [BBALL_HOOP_MODEL, 0, p.GetTeam() == TF_TEAM_RED ? 3 : 2], _hoop.GetOrigin(), _hoop.GetAbsAngles(), 9999.0)
-								printl(glow_dummy)
-								glow_dummy.AcceptInput("SetParent", "!activator", _hoop, _hoop)
-								SetPropBool(glow_dummy, "m_bGlowEnabled", true)
 								hoop_cooldown = Time() + BBALL_HOOP_PLACEMENT_COOLDOWN
 								// p.SetOrigin(hoop.GetOrigin() + hoop.GetAbsAngles().Forward() * BBALL_HOOP_POS_OFFSET)
+							}
+							foreach(__hoop in hoops)
+							{
+								foreach(p, _ in arena.CurrentPlayers)
+								{
+									local glow_dummy = ShowModelToPlayer(p, [BBALL_HOOP_MODEL, 0, p.GetTeam() == TF_TEAM_RED ? 3 : 2], __hoop.GetOrigin(), __hoop.GetAbsAngles(), 9999.0)
+									printl(glow_dummy)
+									glow_dummy.AcceptInput("SetParent", "!activator", __hoop, __hoop)
+									SetPropBool(glow_dummy, "m_bGlowEnabled", true)
+								}
 							}
 
 							if (readytovalidate == arena.MaxPlayers)
@@ -371,9 +392,15 @@ class MGE_Events
 								foreach(p, _ in arena.CurrentPlayers)
 								{
 									EntFireByHandle(p, "RunScriptCode", format(@"
-										self.ForceRespawn();
 										SwitchWeaponSlot(self, 3);
 										SwitchWeaponSlot(self, 1)
+										for (local child = self.FirstMoveChild(); child != null; child = child.NextMovePeer())
+										{
+											SetPropInt(child, `m_clrRender`, INT_COLOR_WHITE)
+											SetPropInt(child, `m_nRenderMode`, kRenderFxNone)
+										}
+										self.RemoveCustomAttribute(`disable weapon switch`)
+										self.RemoveCustomAttribute(`no_attack`)
 									", hoop.entindex()), GENERIC_DELAY, null, null)
 
 									EntFireByHandle(p, "RunScriptCode", format(@"
@@ -397,8 +424,8 @@ class MGE_Events
 
 				foreach (p, _ in arena.CurrentPlayers)
 				{
-					ruleset_inits[ruleset[1]].call(p.GetScriptScope())
-					p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset[1]]
+					ruleset_inits[ruleset].call(p.GetScriptScope())
+					p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset]
 					for(local child = p.FirstMoveChild(); child != null; child = child.NextMovePeer())
 						if (startswith(child.GetClassname(), "tf_weapon"))
 						{
@@ -410,7 +437,7 @@ class MGE_Events
 				}
 				return
 			} else if (!arena.IsMGE) {
-				MGE_ClientPrint(player, HUD_PRINTTALK, "InvalidRuleset", ruleset[1])
+				MGE_ClientPrint(player, HUD_PRINTTALK, "InvalidRuleset", ruleset)
 			}
 		}
 		"language" : function(params) {
@@ -545,10 +572,11 @@ class MGE_Events
 
 				// ", arena_name), -1, null, null)
 
+				local _arena = Arenas[arena_name]
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
-					if (!arena.IsUltiduo)
+					if (!arena.IsUltiduo && !(arena.IsBBall && arena.State == AS_IDLE))
 						EntFireByHandle(player, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
-					else
+					else if (arena.IsUltiduo)
 					{
 						local current_medics = arena.Ultiduo.CurrentMedics
 						foreach(p, _ in arena.CurrentPlayers)
@@ -566,7 +594,8 @@ class MGE_Events
 						}
 					}
 
-				SetSpecialArena(player, arena_name)
+				// SetSpecialArena(player, arena_name)
+				EntFireByHandle(player, "RunScriptCode", format("SetSpecialArena(self, `%s`)", arena_name), GENERIC_DELAY, null, null)
 
 				local idx = TryGetClearSpawnPoint(player, arena_name)
 				player.SetAbsOrigin(arena.SpawnPoints[idx][0])
@@ -681,7 +710,7 @@ class MGE_Events
 					"airshots" in attacker_scope.stats ? attacker_scope.stats.airshots++ : attacker_scope.stats.airshots <- 1
 				}
 				//we've hit a market garden
-				else if (attacker.GetActiveWeapon().GetAttribute("mod crit while airborne", 0) && attacker.InCond(TF_COND_BLASTJUMPING) && params.damagebits & DMG_CRITICAL)
+				else if (attacker && attacker.GetActiveWeapon() && attacker.GetActiveWeapon().GetAttribute("mod crit while airborne", 0) && attacker.InCond(TF_COND_BLASTJUMPING) && params.damagebits & DMG_CRITICAL)
 				{
 					hud_str = GetLocalizedString("MarketGarden", attacker)
 					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
@@ -782,6 +811,8 @@ class MGE_Events
 			local attacker = params.attacker
 			local victim_scope = victim.GetScriptScope()
 
+			if (!victim.IsPlayer()) return
+
 			local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
 			// if ("endif_killme" in victim_scope || ("endif" in arena && arena.endif == "1"))
 			// {
@@ -792,6 +823,11 @@ class MGE_Events
 			// 		victim.ApplyAbsVelocityImpulse(victim.GetAbsVelocity() * ENDIF_FORCE_MULT)
 			// 		print("new velocity: " + victim.GetAbsVelocity())
 			// 	}
+
+			if (victim != attacker && !(arena.IsBBall && arena.State == AS_IDLE))
+			{
+				return false
+			}
 
 			if (victim_scope && victim.IsPlayer() && attacker != victim && (arena.IsEndif || arena.IsMidair) && params.damage_type & DMG_BLAST && !(victim.GetFlags() & FL_ONGROUND))
 			{

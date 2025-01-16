@@ -131,14 +131,16 @@
 
  //passing a specific arena will refresh the rulesets temporarily for use in !rulesets
  //it does NOT initialize anything, only modifies the existing data
-::LoadSpawnPoints <-  function(arena_name = null)
+::LoadSpawnPoints <-  function(custom_ruleset_arena_name = null, arena_reset = false)
 {
 	local config = SpawnConfigs[GetMapName()]
 
+	printl("test1")
 	//custom ruleset handling
-	if (arena_name)
+	if (custom_ruleset_arena_name)
 	{
-		local _arena = Arenas[arena_name]
+		printl("test1")
+		local _arena = Arenas[custom_ruleset_arena_name]
 		_arena.Score          <- array(2, 0)
 
 		//0 breaks our countdown system, default to 1
@@ -165,17 +167,12 @@
 		_arena.round_start_sound_volume <- "round_start_sound_volume" in _arena ? _arena.round_start_sound_volume : ROUND_START_SOUND_VOLUME
 		_arena.airshot_height_threshold <- "airshot_height_threshold" in _arena ? _arena.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 
-		_arena.RulesetVote <- {}
-		foreach(k, _ in special_arenas)
-			_arena.RulesetVote[k] <- 0
-
 		if (_arena.IsUltiduo)
 		{
 			_arena.Ultiduo <- {
 				CurrentMedics = array(2, null)
 			}
 		}
-
 		if (_arena.IsBBall)
 		{
 			//alternative keyvalues for bball logic
@@ -209,9 +206,9 @@
 				if (split_spawns.len() in spawn_lens)
 					bball_points[k] <- Vector(split_spawns[0], split_spawns[1], split_spawns[2])
 			}
-
+			printl("test5")
 			_arena.BBall <- bball_points
-			BBall_SpawnBall(arena_name)
+			BBall_SpawnBall(custom_ruleset_arena_name)
 
 		}
 		if (_arena.IsKoth)
@@ -309,16 +306,14 @@
 		}
 
 		//rulset updated, re-add everyone to the arena
-		Arenas[arena_name] <- _arena
+		Arenas[custom_ruleset_arena_name] <- _arena
 		foreach(p, _ in _arena.CurrentPlayers)
 		{
-			RemovePlayer(p, arena_name)
-			AddPlayer(p, arena_name)
+			RemovePlayer(p, custom_ruleset_arena_name)
+			AddPlayer(p, custom_ruleset_arena_name)
 		}
 		return
 	}
-
-
 
 	// if (ELO_TRACKING_MODE == 2 && ENABLE_LEADERBOARD)
 	if (ENABLE_LEADERBOARD)
@@ -438,11 +433,14 @@
 		EntFire("worldspawn", "CallScriptFunction", "DoLeaderboardCam", GENERIC_DELAY)
 	}
 
-	Arenas_List <- array(config.len(), null)
+	if (!arena_reset)
+		Arenas_List <- array(config.len(), null)
 
 	local idx_failed = false
 	foreach(arena_name, _arena in config)
 	{
+		if (arena_reset && arena_name != custom_ruleset_arena_name) continue
+
 		Arenas[arena_name] <- _arena
 
 		_arena.CurrentPlayers <- {}
@@ -452,8 +450,8 @@
 		_arena.State          <- AS_IDLE
 		//0 breaks our countdown system, default to 1
 		_arena.cdtime         <- "cdtime" in _arena ? _arena.cdtime != "0" ? _arena.cdtime : 1 : DEFAULT_CDTIME
-		// _arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
-		_arena.MaxPlayers     <- 1
+		_arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
+		// _arena.MaxPlayers     <- 1 //debug
 		_arena.classes        <- "classes" in _arena ? split(_arena.classes, " ", true) : []
 		_arena.fraglimit      <- "fraglimit" in _arena ? _arena.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
 		_arena.SpawnIdx       <- 0
@@ -479,7 +477,7 @@
 		{
 			_arena.RulesetVote <- {}
 			foreach(k, _ in special_arenas)
-				_arena.RulesetVote[k] <- 0
+				_arena.RulesetVote[k] <- array(2, 0)
 		}
 
 		if (_arena.IsUltiduo)
@@ -663,7 +661,7 @@
 	if (!custom_ruleset_arena)
 	{
 		if ("ground_ball" in arena.BBall && arena.BBall.ground_ball.IsValid())
-		arena.BBall.ground_ball.Kill()
+			arena.BBall.ground_ball.Kill()
 
 		arena.BBall.ground_ball <- ground_ball
 	} else {
@@ -1349,6 +1347,16 @@
 				EntFireByHandle(arena.BBall.ground_ball, "Kill", "", -1, null, null)
 			}
 
+			if (arena.IsCustomRuleset)
+			{
+				foreach(p, _ in arena.CurrentPlayers)
+				{
+					RemovePlayer(p)
+					LoadSpawnPoints(arena_name, true)
+					AddToArena(p, arena_name)
+				}
+			}
+
 			EntFire("bignet", "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
 		},
 	}
@@ -1356,6 +1364,7 @@
 }
 
 ::SetSpecialArena <- function(player, arena_name) {
+
 	local arena = Arenas[arena_name]
 
 	if ("mge" in arena && arena.mge == "1") return
