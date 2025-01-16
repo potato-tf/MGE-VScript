@@ -117,7 +117,7 @@ class MGE_Events
 				return
 			}
 
-			SetCustomArenaRuleset(arena, ruleset)
+			SetCustomArenaRuleset(arena_name, ruleset)
 		}
 		"language" : function(params) {
 			local lang = split(params.text, " ")
@@ -503,8 +503,9 @@ class MGE_Events
 			// 		print("new velocity: " + victim.GetAbsVelocity())
 			// 	}
 
-			if (victim != attacker && !(arena.IsBBall && arena.State == AS_IDLE))
+			if (attacker != victim && "IsCustomRuleset" in arena && arena.IsCustomRuleset && arena.State != AS_FIGHT)
 			{
+				params.damage = 0
 				return false
 			}
 

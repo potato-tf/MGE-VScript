@@ -166,6 +166,10 @@ const KOTH_HUD_RED_POS_Y				= 0.4
 const KOTH_HUD_BLU_POS_X				= 0.6
 const KOTH_HUD_BLU_POS_Y				= 0.3
 
+//all koth settings below are for custom ruleset koth only
+
+const KOTH_POINT_MODEL			= "models/props_2fort/groundlight003.mdl"
+
 //NOTE:
 //See BBall notes about adding more spawns
 const ULTIDUO_MAX_SPAWNS				= 4
@@ -173,6 +177,8 @@ const ULTIDUO_MAX_SPAWNS				= 4
 
 PrecacheModel(BBALL_BALL_MODEL)
 PrecacheModel(BBALL_HOOP_MODEL)
+
+PrecacheModel(KOTH_POINT_MODEL)
 
 PrecacheSound(COUNTDOWN_SOUND)
 PrecacheSound(ROUND_START_SOUND)
