@@ -16,27 +16,31 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | 4Player | ✅ |
 | Turris | ✅ |
 | BBall | ✅ |
-| Koth* | ⚠️ |
-| Midair?* |⚠️|
+| Koth | ⚠️ |
+| Midair? |⚠️|
 | Ultiduo | ❌ |
 | Plain text ELO/stat tracking | ✅ |
 | Quake-style announcer lines (toggleable) | ✅ |
-| Localization* | ⚠️ |
-| NavMesh Generation* | ⚠️ |
+| Localization | ⚠️ |
+| NavMesh Generation | ⚠️ |
 | Database tracking (MySQL) | ✅ |
-| Database tracking (SQLite) | ❌ |
-| Custom rulesets | ❌ |
+| Database tracking (SQLite) | ⚠️ |
+| Custom rulesets | ⚠️ |
 | Arbitrary team sizes | ❌ |
 | Custom spawn ordering | ❌ |
 | In-Game map configuration tool | ❌ |
 
-*KOTH works but the logic is super janky right now, is Turris even that popular?
+⚠️KOTH works but the logic is super janky right now, is Turris even that popular?
 
-*I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
+⚠️I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
 
-*Theres a few AI translations in here. PRs fixing the AI translations listed in `mge/cfg/localization.nut`  would be appreciated
+⚠️Theres a few AI translations in here. PRs fixing the AI translations listed in `mge/cfg/localization.nut`  would be appreciated
 
-*See below for navmesh warning
+⚠️See below for navmesh warning, tl;dr it's very slow and will still generate bad navs on the more abstract arenas (oihguv, chillypunch, etc)
+
+⚠️The SQLite stuff should work fine but is untested.
+
+⚠️Ruleset voting exists but is very janky, doesn't clean itself up correctly, and is disabled by default.
 
 ## Installation
 - Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.  That's it
@@ -153,7 +157,7 @@ Or for only one arena:
 
 ### **WARNING:
 - This is very slow and will freeze your game for every arena
-- More "abstract" arenas (such as the ones on oihguy or chillypunch) will generate nav squares where you may not want them, and will take forever to generate.  Both oihguy and triumph take 30+ mins for every arena.  You have been warned.
+- More "abstract" arenas (such as the ones on oihguv or chillypunch) will generate nav squares where you may not want them, and will take forever to generate.  Both oihguv and triumph take 30+ mins for every arena.  You have been warned.
 
 ## Localization
 - Localization files are automatically detected by `cl_language` for per-player language settings, if a string is not localized it will default back to the DEFAULT_LANGUAGE constant.
