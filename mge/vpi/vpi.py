@@ -11,7 +11,7 @@ import importlib
 import asyncio
 import aiomysql
 import argparse
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 import vpi_interfaces
 
@@ -27,8 +27,8 @@ args = PARSER.parse_args()
 ############################################ ENV VARS #############################################
 # Server owners modify this section
 
-if os.path.exists("../.env"):
-	load_dotenv('../.env')
+# if os.path.exists("../.env"):
+	# load_dotenv('../.env')
 
 genv = os.environ.get
 
