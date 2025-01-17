@@ -75,7 +75,8 @@ local local_time = {}
 LocalTime(local_time)
 ::SERVER_DATA <- {
 	// server_key = split(hostname, "#")[1].slice(0, hostname.find("["))
-	server_key = split(hostname, "#")[0]
+	// server_key = split(hostname, "#")[0]
+	server_key = hostname
 	address = 0
 	map = GetMapName()
 	max_wave = -1
