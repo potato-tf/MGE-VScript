@@ -73,10 +73,10 @@ foreach (sound in StockSounds)
 local hostname = Convars.GetStr("hostname")
 local local_time = {}
 LocalTime(local_time)
+local _split = split(hostname, "#")
+local _split_region = split(_split[1], "[")
 ::SERVER_DATA <- {
-	// server_key = split(hostname, "#")[1].slice(0, hostname.find("["))
-	// server_key = split(hostname, "#")[0]
-	server_key = hostname
+	server_key = _split[1].slice(0, _split[1].find("["))
 	address = 0
 	map = GetMapName()
 	max_wave = -1
@@ -85,7 +85,7 @@ LocalTime(local_time)
 	players_connecting = 0
 	players_max = MaxClients().tointeger()
 	players_red = 0
-	region = split(hostname, "[")[1].slice(0, hostname.find("]"))
+	region = _split_region[1].slice(0, _split_region[1].find("]"))
 	server_name = hostname
 	status = "Waiting for players"
 	update_time = local_time
@@ -93,7 +93,9 @@ LocalTime(local_time)
 	campaign_name = "MGE"
 }
 
-printl("\n\n" + SERVER_DATA.server_key + "\n\n")
+// printl("\n\n" + SERVER_DATA.server_key + "\n\n")
+// printl(SERVER_DATA.region)
+// printl()
 
 if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 	::MGE_LEADERBOARD_DATA <- {
