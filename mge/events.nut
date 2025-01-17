@@ -162,6 +162,9 @@ class MGE_Events
 			HandleRoundStart()
 		}
 
+		function OnGameEvent_server_spawn(params){
+			printl("<<Server IP: " + server.address + ">>")
+		}
 		function OnGameEvent_player_activate(params)
 		{
 			local player = GetPlayerFromUserID(params.userid)
