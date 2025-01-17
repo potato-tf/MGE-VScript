@@ -74,7 +74,8 @@ local hostname = Convars.GetStr("hostname")
 local local_time = {}
 LocalTime(local_time)
 ::SERVER_DATA <- {
-	server_key = split(hostname, "#")[1].slice(0, hostname.find("["))
+	// server_key = split(hostname, "#")[1].slice(0, hostname.find("["))
+	server_key = split(hostname, "#")[0]
 	address = 0
 	map = GetMapName()
 	max_wave = -1
@@ -90,6 +91,8 @@ LocalTime(local_time)
 	wave = 0
 	campaign_name = "MGE"
 }
+
+printl("\n\n" + SERVER_DATA.server_key + "\n\n")
 
 if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 	::MGE_LEADERBOARD_DATA <- {
