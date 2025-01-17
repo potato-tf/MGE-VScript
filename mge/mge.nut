@@ -70,6 +70,27 @@ foreach (sound in StockSounds)
 ::Arenas      <- {}
 ::Arenas_List <- [] // Need ordered arenas for selection with client commands like !add
 
+local hostname = Convars.GetStr("hostname")
+local local_time = {}
+LocalTime(local_time)
+::SERVER_DATA <- {
+	server_key = split(hostname, "#")[1].slice(0, hostname.find("["))
+	address = 0
+	map = GetMapName()
+	max_wave = -1
+	mission = GetMapName()
+	players_blu = 0
+	players_connecting = 0
+	players_max = MaxClients().tointeger()
+	players_red = 0
+	region = split(hostname, "[")[1].slice(0, hostname.find("]"))
+	server_name = hostname
+	status = "Waiting for players"
+	update_time = local_time
+	wave = 0
+	campaign_name = "MGE"
+}
+
 if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 	::MGE_LEADERBOARD_DATA <- {
 		"Airshots"			 : array(MAX_LEADERBOARD_ENTRIES, null),
@@ -622,6 +643,43 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 	counter--
 	if (counter)
 	{
+
+		if (counter % 20)
+		{
+			LocalTime(local_time)
+			SERVER_DATA.update_time = local_time
+			SERVER_DATA.max_wave = counter
+			SERVER_DATA.wave = counter
+			local players = array(2, 0)
+			local spectators = 0
+			for (local i = 1; i <= MAX_CLIENTS; i++)
+			{
+				local player = PlayerInstanceFromIndex(i)
+
+				if (!player || !player.IsValid()) continue
+
+				if (player.GetTeam() == TEAM_SPECTATOR)
+					spectators++
+				else
+					players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
+			}
+			SERVER_DATA.players_red = players[0]
+			SERVER_DATA.players_blu = players[1]
+			SERVER_DATA.players_connecting = spectators + players[0] + players[1]
+
+			VPI.AsyncCall({
+				func = "VPI_MGE_UpdateServerData",
+				kwargs = SERVER_DATA,
+				callback = function(response, error) {
+					if (error)
+					{
+						printl(error)
+						return
+					}
+					SERVER_DATA.address = response[0][1]
+				}
+			})
+		}
 		if (counter > 60 || counter % 5)
 			return 1
 

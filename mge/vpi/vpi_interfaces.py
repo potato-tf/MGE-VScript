@@ -255,3 +255,11 @@ async def VPI_MGE_AutoUpdate(info, test=False):
                 shutil.rmtree(temp_dir, ignore_errors=True)
             except Exception as e:
                 print(COLOR['YELLOW'], f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}", COLOR['ENDC'])
+
+@WrapDB
+async def VPI_MGE_UpdateServerData(info, cursor):
+    kwargs = info["kwargs"]
+    server_data = kwargs["server_data"]
+    await cursor.execute("UPDATE mge_serverdata SET server_data = %s", (server_data,))
+    return await cursor.fetchall()
+

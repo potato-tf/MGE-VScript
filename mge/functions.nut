@@ -449,7 +449,7 @@
 			{
 				if (k in _arena)
 					_arena[k] = "0"
-					
+
 				_arena.RulesetVote[k] <- array(2, false)
 			}
 
@@ -947,7 +947,7 @@
 			delete arena.CurrentPlayers[player]
 			SetArenaState(arena_name, AS_IDLE)
 		}
-		if (arena.IsCustomRuleset)
+		if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
 		{
 			LoadSpawnPoints(arena_name, true)
 		}
@@ -1651,7 +1651,7 @@
     return proxy_entity;
 }
 //taken from popext (originally made by fellen)
-::VectorAngles <- function(forward) 
+::VectorAngles <- function(forward)
 {
 	local yaw, pitch
 	if ( forward.y == 0.0 && forward.x == 0.0 ) {
@@ -1681,10 +1681,10 @@
 	else
 		EntFireByHandle(MGE_CLIENTCOMMAND, "Command", format("slot%d", slot), delay, player, player)
 }
-::SetCustomArenaRuleset <- function(arena_name, ruleset) 
+::SetCustomArenaRuleset <- function(arena_name, ruleset)
 {
 	local arena = Arenas[arena_name]
-	if (!arena.IsMGE || !(ruleset in special_arenas)) 
+	if (!arena.IsMGE || !(ruleset in special_arenas))
 	{
 		MGE_ClientPrint(player, HUD_PRINTTALK, "InvalidRuleset", ruleset)
 		return
@@ -1933,7 +1933,7 @@
 				arena.RulesetVote[self.entindex()] <- hoop_placed
 				hoop.SetCollisionGroup(COLLISION_GROUP_PLAYER)
 				hoop.AcceptInput("Color", "255 255 255 255", null, null)
-				
+
 				//save basket pos in prop scope
 				hoop.GetScriptScope().basket <- (hoop.GetOrigin() + hoop.GetAbsAngles().Forward() * BBALL_HOOP_POS_OFFSET)
 				hoop.GetScriptScope().hoop_validated <- false
@@ -1980,8 +1980,8 @@
 
 				//all players have placed their hoops, give them their weapons back
 				//once both hoops are validated, we can vote on the ball spawn point
-				
-				//should we force players to soldier for this? 
+
+				//should we force players to soldier for this?
 				//custom rulesets are a gimmick in general so I don't see the harm in letting people play whatever class they want
 				if (arena.RulesetVote.readytovalidate[0] && arena.RulesetVote.readytovalidate[1])
 				{
