@@ -23,12 +23,6 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-
-      - uses: zerotier/github-action@v1
-        with:
-          auth_token: ${{ secrets.ZEROTIER_KEY }}
-          network_id: e4da7455b253a261
-          
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       
