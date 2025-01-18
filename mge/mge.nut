@@ -74,9 +74,9 @@ local hostname = Convars.GetStr("hostname")
 local local_time = {}
 LocalTime(local_time)
 local _split = split(hostname, "#")
-local _split_region = split(_split[1], "[")
+local _split_region = _split.len() == 1 ? "" : split(_split[1], "[")
 ::SERVER_DATA <- {
-	server_key = _split[1].slice(0, _split[1].find("["))
+	server_key = _split.len() == 1 ? "" : _split[1].slice(0, _split[1].find("["))
 	address = 0
 	map = GetMapName()
 	max_wave = -1
