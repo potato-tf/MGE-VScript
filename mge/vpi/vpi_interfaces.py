@@ -282,10 +282,15 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     
     kwargs['address'] = server['addr']
     
+    if (kwargs["map"].startswith("workshop/")):
+        kwargs["map"] = server['map']
+        kwargs["mission"] = server['map']
+    
     await cursor.execute("""
         CREATE TABLE IF NOT EXISTS mge_serverdata (
             server_key VARCHAR(255),
             address VARCHAR(255),
+            classes VARCHAR(255),
             map VARCHAR(255),
             max_wave INTEGER,
             mission VARCHAR(255),
@@ -294,31 +299,45 @@ async def VPI_MGE_UpdateServerData(info, cursor):
             players_max INTEGER,
             players_red INTEGER,
             region VARCHAR(255),
-            server_name VARCHAR(255) PRIMARY KEY,
+            server_name VARCHAR(255),
             status VARCHAR(255),
             update_time VARCHAR(255),
             wave INTEGER,
-            campaign_name VARCHAR(255)
+            campaign_name VARCHAR(255),
+            domain VARCHAR(255),
+            in_protected_match BIT,
+            matchmaking_disable_time FLOAT,
+            password VARCHAR(255),
+            is_fake_ip BIT,
+            PRIMARY KEY (server_key, region, campaign_name)
         )"""
     )
     await cursor.execute("""
-        UPDATE mge_serverdata SET 
-            server_key = %s,
-            address = %s,
-            map = %s,
-            max_wave = %s,
-            mission = %s,
-            players_blu = %s,
-            players_connecting = %s,
-            players_max = %s,
-            players_red = %s,
-            region = %s,
-            server_name = %s,
-            status = %s,
-            update_time = %s,
-            wave = %s,
-            campaign_name = %s
-        WHERE server_key = %s
+        INSERT INTO mge_serverdata (
+            server_key, address, classes, map, max_wave, mission, 
+            players_blu, players_connecting, players_max, players_red,
+            region, server_name, status, update_time, wave, campaign_name,
+            domain, in_protected_match, matchmaking_disable_time, password, is_fake_ip
+        ) VALUES (
+            %s, %s, '', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            NULL, NULL, NULL, NULL, NULL
+        )
+        ON DUPLICATE KEY UPDATE
+            address = VALUES(address),
+            classes = VALUES(classes),
+            map = VALUES(map),
+            max_wave = VALUES(max_wave),
+            mission = VALUES(mission),
+            players_blu = VALUES(players_blu),
+            players_connecting = VALUES(players_connecting),
+            players_max = VALUES(players_max),
+            players_red = VALUES(players_red),
+            region = VALUES(region),
+            server_name = VALUES(server_name),
+            status = VALUES(status),
+            update_time = VALUES(update_time),
+            wave = VALUES(wave),
+            campaign_name = VALUES(campaign_name)
     """, (
         kwargs["server_key"],
         kwargs["address"], 
@@ -332,10 +351,9 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         kwargs["region"],
         kwargs["server_name"],
         kwargs["status"],
-        timestamp,  # Now using the formatted timestamp
+        timestamp,
         kwargs["wave"],
-        kwargs["campaign_name"],
-        kwargs["server_key"]
+        kwargs["campaign_name"]
     ))
     print(server)
     return server

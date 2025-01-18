@@ -92,25 +92,6 @@ local _split_region = split(_split[1], "[")
 	wave = 0
 	campaign_name = "MGE"
 }
-::__test <-  function()
-{
-	VPI.AsyncCall({
-		func = "VPI_MGE_UpdateServerData",
-		kwargs = SERVER_DATA,
-		callback = function(response, error) {
-			if (error)
-			{
-				printl(error)
-				return
-			}
-			if (SERVER_DATA.address == 0)
-				SERVER_DATA.address = response.addr
-
-			foreach(key, value in response)
-				printl(key + " : " + value)
-		}
-	})
-}
 
 // printl("\n\n" + SERVER_DATA.server_key + "\n\n")
 // printl(SERVER_DATA.region)
@@ -669,7 +650,7 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 	if (counter)
 	{
 
-		if (counter % 20)
+		if (!(counter % 20))
 		{
 			LocalTime(local_time)
 			SERVER_DATA.update_time = local_time
@@ -703,9 +684,7 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 					}
 					if (SERVER_DATA.address == 0)
 						SERVER_DATA.address = response.addr
-
-					foreach(key, value in response)
-						printl(key + " " + value)
+					printl("refreshing server data...")
 				}
 			})
 		}
@@ -718,7 +697,7 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 
 	MGE_DoChangelevel()
 }
-// AddThinkToEnt(MGE_TIMER, "TimerThink")
+AddThinkToEnt(MGE_TIMER, "TimerThink")
 
 MGE_TIMER.AddEFlags(EFL_KILLME)
 ::MGE_DoChangelevel <- function() {
