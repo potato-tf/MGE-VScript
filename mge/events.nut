@@ -49,7 +49,7 @@ class MGE_Events
 		"remove" : function(params) {
 
 			local player = GetPlayerFromUserID(params.userid)
-			local scope = player.GetScriptScope()
+			// local scope = player.GetScriptScope()
 
 			RemovePlayer(player)
 		}
@@ -63,11 +63,14 @@ class MGE_Events
 			local mult = ToStrictNum(split_text[1], true)
 			if (split_text_len > 1 && mult)
 			{
-				if (!mult || mult > 0.9)
+				if (mult > 0.9)
 				{
-					MGE_ClientPrint(player, 3, !mult ? "HandicapDisabled" : "InvalidHandicap")
+					MGE_ClientPrint(player, 3, "HandicapDisabled")
 					if ("handicap_hp_mult" in scope)
+					{
+						player.RemoveCustomAttribute("max health additive penalty")
 						delete scope.handicap_hp_mult
+					}
 					return
 				}
 				scope.handicap_hp_mult <- mult
@@ -75,6 +78,11 @@ class MGE_Events
 			else if (!("handicap_hp_mult" in scope))
 			{
 				MGE_ClientPrint(player, 3, "NoCurrentHandicap")
+				return
+
+			} else if (!mult)
+			{
+				MGE_ClientPrint(player, 3, "InvalidHandicap")
 				return
 			}
 
@@ -222,7 +230,11 @@ class MGE_Events
 
 			ValidatePlayerClass(player, player.GetPlayerClass())
 
-			EntFireByHandle(player, "RunScriptCode",  @"
+			local handicap = 0
+			if ("handicap_hp_mult" in scope)
+				handicap = scope.handicap_hp
+
+			EntFireByHandle(player, "RunScriptCode",  format(@"
 				for (local child = self.FirstMoveChild(); child != null; child = child.NextMovePeer())
 				{
 					if (startswith(child.GetClassname(), `tf_weapon`) || startswith(child.GetClassname(), `tf_wearable`))
@@ -236,7 +248,10 @@ class MGE_Events
 						SetPropInt(child, `m_nRenderMode`, kRenderFxNone)
 					}
 				}
-			", GENERIC_DELAY, null, null)
+				if (`handicap_hp_mult` in self.GetScriptScope() && self.GetScriptScope().handicap_hp_mult)
+					self.AddCustomAttribute(`max health additive penalty`, %d)
+
+			", handicap), GENERIC_DELAY, null, null)
 
 			if ("arena_info" in scope && scope.arena_info)
 			{

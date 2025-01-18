@@ -84,8 +84,7 @@ def WrapDB(func):
 		except Exception as e:
 			# Client expects error responses to start with [VPI ERROR]
 			error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
-			print(error)
-			print(e)
+			raise Exception(error)
 		finally:
 			await cursor.close()
 			if (error is None):
