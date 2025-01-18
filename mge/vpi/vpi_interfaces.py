@@ -5,6 +5,8 @@ import git
 import os
 import tempfile
 import shutil
+import datetime
+import requests
 
 os.system('')  # enables ansi escape characters in terminal
 
@@ -20,6 +22,9 @@ COLOR = {
 # Note:
 # All interface functions should be decorated with either WrapDB or WrapInterface
 # Otherwise any errors that occur will not be handled gracefully and brick the entire program
+
+# ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN", "")
+ACCESS_TOKEN = r'eyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MDAwNV8yNThFMTI4QV8xMjQ1NiIsICJzdWIiOiAiNzY1NjExOTc5ODg1MzE5OTEiLCAiYXVkIjogWyAid2ViOnN0b3JlIiBdLCAiZXhwIjogMTczNzI0NDc2MiwgIm5iZiI6IDE3Mjg1MTc5MjUsICJpYXQiOiAxNzM3MTU3OTI1LCAianRpIjogIjAwMEVfMjVCMUYxQ0JfNzRDOUIiLCAib2F0IjogMTczNDYzOTIzMCwgInJ0X2V4cCI6IDE3NTI2NDMxOTQsICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICI2OS4xNDAuMTkxLjI0MSIsICJpcF9jb25maXJtZXIiOiAiNjkuMTQwLjE5MS4yNDEiIH0.SgZX6Vf4QLo73cyBjh_3axCUxgljEIsv66VCnXCGdCrJUXgnqPvDrjJJ12HIlICl3O1Yt7ZZZnnEIgi--d9LBQ'
 
 # Remove problematic characters from strings (return copy)
 def SanitizeString(string):
@@ -259,7 +264,80 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 @WrapDB
 async def VPI_MGE_UpdateServerData(info, cursor):
     kwargs = info["kwargs"]
-    server_data = kwargs["server_data"]
-    await cursor.execute("UPDATE mge_serverdata SET server_data = %s", (server_data,))
-    return await cursor.fetchall()
+    
+    # Convert time dictionary to datetime object
+    time_data = kwargs["update_time"]
+    timestamp = datetime.datetime(
+        year=time_data.get("year", datetime.datetime.now().year),
+        month=time_data.get("month", 1),
+        day=time_data.get("day", 1),
+        hour=time_data.get("hours", 0),
+        minute=time_data.get("minutes", 0),
+        second=time_data.get("seconds", 0)
+    ).strftime('%Y-%m-%d %H:%M:%S')
+    
+    name = kwargs["server_name"]
+    response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
+    server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
+    
+    kwargs['address'] = server['addr']
+    
+    await cursor.execute("""
+        CREATE TABLE IF NOT EXISTS mge_serverdata (
+            server_key VARCHAR(255),
+            address VARCHAR(255),
+            map VARCHAR(255),
+            max_wave INTEGER,
+            mission VARCHAR(255),
+            players_blu INTEGER,
+            players_connecting INTEGER,
+            players_max INTEGER,
+            players_red INTEGER,
+            region VARCHAR(255),
+            server_name VARCHAR(255) PRIMARY KEY,
+            status VARCHAR(255),
+            update_time VARCHAR(255),
+            wave INTEGER,
+            campaign_name VARCHAR(255)
+        )"""
+    )
+    await cursor.execute("""
+        UPDATE mge_serverdata SET 
+            server_key = %s,
+            address = %s,
+            map = %s,
+            max_wave = %s,
+            mission = %s,
+            players_blu = %s,
+            players_connecting = %s,
+            players_max = %s,
+            players_red = %s,
+            region = %s,
+            server_name = %s,
+            status = %s,
+            update_time = %s,
+            wave = %s,
+            campaign_name = %s
+        WHERE server_key = %s
+    """, (
+        kwargs["server_key"],
+        kwargs["address"], 
+        kwargs["map"],
+        kwargs["max_wave"],
+        kwargs["mission"],
+        kwargs["players_blu"],
+        kwargs["players_connecting"],
+        kwargs["players_max"], 
+        kwargs["players_red"],
+        kwargs["region"],
+        kwargs["server_name"],
+        kwargs["status"],
+        timestamp,  # Now using the formatted timestamp
+        kwargs["wave"],
+        kwargs["campaign_name"],
+        kwargs["server_key"]
+    ))
+    print(server)
+    return server
+
 
