@@ -5,6 +5,16 @@ The goal of this project is to create a drop-in replacement for the SM version f
 
 The biggest obstacle that obviously cannot be worked around is the lack of a proper database connector.  If stat tracking is set to database mode, this gamemode copes by using an external python script to move data from disk to database.  You should be EXTREMELY careful about using this alongside untrusted maps/scripts, see below to avoid malicious maps/scripts from tampering with player stats.
 
+## Installation
+- Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.  That's it
+
+  - if you are using `mapspawn.nut` already, rename the mge mapspawn file and add `script_execute new_filename_here` to your `server.cfg` file 
+  - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
+
+
+## Configuration/Modifying game rules
+- Most arena rules can be configured at the top of the `mge/constants.nut` file
+  
 ## Features & Progress
 
 | Feature | Status |
@@ -41,16 +51,6 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 ⚠️The SQLite stuff should work fine but is untested.
 
 ⚠️Ruleset voting exists but is very janky, doesn't clean itself up correctly, and is disabled by default.
-
-## Installation
-- Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.  That's it
-
-  - if you are using `mapspawn.nut` already, rename the mge mapspawn file and add `script_execute new_filename_here` to your `server.cfg` file 
-  - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
-
-
-## Configuration/Modifying game rules
-- Most arena rules can be configured at the top of the `mge/constants.nut` file
 
 ## Converting your map configs
 - Open a copy of `mgemod_spawns.cfg` in VSCode/NP++/any text editor that supports regex search/replace, enable regex
