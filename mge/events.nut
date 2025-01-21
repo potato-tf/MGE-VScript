@@ -475,6 +475,10 @@ class MGE_Events
 		function OnGameEvent_player_team(params)
 		{
 			local player = GetPlayerFromUserID(params.userid)
+
+			//this can return a null player handle on rafmod/potato servers but I don't remember it happening on vanilla
+			if (!player) return
+
 			local scope = player.GetScriptScope()
 			local team = params.team
 
