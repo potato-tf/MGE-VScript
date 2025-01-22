@@ -263,14 +263,8 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 async def VPI_MGE_UpdateServerData(info, cursor):
     kwargs = info["kwargs"]
     
-    print("KWARGS:")
-    print(kwargs)
-    
     # Convert time dictionary to datetime object
     time_data = kwargs["update_time"]
-    
-    print("TIME DATA:")
-    print(time_data)
     
     timestamp = datetime.datetime(
         year=time_data.get("year", datetime.datetime.now().year),
@@ -282,14 +276,9 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     ).strftime('%Y-%m-%d %H:%M:%S')
     
     name = kwargs["server_name"]
-    print("NAME:")
-    print(name)
     
     response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
-    print("RESPONSE:")
-    print(response)
-    print("RESPONSE JSON:")
-    print(response.json())
+
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
     
     kwargs['address'] = server['addr']
@@ -367,7 +356,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         kwargs["wave"],
         kwargs["campaign_name"]
     ))
-    print(server)
+    # print(server)
     return server
 
 
