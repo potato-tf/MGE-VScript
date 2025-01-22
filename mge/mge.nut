@@ -709,7 +709,6 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 					}
 					if (SERVER_DATA.address == 0)
 						SERVER_DATA.address = response.addr
-					printl("refreshing server data...")
 				}
 			})
 		}
