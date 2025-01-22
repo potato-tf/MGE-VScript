@@ -1528,7 +1528,7 @@
 		}
 		return
 	}
-	else if (ELO_TRACKING_MODE == 2 && "VPI" in getroottable())
+	else if (ELO_TRACKING_MODE > 1 && "VPI" in ROOT)
 	{
 		VPI.AsyncCall({
 			func="VPI_MGE_ReadWritePlayerStats",
@@ -1593,6 +1593,27 @@
 			StringToFile(filename, file_data)
 		break
 		case 2:
+
+			local file_data = format("ROOT[\"%s\"]<-{\n", steam_id_slice)
+			foreach(k, v in scope.stats)
+				file_data += format("%s=%s\n", k.tostring(), v.tostring())
+			file_data += "}\n"
+			StringToFile(filename, file_data)
+
+			VPI.AsyncCall({
+				func="VPI_MGE_ReadWritePlayerStats",
+				kwargs= {
+					query_mode="write",
+					network_id=steam_id_slice,
+					stats=_stats,
+					additive=additive
+				},
+				callback=function(response, error) {
+					printf(GetLocalizedString(error ? "VPI_WriteError" : "VPI_WriteSuccess", player), GetPropString(player, "m_szNetworkIDString"))
+				}
+			})
+		break
+		case 3:
 			VPI.AsyncCall({
 				func="VPI_MGE_ReadWritePlayerStats",
 				kwargs= {

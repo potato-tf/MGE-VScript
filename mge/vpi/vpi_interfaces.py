@@ -24,6 +24,7 @@ COLOR = {
 # Otherwise any errors that occur will not be handled gracefully and brick the entire program
 
 ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN", "")
+POTATO_API_KEY = os.environ.get("POTATO_API_KEY", "")
 
 # Remove problematic characters from strings (return copy)
 def SanitizeString(string):
@@ -259,8 +260,51 @@ async def VPI_MGE_AutoUpdate(info, test=False):
             except Exception as e:
                 print(COLOR['YELLOW'], f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}", COLOR['ENDC'])
 
-@WrapDB
+@WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
+    kwargs = info["kwargs"]
+    endpoint = kwargs["endpoint_url"]
+
+    name = kwargs["server_name"]
+
+    response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
+
+    server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
+    kwargs['address'] = server['addr']
+
+    if (kwargs["map"].startswith("workshop/")):
+        kwargs["map"] = server['map']
+        
+    put_server_data = {
+        "serverKey": server['server_key'],
+        "address": server['addr'],
+        "map": server['map'],
+        "maxWave": server['max_wave'],
+        "mission": server['map'],
+        "playersBlu": server['players_blu'], 
+        "playersConnecting": server['players_connecting'],
+        "playersMax": server['players_max'],
+        "playersRed": server['players_red'],
+        "region": server['region'],
+        "serverName": server['name'],
+        "status": server['status'],
+        "updateTime": server['update_time'],
+        "wave": server['wave']
+    }
+    
+    headers = {
+        "Authorization": f"Bearer {POTATO_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.put(endpoint, json=put_server_data, headers=headers)
+
+    kwargs["mission"] = server['map']
+
+    return server
+
+@WrapDB
+async def VPI_MGE_UpdateServerDataDB(info, cursor):
     kwargs = info["kwargs"]
     
     # Convert time dictionary to datetime object

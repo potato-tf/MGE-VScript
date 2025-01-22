@@ -73,6 +73,7 @@ foreach (sound in StockSounds)
 local local_time = {}
 LocalTime(local_time)
 ::SERVER_DATA <- {
+	endpoint_url = "https://potato.tf/api/serverstatus"
 	server_key = ""
 	address = 0
 	map = GetMapName()
@@ -111,7 +112,7 @@ EntFire("worldspawn", "RunScriptCode", @"
 // printl(SERVER_DATA.region)
 // printl()
 
-if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
+if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 	::MGE_LEADERBOARD_DATA <- {
 		"Airshots"			 : array(MAX_LEADERBOARD_ENTRIES, null),
 		"Koth Points Capped" : array(MAX_LEADERBOARD_ENTRIES, null),
@@ -674,7 +675,7 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 	if (counter)
 	{
 
-		if (!(counter % 20))
+		if (!HLTV_TEST && !(counter % VPI_SERVERINFO_UPDATE_INTERVAL))
 		{
 			LocalTime(local_time)
 			SERVER_DATA.update_time = local_time
@@ -705,7 +706,7 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 					if (error)
 					{
 						printl(error)
-						return
+						return 1
 					}
 					if (SERVER_DATA.address == 0)
 						SERVER_DATA.address = response.addr

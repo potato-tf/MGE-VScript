@@ -29,15 +29,10 @@ const DEFAULT_ELO 		= 1600
 
 // 0 = none - No ELO or stat tracking at all
 // 1 = file (tf/scriptdata/mge_playerdata) - Recommended for servers hosted on a single physical machine
-// 2 = database (requires VPI) - Recommended for multi-region server networks
+// 2 = database (requires VPI) - Recommended for multi-region server networks, local data is still written to local storage
+// 3 = database NO fallback - Database connection only, don't write player data to files
 // if VPI is not running this will just do nothing and accumulate junk in your scriptdata folder xd
 const ELO_TRACKING_MODE = 2
-// due to the lack of a proper database connector I generally recommend sticking to the file-based tracking if you don't care about a leaderboard
-// I've done everything I can to make the database integration stuff as smooth as possible and mince has done a great job with VPI
-// but there's only so much you can do when forced to juggle a completely separate third party script
-// even for multi-server networks, this just means your EU players will only have their stats/ELO on EU servers
-// you could argue that ping diffs are actually a good reason to separate stats by region and turn this limitation into a feature lole
-
 const ENABLE_LEADERBOARD = true //This only works if ELO_TRACKING_MODE is set to 2, file-based leaderboards don't exist yet
 const REMOVE_DROPPED_WEAPONS = true
 const IDLE_RESPAWN_TIME = 3.0 //respawn time while waiting for arena to start
@@ -173,7 +168,12 @@ const KOTH_POINT_MODEL			= "models/props_2fort/groundlight003.mdl"
 //NOTE:
 //See BBall notes about adding more spawns
 const ULTIDUO_MAX_SPAWNS				= 4
-//END CONFIG CONSTANTS
+
+//VPI related stuff
+// CONST.HLTV_TEST <- Convars.GetInt("tv_enable")
+const HLTV_TEST = false
+//this gets overwritten by HLTV_TEST (fixed 8 second interval)
+const VPI_SERVERINFO_UPDATE_INTERVAL = 20
 
 PrecacheModel(BBALL_BALL_MODEL)
 PrecacheModel(BBALL_HOOP_MODEL)
