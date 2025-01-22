@@ -70,7 +70,6 @@ foreach (sound in StockSounds)
 ::Arenas      <- {}
 ::Arenas_List <- [] // Need ordered arenas for selection with client commands like !add
 
-local hostname = Convars.GetStr("hostname")
 local local_time = {}
 LocalTime(local_time)
 ::SERVER_DATA <- {
@@ -84,7 +83,7 @@ LocalTime(local_time)
 	players_max = MaxClients().tointeger()
 	players_red = 0
 	region = ""
-	server_name = hostname
+	server_name = ""
 	status = "Waiting for players"
 	update_time = {
 		year = local_time.year
@@ -100,6 +99,7 @@ LocalTime(local_time)
 
 EntFire("worldspawn", "RunScriptCode", @"
 
+	local hostname = Convars.GetStr(`hostname`)
 	local _split = split(hostname, `#`)
 	local _split_region = _split.len() == 1 ? [``, `]`] : split(_split[1], `[`)
 	SERVER_DATA.server_name = Convars.GetStr(`hostname`)
