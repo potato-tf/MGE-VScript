@@ -273,9 +273,9 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     if not name:
         raise ValueError("server_name is required")
 
-    # Verify we have a valid access token
-    if not ACCESS_TOKEN:
-        raise ValueError("Steam API ACCESS_TOKEN is not set or empty")
+    # Verify we have a valid Steam API key
+    if not STEAM_API_KEY:
+        raise ValueError("STEAM_API_KEY is not set or empty")
 
     # Add error handling for Steam API request
     try:
@@ -287,7 +287,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         # Check if we got HTML instead of JSON
         content_type = response.headers.get('content-type', '')
         if 'text/html' in content_type:
-            raise Exception("Received HTML login page instead of JSON. Steam API token may be invalid or expired.")
+            raise Exception("Received HTML login page instead of JSON. Steam API key may be invalid or expired.")
             
         steam_data = response.json()
     except requests.RequestException as e:
@@ -354,8 +354,9 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     }
     
     headers = {
-        "Authorization": f"Bearer {STEAM_API_KEY}",
-        "Content-Type": "application/json"
+        "Authorization": f"Bearer {STEAM_API_KEY}",  # Use Steam API key here instead of POTATO_API_KEY
+        "Content-Type": "application/json",
+        "X-Steam-Auth": STEAM_API_KEY  # Add Steam API key as a separate header
     }
     
     # Add detailed logging
@@ -374,7 +375,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         if request.text:  # Only try to parse JSON if there's a response body
             try:
                 _response = request.json()
-                # print(f"Parsed JSON response: {_response}")
+                print(f"Parsed JSON response: {_response}")
             except ValueError as e:
                 print(f"Warning: Could not parse response as JSON: {str(e)}")
     except requests.RequestException as e:
