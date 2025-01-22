@@ -273,44 +273,6 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     if not name:
         raise ValueError("server_name is required")
 
-    # Verify we have a valid Steam API key
-    if not STEAM_API_KEY:
-        raise ValueError("STEAM_API_KEY is not set or empty")
-
-    # Add error handling for Steam API request
-    try:
-        steam_api_url = rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato"
-        print(f"Fetching server list from Steam API: {steam_api_url}")
-        response = requests.get(steam_api_url)
-        response.raise_for_status()
-        
-        # Check if we got HTML instead of JSON
-        content_type = response.headers.get('content-type', '')
-        if 'text/html' in content_type:
-            raise Exception("Received HTML login page instead of JSON. Steam API key may be invalid or expired.")
-            
-        steam_data = response.json()
-    except requests.RequestException as e:
-        raise Exception(f"Failed to fetch server list from Steam API: {str(e)}")
-    except ValueError as e:
-        raise Exception(f"Invalid JSON response from Steam API: {str(e)}")
-
-    # Verify we got valid server data
-    if not steam_data.get('response') or not steam_data.get('response').get('servers'):
-        raise Exception("No server data received from Steam API")
-
-    servers = steam_data['response']['servers']
-    matching_servers = [server for server in servers if server.get('name') == name]
-    if not matching_servers:
-        raise ValueError(f"No server found with name: {name}")
-    
-    server = matching_servers[0]
-    kwargs['address'] = server.get('addr')
-    
-    # Verify we have a valid API key for potato.tf
-    if not POTATO_API_KEY:
-        raise ValueError("POTATO_API_KEY is not set or empty")
-    
     update_time = kwargs.get("update_time", {})
     now = datetime.datetime.now()
     timestamp = datetime.datetime(
@@ -322,28 +284,24 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         second=update_time.get("second", 0)
     ).timestamp()
 
-    current_map = kwargs.get("map", "")
-    if current_map.startswith("workshop/"):
-        kwargs["map"] = server.get('map', current_map)
-        
     put_server_data = {
         "serverKey": kwargs.get('server_key', ''),
-        "serverName": name,  # Use the original name here
-        "address": server.get('addr', ''),  # Use server address directly
-        "playersRed": int(kwargs.get('players_red', 0)),  # Ensure integers
+        "serverName": name,
+        "address": kwargs.get('address', ''),
+        "playersRed": int(kwargs.get('players_red', 0)),
         "playersBlu": int(kwargs.get('players_blu', 0)),
         "playersConnecting": int(kwargs.get('players_connecting', 0)),
         "playersMax": int(kwargs.get('players_max', 0)),
         "wave": int(kwargs.get('wave', 0)),
         "maxWave": int(kwargs.get('max_wave', 0)),
         "classes": "",
-        "mission": kwargs.get('map', server.get('map', '')),
-        "map": kwargs.get('map', server.get('map', '')),
-        "mapNoVersion": kwargs.get('map', server.get('map', '')),
+        "mission": kwargs.get('map', ''),
+        "map": kwargs.get('map', ''),
+        "mapNoVersion": kwargs.get('map', ''),
         "region": kwargs.get('region', ''),
         "status": kwargs.get('status', ''),
         "campaignName": kwargs.get('campaign_name', ''),
-        "timestamp": int(timestamp),  # Ensure integer timestamp
+        "timestamp": int(timestamp),
         "domain": kwargs.get('domain', ''),
         "matchmakingDisableTime": 0,
         "password": kwargs.get('password', ''),
@@ -354,20 +312,16 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     }
     
     headers = {
-        "Authorization": f"Bearer {STEAM_API_KEY}",  # Use Steam API key here instead of POTATO_API_KEY
-        "Content-Type": "application/json",
-        "X-Steam-Auth": STEAM_API_KEY  # Add Steam API key as a separate header
+        "Content-Type": "application/json"
     }
     
     # Add detailed logging
     print(f"Sending PUT request to {endpoint}")
-    print(f"Headers: {headers}")
     print(f"Request data: {put_server_data}")
     
     try:
         request = requests.put(endpoint, json=put_server_data, headers=headers)
         print(f"Response status code: {request.status_code}")
-        print(f"Response headers: {request.headers}")
         print(f"Response text: {request.text}")
         
         request.raise_for_status()
@@ -381,8 +335,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     except requests.RequestException as e:
         raise Exception(f"Failed to update server data: {str(e)}")
 
-    kwargs["mission"] = server.get('map', '')
-    return server
+    return put_server_data
 
 @WrapDB
 async def VPI_MGE_UpdateServerDataDB(info, cursor):
@@ -445,7 +398,7 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
             region, server_name, status, update_time, wave, campaign_name,
             domain, in_protected_match, matchmaking_disable_time, password, is_fake_ip
         ) VALUES (
-            %s, %s, '', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, '', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
             NULL, NULL, NULL, NULL, NULL
         )
         ON DUPLICATE KEY UPDATE
