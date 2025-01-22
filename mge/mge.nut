@@ -70,13 +70,11 @@ foreach (sound in StockSounds)
 ::Arenas      <- {}
 ::Arenas_List <- [] // Need ordered arenas for selection with client commands like !add
 
-local hostname = @() Convars.GetStr("hostname")
+local hostname = Convars.GetStr("hostname")
 local local_time = {}
 LocalTime(local_time)
-local _split = split(hostname, "#")
-local _split_region = _split.len() == 1 ? ["", "]"] : split(_split[1], "[")
 ::SERVER_DATA <- {
-	server_key = _split.len() == 1 ? "" : _split[1].slice(0, _split[1].find("["))
+	server_key = ""
 	address = 0
 	map = GetMapName()
 	max_wave = -1
@@ -85,7 +83,7 @@ local _split_region = _split.len() == 1 ? ["", "]"] : split(_split[1], "[")
 	players_connecting = 0
 	players_max = MaxClients().tointeger()
 	players_red = 0
-	region = _split_region[1].slice(0, _split_region[1].find("]"))
+	region = ""
 	server_name = hostname
 	status = "Waiting for players"
 	update_time = {
@@ -99,6 +97,15 @@ local _split_region = _split.len() == 1 ? ["", "]"] : split(_split[1], "[")
 	wave = 0
 	campaign_name = "MGE"
 }
+
+EntFire("worldspawn", "RunScriptCode", @"
+
+	local _split = split(hostname, `#`)
+	local _split_region = _split.len() == 1 ? [``, `]`] : split(_split[1], `[`)
+	SERVER_DATA.server_name = Convars.GetStr(`hostname`)
+	SERVER_DATA.server_key = _split.len() == 1 ? `` : _split[1].slice(0, _split[1].find(`[`))
+	SERVER_DATA.region =  _split_region[1].slice(0, _split_region[1].find(`]`))
+", 1)
 
 // printl("\n\n" + SERVER_DATA.server_key + "\n\n")
 // printl(SERVER_DATA.region)
