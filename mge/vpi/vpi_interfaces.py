@@ -285,26 +285,26 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         kwargs["map"] = server['map']
         
     put_server_data = {
-        "serverKey": server['server_key'],
-        "serverName": server['name'],
-        "address": server['addr'],
-        "playersRed": server['players_red'],
-        "playersBlu": server['players_blu'], 
-        "playersConnecting": server['players_connecting'],
-        "playersMax": server['players_max'],
-        "wave": server['wave'],
-        "maxWave": server['max_wave'],
+        "serverKey": kwargs['server_key'],
+        "serverName": kwargs['name'],
+        "address": kwargs['addr'],
+        "playersRed": kwargs['players_red'],
+        "playersBlu": kwargs['players_blu'], 
+        "playersConnecting": kwargs['players_connecting'],
+        "playersMax": kwargs['players_max'],
+        "wave": kwargs['wave'],
+        "maxWave": kwargs['max_wave'],
         "classes": "",
-        "mission": server['map'],
-        "map": server['map'],
-        "mapNoVersion": server['map'],
-        "region": server['region'],
-        "status": server['status'],
-        "campaignName": server['campaign_name'],
+        "mission": kwargs['map'],
+        "map": kwargs['map'],
+        "mapNoVersion": kwargs['map'],
+        "region": kwargs['region'],
+        "status": kwargs['status'],
+        "campaignName": kwargs['campaign_name'],
         "timestamp": timestamp,
-        "domain": server['domain'],
+        "domain": kwargs['domain'],
         "matchmakingDisableTime": 0,
-        "password": server['password'],
+        "password": kwargs['password'],
         "inProtectedMatch": False,
         "isFakeIp": False,
         "steamids": [],
@@ -316,10 +316,11 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         "Content-Type": "application/json"
     }
     
-    response = requests.put(endpoint, json=put_server_data, headers=headers)
-
+    request = requests.put(endpoint, json=put_server_data, headers=headers)
+    _response = request.json()
     kwargs["mission"] = server['map']
 
+    print(_response)
     return server
 
 @WrapDB
