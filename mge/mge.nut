@@ -70,7 +70,7 @@ foreach (sound in StockSounds)
 ::Arenas      <- {}
 ::Arenas_List <- [] // Need ordered arenas for selection with client commands like !add
 
-local hostname = ""
+local hostname = "SERVER_DATA" in ROOT ? SERVER_DATA.server_name : "#[]"
 local local_time = {}
 LocalTime(local_time)
 local _split = split(hostname, "#")
