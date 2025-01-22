@@ -359,7 +359,7 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
     
-    kwargs['address'] = server['addr']
+    kwargs['address'] = server['address']
     
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']
