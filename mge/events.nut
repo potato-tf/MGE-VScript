@@ -214,6 +214,7 @@ class MGE_Events
 						// printl(error)
 						return
 					}
+					printl(response)
 					if (SERVER_DATA.address == 0)
 						SERVER_DATA.address = response.addr
 				}
