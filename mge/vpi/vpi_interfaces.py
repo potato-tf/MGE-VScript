@@ -25,6 +25,7 @@ COLOR = {
 
 ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN", "")
 POTATO_API_KEY = os.environ.get("POTATO_API_KEY", "")
+STEAM_API_KEY = os.environ.get("STEAM_API_KEY", "")
 
 # Remove problematic characters from strings (return copy)
 def SanitizeString(string):
@@ -353,7 +354,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     }
     
     headers = {
-        "Authorization": f"Bearer {POTATO_API_KEY}",
+        "Authorization": f"Bearer {STEAM_API_KEY}",
         "Content-Type": "application/json"
     }
     
