@@ -88,7 +88,14 @@ local _split_region = _split.len() == 1 ? ["", "]"] : split(_split[1], "[")
 	region = _split_region[1].slice(0, _split_region[1].find("]"))
 	server_name = hostname
 	status = "Waiting for players"
-	update_time = local_time
+	update_time = {
+		year = local_time.year
+		month = local_time.month
+		day = local_time.day
+		hour = local_time.hour
+		minute = local_time.minute
+		second = local_time.second
+	}
 	wave = 0
 	campaign_name = "MGE"
 }

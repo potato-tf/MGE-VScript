@@ -270,9 +270,9 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         year=time_data.get("year", datetime.datetime.now().year),
         month=time_data.get("month", 1),
         day=time_data.get("day", 1),
-        hour=time_data.get("hours", 0),
-        minute=time_data.get("minutes", 0),
-        second=time_data.get("seconds", 0)
+        hour=time_data.get("hour", 0),
+        minute=time_data.get("minute", 0),
+        second=time_data.get("second", 0)
     ).strftime('%Y-%m-%d %H:%M:%S')
     
     name = kwargs["server_name"]

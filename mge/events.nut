@@ -112,8 +112,6 @@ class MGE_Events
 			local votes = arena.RulesetVote[ruleset]
 			votes[player.GetTeam() - 2] = true
 
-			printl(votes[0])
-			printl(votes[1])
 			if (!votes[0] || !votes[1])
 			{
 				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetVote", ruleset)
