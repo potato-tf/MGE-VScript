@@ -265,12 +265,15 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 async def VPI_MGE_UpdateServerData(info, cursor):
     kwargs = info["kwargs"]
     # Get required values with error checking
-    endpoint = kwargs.get("endpoint_url", "https://potato.tf/api/serverstatus")
-    if not endpoint:
+    base_endpoint = kwargs.get("endpoint_url", "https://potato.tf/api/serverstatus")
+    if not base_endpoint:
         raise ValueError("endpoint_url is required")
         
     if not POTATO_API_KEY:
         raise ValueError("POTATO_API_KEY environment variable is not set")
+
+    # Add API key as query parameter
+    endpoint = f"{base_endpoint}?key={POTATO_API_KEY}"
 
     name = kwargs.get("server_name")
     if not name:
@@ -316,11 +319,11 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {POTATO_API_KEY}"
+        "Accept": "application/json"
     }
     
     # Add detailed logging
-    print(f"Sending PUT request to {endpoint}")
+    print(f"Sending PUT request to {base_endpoint}")  # Don't log the full URL with API key
     print(f"Request data: {put_server_data}")
     
     try:
