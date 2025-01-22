@@ -105,7 +105,7 @@ EntFire("worldspawn", "RunScriptCode", @"
 	SERVER_DATA.server_name = Convars.GetStr(`hostname`)
 	SERVER_DATA.server_key = _split.len() == 1 ? `` : _split[1].slice(0, _split[1].find(`[`))
 	SERVER_DATA.region =  _split_region[1].slice(0, _split_region[1].find(`]`))
-", 1)
+", 5)
 
 // printl("\n\n" + SERVER_DATA.server_key + "\n\n")
 // printl(SERVER_DATA.region)
