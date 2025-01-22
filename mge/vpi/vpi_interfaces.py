@@ -263,6 +263,7 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
     kwargs = info["kwargs"]
+    
     # Get required values with error checking
     endpoint = kwargs.get("endpoint_url")
     if not endpoint:
@@ -333,7 +334,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     print("Sending request to", endpoint)
     
     _request = requests.put(endpoint, json=put_server_data, headers=headers)
-    print(_request)
+    print(_request.json())
     kwargs["mission"] = server.get('map', '')
 
     return server
