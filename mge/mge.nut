@@ -385,6 +385,15 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 
 ::MGE_Init <- function()
 {
+
+	local clean_map_name = {
+		"workshop/mge_training_v8_beta4b.ugc1996603816" : "Classic Training"
+		mge_training_v8_beta4b 		= "Classic Training"
+		mge_chillypunch_final4_fix2 = "Chillypunch"
+		mge_triumph_beta7_rc1 		= "Triumph"
+		mge_oihguv_sucks_b5 		= "Oihguv"
+		mge_oihguv_sucks_a12 		= "Oihguv"
+	}
 	printl("[VScript MGE] Loaded, moving all active players to spectator")
 
 	for (local i = 1; i <= MAX_CLIENTS; i++)
@@ -426,9 +435,10 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE == 2)
 
 	Convars.SetValue("tf_weapon_criticals", 0)
 	Convars.SetValue("tf_fall_damage_disablespread", 1)
-}
-//assumes spawn config exists
 
+	local gamedesc = format("Potato MGE (%s)", clean_map_name[GetMapName()])
+	SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
+}
 ::nav_generation_state <- {
 	generator = null,
 	is_running = false

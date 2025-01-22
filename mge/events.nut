@@ -112,7 +112,9 @@ class MGE_Events
 			local votes = arena.RulesetVote[ruleset]
 			votes[player.GetTeam() - 2] = true
 
-			if (votes[0] && votes[1])
+			printl(votes[0])
+			printl(votes[1])
+			if (!votes[0] || !votes[1])
 			{
 				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetVote", ruleset)
 
@@ -424,16 +426,15 @@ class MGE_Events
 				local str = format("%s\n", arena_name)
 
 				MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
-
-				foreach(p, _ in arena.CurrentPlayers)
-					str += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo)
-
-				MGE_HUD.KeyValueFromString("message", str)
-
-				foreach (p, _ in arena.CurrentPlayers)
-					EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
 			}
 
+			foreach(p, _ in arena.CurrentPlayers)
+				str += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo)
+
+			MGE_HUD.KeyValueFromString("message", str)
+
+			foreach (p, _ in arena.CurrentPlayers)
+				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
 
 			if (!arena.IsBBall)
 				foreach (p, _ in arena.CurrentPlayers)
