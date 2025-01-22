@@ -263,9 +263,8 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
     kwargs = info["kwargs"]
-    
     # Get required values with error checking
-    endpoint = kwargs.get("endpoint_url")
+    endpoint = kwargs.get("endpoint_url", "https://potato.tf/api/serverstatus")
     if not endpoint:
         raise ValueError("endpoint_url is required")
         
@@ -273,9 +272,19 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     if not name:
         raise ValueError("server_name is required")
 
-    response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
+    # Add error handling for Steam API request
+    try:
+        steam_api_url = rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato"
+        print(f"Fetching server list from Steam API: {steam_api_url}")
+        response = requests.get(steam_api_url)
+        response.raise_for_status()
+        steam_data = response.json()
+    except requests.RequestException as e:
+        raise Exception(f"Failed to fetch server list from Steam API: {str(e)}")
+    except ValueError as e:
+        raise Exception(f"Invalid JSON response from Steam API: {str(e)}")
 
-    servers = response.json().get('response', {}).get('servers', [])
+    servers = steam_data.get('response', {}).get('servers', [])
     matching_servers = [server for server in servers if server.get('name') == name]
     if not matching_servers:
         raise ValueError(f"No server found with name: {name}")
@@ -300,14 +309,14 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         
     put_server_data = {
         "serverKey": kwargs.get('server_key', ''),
-        "serverName": kwargs.get('name', name),
-        "address": kwargs.get('addr', server.get('addr', '')),
-        "playersRed": kwargs.get('players_red', 0),
-        "playersBlu": kwargs.get('players_blu', 0), 
-        "playersConnecting": kwargs.get('players_connecting', 0),
-        "playersMax": kwargs.get('players_max', 0),
-        "wave": kwargs.get('wave', 0),
-        "maxWave": kwargs.get('max_wave', 0),
+        "serverName": name,  # Use the original name here
+        "address": server.get('addr', ''),  # Use server address directly
+        "playersRed": int(kwargs.get('players_red', 0)),  # Ensure integers
+        "playersBlu": int(kwargs.get('players_blu', 0)),
+        "playersConnecting": int(kwargs.get('players_connecting', 0)),
+        "playersMax": int(kwargs.get('players_max', 0)),
+        "wave": int(kwargs.get('wave', 0)),
+        "maxWave": int(kwargs.get('max_wave', 0)),
         "classes": "",
         "mission": kwargs.get('map', server.get('map', '')),
         "map": kwargs.get('map', server.get('map', '')),
@@ -315,7 +324,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         "region": kwargs.get('region', ''),
         "status": kwargs.get('status', ''),
         "campaignName": kwargs.get('campaign_name', ''),
-        "timestamp": timestamp,
+        "timestamp": int(timestamp),  # Ensure integer timestamp
         "domain": kwargs.get('domain', ''),
         "matchmakingDisableTime": 0,
         "password": kwargs.get('password', ''),
@@ -325,18 +334,34 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         "selectedForMatchmaking": False,
     }
     
-    print("Test")
     headers = {
         "Authorization": f"Bearer {POTATO_API_KEY}",
         "Content-Type": "application/json"
     }
     
-    print("Sending request to", endpoint)
+    # Add detailed logging
+    print(f"Sending PUT request to {endpoint}")
+    print(f"Headers: {headers}")
+    print(f"Request data: {put_server_data}")
     
-    _request = requests.put(endpoint, json=put_server_data, headers=headers)
-    print(_request)
-    kwargs["mission"] = server.get('map', '')
+    try:
+        request = requests.put(endpoint, json=put_server_data, headers=headers)
+        print(f"Response status code: {request.status_code}")
+        print(f"Response headers: {request.headers}")
+        print(f"Response text: {request.text}")
+        
+        request.raise_for_status()
+        
+        if request.text:  # Only try to parse JSON if there's a response body
+            try:
+                _response = request.json()
+                print(f"Parsed JSON response: {_response}")
+            except ValueError as e:
+                print(f"Warning: Could not parse response as JSON: {str(e)}")
+    except requests.RequestException as e:
+        raise Exception(f"Failed to update server data: {str(e)}")
 
+    kwargs["mission"] = server.get('map', '')
     return server
 
 @WrapDB
