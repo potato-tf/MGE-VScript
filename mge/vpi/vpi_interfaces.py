@@ -373,7 +373,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         if request.text:  # Only try to parse JSON if there's a response body
             try:
                 _response = request.json()
-                print(f"Parsed JSON response: {_response}")
+                # print(f"Parsed JSON response: {_response}")
             except ValueError as e:
                 print(f"Warning: Could not parse response as JSON: {str(e)}")
     except requests.RequestException as e:
