@@ -287,7 +287,9 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     print(name)
     
     response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
-    
+    print("RESPONSE:")
+    print(response)
+    print("RESPONSE JSON:")
     print(response.json())
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
     
