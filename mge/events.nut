@@ -216,7 +216,7 @@ class MGE_Events
 					}
 					printl(response)
 					if (SERVER_DATA.address == 0)
-						SERVER_DATA.address = response.addr
+						SERVER_DATA.address = response.address
 				}
 			})
 		}
