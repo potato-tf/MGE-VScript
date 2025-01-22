@@ -316,7 +316,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     
     headers = {
         "Content-Type": "application/json",
-        "X-API-Key": POTATO_API_KEY
+        "Authorization": f"Bearer {POTATO_API_KEY}"
     }
     
     # Add detailed logging
