@@ -324,6 +324,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         "selectedForMatchmaking": False,
     }
     
+    print("Test")
     headers = {
         "Authorization": f"Bearer {POTATO_API_KEY}",
         "Content-Type": "application/json"
