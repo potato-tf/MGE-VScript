@@ -707,7 +707,7 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 				callback = function(response, error) {
 					if (error)
 					{
-						printl(error)
+						// printl(error)
 						return 1
 					}
 					if (SERVER_DATA.address == 0)
