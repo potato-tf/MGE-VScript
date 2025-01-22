@@ -272,25 +272,43 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     if not name:
         raise ValueError("server_name is required")
 
+    # Verify we have a valid access token
+    if not ACCESS_TOKEN:
+        raise ValueError("Steam API ACCESS_TOKEN is not set or empty")
+
     # Add error handling for Steam API request
     try:
         steam_api_url = rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato"
         print(f"Fetching server list from Steam API: {steam_api_url}")
         response = requests.get(steam_api_url)
         response.raise_for_status()
+        
+        # Check if we got HTML instead of JSON
+        content_type = response.headers.get('content-type', '')
+        if 'text/html' in content_type:
+            raise Exception("Received HTML login page instead of JSON. Steam API token may be invalid or expired.")
+            
         steam_data = response.json()
     except requests.RequestException as e:
         raise Exception(f"Failed to fetch server list from Steam API: {str(e)}")
     except ValueError as e:
         raise Exception(f"Invalid JSON response from Steam API: {str(e)}")
 
-    servers = steam_data.get('response', {}).get('servers', [])
+    # Verify we got valid server data
+    if not steam_data.get('response') or not steam_data.get('response').get('servers'):
+        raise Exception("No server data received from Steam API")
+
+    servers = steam_data['response']['servers']
     matching_servers = [server for server in servers if server.get('name') == name]
     if not matching_servers:
         raise ValueError(f"No server found with name: {name}")
     
     server = matching_servers[0]
     kwargs['address'] = server.get('addr')
+    
+    # Verify we have a valid API key for potato.tf
+    if not POTATO_API_KEY:
+        raise ValueError("POTATO_API_KEY is not set or empty")
     
     update_time = kwargs.get("update_time", {})
     now = datetime.datetime.now()
