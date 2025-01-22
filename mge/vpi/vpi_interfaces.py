@@ -23,8 +23,7 @@ COLOR = {
 # All interface functions should be decorated with either WrapDB or WrapInterface
 # Otherwise any errors that occur will not be handled gracefully and brick the entire program
 
-# ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN", "")
-ACCESS_TOKEN = r'eyAidHlwIjogIkpXVCIsICJhbGciOiAiRWREU0EiIH0.eyAiaXNzIjogInI6MDAwNV8yNThFMTI4QV8xMjQ1NiIsICJzdWIiOiAiNzY1NjExOTc5ODg1MzE5OTEiLCAiYXVkIjogWyAid2ViOnN0b3JlIiBdLCAiZXhwIjogMTczNzI0NDc2MiwgIm5iZiI6IDE3Mjg1MTc5MjUsICJpYXQiOiAxNzM3MTU3OTI1LCAianRpIjogIjAwMEVfMjVCMUYxQ0JfNzRDOUIiLCAib2F0IjogMTczNDYzOTIzMCwgInJ0X2V4cCI6IDE3NTI2NDMxOTQsICJwZXIiOiAwLCAiaXBfc3ViamVjdCI6ICI2OS4xNDAuMTkxLjI0MSIsICJpcF9jb25maXJtZXIiOiAiNjkuMTQwLjE5MS4yNDEiIH0.SgZX6Vf4QLo73cyBjh_3axCUxgljEIsv66VCnXCGdCrJUXgnqPvDrjJJ12HIlICl3O1Yt7ZZZnnEIgi--d9LBQ'
+ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN", "")
 
 # Remove problematic characters from strings (return copy)
 def SanitizeString(string):
