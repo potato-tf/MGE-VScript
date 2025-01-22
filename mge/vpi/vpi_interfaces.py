@@ -264,11 +264,13 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 async def VPI_MGE_UpdateServerData(info, cursor):
     kwargs = info["kwargs"]
     
+    print("KWARGS:")
     print(kwargs)
     
     # Convert time dictionary to datetime object
     time_data = kwargs["update_time"]
     
+    print("TIME DATA:")
     print(time_data)
     
     timestamp = datetime.datetime(
@@ -281,6 +283,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     ).strftime('%Y-%m-%d %H:%M:%S')
     
     name = kwargs["server_name"]
+    print("NAME:")
     print(name)
     
     response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
