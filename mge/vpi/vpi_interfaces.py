@@ -263,48 +263,61 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
     kwargs = info["kwargs"]
-    endpoint = kwargs["endpoint_url"]
-
-    name = kwargs["server_name"]
+    # Get required values with error checking
+    endpoint = kwargs.get("endpoint_url")
+    if not endpoint:
+        raise ValueError("endpoint_url is required")
+        
+    name = kwargs.get("server_name")
+    if not name:
+        raise ValueError("server_name is required")
 
     response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
 
-    server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
-    kwargs['address'] = server['addr']
+    servers = response.json().get('response', {}).get('servers', [])
+    matching_servers = [server for server in servers if server.get('name') == name]
+    if not matching_servers:
+        raise ValueError(f"No server found with name: {name}")
     
+    server = matching_servers[0]
+    kwargs['address'] = server.get('addr')
+    
+    update_time = kwargs.get("update_time", {})
+    now = datetime.datetime.now()
     timestamp = datetime.datetime(
-        year=kwargs["update_time"].get("year", datetime.datetime.now().year),
-        month=kwargs["update_time"].get("month", 1),
-        day=kwargs["update_time"].get("day", 1),
-        hour=kwargs["update_time"].get("hour", 0),
-        minute=kwargs["update_time"].get("minute", 0),
-        second=kwargs["update_time"].get("second", 0)
+        year=update_time.get("year", now.year),
+        month=update_time.get("month", 1),
+        day=update_time.get("day", 1),
+        hour=update_time.get("hour", 0),
+        minute=update_time.get("minute", 0),
+        second=update_time.get("second", 0)
     ).timestamp()
 
-    if (kwargs["map"].startswith("workshop/")):
-        kwargs["map"] = server['map']
+    current_map = kwargs.get("map", "")
+    if current_map.startswith("workshop/"):
+        kwargs["map"] = server.get('map', current_map)
         
     put_server_data = {
-        "serverKey": kwargs['server_key'],
-        "serverName": kwargs['name'],
-        "address": kwargs['addr'],
-        "playersRed": kwargs['players_red'],
-        "playersBlu": kwargs['players_blu'], 
-        "playersConnecting": kwargs['players_connecting'],
-        "playersMax": kwargs['players_max'],
-        "wave": kwargs['wave'],
-        "maxWave": kwargs['max_wave'],
+        "serverKey": kwargs.get('server_key', ''),
+        "serverName": kwargs.get('name', name),
+        "address": kwargs.get('addr', server.get('addr', '')),
+        "playersRed": kwargs.get('players_red', 0),
+        "playersBlu": kwargs.get('players_blu', 0), 
+        "playersConnecting": kwargs.get('players_connecting', 0),
+        "playersMax": kwargs.get('players_max', 0),
+        "wave": kwargs.get('wave', 0),
+        "maxWave": kwargs.get('max_wave', 0),
         "classes": "",
-        "mission": kwargs['map'],
-        "map": kwargs['map'],
-        "mapNoVersion": kwargs['map'],
-        "region": kwargs['region'],
-        "status": kwargs['status'],
-        "campaignName": kwargs['campaign_name'],
+        "mission": kwargs.get('map', server.get('map', '')),
+        "map": kwargs.get('map', server.get('map', '')),
+        "mapNoVersion": kwargs.get('map', server.get('map', '')),
+        "region": kwargs.get('region', ''),
+        "status": kwargs.get('status', ''),
+        "campaignName": kwargs.get('campaign_name', ''),
         "timestamp": timestamp,
-        "domain": kwargs['domain'],
+        "domain": kwargs.get('domain', ''),
         "matchmakingDisableTime": 0,
-        "password": kwargs['password'],
+        "password": kwargs.get('password', ''),
         "inProtectedMatch": False,
         "isFakeIp": False,
         "steamids": [],
@@ -318,7 +331,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     
     request = requests.put(endpoint, json=put_server_data, headers=headers)
     _response = request.json()
-    kwargs["mission"] = server['map']
+    kwargs["mission"] = server.get('map', '')
 
     print(_response)
     return server
