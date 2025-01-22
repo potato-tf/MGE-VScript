@@ -271,25 +271,44 @@ async def VPI_MGE_UpdateServerData(info, cursor):
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
     kwargs['address'] = server['addr']
+    
+    timestamp = datetime.datetime(
+        year=kwargs["update_time"].get("year", datetime.datetime.now().year),
+        month=kwargs["update_time"].get("month", 1),
+        day=kwargs["update_time"].get("day", 1),
+        hour=kwargs["update_time"].get("hour", 0),
+        minute=kwargs["update_time"].get("minute", 0),
+        second=kwargs["update_time"].get("second", 0)
+    ).timestamp()
 
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']
         
     put_server_data = {
         "serverKey": server['server_key'],
+        "serverName": server['name'],
         "address": server['addr'],
-        "map": server['map'],
-        "maxWave": server['max_wave'],
-        "mission": server['map'],
+        "playersRed": server['players_red'],
         "playersBlu": server['players_blu'], 
         "playersConnecting": server['players_connecting'],
         "playersMax": server['players_max'],
-        "playersRed": server['players_red'],
+        "wave": server['wave'],
+        "maxWave": server['max_wave'],
+        "classes": server['classes'],
+        "mission": server['map'],
+        "map": server['map'],
+        "mapNoVersion": server['map'],
         "region": server['region'],
-        "serverName": server['name'],
         "status": server['status'],
-        "updateTime": server['update_time'],
-        "wave": server['wave']
+        "campaignName": server['campaign_name'],
+        "timestamp": server['update_time'],
+        "domain": server['domain'],
+        "matchmakingDisableTime": 0,
+        "password": server['password'],
+        "inProtectedMatch": False,
+        "isFakeIp": False,
+        "steamids": [],
+        "selectedForMatchmaking": False,
     }
     
     headers = {
