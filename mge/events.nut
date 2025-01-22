@@ -211,7 +211,7 @@ class MGE_Events
 				callback = function(response, error) {
 					if (error)
 					{
-						printl(error)
+						// printl(error)
 						return
 					}
 					if (SERVER_DATA.address == 0)
