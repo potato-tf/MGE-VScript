@@ -269,6 +269,9 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     if not endpoint:
         raise ValueError("endpoint_url is required")
         
+    if not POTATO_API_KEY:
+        raise ValueError("POTATO_API_KEY environment variable is not set")
+
     name = kwargs.get("server_name")
     if not name:
         raise ValueError("server_name is required")
@@ -312,7 +315,8 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     }
     
     headers = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-API-Key": POTATO_API_KEY
     }
     
     # Add detailed logging
