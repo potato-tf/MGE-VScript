@@ -264,6 +264,8 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 async def VPI_MGE_UpdateServerData(info, cursor):
     kwargs = info["kwargs"]
     
+    print(kwargs)
+    
     # Convert time dictionary to datetime object
     time_data = kwargs["update_time"]
     
