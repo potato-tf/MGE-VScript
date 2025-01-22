@@ -279,8 +279,10 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         minute=time_data.get("minute", 0),
         second=time_data.get("second", 0)
     ).strftime('%Y-%m-%d %H:%M:%S')
-    print(name)
+    
     name = kwargs["server_name"]
+    print(name)
+    
     response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
     
     print(response.json())
