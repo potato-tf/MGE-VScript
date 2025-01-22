@@ -329,6 +329,8 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         "Content-Type": "application/json"
     }
     
+    print("Sending request to", endpoint)
+    
     _request = requests.put(endpoint, json=put_server_data, headers=headers)
     print(_request)
     kwargs["mission"] = server.get('map', '')
