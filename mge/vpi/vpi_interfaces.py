@@ -7,8 +7,16 @@ import tempfile
 import shutil
 import datetime
 import requests
+import logging
 
 os.system('')  # enables ansi escape characters in terminal
+
+# Setup logging at the top of the file
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger('VPI_MGE')
 
 COLOR = {
     'CYAN': '\033[96m',
@@ -266,19 +274,18 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
-
-    # return
-
     kwargs = info["kwargs"]
     # Get required values with error checking
     endpoint = kwargs.get("endpoint_url", "https://potato.tf/api/serverstatus")
     if not endpoint:
         raise ValueError("endpoint_url is required")
-
+        
     if not POTATO_API_KEY:
         raise ValueError("POTATO_API_KEY environment variable is not set")
-    
-    name = kwargs["server_name"]
+
+    name = kwargs.get("server_name")
+    if not name:
+        raise ValueError("server_name is required")
 
     response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
 
@@ -333,20 +340,28 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "auth-token": POTATO_API_KEY  # Using the correct auth header
+        "auth-token": POTATO_API_KEY
     }
-
+    
+    # Replace print statements with logging
+    logger.info(f"Sending PUT request to {endpoint}")
+    logger.info(f"Request data: {put_server_data}")
+    
     try:
         request = requests.put(endpoint, json=put_server_data, headers=headers)
-
+        logger.info(f"Response status code: {request.status_code}")
+        logger.info(f"Response text: {request.text}")
+        
         request.raise_for_status()
-
+        
         if request.text:  # Only try to parse JSON if there's a response body
             try:
                 _response = request.json()
+                logger.info(f"Parsed JSON response: {_response}")
             except ValueError as e:
-                print(f"Warning: Could not parse response as JSON: {str(e)}")
+                logger.warning(f"Could not parse response as JSON: {str(e)}")
     except requests.RequestException as e:
+        logger.error(f"Failed to update server data: {str(e)}")
         raise Exception(f"Failed to update server data: {str(e)}")
 
     return put_server_data
