@@ -1368,7 +1368,7 @@
 				EntFireByHandle(arena.BBall.ground_ball, "Kill", "", -1, null, null)
 			}
 
-			if (arena.IsCustomRuleset)
+			if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
 			{
 				foreach(p, _ in arena.CurrentPlayers)
 				{
