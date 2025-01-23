@@ -1891,7 +1891,6 @@
 						arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
 						LoadSpawnPoints(arena_name)
-						
 
 						//why does this need to be set here
 						if ("mge" in arena)
@@ -1920,6 +1919,8 @@
 								delete scope.ThinkTable.CustomRulesetThink
 							p.RemoveCustomAttribute("no_attack")
 							p.RemoveCustomAttribute("disable weapon switch")
+
+							SetSpecialArena(p, arena_name)
 						}
 						return
 					}
