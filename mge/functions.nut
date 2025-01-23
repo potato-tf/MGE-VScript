@@ -1884,6 +1884,7 @@
 						arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
 						arena.fraglimit /= 2
+						BBall_SpawnBall(arena_name, arena.RulesetVote.ground_ball.GetOrigin())
 						LoadSpawnPoints(arena_name)
 
 						printl(arena.RulesetVote.ground_ball)
