@@ -297,7 +297,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
 
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']
-        kwargs["mission"] = server['map']
+        # kwargs["mission"] = server['map']
         
     update_time = kwargs.get("update_time", {})
     now = datetime.datetime.now()
@@ -345,12 +345,12 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     
     # Replace print statements with logging
     logger.info(f"Sending PUT request to {endpoint}")
-    logger.info(f"Request data: {put_server_data}")
+    # logger.info(f"Request data: {put_server_data}")
     
     try:
         request = requests.put(endpoint, json=put_server_data, headers=headers)
-        logger.info(f"Response status code: {request.status_code}")
-        logger.info(f"Response text: {request.text}")
+        # logger.info(f"Response status code: {request.status_code}")
+        # logger.info(f"Response text: {request.text}")
         
         request.raise_for_status()
         
