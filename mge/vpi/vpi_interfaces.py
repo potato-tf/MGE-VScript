@@ -161,6 +161,9 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     kwargs = info["kwargs"]
     query_mode = kwargs["query_mode"] 
     network_id = kwargs["network_id"]
+    
+    if network_id == "BOT": return
+    
     default_elo = kwargs["default_elo"] if "default_elo" in kwargs else 1000
 
     if (query_mode == "read" or query_mode == 0):
