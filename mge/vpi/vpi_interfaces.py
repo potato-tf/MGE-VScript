@@ -162,19 +162,19 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     query_mode = kwargs["query_mode"] 
     network_id = kwargs["network_id"]
     default_elo = kwargs["default_elo"] if "default_elo" in kwargs else 1000
-    
+
     if (query_mode == "read" or query_mode == 0):
         print(COLOR['CYAN'], f"Fetching player data for steam ID {network_id}", COLOR['ENDC'])
         await cursor.execute(f"SELECT {player_data_columns} FROM mge_playerdata WHERE steam_id = {network_id}")
         result = await cursor.fetchall()
-        
+
         # If no record exists, create one with default values
         if not result:
             print(COLOR['YELLOW'], f"No record exists for steam ID {network_id}, adding...", COLOR['ENDC'])
             await cursor.execute(f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES ({network_id}, {default_elo}, {default_zeroes})")
             await cursor.execute(f"SELECT {player_data_columns} FROM mge_playerdata WHERE steam_id = {network_id}")
             result = await cursor.fetchall()
-            
+
         return result
     elif (query_mode == "write" or query_mode == 1):
         # Build SET clause from stats dictionary
@@ -182,22 +182,22 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
         for key, value in kwargs['stats'].items():
             set_clauses.append(f"{key} = {value}")
         set_clause = ", ".join(set_clauses)
-        
+
         print(COLOR['CYAN'], f"Updating player data for steam ID {network_id} with stats: {set_clause}", COLOR['ENDC'])
         await cursor.execute(f"UPDATE mge_playerdata SET {set_clause} WHERE steam_id = {network_id}")
         return await cursor.fetchall()
-    
+
 banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup.bat", "config.nut"]
 @WrapInterface
 async def VPI_MGE_AutoUpdate(info, test=False):
     """
     Git clones a repository and returns a list of changed files
-    
+
     Args:
         kwargs (dict): Dictionary containing:
             repo (str): Repository URL to clone
             branch (str): Branch to clone (optional, defaults to main)
-            
+
     Returns:
         list: List of changed files, or empty list if no changes/error
     """
@@ -210,28 +210,28 @@ async def VPI_MGE_AutoUpdate(info, test=False):
         if not repo_url:
             print(COLOR['RED'], "[VPI] Error: No repository URL provided", COLOR['ENDC'])
             return []
-            
+
         # Create temp directory for clone
         temp_dir = tempfile.mkdtemp()
-        
+
         print(COLOR['GREEN2'], f"Cloning repository {repo_url} into {temp_dir}", COLOR['ENDC'])
         # Clone the repository using GitPython
         repo = git.Repo.clone_from(repo_url, temp_dir, branch=branch)
-        
+
         # Get list of changed files by comparing with current directory
         changed_files = []
         current_dir = clone_dir
-        
+
         for root, _, files in os.walk(temp_dir):
             for file in files:
                 # Skip .git directory
                 if any(banned in file for banned in banned_files) or any(banned in root for banned in banned_files):
                     continue
-                    
+
                 temp_path = os.path.join(root, file)
                 relative_path = os.path.relpath(temp_path, temp_dir)
                 current_path = os.path.join(current_dir, relative_path)
-                
+
                 # Check if file exists and has different content
                 if not os.path.exists(current_path):
                     changed_files.append(relative_path)
@@ -241,18 +241,18 @@ async def VPI_MGE_AutoUpdate(info, test=False):
                             changed_files.append(relative_path)
 	
         print(COLOR['GREEN'], f"Changed files: {changed_files}", COLOR['ENDC'])
-        
+
         #move changed files to the clone directory
         for file in changed_files:
             shutil.move(os.path.join(temp_dir, file), os.path.join(clone_dir, file))
-        
+
 
         return changed_files
-        
+
     except Exception as e:
         print(COLOR['RED'], f"[VPI] Error during auto-update: {str(e)}", COLOR['ENDC'])
         return []
-    
+
     finally:
         # Cleanup temp directory
         if 'temp_dir' in locals():
@@ -263,15 +263,15 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
-    
-    return
+
+    # return
 
     kwargs = info["kwargs"]
     # Get required values with error checking
     endpoint = kwargs.get("endpoint_url", "https://potato.tf/api/serverstatus")
     if not endpoint:
         raise ValueError("endpoint_url is required")
-        
+
     if not POTATO_API_KEY:
         raise ValueError("POTATO_API_KEY environment variable is not set")
 
@@ -316,28 +316,21 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         "steamids": [],
         "selectedForMatchmaking": False,
     }
-    
+
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
         "auth-token": POTATO_API_KEY  # Using the correct auth header
     }
-    
-    # Add detailed logging
-    print(f"Sending PUT request to {endpoint}")
-    print(f"Request data: {put_server_data}")
-    
+
     try:
         request = requests.put(endpoint, json=put_server_data, headers=headers)
-        print(f"Response status code: {request.status_code}")
-        print(f"Response text: {request.text}")
-        
+
         request.raise_for_status()
-        
+
         if request.text:  # Only try to parse JSON if there's a response body
             try:
                 _response = request.json()
-                print(f"Parsed JSON response: {_response}")
             except ValueError as e:
                 print(f"Warning: Could not parse response as JSON: {str(e)}")
     except requests.RequestException as e:
@@ -348,10 +341,10 @@ async def VPI_MGE_UpdateServerData(info, cursor):
 @WrapDB
 async def VPI_MGE_UpdateServerDataDB(info, cursor):
     kwargs = info["kwargs"]
-    
+
     # Convert time dictionary to datetime object
     time_data = kwargs["update_time"]
-    
+
     timestamp = datetime.datetime(
         year=time_data.get("year", datetime.datetime.now().year),
         month=time_data.get("month", 1),
@@ -360,19 +353,20 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
         minute=time_data.get("minute", 0),
         second=time_data.get("second", 0)
     ).strftime('%Y-%m-%d %H:%M:%S')
-    
+
     name = kwargs["server_name"]
-    
+
     response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
-    
-    kwargs['address'] = server['address']
-    
+
+    if server and "address" in server:
+        kwargs['address'] = server['address']
+
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']
         kwargs["mission"] = server['map']
-    
+
     await cursor.execute("""
         CREATE TABLE IF NOT EXISTS mge_serverdata (
             server_key VARCHAR(255),
@@ -442,7 +436,7 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
         kwargs["wave"],
         kwargs["campaign_name"]
     ))
-    # print(server)
+    print(server)
     return server
 
 
