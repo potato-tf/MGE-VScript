@@ -1870,6 +1870,7 @@
 						arena.RulesetVote.ground_ball.SetOrigin(ball.GetOrigin())
 						arena.RulesetVote.ground_ball.SetAbsAngles(ball.GetAbsAngles())
 						printl(arena.RulesetVote.ground_ball)
+						arena.RulesetVote.ground_ball.AddEFlags(EFL_KILLME) //why are you disappearing?
 
 						arena.bball_home <- ball.GetOrigin().ToKVString()
 						arena.bball_home_red <- ball.GetOrigin().ToKVString()
@@ -1886,6 +1887,8 @@
 
 						// if ("ground_ball" in arena.RulesetVote)
 						arena.BBall.ground_ball <- arena.RulesetVote.ground_ball
+
+						arena.BBall.ground_ball.RemoveEFlags(EFL_KILLME)
 
 						printl(arena.RulesetVote.ground_ball)
 
