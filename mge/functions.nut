@@ -1729,6 +1729,7 @@
 
 	local ruleset_inits = {
 		function bball() {
+			printl("RulesetTest")
 			//set some temporary bball variables
 			if (!("validatedhoops" in arena.RulesetVote))
 			{
@@ -1792,8 +1793,10 @@
 		function bball() {
 			// printl(arena.RulesetVote.validatedhoops)
 			// printl("temp_ball" in self.GetScriptScope())
+			printl("RulesetThink")
 			local scope = self.GetScriptScope()
 			if (hoop_cooldown > Time()) return
+			printl("RulesetThink2")
 
 			local hoop_trace = {
 
