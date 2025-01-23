@@ -501,6 +501,12 @@ class MGE_Events
 
 				if (arena.Score[0] >= fraglimit || arena.Score[1] >= fraglimit)
 				{
+					foreach(p, _ in arena.CurrentPlayers)
+						str += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo)
+
+					foreach (p, _ in arena.CurrentPlayers)
+						EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
+
 					CalcArenaScore(arena_name)
 					return
 				}

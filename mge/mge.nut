@@ -78,7 +78,8 @@ LocalTime(local_time)
 	address = 0
 	map = GetMapName()
 	max_wave = -1
-	mission = GetMapName()
+	// mission = GetMapName()
+	mission = ""
 	players_blu = 0
 	players_connecting = 0
 	players_max = MaxClients().tointeger()

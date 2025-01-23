@@ -393,7 +393,7 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
 
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']
-        kwargs["mission"] = server['map']
+        # kwargs["mission"] = server['map']
 
     await cursor.execute("""
         CREATE TABLE IF NOT EXISTS mge_serverdata (

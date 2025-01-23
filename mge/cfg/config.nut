@@ -170,8 +170,8 @@ const KOTH_POINT_MODEL			= "models/props_2fort/groundlight003.mdl"
 const ULTIDUO_MAX_SPAWNS				= 4
 
 //VPI related stuff
-// CONST.HLTV_TEST <- Convars.GetInt("tv_enable")
-const HLTV_TEST = false
+CONST.HLTV_TEST <- Convars.GetInt("tv_enable")
+// const HLTV_TEST = false
 //this gets overwritten by HLTV_TEST (fixed 8 second interval)
 const VPI_SERVERINFO_UPDATE_INTERVAL = 20
 
