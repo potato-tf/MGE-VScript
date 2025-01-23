@@ -274,11 +274,20 @@ async def VPI_MGE_UpdateServerData(info, cursor):
 
     if not POTATO_API_KEY:
         raise ValueError("POTATO_API_KEY environment variable is not set")
+    
+    name = kwargs["server_name"]
 
-    name = kwargs.get("server_name")
-    if not name:
-        raise ValueError("server_name is required")
+    response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
 
+    server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
+
+    if server and "address" in server:
+        kwargs['address'] = server['address']
+
+    if (kwargs["map"].startswith("workshop/")):
+        kwargs["map"] = server['map']
+        kwargs["mission"] = server['map']
+        
     update_time = kwargs.get("update_time", {})
     now = datetime.datetime.now()
     timestamp = datetime.datetime(
