@@ -206,7 +206,7 @@
 			}
 			printl("test5")
 			_arena.BBall <- bball_points
-			BBall_SpawnBall(custom_ruleset_arena_name)
+			BBall_SpawnBall(custom_ruleset_arena_name, null, true)
 
 		}
 		if (_arena.IsKoth)
@@ -1884,11 +1884,8 @@
 						arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
 						arena.fraglimit /= 2
-						BBall_SpawnBall(arena_name, arena.RulesetVote.ground_ball.GetOrigin(),  true)
+						// BBall_SpawnBall(arena_name, arena.RulesetVote.ground_ball.GetOrigin(),  true)
 						LoadSpawnPoints(arena_name)
-
-						printl(arena.RulesetVote.ground_ball)
-						printl("ground_ball" in arena.RulesetVote)
 
 						// if ("ground_ball" in arena.RulesetVote)
 						arena.BBall.ground_ball <- arena.RulesetVote.ground_ball
