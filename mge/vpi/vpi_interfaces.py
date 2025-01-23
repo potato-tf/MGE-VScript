@@ -284,6 +284,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
 
+    print(server)
     if server and "address" in server:
         kwargs['address'] = server['address']
 
