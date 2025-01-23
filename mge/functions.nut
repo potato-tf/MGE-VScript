@@ -1891,6 +1891,9 @@
 						arena.fraglimit /= 2
 						LoadSpawnPoints(arena_name)
 
+						//why does this need to be set here
+						arena.IsBBall <- true
+
 						arena.BBall.ground_ball <- groundball
 
 						arena.RulesetVote.clear()
