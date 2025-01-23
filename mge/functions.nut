@@ -1793,10 +1793,8 @@
 		function bball() {
 			// printl(arena.RulesetVote.validatedhoops)
 			// printl("temp_ball" in self.GetScriptScope())
-			printl("RulesetThink")
 			local scope = self.GetScriptScope()
 			if (hoop_cooldown > Time()) return
-			printl("RulesetThink2")
 
 			local hoop_trace = {
 
