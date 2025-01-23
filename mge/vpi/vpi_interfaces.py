@@ -291,7 +291,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
 
-    print(server)
+    logger.info(f"Server: {server}")
     if server and "address" in server:
         kwargs['address'] = server['address']
 
@@ -357,7 +357,6 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         if request.text:  # Only try to parse JSON if there's a response body
             try:
                 _response = request.json()
-                logger.info(f"Parsed JSON response: {_response}")
             except ValueError as e:
                 logger.warning(f"Could not parse response as JSON: {str(e)}")
     except requests.RequestException as e:
