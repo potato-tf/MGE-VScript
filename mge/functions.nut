@@ -1885,8 +1885,6 @@
 
 						arena.fraglimit /= 2
 
-						arena.IsBBall <- true
-						arena.BBall.ground_ball <- groundball
 						arena.bball_home 		<- ball.GetOrigin().ToKVString()
 						arena.bball_home_red 	<- ball.GetOrigin().ToKVString()
 						arena.bball_home_blue 	<- ball.GetOrigin().ToKVString()
