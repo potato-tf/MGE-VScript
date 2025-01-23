@@ -488,7 +488,7 @@
 		_arena.round_start_sound_volume <- "round_start_sound_volume" in _arena ? _arena.round_start_sound_volume : ROUND_START_SOUND_VOLUME
 		_arena.airshot_height_threshold <- "airshot_height_threshold" in _arena ? _arena.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 
-		if (_arena.IsMGE)
+		if (_arena.IsMGE && !("IsCustomRuleset" in _arena) && !("RulesetVote" in _arena))
 		{
 			_arena.IsCustomRuleset <- false
 			_arena.RulesetVote <- {}
