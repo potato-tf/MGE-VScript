@@ -1882,7 +1882,8 @@
 
 						//set by BBall_SpawnBall
 
-						arena.BBall.ground_ball <- arena.RulesetVote.ground_ball
+						if ("ground_ball" in arena.RulesetVote)
+							arena.BBall.ground_ball <- arena.RulesetVote.ground_ball
 
 						arena.RulesetVote.clear()
 						SetArenaState(arena_name, AS_COUNTDOWN)
