@@ -1721,7 +1721,11 @@
 	arena[ruleset] <- "1"
 	arena.IsCustomRuleset <- true
 	SetArenaState(arena_name, AS_IDLE)
-	if ("mge" in arena) delete arena.mge
+	if ("mge" in arena)
+	{
+		delete arena.mge
+		arena.IsMGE <- false
+	}
 
 	local ruleset_inits = {
 		function bball() {
