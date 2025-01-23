@@ -291,9 +291,9 @@ async def VPI_MGE_UpdateServerData(info, cursor):
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
 
-    logger.info(f"Server: {server}")
-    if server and "address" in server:
-        kwargs['address'] = server['address']
+    # logger.info(f"Server: {server}")
+    if server and "addr" in server:
+        kwargs['address'] = server['addr']
 
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']
