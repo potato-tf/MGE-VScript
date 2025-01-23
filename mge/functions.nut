@@ -1392,7 +1392,9 @@
 
 	local arena = Arenas[arena_name]
 
-	if ("mge" in arena && arena.mge == "1" && !"CustomRuleset" in arena && !arena.CustomRuleset) return
+	printl("mge" in arena && arena.mge == "1")
+
+	if ("mge" in arena && arena.mge == "1") return
 
 	local scope = player.GetScriptScope()
 	local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
@@ -1919,8 +1921,6 @@
 								delete scope.ThinkTable.CustomRulesetThink
 							p.RemoveCustomAttribute("no_attack")
 							p.RemoveCustomAttribute("disable weapon switch")
-
-							SetSpecialArena(p, arena_name)
 						}
 						return
 					}
