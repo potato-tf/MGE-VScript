@@ -387,7 +387,7 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
     response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
-
+    print(server)
     if server and "address" in server:
         kwargs['address'] = server['address']
 
@@ -464,7 +464,6 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
         kwargs["wave"],
         kwargs["campaign_name"]
     ))
-    print(server)
     return server
 
 
