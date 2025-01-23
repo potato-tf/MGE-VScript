@@ -349,7 +349,7 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     
     try:
         request = requests.put(endpoint, json=put_server_data, headers=headers)
-        # logger.info(f"Response status code: {request.status_code}")
+        logger.info(f"Response status code: {request.status_code}")
         # logger.info(f"Response text: {request.text}")
         
         request.raise_for_status()
