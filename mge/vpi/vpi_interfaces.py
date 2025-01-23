@@ -263,6 +263,9 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
+    
+    return
+
     kwargs = info["kwargs"]
     # Get required values with error checking
     endpoint = kwargs.get("endpoint_url", "https://potato.tf/api/serverstatus")
