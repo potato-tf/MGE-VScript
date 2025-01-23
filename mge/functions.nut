@@ -1866,11 +1866,14 @@
 					local votepos = arena.RulesetVote.ballvote_pos
 					if (votepos[0] && votepos[1] && (votepos[0] - votepos[1]).Length() < 200.0)
 					{
+						printl("ground_ball" in arena.RulesetVote)
+						arena.RulesetVote.ground_ball.AddEFlags(EFL_KILLME) //why are you disappearing?
 						printl(arena.RulesetVote.ground_ball)
+						printl("ground_ball" in arena.RulesetVote)
 						arena.RulesetVote.ground_ball.SetOrigin(ball.GetOrigin())
 						arena.RulesetVote.ground_ball.SetAbsAngles(ball.GetAbsAngles())
 						printl(arena.RulesetVote.ground_ball)
-						arena.RulesetVote.ground_ball.AddEFlags(EFL_KILLME) //why are you disappearing?
+						printl("ground_ball" in arena.RulesetVote)
 
 						arena.bball_home <- ball.GetOrigin().ToKVString()
 						arena.bball_home_red <- ball.GetOrigin().ToKVString()
@@ -1884,11 +1887,10 @@
 						LoadSpawnPoints(arena_name)
 
 						printl(arena.RulesetVote.ground_ball)
+						printl("ground_ball" in arena.RulesetVote)
 
 						// if ("ground_ball" in arena.RulesetVote)
 						arena.BBall.ground_ball <- arena.RulesetVote.ground_ball
-
-						arena.BBall.ground_ball.RemoveEFlags(EFL_KILLME)
 
 						printl(arena.RulesetVote.ground_ball)
 
