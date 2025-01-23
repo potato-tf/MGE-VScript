@@ -1889,9 +1889,9 @@
 						//why does this need to be set here
 						arena.IsBBall <- true
 						arena.BBall.ground_ball <- groundball
-						arena.bball_home <- ball.GetOrigin().ToKVString()
-						arena.bball_home_red <- ball.GetOrigin().ToKVString()
-						arena.bball_home_blue <- ball.GetOrigin().ToKVString()
+						arena.bball_home 		<- ball.GetOrigin().ToKVString()
+						arena.bball_home_red 	<- ball.GetOrigin().ToKVString()
+						arena.bball_home_blue 	<- ball.GetOrigin().ToKVString()
 						arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
 						arena.RulesetVote.clear()
