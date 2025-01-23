@@ -1392,7 +1392,7 @@
 
 	local arena = Arenas[arena_name]
 
-	if ("mge" in arena && arena.mge == "1") return
+	if ("mge" in arena && arena.mge == "1" && !"CustomRuleset" in arena && !arena.CustomRuleset) return
 
 	local scope = player.GetScriptScope()
 	local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
@@ -1891,8 +1891,14 @@
 						arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
 						LoadSpawnPoints(arena_name)
+						
 
 						//why does this need to be set here
+						if ("mge" in arena)
+						{
+							delete arena.mge
+							arena.IsMGE <- false
+						}
 						arena.IsBBall <- true
 						arena.BBall.ground_ball <- groundball
 
