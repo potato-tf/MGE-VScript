@@ -731,13 +731,18 @@
 		ClientPrint(p, 3, p == player ? "You have the ball!" : format("%s has the ball!", player.GetScriptScope().Name))
 	}
 
+	printl(ball_ent)
+
 	EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
 	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
 	EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", GENERIC_DELAY, null, null)
 
+	printl(ball_ent)
+
 	DispatchParticleEffect(player.GetTeam() == TF_TEAM_RED ? BBALL_PARTICLE_PICKUP_RED : BBALL_PARTICLE_PICKUP_BLUE, player.GetOrigin(), Vector(0, 90, 0))
 	EntFire(format("__mge_bball_trail_%d", player.GetTeam()), "StartTouch", "!activator", -1, player)
 
+	printl(ball_ent)
 }
 
 ::AddBot <- function(arena_name)
@@ -1879,13 +1884,9 @@
 						arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
 						arena.fraglimit /= 2
-						// BBall_SpawnBall(arena_name, arena.RulesetVote.ground_ball.GetOrigin(),  true)
 						LoadSpawnPoints(arena_name)
 
-						// if ("ground_ball" in arena.RulesetVote)
 						arena.BBall.ground_ball <- groundball
-
-						printl(groundball)
 
 						arena.RulesetVote.clear()
 						SetArenaState(arena_name, AS_COUNTDOWN)
