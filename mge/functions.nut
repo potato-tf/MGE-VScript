@@ -139,6 +139,7 @@
 	if (custom_ruleset_arena_name && !arena_reset)
 	{
 		local _arena = config[custom_ruleset_arena_name]
+		printl("RulesetVote" in _arena)
 		_arena.Score          <- array(2, 0)
 
 		//0 breaks our countdown system, default to 1
@@ -205,8 +206,10 @@
 					bball_points[k] <- Vector(split_spawns[0], split_spawns[1], split_spawns[2])
 			}
 			printl("test5")
+			printl("RulesetVote" in _arena)
 			_arena.BBall <- bball_points
-			BBall_SpawnBall(custom_ruleset_arena_name, null, true)
+			BBall_SpawnBall(custom_ruleset_arena_name)
+			printl("RulesetVote" in _arena)
 
 		}
 		if (_arena.IsKoth)
@@ -265,7 +268,6 @@
 			{
 				try
 				{
-
 					if (
 						(_arena.IsBBall && spawn_idx > BBALL_MAX_SPAWNS) ||
 						(_arena.IsKoth && spawn_idx > KOTH_MAX_SPAWNS) 	||
@@ -452,8 +454,6 @@
 
 				_arena.RulesetVote[k] <- array(2, false)
 			}
-
-
 		}
 
 		Arenas[arena_name] <- _arena
@@ -473,7 +473,7 @@
 
 		//do this instead of checking both of these everywhere
 		_arena.IsMGE          <- "mge" in _arena && _arena.mge == "1"
-		_arena.IsUltiduo       <- "ultiduo" in _arena && _arena.ultiduo == "1"
+		_arena.IsUltiduo      <- "ultiduo" in _arena && _arena.ultiduo == "1"
 		_arena.IsKoth         <- "koth" in _arena && _arena.koth == "1"
 		_arena.IsBBall        <- "bball" in _arena && _arena.bball == "1"
 		_arena.IsAmmomod      <- "ammomod" in _arena && _arena.ammomod == "1"
@@ -1866,14 +1866,9 @@
 					local votepos = arena.RulesetVote.ballvote_pos
 					if (votepos[0] && votepos[1] && (votepos[0] - votepos[1]).Length() < 200.0)
 					{
-						printl("ground_ball" in arena.RulesetVote)
-						arena.RulesetVote.ground_ball.AddEFlags(EFL_KILLME) //why are you disappearing?
-						printl(arena.RulesetVote.ground_ball)
-						printl("ground_ball" in arena.RulesetVote)
-						arena.RulesetVote.ground_ball.SetOrigin(ball.GetOrigin())
-						arena.RulesetVote.ground_ball.SetAbsAngles(ball.GetAbsAngles())
-						printl(arena.RulesetVote.ground_ball)
-						printl("ground_ball" in arena.RulesetVote)
+						local groundball = arena.RulesetVote.ground_ball
+						groundball.SetOrigin(ball.GetOrigin())
+						groundball.SetAbsAngles(ball.GetAbsAngles())
 
 						arena.bball_home <- ball.GetOrigin().ToKVString()
 						arena.bball_home_red <- ball.GetOrigin().ToKVString()
@@ -1888,9 +1883,9 @@
 						LoadSpawnPoints(arena_name)
 
 						// if ("ground_ball" in arena.RulesetVote)
-						arena.BBall.ground_ball <- arena.RulesetVote.ground_ball
+						arena.BBall.ground_ball <- groundball
 
-						printl(arena.RulesetVote.ground_ball)
+						printl(groundball)
 
 						arena.RulesetVote.clear()
 						SetArenaState(arena_name, AS_COUNTDOWN)
