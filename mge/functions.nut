@@ -1168,10 +1168,13 @@
 			end /= 2
 
 		idx = (idx + 1) % end
-		idx = 10
-		printl("Test " + idx + " : " + arena.IsBBall + " End: " + end + " Spawnpoints: " + arena.SpawnPoints.len())
+		printl(idx + " : " + end + " : " + arena.SpawnPoints.len())
 		if (team == TF_TEAM_BLUE)
 			idx += arena.SpawnPoints.len() / 2
+
+		if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
+			arena.SpawnIdx = idx
+
 		return idx
 	}
 
