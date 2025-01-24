@@ -1156,7 +1156,6 @@
 	{
 		local end = -1
 		local idx = arena.SpawnIdx
-
 		if (arena.IsKoth)
 			end = KOTH_MAX_SPAWNS
 		else if (arena.IsBBall)
