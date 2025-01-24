@@ -1899,6 +1899,13 @@
 						arena.bball_home_blue 	<- ball.GetOrigin().ToKVString()
 						arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
+
+						//HACK
+						//the temp_ball kill below doesn't work for the first person who placed the flag, only the last
+						//just manually kill all obj_teleporters in radius
+						for (local hack; hack = Entities.FindByClassnameWithin(hack, "obj_teleporter", ball.GetOrigin(), 200.0);)
+							EntFireByHandle(hack, "Kill", "", -1, null, null)
+
 						foreach(p, _ in arena.CurrentPlayers)
 						{
 							if (scope.temp_ball)
@@ -1907,16 +1914,14 @@
 						LoadSpawnPoints(arena_name)
 
 						//why does this need to be set here
-						if ("mge" in arena)
-						{
-							delete arena.mge
-							arena.IsMGE <- false
-						}
-						arena.IsBBall <- true
+						// if ("mge" in arena)
+						// {
+						// 	delete arena.mge
+						// 	arena.IsMGE <- false
+						// }
+						// arena.IsBBall <- true
 						arena.BBall.ground_ball <- groundball
 
-						printl(arena.bball_hoop_red)
-						printl(arena.bball_hoop_blue)
 						// arena.bball_home 		<- ball.GetOrigin().ToKVString()
 						// arena.bball_home_red 	<- ball.GetOrigin().ToKVString()
 						// arena.bball_home_blue 	<- ball.GetOrigin().ToKVString()
