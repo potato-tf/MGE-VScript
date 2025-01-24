@@ -1899,6 +1899,11 @@
 						arena.bball_home_blue 	<- ball.GetOrigin().ToKVString()
 						arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
+						foreach(p, _ in arena.CurrentPlayers)
+						{
+							if (scope.temp_ball)
+								EntFireByHandle(scope.temp_ball, "Kill", "", -1, null, null)
+						}
 						LoadSpawnPoints(arena_name)
 
 						//why does this need to be set here
@@ -1922,7 +1927,7 @@
 
 						foreach(p, _ in arena.CurrentPlayers)
 						{
-							if (scope.temp_ball && scope.temp_ball.IsValid())
+							if (scope.temp_ball)
 								EntFireByHandle(scope.temp_ball, "Kill", "", -1, null, null)
 							if ("CustomRulesetThink" in scope.ThinkTable)
 								delete scope.ThinkTable.CustomRulesetThink
