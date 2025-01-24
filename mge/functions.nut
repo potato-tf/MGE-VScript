@@ -1848,7 +1848,10 @@
 					foreach(p, _ in arena.CurrentPlayers)
 					{
 						local _scope = p.GetScriptScope()
+
 						_scope.temp_ball <- ShowModelToPlayer(p, [BBALL_BALL_MODEL, 0, 0], hoop_trace.endpos, QAngle(), 9999.0)
+						SetPropInt(_scope.temp_ball, "m_nRenderFX", kRenderFxDistort)
+
 						EntFireByHandle(p, "RunScriptCode", format(@"
 							SendGlobalGameEvent(`show_annotation`, {
 								visibilityBitfield = 1 << self.entindex(),
