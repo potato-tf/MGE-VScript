@@ -1172,8 +1172,8 @@
 		if (team == TF_TEAM_BLUE)
 			idx += arena.SpawnPoints.len() / 2
 
-		if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
-			arena.SpawnIdx = idx
+		// if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
+		arena.SpawnIdx = idx
 
 		return idx
 	}
