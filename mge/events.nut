@@ -374,8 +374,8 @@ class MGE_Events
 				// MGE_HUD.AcceptInput("Display", "", player, player)
 				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, player, player)
 
-				if (arena.IsBBall)
-					EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", GENERIC_DELAY, null, null)
+				// if (arena.IsBBall)
+				EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", GENERIC_DELAY, null, null)
 			}
 			else
 			{
