@@ -190,7 +190,7 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 						cap_contested = true
 
 				//we don't own it, start capping point
-				if (owner_team != team && partial_cap_cooldowntime < Time())
+				if (owner_team != team && partial_cap_cooldowntime < Time() && !cap_contested)
 				{
 
 					//revert enemy partial cap progress first
