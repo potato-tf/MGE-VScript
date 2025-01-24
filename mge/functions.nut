@@ -952,10 +952,10 @@
 			delete arena.CurrentPlayers[player]
 			SetArenaState(arena_name, AS_IDLE)
 		}
-		if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
-		{
-			LoadSpawnPoints(arena_name, true)
-		}
+		// if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
+		// {
+		// 	LoadSpawnPoints(arena_name, true)
+		// }
 	}
 }
 
@@ -1392,8 +1392,6 @@
 
 	local arena = Arenas[arena_name]
 
-	printl("mge" in arena && arena.mge == "1")
-
 	if ("mge" in arena && arena.mge == "1") return
 
 	local scope = player.GetScriptScope()
@@ -1401,8 +1399,10 @@
 	local maxhp = player.GetMaxHealth() * hpratio
 
 	foreach(k, func in special_arenas)
+	{
 		if (k in arena && arena[k] == "1")
 			func.call(scope)
+	}
 }
 
 ::PlayAnnouncer <- function(player, sound_name) {
