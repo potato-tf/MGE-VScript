@@ -180,132 +180,139 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 
 			if (!player.IsAlive()) return
 
-			//we don't own it, start capping point
-			if (owner_team != team && partial_cap_cooldowntime < Time() && (player.GetOrigin() - point).Length() < radius)
+			if ((player.GetOrigin() - point).Length() < radius)
 			{
 				if (!(player in current_cappers))
 					current_cappers[player] <- true
 
 				foreach(p, is_capping in current_cappers)
-				{
 					if (p.GetTeam() != player.GetTeam() && is_capping)
 						cap_contested = true
-				}
 
-				//revert enemy partial cap progress first
-				if (arena.Koth[enemy_partial_cap_amount] > 0.0 && !cap_contested)
+				//we don't own it, start capping point
+				if (owner_team != team && partial_cap_cooldowntime < Time())
 				{
-					if (arena.Koth.additive_decay)
-						arena.Koth[enemy_partial_cap_amount] -= arena.Koth.partial_cap_rate
 
-					partial_cap_cooldowntime = Time() + (additive_decay ? arena.Koth.partial_cap_interval : arena.Koth.cap_decay_interval)
-					return
-				}
-
-				//add partial cap progress
-				if (!cap_contested)
-					arena.Koth[partial_cap_amount] += arena.Koth.partial_cap_rate
-
-				//finished capping, we own it now, reset our partial cap progress for next time
-				if (arena.Koth[partial_cap_amount] >= 1.0)
-				{
-					arena.Koth.owner_team = team
-					arena.Koth[partial_cap_amount] = 0.0
-					// arena.Koth[partial_cap_amount] = owner_team == self.GetTeam() ? 0.0 : 0.99
-				}
-
-				//hud stuff
-				foreach(p, _ in arena.CurrentPlayers)
-				{
-					local _team = p.GetTeam()
-					local ent = _team == TF_TEAM_RED ? KOTH_HUD_RED : KOTH_HUD_BLU
-					local str = ""
-
-					//we own it, show cap time
-					if (owner_team == _team)
+					//revert enemy partial cap progress first
+					if (arena.Koth[enemy_partial_cap_amount] > 0.0 && !cap_contested)
 					{
-						ent.KeyValueFromString("message", format("Cap Time: %.2f", arena.Koth[enemy_cap_amount]))
-						ent.AcceptInput("Display", "", p, p)
-						continue
+						if (arena.Koth.additive_decay)
+							arena.Koth[enemy_partial_cap_amount] -= arena.Koth.partial_cap_rate
+
+						partial_cap_cooldowntime = Time() + (additive_decay ? arena.Koth.partial_cap_interval : arena.Koth.cap_decay_interval)
+						return
 					}
-					//we don't own it, show partial cap progress
-					ent.KeyValueFromString("message", format("Partial Cap: %.2f", arena.Koth[partial_cap_amount]))
-					ent.AcceptInput("Display", "", p, p)
 
+					//add partial cap progress
+					if (!cap_contested)
+						arena.Koth[partial_cap_amount] += arena.Koth.partial_cap_rate
+
+					//finished capping, we own it now, reset our partial cap progress for next time
+					if (arena.Koth[partial_cap_amount] >= 1.0)
+					{
+						arena.Koth.owner_team = team
+						arena.Koth[partial_cap_amount] = 0.0
+						// arena.Koth[partial_cap_amount] = owner_team == self.GetTeam() ? 0.0 : 0.99
+					}
+
+					//hud stuff
+					foreach(p, _ in arena.CurrentPlayers)
+					{
+						local _team = p.GetTeam()
+						local ent = _team == TF_TEAM_RED ? KOTH_HUD_RED : KOTH_HUD_BLU
+						local str = ""
+
+						//we own it, show cap time
+						if (owner_team == _team)
+						{
+							ent.KeyValueFromString("message", format("Cap Time: %.2f", arena.Koth[enemy_cap_amount]))
+							ent.AcceptInput("Display", "", p, p)
+							continue
+						}
+						//we don't own it, show partial cap progress
+						ent.KeyValueFromString("message", format("Partial Cap: %.2f", arena.Koth[partial_cap_amount]))
+						ent.AcceptInput("Display", "", p, p)
+
+					}
+					partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
+					return
 				}
-				partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
-				return
-			}
-			//we own it, switch to standard countdown timer
-			else if (cap_countdown_interval < Time() && owner_team == team)
-			{
-				//decrease cap time
-				arena.Koth[cap_amount] -= arena.Koth.countdown_rate
-
-				//timer hit 0, we won this round
-				if (!arena.Koth[cap_amount])
+				//we own it, switch to standard countdown timer
+				else if (cap_countdown_interval < Time() && owner_team == team)
 				{
-					arena.Score[team == TF_TEAM_RED ? 0 : 1]++
-					"koth_points_capped" in scope.stats ? scope.stats.koth_points_capped++ : scope.stats.koth_points_capped <- 1
-					CalcArenaScore(arena_name)
-					SetArenaState(arena_name, AS_COUNTDOWN)
+					//decrease cap time
+					arena.Koth[cap_amount] -= arena.Koth.countdown_rate
+
+					//timer hit 0, we won this round
+					if (!arena.Koth[cap_amount])
+					{
+						arena.Score[team == TF_TEAM_RED ? 0 : 1]++
+						"koth_points_capped" in scope.stats ? scope.stats.koth_points_capped++ : scope.stats.koth_points_capped <- 1
+						CalcArenaScore(arena_name)
+						SetArenaState(arena_name, AS_COUNTDOWN)
+						return
+					}
+
+					local _cap_amount = arena.Koth[cap_amount].tointeger()
+
+					if (!_cap_amount) return
+
+					//play countdown sound
+					local _announcer_sound =  {
+						[300] = "5min",
+						[120] = "2min",
+						[60] = "60sec",
+						[30] = "30sec",
+						[20] = "20sec",
+						[10] = "10sec"
+					}
+					if (_cap_amount in _announcer_sound)
+						foreach(p, _ in arena.CurrentPlayers)
+							EmitSoundEx({
+								sound_name = format("vo/announcer_ends_%s.mp3", _announcer_sound[_cap_amount]),
+								entity = p,
+								volume = 1.0,
+								channel = CHAN_STREAM,
+								filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
+							})
+
+					else if (_cap_amount < 6)
+						foreach(p, _ in arena.CurrentPlayers)
+							EmitSoundEx({
+								sound_name = format("vo/announcer_ends_%dsec.mp3", _cap_amount),
+								entity = p,
+								volume = 1.0,
+								channel = CHAN_STREAM,
+								filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
+							})
+					//hud stuff
+					foreach(p, _ in arena.CurrentPlayers)
+					{
+						KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
+						KOTH_HUD_RED.AcceptInput("Display", "", p, p)
+						KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
+						KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
+					}
+
+					cap_countdown_interval = Time() + arena.Koth.countdown_interval
 					return
 				}
 
-				local _cap_amount = arena.Koth[cap_amount].tointeger()
-
-				if (!_cap_amount) return
-
-				//play countdown sound
-				local _announcer_sound =  {
-					[300] = "5min",
-					[120] = "2min",
-					[60] = "60sec",
-					[30] = "30sec",
-					[20] = "20sec",
-					[10] = "10sec"
-				}
-				if (_cap_amount in _announcer_sound)
-					foreach(p, _ in arena.CurrentPlayers)
-						EmitSoundEx({
-							sound_name = format("vo/announcer_ends_%s.mp3", _announcer_sound[_cap_amount]),
-							entity = p,
-							volume = 1.0,
-							channel = CHAN_STREAM,
-							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
-						})
-
-				else if (_cap_amount < 6)
-					foreach(p, _ in arena.CurrentPlayers)
-						EmitSoundEx({
-							sound_name = format("vo/announcer_ends_%dsec.mp3", _cap_amount),
-							entity = p,
-							volume = 1.0,
-							channel = CHAN_STREAM,
-							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
-						})
-				//hud stuff
-				foreach(p, _ in arena.CurrentPlayers)
+				//we stopped capping
+				else if ((player.GetOrigin() - point).Length() > radius)
 				{
-					KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
-					KOTH_HUD_RED.AcceptInput("Display", "", p, p)
-					KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
-					KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
+					current_cappers[player] <- false
+
+					//start decaying partial cap
+					if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount])
+					{
+						arena.Koth[partial_cap_amount] -= arena.Koth.decay_rate
+						cap_decay_interval = Time() + arena.Koth.decay_interval
+					}
 				}
-
-				cap_countdown_interval = Time() + arena.Koth.countdown_interval
-				return
-			}
-
-			//we stopped capping, start decaying partial cap
-			else if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount] && (player.GetOrigin() - point).Length() > radius)
-			{
-				arena.Koth[partial_cap_amount] -= arena.Koth.decay_rate
-				cap_decay_interval = Time() + arena.Koth.decay_interval
-				current_cappers[player] <- false
 			}
 		}
-	}
+
 	function bball()
 	{
 		local player = self
