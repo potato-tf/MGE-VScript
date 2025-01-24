@@ -312,7 +312,7 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 				}
 			}
 		}
-
+	}
 	function bball()
 	{
 		local player = self
