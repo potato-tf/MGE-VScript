@@ -186,8 +186,11 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 					current_cappers[player] <- true
 
 				foreach(p, is_capping in current_cappers)
+				{
+					printl(is_capping)
 					if (p.GetTeam() != player.GetTeam() && is_capping)
 						cap_contested = true
+				}
 
 				printl(cap_contested + " | " + current_cappers[player])
 				//we don't own it, start capping point
