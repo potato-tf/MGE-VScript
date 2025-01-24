@@ -1152,7 +1152,7 @@
 	local arena = Arenas[arena_name]
 
 	//most non-MGE configs have fixed spawn rotations per team
-	if (!arena.IsMGE)
+	if (!arena.IsMGE && !arena.IsEndif)
 	{
 		local end = -1
 		local idx = arena.SpawnIdx
