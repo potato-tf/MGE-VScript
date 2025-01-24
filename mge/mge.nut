@@ -302,7 +302,6 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 		local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
 		scope.ThinkTable.BBallThink <- function() {
 
-			printl("BBallThink")
 			if (scope.ball_ent && scope.ball_ent.IsValid())
 			{
 				//bball score think
