@@ -170,6 +170,8 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 		local cap_amount = team == TF_TEAM_RED ? "red_cap_time" : "blu_cap_time"
 		local enemy_cap_amount = team == TF_TEAM_RED ? "blu_cap_time" : "red_cap_time"
 		local additive_decay = arena.Koth.additive_decay
+		local current_cappers = {}
+		local cap_contested = false
 
 		//cap logic think
 		scope.ThinkTable.KothThink <- function()
@@ -179,10 +181,19 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 			if (!player.IsAlive()) return
 
 			//we don't own it, start capping point
-			if (owner_team != team && partial_cap_cooldowntime < Time() && (self.GetOrigin() - point).Length() < radius)
+			if (owner_team != team && partial_cap_cooldowntime < Time() && (player.GetOrigin() - point).Length() < radius)
 			{
+				if (!(player in current_cappers))
+					current_cappers[player] <- true
+
+				foreach(p, is_capping in current_cappers)
+				{
+					if (p.GetTeam() != player.GetTeam() && is_capping)
+						cap_contested = true
+				}
+
 				//revert enemy partial cap progress first
-				if (arena.Koth[enemy_partial_cap_amount] > 0.0)
+				if (arena.Koth[enemy_partial_cap_amount] > 0.0 && !cap_contested)
 				{
 					if (arena.Koth.additive_decay)
 						arena.Koth[enemy_partial_cap_amount] -= arena.Koth.partial_cap_rate
@@ -190,8 +201,10 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 					partial_cap_cooldowntime = Time() + (additive_decay ? arena.Koth.partial_cap_interval : arena.Koth.cap_decay_interval)
 					return
 				}
+
 				//add partial cap progress
-				arena.Koth[partial_cap_amount] += arena.Koth.partial_cap_rate
+				if (!cap_contested)
+					arena.Koth[partial_cap_amount] += arena.Koth.partial_cap_rate
 
 				//finished capping, we own it now, reset our partial cap progress for next time
 				if (arena.Koth[partial_cap_amount] >= 1.0)
@@ -285,10 +298,11 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 			}
 
 			//we stopped capping, start decaying partial cap
-			else if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount] && (self.GetOrigin() - point).Length() > radius)
+			else if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount] && (player.GetOrigin() - point).Length() > radius)
 			{
 				arena.Koth[partial_cap_amount] -= arena.Koth.decay_rate
 				cap_decay_interval = Time() + arena.Koth.decay_interval
+				current_cappers[player] <- false
 			}
 		}
 	}
