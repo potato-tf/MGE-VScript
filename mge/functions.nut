@@ -1173,7 +1173,7 @@
 
 		idx = (idx + 1) % end
 		if (team == TF_TEAM_BLUE)
-			idx += arena.SpawnPoints.len() / 2
+			idx += (arena.SpawnPoints.len() / 2) - 1
 
 		printl(idx + " : " + end + " : " + arena.SpawnPoints.len())
 		// if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
