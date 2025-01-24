@@ -481,7 +481,7 @@ class MGE_Events
 			foreach(p, _ in arena.CurrentPlayers)
 				hudstr += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo)
 
-			MGE_HUD.KeyValueFromString("message", str)
+			MGE_HUD.KeyValueFromString("message", hudstr)
 
 			foreach (p, _ in arena.CurrentPlayers)
 				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
