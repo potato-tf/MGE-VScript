@@ -358,7 +358,7 @@ class MGE_Events
 						sound_level = 65
 					})
 
-				local str = format("%s\n", arena_name)
+				local hudstr = format("%s\n", arena_name)
 				foreach(p, _ in arena.CurrentPlayers)
 				{
 					local scope = p.GetScriptScope()
@@ -367,9 +367,9 @@ class MGE_Events
 					//joined spectator directly without using !remove
 					if (team == TEAM_SPECTATOR) continue
 
-					str += format("%s: %d (%d)\n", scope.Name, arena.Score[team - 2], scope.stats.elo)
+					hudstr += format("%s: %d (%d)\n", scope.Name, arena.Score[team - 2], scope.stats.elo)
 				}
-				MGE_HUD.KeyValueFromString("message", str)
+				MGE_HUD.KeyValueFromString("message", hudstr)
 				MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
 				// MGE_HUD.AcceptInput("Display", "", player, player)
 				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, player, player)
@@ -472,13 +472,13 @@ class MGE_Events
 				if (str) PlayAnnouncer(attacker, str)
 				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)
 
-				local str = format("%s\n", arena_name)
+				local hudstr = format("%s\n", arena_name)
 
 				MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
 			}
 
 			foreach(p, _ in arena.CurrentPlayers)
-				str += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo)
+				hudstr += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo)
 
 			MGE_HUD.KeyValueFromString("message", str)
 
@@ -502,7 +502,7 @@ class MGE_Events
 				if (arena.Score[0] >= fraglimit || arena.Score[1] >= fraglimit)
 				{
 					foreach(p, _ in arena.CurrentPlayers)
-						str += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo)
+						hudstr += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo)
 
 					foreach (p, _ in arena.CurrentPlayers)
 						EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)

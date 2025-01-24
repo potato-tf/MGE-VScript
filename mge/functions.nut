@@ -1326,12 +1326,12 @@
 				", arena_name, arena.round_start_sound, arena.round_start_sound_volume), countdown_time, null, null)
 			}
 
-			local str = format("%s\n", arena_name)
+			local hudstr = format("%s\n", arena_name)
 			foreach(_p in _players)
 				if (_p && _p.IsValid())
-					str += format("%s: %d (%d)\n", _p.GetScriptScope().Name, arena.Score[_p.GetTeam() - 2], _p.GetScriptScope().stats.elo)
+					hudstr += format("%s: %d (%d)\n", _p.GetScriptScope().Name, arena.Score[_p.GetTeam() - 2], _p.GetScriptScope().stats.elo)
 
-			MGE_HUD.KeyValueFromString("message", str)
+			MGE_HUD.KeyValueFromString("message", hudstr)
 
 			foreach(_p in _players)
 				if (_p && _p.IsValid())
