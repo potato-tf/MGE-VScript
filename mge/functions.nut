@@ -914,7 +914,8 @@
 	player.ForceRespawn()
 	current_players[player] <- scope.stats.elo
 
-	// EntFireByHandle(player, "RunScriptCode", format("self.ForceRespawn(); Arenas[`%s`].CurrentPlayers[self] <- self.GetScriptScope().stats.elo", arena_name), GENERIC_DELAY, null, null)
+	//shitfix, fixes CurrentPlayers not updating
+	EntFireByHandle(player, "RunScriptCode", format("self.ForceRespawn()", arena_name), GENERIC_DELAY, null, null)
 
 	// EntFireByHandle(KOTH_HUD_BLU, "RunScriptCode", "DispatchSpawn(self); self.RemoveEFlags(EFL_KILLME)", 1.0, null, null)
 }

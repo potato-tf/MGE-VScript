@@ -187,7 +187,6 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 
 				foreach(p, is_capping in current_cappers)
 				{
-					printl(is_capping)
 					if (p.GetTeam() != player.GetTeam() && is_capping)
 						cap_contested = true
 				}
