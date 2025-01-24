@@ -913,7 +913,7 @@
 	player.ForceChangeTeam(team, true)
 	// player.ForceRespawn()
 
-	EntFireByHandle(player, "RunScriptCode", "self.ForceRespawn(); current_players[self] <- self.GetScriptScope().stats.elo", GENERIC_DELAY, null, null)
+	EntFireByHandle(player, "RunScriptCode", format("self.ForceRespawn(); Arenas[`%s`].CurrentPlayers[self] <- self.GetScriptScope().stats.elo", arena_name), GENERIC_DELAY, null, null)
 
 	// current_players[player] <- scope.stats.elo
 	// EntFireByHandle(KOTH_HUD_BLU, "RunScriptCode", "DispatchSpawn(self); self.RemoveEFlags(EFL_KILLME)", 1.0, null, null)
