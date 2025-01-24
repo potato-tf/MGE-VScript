@@ -432,7 +432,7 @@ class MGE_Events
 			local respawntime = "respawntime" in arena && arena.respawntime != "0" ? arena.respawntime.tofloat() : 0.2
 			local fraglimit = arena.fraglimit.tointeger()
 			local trace_dist = arena.IsEndif ? arena.Endif.height_threshold : arena.IsMidair ? arena.Midair.height_threshold : AIRSHOT_HEIGHT_THRESHOLD
-			local str = false, hud_str = false
+			local str = false, print_str = false
 			// local rocket_jumping = (!(victim.GetFlags() & FL_ONGROUND) && victim.InCond(TF_COND_BLASTJUMPING)
 			if (ENABLE_ANNOUNCER && arena.State == AS_FIGHT && attacker && attacker.GetScriptScope().enable_announcer)
 			{
@@ -440,7 +440,7 @@ class MGE_Events
 				//first blood
 				if (!arena.Score[0] && !arena.Score[1] && !arena.IsBBall && !arena.IsKoth)
 				{
-					hud_str = GetLocalizedString("FirstBlood", attacker)
+					print_str = GetLocalizedString("FirstBlood", attacker)
 					str = format("vo/announcer_am_firstblood0%d.mp3", RandomInt(1, 6))
 				}
 				//we've hit a killstreak threshold
@@ -454,26 +454,26 @@ class MGE_Events
 				//we've hit an airshot
 				else if (params.rocket_jump && (params.damagebits & DMG_BLAST) && TraceLine(victim.GetOrigin(), victim.GetOrigin() - Vector(0, 0, trace_dist), victim) == 1)
 				{
-					hud_str = GetLocalizedString("Airshot", attacker)
+					print_str = GetLocalizedString("Airshot", attacker)
 					str = format("vo/announcer_am_killstreak%d.mp3", RandomInt(10, 11))
 					"airshots" in attacker_scope.stats ? attacker_scope.stats.airshots++ : attacker_scope.stats.airshots <- 1
 				}
 				//we've hit a market garden
 				else if (attacker && attacker.GetActiveWeapon() && attacker.GetActiveWeapon().GetAttribute("mod crit while airborne", 0) && attacker.InCond(TF_COND_BLASTJUMPING) && params.damagebits & DMG_CRITICAL)
 				{
-					hud_str = GetLocalizedString("MarketGarden", attacker)
+					print_str = GetLocalizedString("MarketGarden", attacker)
 					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
 					"market_gardens" in attacker_scope.stats ? attacker_scope.stats.market_gardens++ : attacker_scope.stats.market_gardens <- 1
 				}
 			}
+
+			local hudstr = format("%s\n", arena_name)
 			if (attacker && attacker != victim)
 			{
 				MGE_ClientPrint(victim, 3, "HPLeft", attacker.GetHealth())
 
 				if (str) PlayAnnouncer(attacker, str)
-				if (hud_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, hud_str)
-
-				local hudstr = format("%s\n", arena_name)
+				if (print_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, print_str)
 
 				MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
 			}
