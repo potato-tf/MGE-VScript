@@ -321,6 +321,7 @@ class MGE_Events
 				// ", arena_name), -1, null, null)
 
 				local _arena = Arenas[arena_name]
+				printl(arena.CurrentPlayers.len() + " | " + arena.MaxPlayers)
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
 					if (!arena.IsUltiduo && !(arena.IsBBall && arena.State == AS_IDLE && "IsCustomRuleset" in arena && arena.IsCustomRuleset))
 						EntFireByHandle(player, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
