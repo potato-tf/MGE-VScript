@@ -1165,8 +1165,6 @@
 		else if (arena.IsUltiduo)
 			end = ULTIDUO_MAX_SPAWNS
 
-		end--
-
 		local team = player.GetTeam()
 		if (team == TF_TEAM_RED)
 			end /= 2
