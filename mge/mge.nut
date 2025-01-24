@@ -182,7 +182,7 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 
 			if ((player.GetOrigin() - point).Length() < radius)
 			{
-				if (!(player in current_cappers))
+				if (!(player in current_cappers) || !current_cappers[player])
 					current_cappers[player] <- true
 
 				foreach(p, is_capping in current_cappers)
@@ -194,7 +194,7 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 				{
 
 					//revert enemy partial cap progress first
-					if (arena.Koth[enemy_partial_cap_amount] > 0.0 && !cap_contested)
+					if (arena.Koth[enemy_partial_cap_amount] > 0.0)
 					{
 						if (arena.Koth.additive_decay)
 							arena.Koth[enemy_partial_cap_amount] -= arena.Koth.partial_cap_rate
