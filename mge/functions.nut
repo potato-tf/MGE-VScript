@@ -1168,7 +1168,7 @@
 			end /= 2
 
 		idx = (idx + 1) % end
-		printl("Test " + idx + " : " + arena.IsBBall)
+		printl("Test " + idx + " : " + arena.IsBBall + " End: " + end)
 		if (team == TF_TEAM_BLUE)
 			idx += arena.SpawnPoints.len() / 2
 		return idx
