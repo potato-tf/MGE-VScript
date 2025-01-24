@@ -450,7 +450,7 @@
 			foreach(k, v in special_arenas)
 			{
 				if (k in _arena)
-					delete _arena[k]
+					_arena[k] = "0"
 
 				_arena.RulesetVote[k] <- array(2, false)
 			}
@@ -952,10 +952,10 @@
 			delete arena.CurrentPlayers[player]
 			SetArenaState(arena_name, AS_IDLE)
 		}
-		if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
-		{
-			LoadSpawnPoints(arena_name, true)
-		}
+		// if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
+		// {
+		// 	LoadSpawnPoints(arena_name, true)
+		// }
 	}
 }
 
