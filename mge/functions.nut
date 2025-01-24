@@ -1128,7 +1128,6 @@
 	for (local i = 0; i < MAX_CLEAR_SPAWN_RETRIES; ++i)
 	{
 		idx = GetNextSpawnPoint(player, arena_name)
-		printl(idx)
 		local spawn = spawns[idx]
 		if (!mindist) return idx
 
@@ -1168,6 +1167,7 @@
 		if (team == TF_TEAM_RED)
 			end /= 2
 
+		printl("Test " + idx)
 		idx = (idx + 1) % end
 		if (team == TF_TEAM_BLUE)
 			idx += arena.SpawnPoints.len() / 2
