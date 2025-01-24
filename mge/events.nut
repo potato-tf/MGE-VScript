@@ -349,8 +349,6 @@ class MGE_Events
 				player.SetAbsOrigin(arena.SpawnPoints[idx][0])
 				player.SnapEyeAngles(arena.SpawnPoints[idx][1])
 
-				printl(idx)
-
 				if (arena.State == AS_FIGHT)
 					EmitSoundEx({
 						sound_name = SPAWN_SOUND,

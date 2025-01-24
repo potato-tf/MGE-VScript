@@ -67,6 +67,11 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 - **CUSTOM MAPS NEED TO BE INDEXED MANUALLY!** See the `mge/cfg/mgemod_spawns.nut` file for an example of how to index your map
     - Failing to index your maps will result in !add being unordered, rendering everyone's !add binds useless
 
+## Known bugs/limitations
+- KOTH in general is a bit jank
+- Custom ruleset spawns do not rotate correctly
+- The BBall flag can sometimes not drop if you kill the player as soon as they pick it up, they will still have it on respawn.
+
 - ### Adding new BBall/Koth/etc spawns:
 - BBall, Koth, and other "specialty" modes still supports reading hoop/koth point/ball spawn points/etc using the old method for backwards compatibility
 - The old system requires exactly 8 spawns on BBall and 6 on KOTH, with the other indexes being used for arena logic.

@@ -1128,6 +1128,7 @@
 	for (local i = 0; i < MAX_CLEAR_SPAWN_RETRIES; ++i)
 	{
 		idx = GetNextSpawnPoint(player, arena_name)
+		printl(idx)
 		local spawn = spawns[idx]
 		if (!mindist) return idx
 
