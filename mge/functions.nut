@@ -1903,7 +1903,7 @@
 						//HACK
 						//the temp_ball kill below doesn't work for the first person who placed the flag, only the last
 						//just manually kill all obj_teleporters in radius
-						for (local hack; hack = Entities.FindByClassnameWithin(hack, "obj_teleporter", ball.GetOrigin(), 200.0);)
+						for (local hack; hack = FindByClassnameWithin(hack, "obj_teleporter", ball.GetOrigin(), 200.0);)
 							EntFireByHandle(hack, "Kill", "", -1, null, null)
 
 						foreach(p, _ in arena.CurrentPlayers)
