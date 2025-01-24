@@ -1157,11 +1157,11 @@
 		local end = -1
 		local idx = arena.SpawnIdx
 		if (arena.IsKoth)
-			end = KOTH_MAX_SPAWNS
+			end = KOTH_MAX_SPAWNS - 1
 		else if (arena.IsBBall)
-			end = BBALL_MAX_SPAWNS
+			end = BBALL_MAX_SPAWNS - 1
 		else if (arena.IsUltiduo)
-			end = ULTIDUO_MAX_SPAWNS
+			end = ULTIDUO_MAX_SPAWNS - 1
 
 		local team = player.GetTeam()
 		if (team == TF_TEAM_RED)
