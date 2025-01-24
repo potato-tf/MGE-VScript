@@ -721,7 +721,7 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 			}
 			SERVER_DATA.players_red = players[0]
 			SERVER_DATA.players_blu = players[1]
-			SERVER_DATA.players_connecting = spectators + players[0] + players[1]
+			SERVER_DATA.players_connecting = spectators
 			SERVER_DATA.server_name = Convars.GetStr("hostname")
 
 			VPI.AsyncCall({
