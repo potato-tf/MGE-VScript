@@ -189,6 +189,7 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 					if (p.GetTeam() != player.GetTeam() && is_capping)
 						cap_contested = true
 
+				printl(cap_contested + " | " + current_cappers[player])
 				//we don't own it, start capping point
 				if (owner_team != team && partial_cap_cooldowntime < Time() && !cap_contested)
 				{
