@@ -321,10 +321,12 @@ class MGE_Events
 				// ", arena_name), -1, null, null)
 
 				local _arena = Arenas[arena_name]
-				printl(arena.CurrentPlayers.len() + " | " + arena.MaxPlayers)
+
+				//set arena state to countdown
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
 					if (!arena.IsUltiduo && !(arena.IsBBall && arena.State == AS_IDLE && "IsCustomRuleset" in arena && arena.IsCustomRuleset))
 						EntFireByHandle(player, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
+					//ultiduo
 					else if (arena.IsUltiduo)
 					{
 						local current_medics = arena.Ultiduo.CurrentMedics
@@ -346,10 +348,25 @@ class MGE_Events
 				// SetSpecialArena(player, arena_name)
 				EntFireByHandle(player, "RunScriptCode", format("SetSpecialArena(self, `%s`)", arena_name), GENERIC_DELAY, null, null)
 
+				//spawn player
 				local idx = TryGetClearSpawnPoint(player, arena_name)
 				player.SetAbsOrigin(arena.SpawnPoints[idx][0])
 				player.SnapEyeAngles(arena.SpawnPoints[idx][1])
 
+				//regenerate all players
+				if (!arena.IsBBall)
+				foreach (p, _ in arena.CurrentPlayers)
+				{
+					p.Regenerate(true)
+					//this attrib is set by ammomod
+					if (!p.GetCustomAttribute("hidden maxhealth non buffed", 0) && arena.IsMGE)
+					{
+						local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
+						EntFireByHandle(p, "RunScriptCode", format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio), GENERIC_DELAY, null, null)
+					}
+				}
+
+				//play spawn sound
 				if (arena.State == AS_FIGHT)
 					EmitSoundEx({
 						sound_name = SPAWN_SOUND,
@@ -359,6 +376,7 @@ class MGE_Events
 						sound_level = 65
 					})
 
+				//update hud
 				local hudstr = format("%s\n", arena_name)
 				foreach(p, _ in arena.CurrentPlayers)
 				{
@@ -485,15 +503,6 @@ class MGE_Events
 
 			foreach (p, _ in arena.CurrentPlayers)
 				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
-
-			if (!arena.IsBBall)
-				foreach (p, _ in arena.CurrentPlayers)
-				{
-					p.Regenerate(true)
-					//this attrib is set by ammomod
-					if (!p.GetCustomAttribute("hidden maxhealth non buffed", 0) && arena.IsMGE)
-						p.SetHealth(p.GetMaxHealth() * arena.hpratio.tofloat())
-				}
 
 			// Koth / bball mode doesn't count deaths
 			if (!arena.IsKoth && !arena.IsBBall && arena.State == AS_FIGHT)

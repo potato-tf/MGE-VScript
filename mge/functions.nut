@@ -387,6 +387,7 @@
 			local leaderboard_pos = (random_cam.GetOrigin() + (random_cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET)) + Vector(0, 0, LEADERBOARD_VERTICAL_OFFSET)
 
 			::MGE_Leaderboard <- CreateByClassname("point_worldtext")
+
 			MGE_Leaderboard.KeyValueFromString("targetname", "__mge_leaderboard_text")
 			MGE_Leaderboard.KeyValueFromString("message", "      Placeholder:\n       #305 | aaaa\n")
 			MGE_Leaderboard.KeyValueFromInt("textsize", LEADERBOARD_TEXT_SIZE)
@@ -396,38 +397,41 @@
 			SetPropBool(MGE_Leaderboard, "m_bForcePurgeFixedUpStrings", true)
 			MGE_Leaderboard.AddEFlags(EFL_KILLME)
 			DispatchSpawn(MGE_Leaderboard)
-			// MGE_Leaderboard.ValidateScriptScope()
-			// MGE_Leaderboard.GetScriptScope().UpdateLeaderboard <- function() {
-			// 	foreach(stat, steamid_list in MGE_LEADERBOARD_DATA)
-			// 	{
-			// 	local message = format("          %s:\n", stat)
-			// 		foreach(i, user_info in steamid_list)
-			// 			message += format("\n          %d | %s | %d\n", i + 1, user_info.name, user_info.amount)
-			// 		yield
-			// 	}
-			// 	//refresh data
-			// 	VPI.AsyncCall({
-			// 		func="VPI_MGE_PopulateLeaderboard",
-			// 		kwargs= {},
-			// 		callback=function(response, error) {
-			// 			if (typeof(response) != "array" || !response.len())
-			// 			{
-			// 				MGE_ClientPrint(player, 3, "VPI_ReadError", "Could not populate leaderboard")
-			// 				MGE_ClientPrint(player, 2, "VPI_ReadError", "Could not populate leaderboard")
-			// 				return
-			// 			}
-			// 			MGE_LEADERBOARD_DATA <- response[0]
-			// 			MGE_ClientPrint(player, 3, "VPI_ReadSuccess",  "Populated leaderboard")
-			// 			MGE_ClientPrint(player, 2, "VPI_ReadSuccess",  "Populated leaderboard")
-			// 		}
-			// 	})
-			// }
-			// MGE_Leaderboard.GetScriptScope().LeaderboardThink <- function() {
-			// 	local gen = UpdateLeaderboard()
-			// 	resume gen
-			// 	return LEADERBOARD_UPDATE_INTERVAL
-			// }
-			// AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
+			MGE_Leaderboard.ValidateScriptScope()
+			MGE_Leaderboard.GetScriptScope().UpdateLeaderboard <- function() {
+				foreach(stat, steamid_list in MGE_LEADERBOARD_DATA)
+				{
+				local message = format("          %s:\n", stat)
+					foreach(i, user_info in steamid_list)
+						message += format("\n          %d | %s | %d\n", i + 1, user_info.name, user_info.amount)
+					yield
+				}
+				//refresh data
+				VPI.AsyncCall({
+					func="VPI_MGE_PopulateLeaderboard",
+					kwargs= {
+						order_filter = "elo",
+						max_leaderboard_entries = 10,
+					},
+					callback=function(response, error) {
+						if (typeof(response) != "array" || !response.len())
+						{
+							MGE_ClientPrint(player, 3, "VPI_ReadError", "Could not populate leaderboard")
+							MGE_ClientPrint(player, 2, "VPI_ReadError", "Could not populate leaderboard")
+							return
+						}
+						MGE_LEADERBOARD_DATA <- response[0]
+						MGE_ClientPrint(player, 3, "VPI_ReadSuccess",  "Populated leaderboard")
+						MGE_ClientPrint(player, 2, "VPI_ReadSuccess",  "Populated leaderboard")
+					}
+				})
+			}
+			MGE_Leaderboard.GetScriptScope().LeaderboardThink <- function() {
+				local gen = UpdateLeaderboard()
+				resume gen
+				return LEADERBOARD_UPDATE_INTERVAL
+			}
+			AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
 		}
 		//delay this until ents are spawned
 		EntFire("worldspawn", "CallScriptFunction", "DoLeaderboardCam", GENERIC_DELAY)

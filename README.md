@@ -11,6 +11,10 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
   - if you are using `mapspawn.nut` already, rename the mge mapspawn file and add `script_execute new_filename_here` to your `server.cfg` file 
   - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
 
+  ## Don't pack this into your map
+  - I generally don't recommend you do this, this will receive live regular updates like a sourcemod plugin, and will conflict with server configs
+  - Feel free to ship your own custom forks with no stat tracking (so long as I'm still in the credits), but you should modify your fork in a way that it doesn't override any existing mge scripts on the server
+
 
 ## Configuration/Modifying game rules
 - Most arena rules can be configured at the top of the `mge/constants.nut` file
