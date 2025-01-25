@@ -466,8 +466,8 @@
 							think_override = LEADERBOARD_UPDATE_INTERVAL
 						}
 						
-						foreach( u in user_info)
-							printl(u)
+						// foreach( u in user_info)
+							// printl(u)
 						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
 						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 					}
