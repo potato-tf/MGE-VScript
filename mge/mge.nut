@@ -69,6 +69,7 @@ foreach (sound in StockSounds)
 
 ::Arenas      <- {}
 ::Arenas_List <- [] // Need ordered arenas for selection with client commands like !add
+::ALL_PLAYERS <- {}
 
 local local_time = {}
 LocalTime(local_time)
@@ -446,6 +447,9 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 
 		player.ValidateScriptScope()
 		InitPlayerScope(player)
+
+		ALL_PLAYERS[player] <- GetPropIntArray(FindByClassname(null, "tf_player_manager"), "m_iUserID", player.entindex())
+
 		local scope = player.GetScriptScope()
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
 		GetStats(player)
@@ -457,11 +461,11 @@ if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
 
 	if (ELO_TRACKING_MODE == 2)
 	{
-		printl(GetLocalizedString("VPI_InitDB"))
+		printl(MGE_Localization[DEFAULT_LANGUAGE]["VPI_InitDB"])
 		VPI.AsyncCall({
 			func = "VPI_MGE_DBInit",
 			callback = function(response, error) {
-				printl(GetLocalizedString(error ? "VPI_DBInitError" : "VPI_DBInitSuccess"))
+				printl(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_DBInitError" : "VPI_DBInitSuccess"])
 			}
 		})
 	}
@@ -595,7 +599,6 @@ SetPropBool(MGE_HUD, "m_bForcePurgeFixedupStrings", true)
 //something somewhere keeps cleaning up our entities on player spawn
 //this is not a good solution and causes a myriad of unintended side effects
 //notably team_round_timer does not fire its OnFinished output
-MGE_HUD.AddEFlags(EFL_KILLME)
 
 ::KOTH_HUD_RED <- CreateByClassname("game_text")
 KOTH_HUD_RED.KeyValueFromString("targetname", "__mge_hud_koth_red")
@@ -610,7 +613,6 @@ KOTH_HUD_RED.KeyValueFromInt("channel", 5)
 KOTH_HUD_RED.KeyValueFromFloat("x", KOTH_HUD_RED_POS_X)
 KOTH_HUD_RED.KeyValueFromFloat("y", KOTH_HUD_RED_POS_Y)
 SetPropBool(KOTH_HUD_RED, "m_bForcePurgeFixedupStrings", true)
-KOTH_HUD_RED.AddEFlags(EFL_KILLME)
 
 ::KOTH_HUD_BLU <- CreateByClassname("game_text")
 KOTH_HUD_BLU.KeyValueFromString("targetname", "__mge_hud_koth_blu")
@@ -625,11 +627,9 @@ KOTH_HUD_BLU.KeyValueFromInt("channel", 6)
 KOTH_HUD_BLU.KeyValueFromFloat("x", KOTH_HUD_BLU_POS_X)
 KOTH_HUD_BLU.KeyValueFromFloat("y", KOTH_HUD_BLU_POS_Y)
 SetPropBool(KOTH_HUD_BLU, "m_bForcePurgeFixedupStrings", true)
-KOTH_HUD_BLU.AddEFlags(EFL_KILLME)
 
 ::MGE_CHANGELEVEL <- CreateByClassname("point_intermission")
 MGE_CHANGELEVEL.KeyValueFromString("targetname", "__mge_changelevel")
-MGE_CHANGELEVEL.AddEFlags(EFL_KILLME)
 
 if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 {
@@ -674,7 +674,6 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 
 ::MGE_CLIENTCOMMAND <- CreateByClassname("point_clientcommand")
 MGE_CLIENTCOMMAND.KeyValueFromString("targetname", "__mge_clientcommand")
-MGE_CLIENTCOMMAND.AddEFlags(EFL_KILLME)
 DispatchSpawn(MGE_CLIENTCOMMAND)
 
 ::MGE_TIMER <- CreateByClassname("team_round_timer")
@@ -702,7 +701,6 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 	counter--
 	if (counter)
 	{
-
 		if (!HLTV_TEST && !(counter % VPI_SERVERINFO_UPDATE_INTERVAL))
 		{
 			LocalTime(local_time)
@@ -711,11 +709,9 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 			SERVER_DATA.wave = counter
 			local players = array(2, 0)
 			local spectators = 0
-			for (local i = 1; i <= MAX_CLIENTS; i++)
+			foreach (player, userid in ALL_PLAYERS)
 			{
-				local player = PlayerInstanceFromIndex(i)
-
-				if (!player || !player.IsValid()) continue
+				if (player.IsFakeClient()) continue
 
 				if (player.GetTeam() == TEAM_SPECTATOR)
 					spectators++
@@ -741,10 +737,13 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 				}
 			})
 		}
-		if (counter > 60 || counter % 5)
+		// printl(counter)
+		if (counter < 60 && !(counter % 5))
+		// if (!(counter % 5))
+		{
+			SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", counter)})
 			return 1
-
-		SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", counter)})
+		}
 		return 1
 	}
 
@@ -752,7 +751,6 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 }
 AddThinkToEnt(MGE_TIMER, "TimerThink")
 
-MGE_TIMER.AddEFlags(EFL_KILLME)
 ::MGE_DoChangelevel <- function() {
 
 	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)

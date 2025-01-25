@@ -167,6 +167,7 @@ class MGE_Events
 	Events = {
 		function OnGameEvent_teamplay_round_start(params)
 		{
+			EntFire("bignet", "RunScriptCode", "PreserveEnts(false)", GENERIC_DELAY)
 			HandleRoundStart()
 		}
 
@@ -189,12 +190,8 @@ class MGE_Events
 			SERVER_DATA.wave = counter
 			local players = array(2, 0)
 			local spectators = 0
-			for (local i = 1; i <= MAX_CLIENTS; i++)
+			foreach (player, userid in ALL_PLAYERS)
 			{
-				local player = PlayerInstanceFromIndex(i)
-
-				if (!player || !player.IsValid()) continue
-
 				if (player.GetTeam() == TEAM_SPECTATOR)
 					spectators++
 				else
@@ -233,6 +230,8 @@ class MGE_Events
 
 			if (player.IsFakeClient()) return
 
+			ALL_PLAYERS[player] <- params.userid
+
 			GetStats(player)
 
 			MGE_ClientPrint(player, 3, "Welcome1", MGE_VERSION)
@@ -246,6 +245,7 @@ class MGE_Events
 			if (!player) return
 			RemovePlayer(player, false)
 			// UpdateStats(player, player.GetScriptScope().stats, true)
+			delete ALL_PLAYERS[player]
 		}
 
 		function OnGameEvent_player_say(params)
@@ -270,6 +270,8 @@ class MGE_Events
 
 		function OnGameEvent_player_spawn(params)
 		{
+			PreserveEnts()
+
 			local player = GetPlayerFromUserID(params.userid)
 
 			local scope = player.GetScriptScope()

@@ -6,7 +6,8 @@ const MAP_RESTART_TIMER = 7200 //how long to wait before restarting the map/serv
 //setting this to true will send a retry command to every player and kill worldspawn
 //this obviously assumes you use a watchdog script/systemd/etc to restart the server automatically on crash
 //we should find a better way to kill the server that doesn't trigger an accelerator crash dump
-const SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL = true
+//this will not work if your server launch times are longer than 25 seconds (default retry attempt time)
+const SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL = false
 
 //if repo is (not false or "") AND vpi is running, VPI will periodically git clone the repo
 //if VPI detects a change it will trigger a callback function to shorten the map restart timer

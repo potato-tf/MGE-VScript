@@ -15,17 +15,22 @@
 		player_manager.ValidateScriptScope()
 		local prop_array_size = GetPropArraySize(player_manager, "m_flNextRespawnTime")
 		player_manager.GetScriptScope().HideRespawnText <- function() {
-			for (local i = 1; i <= MAX_CLIENTS; i++)
+			foreach (player, userid in ALL_PLAYERS)
 			{
-				local player = PlayerInstanceFromIndex(i)
-				if (!player || !player.IsValid() || player.IsFakeClient() || i > prop_array_size) continue
+				if (player.IsFakeClient()) continue
 
-				SetPropFloatArray(player_manager, "m_flNextRespawnTime", -1, i)
+				SetPropFloatArray(player_manager, "m_flNextRespawnTime", -1, player.entindex())
 			}
 			return -1
 		}
 		AddThinkToEnt(player_manager, "HideRespawnText")
 	}
+}
+
+::PreserveEnts <- function(preserve = true)
+{
+	for (local ent; ent = FindByName(ent, "__mge*");)
+		preserve ? ent.AddEFlags(EFL_KILLME) : ent.RemoveEFlags(EFL_KILLME)
 }
 
 ::InitPlayerScope <- function(player)
@@ -72,6 +77,7 @@
 		won_last_match = false,
 		ball_ent = null
 	}
+
 	foreach (k, v in toscope)
 		scope[k] <- v
 
@@ -109,7 +115,6 @@
 
 	MGE_ClientPrint(player, 3, "ClassIsNotAllowed", newclass)
 }
-
 // tointeger() allows trailing garbage (e.g. "123abc")
 // This will only allow strictly integers (also floats with only zeroes: e.g "1.00")
 ::ToStrictNum <-  function(str, float = false)
@@ -131,6 +136,8 @@
 
  //passing a specific arena will refresh the rulesets temporarily for use in !rulesets
  //it does NOT initialize anything, only modifies the existing data
+ 
+ //passing an arena name and setting arena_reset to true will convert the existing arena to a standard MGE arena
 ::LoadSpawnPoints <-  function(custom_ruleset_arena_name = null, arena_reset = false)
 {
 	local config = SpawnConfigs[GetMapName()]
@@ -325,7 +332,6 @@
 			//spawn our camera
 			::MGE_LeaderboardCam <- CreateByClassname("info_observer_point")
 			SetPropBool(MGE_LeaderboardCam, "m_bForcePurgeFixedUpStrings", true)
-			MGE_LeaderboardCam.AddEFlags(EFL_KILLME)
 			MGE_LeaderboardCam.KeyValueFromString("targetname", "__mge_leaderboard_cam")
 			MGE_LeaderboardCam.KeyValueFromInt("fov",  120)
 			DispatchSpawn(MGE_LeaderboardCam)
@@ -395,13 +401,13 @@
 			MGE_Leaderboard.KeyValueFromInt("orientation", 1)
 			MGE_Leaderboard.SetOrigin(leaderboard_pos)
 			SetPropBool(MGE_Leaderboard, "m_bForcePurgeFixedUpStrings", true)
-			MGE_Leaderboard.AddEFlags(EFL_KILLME)
 			DispatchSpawn(MGE_Leaderboard)
 			MGE_Leaderboard.ValidateScriptScope()
 			MGE_Leaderboard.GetScriptScope().UpdateLeaderboard <- function() {
 				foreach(stat, steamid_list in MGE_LEADERBOARD_DATA)
 				{
-				local message = format("          %s:\n", stat)
+					if (!steamid_list) steamid_list = []
+					local message = format("          %s:\n", stat)
 					foreach(i, user_info in steamid_list)
 						message += format("\n          %d | %s | %d\n", i + 1, user_info.name, user_info.amount)
 					yield
@@ -762,10 +768,9 @@
 	// Ideally find a bot that isn't currently in an arena, but we aren't picky at the end of the day
 	local abot = null
 	local bot  = null
-	for (local i = 1; i <= MAX_CLIENTS; ++i)
+	foreach (player, userid in ALL_PLAYERS)
 	{
-		local player = PlayerInstanceFromIndex(i)
-		if (!player || !player.IsBotOfType(1337)) continue
+		if (!player.IsFakeClient()) continue
 
 		player.ValidateScriptScope()
 		local scope = player.GetScriptScope()
@@ -1463,19 +1468,11 @@
 	local localized_string = args[2]
 	local format_args = args.slice(3).apply(@(a) a.tostring())
 
-	local _players = []
-	if (!player) {
-		for (local i = 1; i < MAX_CLIENTS; i++)
-		{
-			local p = PlayerInstanceFromIndex(i)
-			if (!p || !p.IsValid() || p.IsFakeClient()) continue
-			_players.push(p)
-		}
-	}
-	else _players.push(player)
 
-	foreach (p in _players)
+	foreach (p, userid in ALL_PLAYERS)
 	{
+		if (p.IsFakeClient()) continue
+
 		local temp = UniqueString()
 		local str = ""
 		local scope = p.GetScriptScope()
@@ -1561,7 +1558,7 @@
 
 				if (typeof(response) != "array" || !response.len())
 				{
-					printf(GetLocalizedString("VPI_ReadError", player), GetPropString(player, "m_szNetworkIDString"))
+					printf(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], GetPropString(player, "m_szNetworkIDString"))
 					return
 				}
 
@@ -1579,7 +1576,7 @@
 					hoops_scored = r[10],
 					koth_points_capped = r[11]
 				}
-				printf(GetLocalizedString("VPI_ReadSuccess", player), GetPropString(player, "m_szNetworkIDString"))
+				printf(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadSuccess"], GetPropString(player, "m_szNetworkIDString"))
 			}
 		})
 	}
@@ -1593,7 +1590,7 @@
 
 	if (!("stats" in scope))
 	{
-		printf(GetLocalizedString("Error_StatsNotFound", player), steam_id)
+		printf(MGE_Localization[DEFAULT_LANGUAGE]["Error_StatsNotFound"], steam_id)
 		GetStats(player)
 		return
 	}
@@ -1629,7 +1626,7 @@
 					additive=additive
 				},
 				callback=function(response, error) {
-					printf(GetLocalizedString(error ? "VPI_WriteError" : "VPI_WriteSuccess", player), GetPropString(player, "m_szNetworkIDString"))
+					printf(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_WriteError" : "VPI_WriteSuccess"], GetPropString(player, "m_szNetworkIDString"))
 				}
 			})
 		break
@@ -1643,7 +1640,7 @@
 					additive=additive
 				},
 				callback=function(response, error) {
-					printf(GetLocalizedString(error ? "VPI_WriteError" : "VPI_WriteSuccess", player), GetPropString(player, "m_szNetworkIDString"))
+					printf(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_WriteError" : "VPI_WriteSuccess"], GetPropString(player, "m_szNetworkIDString"))
 				}
 			})
 		break
