@@ -74,13 +74,13 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 - Custom ruleset spawns do not rotate correctly
 - The BBall flag can sometimes not drop if you kill the player as soon as they pick it up, they will still have it on respawn.
 
-- ### Adding new BBall/Koth/etc spawns:
+## Adding new BBall/Koth/etc spawns:
 - BBall, Koth, and other "specialty" modes still supports reading hoop/koth point/ball spawn points/etc using the old method for backwards compatibility
 - The old system requires exactly 8 spawns on BBall and 6 on KOTH, with the other indexes being used for arena logic.
 - This isn't strictly necessary anymore, these arenas can now support any arbitrary number of spawn points (just make sure the number of spawns is divisible by 2)
 - If you'd like to modify spawn points for these arenas, see `constants.nut` and search for `BBALL_MAX_SPAWNS` to see how it works.
 
-- ### New optional arena keyvalues:
+## New optional arena keyvalues:
 If not specified, the default values can be found in `cfg/config.nut`
 
 - `countdown_sound` - the sound played when the countdown starts
@@ -177,10 +177,9 @@ Or for only one arena:
 - Localization files are automatically detected by `cl_language` for per-player language settings, if a string is not localized it will default back to the DEFAULT_LANGUAGE constant.
 - **Some translations are machine translated**, please submit pull requests to fix any bad ones.
 
-
 ## Credits
 *Localization credits can be found at the top of `mge/cfg/localization.nut`*
 - Braindawg - Most of it.
-- Mince - Database interface tool (VPI), misc cleanup, bot stuff.
+- Mince - (VPI), misc cleanup, bot stuff.
 - [MGEMod](https://github.com/sapphonie/MGEMod) - The most recent version of the original MGEMod plugin.
 - CPrice, Lange - Original MGEMod/Ammomod developers.
