@@ -34,6 +34,7 @@ COLOR = {
 # Otherwise any errors that occur will not be handled gracefully and brick the entire program
 
 ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN", "")
+WEBAPI_KEY = os.environ.get("WEBAPI_KEY", "")
 POTATO_API_KEY = os.environ.get("POTATO_API_KEY", "")
 STEAM_API_KEY = os.environ.get("STEAM_API_KEY", "")
 
@@ -289,9 +290,9 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     if not name:
         raise ValueError("server_name is required")
 
-    response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
+    response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={WEBAPI_KEY}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
 
-    logger.info(f"Response: {response}")
+    logger.info(f"Response: {response.text}")
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
 
