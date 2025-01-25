@@ -714,7 +714,7 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 			local spectators = 0
 			foreach (player, userid in ALL_PLAYERS)
 			{
-				if (player.IsFakeClient()) continue
+				if (!player || !player.IsValid() || player.IsFakeClient()) continue
 
 				if (player.GetTeam() == TEAM_SPECTATOR)
 					spectators++

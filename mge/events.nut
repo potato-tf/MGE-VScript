@@ -197,6 +197,8 @@ class MGE_Events
 			local spectators = 0
 			foreach (player, userid in ALL_PLAYERS)
 			{
+				if (!player || !player.IsValid() || player.IsFakeClient()) continue
+
 				if (player.GetTeam() == TEAM_SPECTATOR)
 					spectators++
 				else

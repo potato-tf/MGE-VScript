@@ -17,7 +17,7 @@
 		player_manager.GetScriptScope().HideRespawnText <- function() {
 			foreach (player, userid in ALL_PLAYERS)
 			{
-				if (player.IsFakeClient()) continue
+				if (!player || !player.IsValid() || player.IsFakeClient()) continue
 
 				SetPropFloatArray(player_manager, "m_flNextRespawnTime", -1, player.entindex())
 			}
@@ -818,7 +818,7 @@
 	local bot  = null
 	foreach (player, userid in ALL_PLAYERS)
 	{
-		if (!player.IsFakeClient()) continue
+		if (!player || !player.IsValid() || !player.IsFakeClient()) continue
 
 		player.ValidateScriptScope()
 		local scope = player.GetScriptScope()
