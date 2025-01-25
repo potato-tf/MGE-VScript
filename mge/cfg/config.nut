@@ -3,18 +3,20 @@ const DEFAULT_LANGUAGE                        = "english"
 
 const MAP_RESTART_TIMER                       = 7200 //how long to wait before restarting the map/server in seconds
 
-//setting this to true will send a retry command to every player and kill worldspawn
-//this obviously assumes you use a watchdog script/systemd/etc to restart the server automatically on crash
-//we should find a better way to kill the server that doesn't trigger an accelerator crash dump
-//this will not work if your server launch times are longer than 25 seconds (default retry attempt time)
+/***************************************************************************************************************
+ *              setting this to true will send a retry command to every player and kill worldspawn             *
+ *   this obviously assumes you use a watchdog script/systemd/etc to restart the server automatically on crash *
+ *         we should find a better way to kill the server that doesn't trigger an accelerator crash dump       *
+ *    this will not work if your server launch times are longer than 25 seconds (default retry attempt time)   *
+ ***************************************************************************************************************/
+ *    this will not work if your server launch times are longer than 25 seconds (default retry attempt time)   *
+ ***************************************************************************************************************/
 const SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL    = false
 
-//if repo is (not false or "") AND vpi is running, VPI will periodically git clone the repo
-//if VPI detects a change it will trigger a callback function to shorten the map restart timer
-//if the restart timer is currently above the GAMEMODE_AUTOUPDATE_RESTART_TIME
-
-//if VPI is not running this will just do nothing and accumulate junk in your scriptdata folder xd
-
+/******************************************************************************************************
+ *      if repo is (not false or "") and vpi is running, vpi will periodically git clone the repo     *
+ *     if vpi detects a change it will trigger a callback function to shorten the map restart timer   *
+ ******************************************************************************************************/
 // const GAMEMODE_AUTOUPDATE_REPO            = "https://github.com/potato-tf/MGE-VScript.git" //the repo to clone
 const GAMEMODE_AUTOUPDATE_REPO               = false //the repo to clone
 const GAMEMODE_AUTOUPDATE_BRANCH             = "main" //the branch to clone
