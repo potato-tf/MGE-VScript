@@ -9,8 +9,6 @@ const MAP_RESTART_TIMER                       = 7200 //how long to wait before r
  *         we should find a better way to kill the server that doesn't trigger an accelerator crash dump       *
  *    this will not work if your server launch times are longer than 25 seconds (default retry attempt time)   *
  ***************************************************************************************************************/
- *    this will not work if your server launch times are longer than 25 seconds (default retry attempt time)   *
- ***************************************************************************************************************/
 const SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL    = false
 
 /******************************************************************************************************
