@@ -7,8 +7,6 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 
 ## Installation
 - Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.  That's it
-
-  - if you are using `mapspawn.nut` already, rename the mge mapspawn file and add `script_execute new_filename_here` to your `server.cfg` file 
   - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
 
 ## Don't pack this into your map
@@ -83,7 +81,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 - If you'd like to modify spawn points for these arenas, see `constants.nut` and search for `BBALL_MAX_SPAWNS` to see how it works.
 
 - ### New optional arena keyvalues:
-If not specified, the default values can be found in `constants.nut`
+If not specified, the default values can be found in `cfg/config.nut`
 
 - `countdown_sound` - the sound played when the countdown starts
 - `countdown_sound_volume` - the volume of the countdown sound
@@ -124,12 +122,10 @@ All chat commands can be prefixed with any of these characters: `/\.!?`
 | stats | view your stats breakdown
 | ruleset | Vote to change the current arenas ruleset, for example enabling endif or ammomod
 | addbots/removebots | add/remove training bots from arena
-| teamsize | vote to change the team sizes for the current arena.  Syntax would be `!teamsize 2 1` for 2v1.
-| nostats | vote to disable stat tracking for the current arena
 
 ## ELO/Stat Tracking
 ### SECURITY WARNING
-Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issues/6356) if you want this to be fixed.
+Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issues/6356).
 - While most existing MGE maps are safe to use, **DO NOT ENABLE ANY STAT TRACKING ON UNTRUSTED MAPS!**
     - Any MGE maps created after the VScript update can pack a mapspawn.nut file that will override ours
     - Not only will this break the gamemode, but malicious maps can target either the database or filesystem and manipulate player stats
@@ -143,6 +139,7 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 ### Plain Text
 - perfect option for MGE servers running on a single physical server
 - player stats are tracked in the `tf/scriptdata/mge_playerdata` directory indexed by steamid.
+- No leaderboard support currently.
 
 ### Database
 - Database tracking uses [VScript-Python Interface](https://github.com/potato-tf/VPI) to send data from vscript to python through the filesystem.
@@ -153,6 +150,14 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
         - You should create a systemd service for this on linux, or whatever the windows equivalent is
     - Check server console for any VPI related errors when you join/leave the server.
     - This will automatically create the `mge_playerdata` table in your database
+ 
+## VPI
+- VScript Python Interface is a tool created by Mince1844 that serializes your vscript data into JSON for an external program to read (python script in this case), then writes response data back to the scriptdata folder, allowing for two-way communication with more powerful external tools without relying on SourcePawn. 
+- MGE-VScript ships with the following VPI integrations:
+    - Database connector
+    - Github auto-updates (periodic git clones of this repo)
+    - Sending PUT requests to our webserver
+See the official VPI documentation and `vpi_interfaces.py` if you want to create your own interface functions. 
 
 ## NavMesh generation
 
