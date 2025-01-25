@@ -116,21 +116,25 @@ EntFire("worldspawn", "RunScriptCode", @"
 // printl(SERVER_DATA.region)
 // printl()
 
-if (ENABLE_LEADERBOARD && ELO_TRACKING_MODE > 1)
+if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	::MGE_LEADERBOARD_DATA <- {
+		"ELO"				 : array(MAX_LEADERBOARD_ENTRIES, null),
 		"Airshots"			 : array(MAX_LEADERBOARD_ENTRIES, null),
 		"Koth Points Capped" : array(MAX_LEADERBOARD_ENTRIES, null),
 		"Hoops Scored" 		 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Ammomod Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Endif Wins"		 : array(MAX_LEADERBOARD_ENTRIES, null),
 		"Market Gardens" 	 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Scout Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Soldier Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Demoman Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Arenas Played"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Wins"				 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Losses"			 : array(MAX_LEADERBOARD_ENTRIES, null),
+		"Kills"				 : array(MAX_LEADERBOARD_ENTRIES, null),
 		"Deaths"			 : array(MAX_LEADERBOARD_ENTRIES, null),
 		"Damage Dealt"		 : array(MAX_LEADERBOARD_ENTRIES, null),
 		"Damage Taken"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		// "Ammomod Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		// "Endif Wins"		 	 : array(MAX_LEADERBOARD_ENTRIES, null),
+		// "Scout Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		// "Soldier Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		// "Demoman Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+		// "Arenas Played"		 : array(MAX_LEADERBOARD_ENTRIES, null),
 	}
 
 ::ArenaClasses <- ["", "scout", "sniper", "soldier", "demoman", "medic", "heavy", "pyro", "spy", "engineer", "civilian"]
@@ -686,8 +690,7 @@ SetPropBool(MGE_TIMER, "m_bShowTimeRemaining", true)
 SetPropBool(MGE_TIMER, "m_bAutoCountdown", true)
 SetPropBool(MGE_TIMER, "m_bStartPaused", false)
 
-
-//doesn't fire due to EFL_KILLME
+//doesn't fire with with EFL_KILLME
 AddOutput(MGE_TIMER, "OnFinished", "!self", "CallScriptFunction", "MGE_DoChangelevel", 1.0, -1)
 
 DispatchSpawn(MGE_TIMER)
@@ -747,7 +750,7 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 		return 1
 	}
 
-	MGE_DoChangelevel()
+	// MGE_DoChangelevel()
 }
 AddThinkToEnt(MGE_TIMER, "TimerThink")
 

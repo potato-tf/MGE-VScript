@@ -395,7 +395,7 @@
 			::MGE_Leaderboard <- CreateByClassname("point_worldtext")
 
 			MGE_Leaderboard.KeyValueFromString("targetname", "__mge_leaderboard_text")
-			MGE_Leaderboard.KeyValueFromString("message", "      Placeholder:\n       #305 | aaaa\n")
+			MGE_Leaderboard.KeyValueFromString("message", "      Placeholder:\n       #9999 | aaaa\n")
 			MGE_Leaderboard.KeyValueFromInt("textsize", LEADERBOARD_TEXT_SIZE)
 			MGE_Leaderboard.KeyValueFromString("color", "255 255 255")
 			MGE_Leaderboard.KeyValueFromInt("orientation", 1)
@@ -404,20 +404,38 @@
 			DispatchSpawn(MGE_Leaderboard)
 			MGE_Leaderboard.ValidateScriptScope()
 			MGE_Leaderboard.GetScriptScope().UpdateLeaderboard <- function() {
-				foreach(stat, steamid_list in MGE_LEADERBOARD_DATA)
-				{
-					if (!steamid_list) steamid_list = []
+				// Store the keys and current index to track progress across yields
+				if (!("_current_stat_index" in this))
+					this._current_stat_index <- 0
+				
+				local stat_keys = MGE_LEADERBOARD_DATA.keys()
+				
+				// Process one stat per yield
+				if (this._current_stat_index < stat_keys.len()) {
+					local stat = stat_keys[this._current_stat_index]
+					local steamid_list = MGE_LEADERBOARD_DATA[stat]
+					
+					printl(stat + "  : " + MGE_LEADERBOARD_DATA.len())
 					local message = format("          %s:\n", stat)
 					foreach(i, user_info in steamid_list)
+					{
+						if (!user_info)
+							user_info = {name = "NONE", amount = -INT_MAX}
 						message += format("\n          %d | %s | %d\n", i + 1, user_info.name, user_info.amount)
+					}
+					MGE_Leaderboard.KeyValueFromString("message", message)
+					
+					this._current_stat_index++
 					yield
 				}
-				//refresh data
+				
+				// Reset index and refresh data when done with all stats
+				this._current_stat_index = 0
 				VPI.AsyncCall({
 					func="VPI_MGE_PopulateLeaderboard",
 					kwargs= {
 						order_filter = "elo",
-						max_leaderboard_entries = 10,
+						max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
 					},
 					callback=function(response, error) {
 						if (typeof(response) != "array" || !response.len())
