@@ -283,8 +283,6 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
-    
-    return
 
     kwargs = info["kwargs"]
     # Get required values with error checking
@@ -300,8 +298,6 @@ async def VPI_MGE_UpdateServerData(info, cursor):
         raise ValueError("server_name is required")
 
     response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={WEBAPI_KEY}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
-
-    # logger.info(f"Response: {response.text}")
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
 
