@@ -34,8 +34,8 @@ const DEFAULT_ELO                            = 1600
 // 2 = database (requires VPI) - Recommended for multi-region server networks, local data is still written to local storage
 // 3 = database NO fallback - Database connection only, don't write player data to files
 // if VPI is not running this will just do nothing and accumulate junk in your scriptdata folder xd
-const ELO_TRACKING_MODE                      = 1
-const ENABLE_LEADERBOARD                     = true //This only works if ELO_TRACKING_MODE is set to 2, file-based leaderboards don't exist yet
+const ELO_TRACKING_MODE                      = 2
+const ENABLE_LEADERBOARD                     = true //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
 const REMOVE_DROPPED_WEAPONS                 = true
 const IDLE_RESPAWN_TIME                      = 3.0 //respawn time while waiting for arena to start
 const AIRSHOT_HEIGHT_THRESHOLD               = 100

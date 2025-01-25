@@ -148,21 +148,26 @@ class MGE_Events
 
 		"help" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
-			MGE_ClientPrint(player, 3, "Cmd_MGECmds")
-			MGE_ClientPrint(player, 3, "Cmd_SeeConsole")
-			MGE_ClientPrint(player, 2, "Cmd_MGEMod")
-			MGE_ClientPrint(player, 2, "Cmd_Add")
-			MGE_ClientPrint(player, 2, "Cmd_Remove")
-			MGE_ClientPrint(player, 2, "Cmd_First")
-			MGE_ClientPrint(player, 2, "Cmd_Top5")
-			MGE_ClientPrint(player, 2, "Cmd_Rank")
-			MGE_ClientPrint(player, 2, "Cmd_HitBlip")
-			MGE_ClientPrint(player, 2, "Cmd_Hud")
-			MGE_ClientPrint(player, 2, "Cmd_Handicap")
-			MGE_ClientPrint(player, 2, "Cmd_Ruleset")
-			MGE_ClientPrint(player, 2, "Cmd_Language")
+			MGE_ClientPrint(player, HUD_PRINTTALK, "Cmd_MGECmds")
+			MGE_ClientPrint(player, HUD_PRINTTALK, "Cmd_SeeConsole")
+			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_MGEMod")
+			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Add")
+			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Remove")
+			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_First")
+			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Top5")
+			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Rank")
+			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_HitBlip")
+			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Hud")
+			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Handicap")
+			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Ruleset")
+			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Language")
 		}
 		"mgehelp": @(params) this["help"](params)
+
+		"top5": function(params) {
+			local player = GetPlayerFromUserID(params.userid)
+			MGE_ClientPrint(player, HUD_PRINTTALK, "Visit https://potato.tf/mge_leaderboard for leaderboard stats")
+		}
 	}
 	Events = {
 		function OnGameEvent_teamplay_round_start(params)

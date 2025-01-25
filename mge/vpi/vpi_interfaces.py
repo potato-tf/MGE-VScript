@@ -128,7 +128,7 @@ def WrapInterface(func):
 
 	return inner
 
-player_data_columns = "steam_id, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped"
+player_data_columns = "steam_id, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped, name"
 @WrapDB
 async def VPI_MGE_DBInit(info, cursor):
 	print(COLOR['HEADER'], "Initializing MGE database...", COLOR['ENDC'])
@@ -150,19 +150,20 @@ async def VPI_MGE_DBInit(info, cursor):
 			airshots BIGINT, 
 			market_gardens BIGINT, 
 			hoops_scored BIGINT, 
-			koth_points_capped BIGINT)"""
+			koth_points_capped BIGINT,
+            name VARCHAR(255))"""
 		)
 	finally:
 		print(COLOR['GREEN'], "MGE database initialized, check server console for '[VPI]: Database initialized successfully'", COLOR['ENDC'])
 	return await cursor.fetchall()
 
-DEFAULT_MAX_LEADERBOARD_ENTRIES = 25
+DEFAULT_MAX_LEADERBOARD_ENTRIES = 7
 @WrapDB
 async def VPI_MGE_PopulateLeaderboard(info, cursor):
 	kwargs = info["kwargs"]
 	order_filter = kwargs["order_filter"] if "order_filter" in kwargs else "elo"
 	max_leaderboard_entries = kwargs["max_leaderboard_entries"] if "max_leaderboard_entries" in kwargs else DEFAULT_MAX_LEADERBOARD_ENTRIES
-	await cursor.execute(f"SELECT steam_id FROM mge_playerdata ORDER BY {order_filter} DESC LIMIT {max_leaderboard_entries}")
+	await cursor.execute(f"SELECT steam_id, {order_filter}, `name` FROM mge_playerdata ORDER BY {order_filter} DESC LIMIT {max_leaderboard_entries}")
 
 	return await cursor.fetchall()
 
@@ -173,20 +174,25 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     query_mode = kwargs["query_mode"] 
     network_id = kwargs["network_id"]
     
+    print("name" in kwargs)
+    name = kwargs["name"]
+
     if network_id == "BOT": return
     
     default_elo = kwargs["default_elo"] if "default_elo" in kwargs else 1000
 
     if (query_mode == "read" or query_mode == 0):
+        
         print(COLOR['CYAN'], f"Fetching player data for steam ID {network_id}", COLOR['ENDC'])
-        await cursor.execute(f"SELECT {player_data_columns} FROM mge_playerdata WHERE steam_id = {network_id}")
+        await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
         result = await cursor.fetchall()
 
         # If no record exists, create one with default values
         if not result:
             print(COLOR['YELLOW'], f"No record exists for steam ID {network_id}, adding...", COLOR['ENDC'])
-            await cursor.execute(f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES ({network_id}, {default_elo}, {default_zeroes})")
-            await cursor.execute(f"SELECT {player_data_columns} FROM mge_playerdata WHERE steam_id = {network_id}")
+            # await cursor.execute(f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES ({network_id}, {default_elo}, {default_zeroes})")
+            await cursor.execute(f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES ({network_id}, {default_elo}, {default_zeroes}, {name})")
+            await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
             result = await cursor.fetchall()
 
         return result
@@ -277,6 +283,9 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
+    
+    return
+
     kwargs = info["kwargs"]
     # Get required values with error checking
     endpoint = kwargs.get("endpoint_url", "https://potato.tf/api/serverstatus")

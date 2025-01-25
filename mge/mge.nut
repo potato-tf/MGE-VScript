@@ -735,7 +735,7 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 						// printl(error)
 						return 1
 					}
-					if (SERVER_DATA.address == 0)
+					if (SERVER_DATA.address == 0 && "address" in response)
 						SERVER_DATA.address = response.address
 				}
 			})

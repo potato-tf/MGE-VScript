@@ -70,7 +70,8 @@
 			airshots = -INT_MAX,
 			market_gardens = -INT_MAX,
 			hoops_scored = -INT_MAX,
-			koth_points_capped = -INT_MAX
+			koth_points_capped = -INT_MAX,
+			name = Convars.GetClientConvarValue("name", player.entindex())
 		},
 		enable_announcer = true,
 		enable_countdown = true,
@@ -403,25 +404,72 @@
 			SetPropBool(MGE_Leaderboard, "m_bForcePurgeFixedUpStrings", true)
 			DispatchSpawn(MGE_Leaderboard)
 			MGE_Leaderboard.ValidateScriptScope()
+
+			local think_override = LEADERBOARD_UPDATE_INTERVAL
 			MGE_Leaderboard.GetScriptScope().UpdateLeaderboard <- function() {
 				// Store the keys and current index to track progress across yields
 				if (!("_current_stat_index" in this))
 					this._current_stat_index <- 0
-				
+
 				local stat_keys = MGE_LEADERBOARD_DATA.keys()
+
+				local stat_index = this._current_stat_index
+
+				local stat = stat_keys[stat_index in stat_keys ? stat_index : 0]
 				
+				// printl("populating leaderboard")
+
+				local column_name = ""
+				split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
+				column_name = column_name.slice(1)
+
+				VPI.AsyncCall({
+					func="VPI_MGE_PopulateLeaderboard",
+					kwargs= {
+						order_filter = column_name,
+						max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
+					},
+					callback=function(response, error) {
+						if (typeof(response) != "array" || !response.len())
+						{
+							// MGE_ClientPrint(player, 3, "VPI_ReadError", "Could not populate leaderboard")
+							// MGE_ClientPrint(player, 2, "VPI_ReadError", "Could not populate leaderboard")
+							printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
+							return
+						}
+						foreach (i, r in response)
+						{
+							// foreach (j, _r in r)
+								// printl(j + " : " + _r)
+							local data = MGE_LEADERBOARD_DATA[stat]
+							data[i] = r
+						}
+						// MGE_LEADERBOARD_DATA <- data
+						// MGE_ClientPrint(player, 3, "VPI_ReadSuccess",  "Populated leaderboard")
+						// MGE_ClientPrint(player, 2, "VPI_ReadSuccess",  "Populated leaderboard")
+						// printf(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadSuccess"], data[0].tostring())
+					}
+				})
+
 				// Process one stat per yield
 				if (this._current_stat_index < stat_keys.len()) {
-					local stat = stat_keys[this._current_stat_index]
 					local steamid_list = MGE_LEADERBOARD_DATA[stat]
-					
-					printl(stat + "  : " + MGE_LEADERBOARD_DATA.len())
+
 					local message = format("          %s:\n", stat)
 					foreach(i, user_info in steamid_list)
 					{
 						if (!user_info)
-							user_info = {name = "NONE", amount = -INT_MAX}
-						message += format("\n          %d | %s | %d\n", i + 1, user_info.name, user_info.amount)
+						{
+							think_override = 0.2
+							user_info = ["NONE", -INT_MAX]
+						} else {
+							think_override = LEADERBOARD_UPDATE_INTERVAL
+						}
+						
+						foreach( u in user_info)
+							printl(u)
+						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
+						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 					}
 					MGE_Leaderboard.KeyValueFromString("message", message)
 					
@@ -431,29 +479,11 @@
 				
 				// Reset index and refresh data when done with all stats
 				this._current_stat_index = 0
-				VPI.AsyncCall({
-					func="VPI_MGE_PopulateLeaderboard",
-					kwargs= {
-						order_filter = "elo",
-						max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
-					},
-					callback=function(response, error) {
-						if (typeof(response) != "array" || !response.len())
-						{
-							MGE_ClientPrint(player, 3, "VPI_ReadError", "Could not populate leaderboard")
-							MGE_ClientPrint(player, 2, "VPI_ReadError", "Could not populate leaderboard")
-							return
-						}
-						MGE_LEADERBOARD_DATA <- response[0]
-						MGE_ClientPrint(player, 3, "VPI_ReadSuccess",  "Populated leaderboard")
-						MGE_ClientPrint(player, 2, "VPI_ReadSuccess",  "Populated leaderboard")
-					}
-				})
 			}
 			MGE_Leaderboard.GetScriptScope().LeaderboardThink <- function() {
 				local gen = UpdateLeaderboard()
 				resume gen
-				return LEADERBOARD_UPDATE_INTERVAL
+				return think_override
 			}
 			AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
 		}
@@ -1570,12 +1600,14 @@
 			kwargs= {
 				query_mode="read",
 				network_id=steam_id_slice,
-				default_elo=DEFAULT_ELO
+				default_elo=DEFAULT_ELO,
+				name = scope.Name
 			},
 			callback=function(response, error) {
 
 				if (typeof(response) != "array" || !response.len())
 				{
+					printl(response)
 					printf(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], GetPropString(player, "m_szNetworkIDString"))
 					return
 				}
@@ -1592,7 +1624,8 @@
 					airshots = r[8],
 					market_gardens = r[9],
 					hoops_scored = r[10],
-					koth_points_capped = r[11]
+					koth_points_capped = r[11],
+					name = r[12]
 				}
 				printf(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadSuccess"], GetPropString(player, "m_szNetworkIDString"))
 			}
@@ -1640,6 +1673,7 @@
 				kwargs= {
 					query_mode="write",
 					network_id=steam_id_slice,
+					name = scope.Name,
 					stats=_stats,
 					additive=additive
 				},
@@ -1654,6 +1688,7 @@
 				kwargs= {
 					query_mode="write",
 					network_id=steam_id_slice,
+					name = scope.Name,
 					stats=_stats,
 					additive=additive
 				},
