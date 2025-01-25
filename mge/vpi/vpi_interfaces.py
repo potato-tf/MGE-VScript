@@ -6,6 +6,7 @@ import os
 import tempfile
 import shutil
 import datetime
+import sys
 import requests
 import logging
 
@@ -14,7 +15,8 @@ os.system('')  # enables ansi escape characters in terminal
 # Setup logging at the top of the file
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
 )
 logger = logging.getLogger('VPI_MGE')
 
