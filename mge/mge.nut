@@ -682,6 +682,7 @@ DispatchSpawn(MGE_CLIENTCOMMAND)
 
 ::MGE_TIMER <- CreateByClassname("team_round_timer")
 MGE_TIMER.KeyValueFromString("targetname", "__mge_timer")
+
 SetPropInt(MGE_TIMER, "m_nTimerMaxLength", MAP_RESTART_TIMER)
 SetPropInt(MGE_TIMER, "m_nTimerInitialLength", MAP_RESTART_TIMER)
 SetPropInt(MGE_TIMER, "m_nTimerLength", MAP_RESTART_TIMER)

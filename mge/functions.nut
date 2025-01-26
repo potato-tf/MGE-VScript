@@ -1845,7 +1845,6 @@
 				})
 			", GENERIC_DELAY, null, null)
 		}
-
 		function koth() {
 			local cap_point = CreateByClassname("prop_dynamic")
 			cap_point.SetModel(KOTH_POINT_MODEL)
@@ -1853,7 +1852,21 @@
 			cap_point.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 			DispatchSpawn(cap_point)
 
+			arena.RulesetVote.pointvote_pos <- array(2, null)
+
 			scope.cap_point <- cap_point
+		}
+		function ultiduo() {
+			return
+		}
+		function ammomod() {
+			return
+		}
+		function endif() {
+			return
+		}
+		function midair() {
+			return
 		}
 	}
 	local ruleset_thinks = {
@@ -1904,6 +1917,8 @@
 
 					arena.RulesetVote.validatedhoops++
 				}
+
+				//spawn ball
 				if (arena.RulesetVote.validatedhoops == arena.MaxPlayers)
 				{
 					foreach(p, _ in arena.CurrentPlayers)
@@ -1928,7 +1943,10 @@
 					}
 				}
 				return
-			} else if (hoop_validated && arena.RulesetVote.validatedhoops == arena.MaxPlayers && "temp_ball" in scope)
+			}
+
+			//spawn ball
+			else if (hoop_validated && arena.RulesetVote.validatedhoops == arena.MaxPlayers && "temp_ball" in scope)
 			{
 
 				local ball = scope.temp_ball
@@ -2039,8 +2057,8 @@
 				if (!(GetPropInt(self, "m_nButtons") & IN_ATTACK))
 					return false
 
-				if ((self.EyePosition() - hoop_trace.pos).Length() > BBALL_MAX_HOOP_DIST)
-					return false
+				// if ((self.EyePosition() - hoop_trace.pos).Length() > BBALL_MAX_HOOP_DIST)
+					// return false
 
 				if (ball && ball.GetAbsAngles().x != BBALL_BALL_ANGLE_X)
 					return false
@@ -2141,11 +2159,102 @@
 				}
 			}
 		}
-
 		function koth() {
 
+			if (point_cooldown > Time()) return
+
+			local point_trace = {
+
+				start = self.EyePosition(),
+				end = (self.EyeAngles().Forward() * INT_MAX),
+				mask = hoop_placed ? -1 : MASK_PLAYERSOLID,
+				ignore = self
+			}
+
+			TraceLineEx(point_trace)
+
+			local point = scope.temp_point
+			point.KeyValueFromVector("origin", point_trace.pos + Vector(0, 0, 10))
+			local normal_angles = VectorAngles(point_trace.plane_normal)
+			point.SetAbsAngles(QAngle(normal_angles.x, normal_angles.y, normal_angles.z) + QAngle(90, 0, 0))
+			
+			scope.point_cooldown <- 0.0
+
+			function CanPlacePoint() {
+
+				if (!(GetPropInt(self, "m_nButtons") & IN_ATTACK))
+					return false
+
+				// if ((self.EyePosition() - hoop_trace.pos).Length() > BBALL_MAX_HOOP_DIST)
+					// return false
+
+				if (point && point.GetAbsAngles().x != KOTH_POINT_ANGLE_X)
+					return false
+
+				if (!point && abs(point.GetAbsAngles().x) > KOTH_POINT_MAX_ANGLE_X)
+					return false
+
+				return true
+			}
+			
+			//place point
+			if (CanPlacePoint())
+			{
+				arena.RulesetVote.pointvote_pos[self.GetTeam() - 2] = point.GetOrigin()
+
+				local votepos = arena.RulesetVote.pointvote_pos
+
+				//we both picked an area close enough to eachother, start the game
+				if (votepos[0] && votepos[1] && (votepos[0] - votepos[1]).Length() < 200.0)
+				{
+					arena.fraglimit = 2
+					arena.koth_cap <- point.GetOrigin().ToKVString()
+
+					//HACK
+					//see above for bball
+					for (local hack; hack = FindByClassnameWithin(hack, "obj_teleporter", point.GetOrigin(), 200.0);)
+						EntFireByHandle(hack, "Kill", "", -1, null, null)
+
+					foreach(p, _ in arena.CurrentPlayers)
+						if (scope.temp_point)
+							EntFireByHandle(scope.temp_point, "Kill", "", -1, null, null)
+					
+					LoadSpawnPoints(arena_name)
+
+					arena.RulesetVote.clear()
+
+					foreach(p, _ in arena.CurrentPlayers)
+					{
+						if (scope.temp_ball)
+							EntFireByHandle(scope.temp_ball, "Kill", "", -1, null, null)
+
+						if ("CustomRulesetThink" in scope.ThinkTable)
+							delete scope.ThinkTable.CustomRulesetThink
+							
+						p.RemoveCustomAttribute("no_attack")
+						p.RemoveCustomAttribute("disable weapon switch")
+					}
+					return
+				}
+
+				foreach (p, _ in arena.CurrentPlayers)
+				{
+					SendGlobalGameEvent("show_annotation", {
+						visibilityBitfield = 1 << p.entindex(),
+						id = self.entindex() + KOTH_MAX_SPAWNS,
+						text = format("%s wants to spawn the point here", scope.Name),
+						lifetime = 3.0,
+						play_sound = COUNTDOWN_SOUND,
+						follow_entindex = scope.temp_point.entindex(),
+						show_distance = true,
+						show_effect = true
+					})
+				}
+				point_cooldown = Time() + KOTH_POINT_PLACEMENT_COOLDOWN
+			}
 		}
 	}
+
 	foreach (p, _ in arena.CurrentPlayers)
 	{
 		ruleset_inits[ruleset].call(p.GetScriptScope())
@@ -2159,5 +2268,7 @@
 		p.AddCustomAttribute("no_attack", 1, -1)
 		p.AddCustomAttribute("disable weapon switch", 1, -1)
 	}
+	
+	SetArenaState(arena_name, AS_COUNTDOWN)
 	return
 }

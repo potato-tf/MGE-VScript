@@ -127,7 +127,7 @@ const BBALL_HOOP_PLACEMENT_COOLDOWN         = 2.0
 const BBALL_HOOP_POS_OFFSET                 = 60
  //setting this to 360 will allow placing hoops on the floor/ceiling.
  //Some angle forgiveness (<15) means the wall doesn't need to be perfectly flat
-const BBALL_HOOP_MAX_ANGLE_X                = 5.0
+const BBALL_HOOP_MAX_ANGLE_X                = 20.0
 const BBALL_BALL_ANGLE_X                    = 360.0
 
 //NOTE:
@@ -166,6 +166,7 @@ const KOTH_HUD_BLU_POS_Y                    = 0.3
 //all koth settings below are for custom ruleset koth only
 
 const KOTH_POINT_MODEL                      = "models/props_2fort/groundlight003.mdl"
+const KOTH_POINT_MAX_ANGLE_X                  = 20.0
 
 //NOTE:
 //See BBall notes about adding more spawns
