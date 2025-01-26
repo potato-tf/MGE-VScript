@@ -137,7 +137,7 @@
 
  //passing a specific arena will refresh the rulesets temporarily for use in !rulesets
  //it does NOT initialize anything, only modifies the existing data
- 
+
  //passing an arena name and setting arena_reset to true will convert the existing arena to a standard MGE arena
 ::LoadSpawnPoints <-  function(custom_ruleset_arena_name = null, arena_reset = false)
 {
@@ -416,7 +416,7 @@
 				local stat_index = this._current_stat_index
 
 				local stat = stat_keys[stat_index in stat_keys ? stat_index : 0]
-				
+
 				// printl("populating leaderboard")
 
 				local column_name = ""
@@ -465,18 +465,18 @@
 						} else {
 							think_override = LEADERBOARD_UPDATE_INTERVAL
 						}
-						
+
 						// foreach( u in user_info)
 							// printl(u)
 						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
 						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 					}
 					MGE_Leaderboard.KeyValueFromString("message", message)
-					
+
 					this._current_stat_index++
 					yield
 				}
-				
+
 				// Reset index and refresh data when done with all stats
 				this._current_stat_index = 0
 			}
@@ -497,9 +497,7 @@
 	local idx_failed = false
 	foreach(arena_name, _arena in config)
 	{
-		if (arena_reset && arena_name != custom_ruleset_arena_name) continue
-
-		if (arena_reset)
+		if (arena_reset && arena_name == custom_ruleset_arena_name)
 		{
 			_arena.mge <- "1"
 			_arena.IsMGE <- true
@@ -508,7 +506,8 @@
 			foreach(k, v in special_arenas)
 			{
 				if (k in _arena)
-					_arena[k] = "0"
+					delete _arena[k]
+					// _arena[k] = "0"
 
 				_arena.RulesetVote[k] <- array(2, false)
 			}
@@ -2177,7 +2176,7 @@
 			point.KeyValueFromVector("origin", point_trace.pos + Vector(0, 0, 10))
 			local normal_angles = VectorAngles(point_trace.plane_normal)
 			point.SetAbsAngles(QAngle(normal_angles.x, normal_angles.y, normal_angles.z) + QAngle(90, 0, 0))
-			
+
 			scope.point_cooldown <- 0.0
 
 			function CanPlacePoint() {
@@ -2196,7 +2195,7 @@
 
 				return true
 			}
-			
+
 			//place point
 			if (CanPlacePoint())
 			{
@@ -2218,7 +2217,7 @@
 					foreach(p, _ in arena.CurrentPlayers)
 						if (scope.temp_point)
 							EntFireByHandle(scope.temp_point, "Kill", "", -1, null, null)
-					
+
 					LoadSpawnPoints(arena_name)
 
 					arena.RulesetVote.clear()
@@ -2230,7 +2229,7 @@
 
 						if ("CustomRulesetThink" in scope.ThinkTable)
 							delete scope.ThinkTable.CustomRulesetThink
-							
+
 						p.RemoveCustomAttribute("no_attack")
 						p.RemoveCustomAttribute("disable weapon switch")
 					}
@@ -2268,7 +2267,7 @@
 		p.AddCustomAttribute("no_attack", 1, -1)
 		p.AddCustomAttribute("disable weapon switch", 1, -1)
 	}
-	
+
 	SetArenaState(arena_name, AS_COUNTDOWN)
 	return
 }
