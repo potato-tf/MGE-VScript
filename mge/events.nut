@@ -578,7 +578,10 @@ class MGE_Events
 						spec_cooldown_time = Time() + SPECTATOR_MESSAGE_COOLDOWN
 					}
 				}
-			}
+			} 
+			else if (team != scope.arena_info.team)
+				EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(self.GetScriptScope().arena_info.team, true); self.ForceRespawn()", GENERIC_DELAY, null, null)
+			
 		}
 
 		function OnScriptHook_OnTakeDamage(params)

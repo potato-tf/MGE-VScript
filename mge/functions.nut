@@ -941,6 +941,7 @@
 	scope.arena_info <- {
 		arena = arena,
 		name  = arena_name,
+		team = player.GetTeam()
 	}
 
 	// Choose the team with the lower amount of players
@@ -968,6 +969,7 @@
 
 	// Spawn (goto player_spawn)
 	player.ForceChangeTeam(team, true)
+	scope.arena_info.team = team
 	player.ForceRespawn()
 	current_players[player] <- scope.stats.elo
 
