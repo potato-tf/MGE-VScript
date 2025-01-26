@@ -1519,7 +1519,7 @@
 
 	foreach (p, userid in ALL_PLAYERS)
 	{
-		if (p.IsFakeClient()) continue
+		if (!p || !p.IsValid() || p.IsFakeClient()) continue
 
 		local temp = UniqueString()
 		local str = ""
