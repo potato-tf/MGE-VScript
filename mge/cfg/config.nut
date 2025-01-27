@@ -83,11 +83,21 @@ const MGE_HUD_POS_X                         = 0.2
 const MGE_HUD_POS_Y                         = 0.15
 
 const AMMOMOD_RESPAWN_DELAY                 = 2.0
+const AMMOMOD_DEFAULT_HP_MULT 				= 6.0
 
 const TURRIS_REGEN_TIME                     = 5.0
 
 const ENDIF_HEIGHT_THRESHOLD                = 250
 
+const ALLMEAT_DAMAGE_THRESHOLD              = 0.85
+
+::ALLMEAT_MAX_DAMAGE <- {
+	tf_weapon_scattergun = 105,
+	tf_weapon_handgun_scout_primary = 72,
+	tf_weapon_shotgun = 90,
+	tf_weapon_pipebomblauncher = 100,
+	[ID_PANIC_ATTACK_SHOTGUN] = 108,
+}
 //this is absolutely not the value that the .sp plugin implies it uses, 2.15 is way too high
 //on the majority of mge servers, endif force mult only barely pushes you over the threshold with a single non-DH shot to the toes
 //2.15 here is pinball mode
@@ -128,6 +138,7 @@ const BBALL_HOOP_POS_OFFSET                 = 60
  //setting this to 360 will allow placing hoops on the floor/ceiling.
  //Some angle forgiveness (<15) means the wall doesn't need to be perfectly flat
 const BBALL_HOOP_MAX_ANGLE_X                = 20.0
+
 const BBALL_BALL_ANGLE_X                    = 360.0
 
 //NOTE:
@@ -167,6 +178,8 @@ const KOTH_HUD_BLU_POS_Y                    = 0.3
 
 const KOTH_POINT_MODEL                      = "models/props_2fort/groundlight003.mdl"
 const KOTH_POINT_MAX_ANGLE_X                  = 20.0
+const KOTH_POINT_ANGLE_X                    = 360.0
+const KOTH_POINT_PLACEMENT_COOLDOWN                   = 2.0
 
 //NOTE:
 //See BBall notes about adding more spawns

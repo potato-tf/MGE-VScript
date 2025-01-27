@@ -166,6 +166,7 @@
 		_arena.IsTurris       <- "turris" in _arena && _arena.turris == "1"
 		_arena.IsEndif        <- "endif" in _arena && _arena.endif == "1"
 		_arena.IsMidair       <- "midair" in _arena && _arena.midair == "1"
+		_arena.IsAllMeat      <- "allmeat" in _arena && _arena.allmeat == "1"
 
 		//new keyvalues
 		_arena.countdown_sound 		  	<- "countdown_sound" in _arena ? _arena.countdown_sound : COUNTDOWN_SOUND
@@ -226,7 +227,7 @@
 			//koth_radius is a new kv that you can set per-arena
 			_arena.Koth <- {
 				//see BBall notes about adding more spawns, koth uses the final index for cap points
-				cap_point = "koth_cap" in _arena ? _arena.koth_cap : ""
+				cap_point = "koth_cap" in _arena ? _arena.koth_cap : Vector()
 				cap_radius = "koth_radius" in _arena ? _arena.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
 				owner_team = 0
 
@@ -537,6 +538,7 @@
 		_arena.IsTurris       <- "turris" in _arena && _arena.turris == "1"
 		_arena.IsEndif        <- "endif" in _arena && _arena.endif == "1"
 		_arena.IsMidair       <- "midair" in _arena && _arena.midair == "1"
+		_arena.IsAllMeat      <- "allmeat" in _arena && _arena.allmeat == "1"
 
 		//new keyvalues
 		_arena.countdown_sound <- "countdown_sound" in _arena ? _arena.countdown_sound : COUNTDOWN_SOUND
@@ -603,7 +605,7 @@
 			//koth_radius is a new kv that you can set per-arena
 			_arena.Koth <- {
 				//see BBall notes about adding more spawns, koth uses the final index for cap points
-				cap_point = "koth_cap" in _arena ? _arena.koth_cap : ""
+				cap_point = "koth_cap" in _arena ? _arena.koth_cap :Vector()
 				cap_radius = "koth_radius" in _arena ? _arena.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
 				owner_team = 0
 
@@ -644,6 +646,12 @@
 		{
 			_arena.Midair <- {
 				height_threshold = "midair_height_threshold" in _arena ? _arena.midair_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
+			}
+		}
+		if (_arena.IsAllMeat)
+		{
+			_arena.AllMeat <- {
+				damage_threshold = "damage_threshold" in _arena ? _arena.damage_threshold : ALLMEAT_DAMAGE_THRESHOLD
 			}
 		}
 		local idx = ("idx" in _arena) ? _arena.idx.tointeger() : null
@@ -749,6 +757,8 @@
 
 ::BBall_Pickup <- function(player)
 {
+	if (!player.IsAlive()) return
+
 	local scope = player.GetScriptScope()
 	if (scope.ball_ent && scope.ball_ent.IsValid())
 		return
@@ -973,7 +983,8 @@
 	current_players[player] <- scope.stats.elo
 
 	//shitfix, fixes CurrentPlayers not updating
-	EntFireByHandle(player, "RunScriptCode", format("self.ForceRespawn()", arena_name), GENERIC_DELAY, null, null)
+	if (!arena.IsAmmomod)
+		EntFireByHandle(player, "RunScriptCode", format("self.ForceRespawn()", arena_name), GENERIC_DELAY, null, null)
 
 	// EntFireByHandle(KOTH_HUD_BLU, "RunScriptCode", "DispatchSpawn(self); self.RemoveEFlags(EFL_KILLME)", 1.0, null, null)
 }
@@ -1064,6 +1075,12 @@
 		winner.IsFakeClient() || loser.IsFakeClient()) {
 		return
 	}
+
+	local arena = winner.GetScriptScope().arena_info.arena
+
+	if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
+		return
+	
 
 	local winner_stats = winner.GetScriptScope().stats
 	local loser_stats = loser.GetScriptScope().stats
@@ -1444,8 +1461,7 @@
 			{
 				foreach(p, _ in arena.CurrentPlayers)
 				{
-					AddPlayer(p, arena_name)
-					LoadSpawnPoints(arena_name, true)
+					RemovePlayer(p, true)
 				}
 			}
 
@@ -1773,19 +1789,27 @@
 	else
 		EntFireByHandle(MGE_CLIENTCOMMAND, "Command", format("slot%d", slot), delay, player, player)
 }
-::SetCustomArenaRuleset <- function(arena_name, ruleset)
+::SetCustomArenaRuleset <- function(arena_name, ruleset, fraglimit = 5)
 {
 	local arena = Arenas[arena_name]
 	if (!arena.IsMGE || !(ruleset in special_arenas))
 	{
-		MGE_ClientPrint(player, HUD_PRINTTALK, "InvalidRuleset", ruleset)
+		foreach(p, _ in arena.CurrentPlayers)
+			MGE_ClientPrint(p, HUD_PRINTTALK, "InvalidRuleset", ruleset)
 		return
 	}
 
 	arena.RulesetVote.clear()
 
 	arena[ruleset] <- "1"
-	arena.IsCustomRuleset <- true
+	local infammo_arenas = {
+		ammomod = true
+		endif = true
+	}
+
+	if (ruleset in infammo_arenas)
+		arena.infammo <- "1"
+
 	SetArenaState(arena_name, AS_IDLE)
 	if ("mge" in arena)
 	{
@@ -1794,8 +1818,8 @@
 	}
 
 	local ruleset_inits = {
+
 		function bball() {
-			printl("RulesetTest")
 			//set some temporary bball variables
 			if (!("validatedhoops" in arena.RulesetVote))
 			{
@@ -1845,26 +1869,62 @@
 			", GENERIC_DELAY, null, null)
 		}
 		function koth() {
+
 			local cap_point = CreateByClassname("prop_dynamic")
 			cap_point.SetModel(KOTH_POINT_MODEL)
-			cap_point.SetSolid(SOLID_VPHYSICS)
+			cap_point.SetSolid(SOLID_NONE)
 			cap_point.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+			cap_point.SetModelScale(0.5, 0.0)
 			DispatchSpawn(cap_point)
 
-			arena.RulesetVote.pointvote_pos <- array(2, null)
+			local scope = self.GetScriptScope()
 
-			scope.cap_point <- cap_point
+			arena.RulesetVote.pointvote_pos <- array(2, null)
+			arena.RulesetVote.cap_point <- cap_point
+
+			scope.point_placed <- false
+			scope.point_validated <- false
+			scope.point_cooldown <- 0.0
+
+			foreach(p, _ in arena.CurrentPlayers)
+			{
+				local _scope = p.GetScriptScope()
+
+				_scope.temp_point <- ShowModelToPlayer(p, [KOTH_POINT_MODEL, 0, 0], cap_point.GetOrigin(), QAngle(), 9999.0)
+				SetPropInt(_scope.temp_point, "m_nRenderFX", kRenderFxDistort)
+
+				EntFireByHandle(p, "RunScriptCode", format(@"
+					SendGlobalGameEvent(`show_annotation`, {
+						visibilityBitfield = 1 << self.entindex(),
+						id = self.entindex() + BBALL_HOOP_SIZE,
+						text = `MOUSE1: Set point`,
+						lifetime = 5.0,
+						play_sound = BBALL_PICKUP_SOUND,
+						follow_entindex = %d,
+						show_distance = true,
+						show_effect = true
+					})
+				", _scope.temp_point.entindex()), GENERIC_DELAY, null, null)
+			}
 		}
 		function ultiduo() {
+			LoadSpawnPoints(arena_name)
 			return
 		}
 		function ammomod() {
+			LoadSpawnPoints(arena_name)
+			arena.fraglimit = fraglimit
+			arena.hpratio = AMMOMOD_DEFAULT_HP_MULT
 			return
 		}
 		function endif() {
+			LoadSpawnPoints(arena_name)
+			arena.fraglimit = fraglimit
 			return
 		}
 		function midair() {
+			LoadSpawnPoints(arena_name)
+			arena.fraglimit = fraglimit
 			return
 		}
 	}
@@ -1947,7 +2007,6 @@
 			//spawn ball
 			else if (hoop_validated && arena.RulesetVote.validatedhoops == arena.MaxPlayers && "temp_ball" in scope)
 			{
-
 				local ball = scope.temp_ball
 				ball.KeyValueFromVector("origin", hoop_trace.pos + Vector(0, 0, 10))
 				local normal_angles = VectorAngles(hoop_trace.plane_normal)
@@ -2166,11 +2225,13 @@
 
 				start = self.EyePosition(),
 				end = (self.EyeAngles().Forward() * INT_MAX),
-				mask = hoop_placed ? -1 : MASK_PLAYERSOLID,
+				mask = point_placed ? -1 : MASK_PLAYERSOLID,
 				ignore = self
 			}
 
 			TraceLineEx(point_trace)
+
+			local scope = self.GetScriptScope()
 
 			local point = scope.temp_point
 			point.KeyValueFromVector("origin", point_trace.pos + Vector(0, 0, 10))
@@ -2209,30 +2270,32 @@
 					arena.fraglimit = 2
 					arena.koth_cap <- point.GetOrigin().ToKVString()
 
-					//HACK
-					//see above for bball
-					for (local hack; hack = FindByClassnameWithin(hack, "obj_teleporter", point.GetOrigin(), 200.0);)
-						EntFireByHandle(hack, "Kill", "", -1, null, null)
+					local cap_point = arena.RulesetVote.cap_point
+					cap_point.SetOrigin(point.GetOrigin())
 
 					foreach(p, _ in arena.CurrentPlayers)
 						if (scope.temp_point)
 							EntFireByHandle(scope.temp_point, "Kill", "", -1, null, null)
+					
+					for (local hack; hack = FindByClassnameWithin(hack, "obj_teleporter", point.GetOrigin(), 200.0);)
+						EntFireByHandle(hack, "Kill", "", -1, null, null)
 
 					LoadSpawnPoints(arena_name)
 
-					arena.RulesetVote.clear()
+					delete arena.RulesetVote.pointvote_pos
 
 					foreach(p, _ in arena.CurrentPlayers)
 					{
-						if (scope.temp_ball)
-							EntFireByHandle(scope.temp_ball, "Kill", "", -1, null, null)
+
+						local glow_dummy = ShowModelToPlayer(p, [KOTH_POINT_MODEL, 0, cap_point.GetTeam()], cap_point.GetOrigin(), QAngle(), 9999.0)
+
+						glow_dummy.AcceptInput("SetParent", "!activator", cap_point, cap_point)
+						SetPropBool(glow_dummy, "m_bGlowEnabled", true)
 
 						if ("CustomRulesetThink" in scope.ThinkTable)
 							delete scope.ThinkTable.CustomRulesetThink
-
-						p.RemoveCustomAttribute("no_attack")
-						p.RemoveCustomAttribute("disable weapon switch")
 					}
+					SetArenaState(arena_name, AS_COUNTDOWN)
 					return
 				}
 
@@ -2252,22 +2315,36 @@
 				point_cooldown = Time() + KOTH_POINT_PLACEMENT_COOLDOWN
 			}
 		}
+		function ultiduo() {
+			return
+		}
+		function ammomod() {
+			return
+		}
+		function endif() {
+			return
+		}
+		function midair() {
+			return
+		}
 	}
 
-	foreach (p, _ in arena.CurrentPlayers)
-	{
-		ruleset_inits[ruleset].call(p.GetScriptScope())
-		p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset]
-		for(local child = p.FirstMoveChild(); child != null; child = child.NextMovePeer())
-			if (startswith(child.GetClassname(), "tf_weapon"))
+		foreach (p, _ in arena.CurrentPlayers)
+		{
+			ruleset_inits[ruleset].call(p.GetScriptScope())
+			p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset]
+			if (ruleset == "bball" || ruleset == "koth")
 			{
-				SetPropInt(child, "m_nRenderMode", kRenderTransColor)
-				SetPropInt(child, "m_clrRender", 0)
+				for(local child = p.FirstMoveChild(); child != null; child = child.NextMovePeer())
+					if (startswith(child.GetClassname(), "tf_weapon"))
+					{
+						SetPropInt(child, "m_nRenderMode", kRenderTransColor)
+						SetPropInt(child, "m_clrRender", 0)
+					}
+				p.AddCustomAttribute("no_attack", 1, -1)
+				p.AddCustomAttribute("disable weapon switch", 1, -1)
 			}
-		p.AddCustomAttribute("no_attack", 1, -1)
-		p.AddCustomAttribute("disable weapon switch", 1, -1)
-	}
+		}
 
-	SetArenaState(arena_name, AS_COUNTDOWN)
 	return
 }

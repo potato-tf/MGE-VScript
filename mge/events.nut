@@ -108,6 +108,7 @@ class MGE_Events
 			local arena_name = scope.arena_info.name
 			local ruleset_split = split(params.text, " ")
 			local ruleset = ruleset_split[1]
+			local fraglimit = 2 in ruleset_split ? ruleset_split[2].tointeger() : arena.fraglimit / 2
 
 			local votes = arena.RulesetVote[ruleset]
 			votes[player.GetTeam() - 2] = true
@@ -125,7 +126,7 @@ class MGE_Events
 				return
 			}
 
-			SetCustomArenaRuleset(arena_name, ruleset)
+			SetCustomArenaRuleset(arena_name, ruleset, fraglimit)
 		}
 		"language" : function(params) {
 			local lang = split(params.text, " ")
@@ -225,9 +226,6 @@ class MGE_Events
 			})
 		}
 
-		function OnGameEvent_server_spawn(params){
-			printl("<<Server IP: " + server.address + ">>")
-		}
 		function OnGameEvent_player_activate(params)
 		{
 			local player = GetPlayerFromUserID(params.userid)
@@ -333,7 +331,7 @@ class MGE_Events
 
 				//set arena state to countdown
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
-					if (!arena.IsUltiduo && !(arena.IsBBall && arena.State == AS_IDLE && "IsCustomRuleset" in arena && arena.IsCustomRuleset))
+					if (!arena.IsUltiduo && !((arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && "IsCustomRuleset" in arena && arena.IsCustomRuleset))
 						EntFireByHandle(player, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
 					//ultiduo
 					else if (arena.IsUltiduo)
@@ -367,8 +365,7 @@ class MGE_Events
 				foreach (p, _ in arena.CurrentPlayers)
 				{
 					p.Regenerate(true)
-					//this attrib is set by ammomod
-					if (!p.GetCustomAttribute("hidden maxhealth non buffed", 0) && arena.IsMGE)
+					if (arena.IsMGE)
 					{
 						local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
 						EntFireByHandle(p, "RunScriptCode", format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio), GENERIC_DELAY, null, null)
@@ -497,7 +494,7 @@ class MGE_Events
 			local hudstr = format("%s\n", arena_name)
 			if (attacker && attacker != victim)
 			{
-				MGE_ClientPrint(victim, 3, "HPLeft", attacker.GetHealth())
+				MGE_ClientPrint(victim, HUD_PRINTTALK, "HPLeft", attacker.GetHealth())
 
 				if (str) PlayAnnouncer(attacker, str)
 				if (print_str) MGE_ClientPrint(attacker, HUD_PRINTTALK, print_str)
@@ -592,7 +589,7 @@ class MGE_Events
 
 			if (!victim.IsPlayer()) return
 
-			local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
+			local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? Arenas[victim_scope.arena_info.name] : {}
 			// if ("endif_killme" in victim_scope || ("endif" in arena && arena.endif == "1"))
 			// {
 			// 	if (!("midair" in arena) || arena.midair == "0")
@@ -608,7 +605,16 @@ class MGE_Events
 				params.damage = 0
 				return false
 			}
-
+			if (arena.IsAllMeat)
+			{
+				local weapon = params.weapon
+				if (!weapon) return
+				local itemdef = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
+				if (itemdef in ALLMEAT_MAX_DAMAGE && params.damage > (ALLMEAT_MAX_DAMAGE[itemdef] * ALLMEAT_DAMAGE_THRESHOLD))
+					params.damage = ALLMEAT_MAX_DAMAGE[itemdef]
+				else if (weapon.GetClassname() in ALLMEAT_MAX_DAMAGE && params.damage > (ALLMEAT_MAX_DAMAGE[weapon.GetClassname()] * ALLMEAT_DAMAGE_THRESHOLD))
+					params.damage = min(params.damage, ALLMEAT_MAX_DAMAGE[weapon.GetClassname()])
+			}
 			if (victim_scope && victim.IsPlayer() && attacker != victim && (arena.IsEndif || arena.IsMidair) && params.damage_type & DMG_BLAST && !(victim.GetFlags() & FL_ONGROUND))
 			{
 				local trace_dist = arena.IsEndif ? arena.Endif.height_threshold : arena.IsMidair ? arena.Midair.height_threshold : AIRSHOT_HEIGHT_THRESHOLD
@@ -621,6 +627,10 @@ class MGE_Events
 			}
 		}
 
+		// function OnGameEvent_projectile_direct_hit(params)
+		// {
+
+		// }
 		function OnGameEvent_player_hurt(params)
 		{
 			local victim = GetPlayerFromUserID(params.userid)
@@ -629,7 +639,7 @@ class MGE_Events
 			local attacker = GetPlayerFromUserID(params.attacker)
 			local attacker_scope = attacker ? attacker.GetScriptScope() : {}
 
-			if (arena.State == AS_FIGHT)
+			if (arena.State == AS_FIGHT && !arena.IsEndif && !arena.IsMidair)
 			{
 				"damage_taken" in victim_scope.stats ? victim_scope.stats.damage_taken += params.damageamount : victim_scope.stats.damage_taken <- params.damageamount
 				if (attacker)

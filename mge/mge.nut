@@ -177,6 +177,13 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		local additive_decay = arena.Koth.additive_decay
 		local current_cappers = {}
 		local cap_contested = false
+		local point_vector = Vector()
+
+		if (typeof point == "string")
+		{
+			point_vector = split(point, " ").apply(@(v) ToStrictNum(v, true))
+			point_vector = Vector(point_vector[0], point_vector[1], point_vector[2])
+		}
 
 		//cap logic think
 		scope.ThinkTable.KothThink <- function()
@@ -185,7 +192,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 
 			if (!player.IsAlive()) return
 
-			if ((player.GetOrigin() - point).Length() < radius)
+			if ((player.GetOrigin() - point_vector).Length() < radius)
 			{
 				if (!(player in current_cappers) || !current_cappers[player])
 					current_cappers[player] <- true
@@ -220,6 +227,13 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 					{
 						arena.Koth.owner_team = team
 						arena.Koth[partial_cap_amount] = 0.0
+
+						if ("RulesetVote" in arena && "cap_point" in arena.RulesetVote && arena.RulesetVote.cap_point && arena.RulesetVote.cap_point.IsValid())
+						{
+							local cap_point = arena.RulesetVote.cap_point
+							cap_point.SetTeam(owner_team)
+							cap_point.FirstMoveChild().SetTeam(owner_team) //glow teleporter
+						}
 						// arena.Koth[partial_cap_amount] = owner_team == self.GetTeam() ? 0.0 : 0.99
 					}
 
@@ -245,79 +259,78 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 					partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
 					return
 				}
-				//we own it, switch to standard countdown timer
-				else if (cap_countdown_interval < Time() && owner_team == team)
+			}
+			//we stopped capping
+			else
+			{
+				current_cappers[player] <- false
+
+				//start decaying partial cap
+				if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount])
 				{
-					//decrease cap time
-					arena.Koth[cap_amount] -= arena.Koth.countdown_rate
+					arena.Koth[partial_cap_amount] -= arena.Koth.decay_rate
+					cap_decay_interval = Time() + arena.Koth.decay_interval
+				}
+			}
+			//we own it, switch to standard countdown timer
+			if (cap_countdown_interval < Time() && owner_team == team)
+			{
+				//decrease cap time
+				arena.Koth[cap_amount] -= arena.Koth.countdown_rate
 
-					//timer hit 0, we won this round
-					if (!arena.Koth[cap_amount])
-					{
-						arena.Score[team == TF_TEAM_RED ? 0 : 1]++
-						"koth_points_capped" in scope.stats ? scope.stats.koth_points_capped++ : scope.stats.koth_points_capped <- 1
-						CalcArenaScore(arena_name)
-						SetArenaState(arena_name, AS_COUNTDOWN)
-						return
-					}
-
-					local _cap_amount = arena.Koth[cap_amount].tointeger()
-
-					if (!_cap_amount) return
-
-					//play countdown sound
-					local _announcer_sound =  {
-						[300] = "5min",
-						[120] = "2min",
-						[60] = "60sec",
-						[30] = "30sec",
-						[20] = "20sec",
-						[10] = "10sec"
-					}
-					if (_cap_amount in _announcer_sound)
-						foreach(p, _ in arena.CurrentPlayers)
-							EmitSoundEx({
-								sound_name = format("vo/announcer_ends_%s.mp3", _announcer_sound[_cap_amount]),
-								entity = p,
-								volume = 1.0,
-								channel = CHAN_STREAM,
-								filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
-							})
-
-					else if (_cap_amount < 6)
-						foreach(p, _ in arena.CurrentPlayers)
-							EmitSoundEx({
-								sound_name = format("vo/announcer_ends_%dsec.mp3", _cap_amount),
-								entity = p,
-								volume = 1.0,
-								channel = CHAN_STREAM,
-								filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
-							})
-					//hud stuff
-					foreach(p, _ in arena.CurrentPlayers)
-					{
-						KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
-						KOTH_HUD_RED.AcceptInput("Display", "", p, p)
-						KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
-						KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
-					}
-
-					cap_countdown_interval = Time() + arena.Koth.countdown_interval
+				//timer hit 0, we won this round
+				if (!arena.Koth[cap_amount])
+				{
+					arena.Score[team == TF_TEAM_RED ? 0 : 1]++
+					"koth_points_capped" in scope.stats ? scope.stats.koth_points_capped++ : scope.stats.koth_points_capped <- 1
+					CalcArenaScore(arena_name)
+					SetArenaState(arena_name, AS_COUNTDOWN)
 					return
 				}
 
-				//we stopped capping
-				else if ((player.GetOrigin() - point).Length() > radius)
-				{
-					current_cappers[player] <- false
+				local _cap_amount = arena.Koth[cap_amount].tointeger()
 
-					//start decaying partial cap
-					if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount])
-					{
-						arena.Koth[partial_cap_amount] -= arena.Koth.decay_rate
-						cap_decay_interval = Time() + arena.Koth.decay_interval
-					}
+				if (!_cap_amount) return
+
+				//play countdown sound
+				local _announcer_sound =  {
+					[300] = "5min",
+					[120] = "2min",
+					[60] = "60sec",
+					[30] = "30sec",
+					[20] = "20sec",
+					[10] = "10sec"
 				}
+				if (_cap_amount in _announcer_sound)
+					foreach(p, _ in arena.CurrentPlayers)
+						EmitSoundEx({
+							sound_name = format("vo/announcer_ends_%s.mp3", _announcer_sound[_cap_amount]),
+							entity = p,
+							volume = 1.0,
+							channel = CHAN_STREAM,
+							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
+						})
+
+				else if (_cap_amount < 6)
+					foreach(p, _ in arena.CurrentPlayers)
+						EmitSoundEx({
+							sound_name = format("vo/announcer_ends_%dsec.mp3", _cap_amount),
+							entity = p,
+							volume = 1.0,
+							channel = CHAN_STREAM,
+							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
+						})
+				//hud stuff
+				foreach(p, _ in arena.CurrentPlayers)
+				{
+					KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
+					KOTH_HUD_RED.AcceptInput("Display", "", p, p)
+					KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
+					KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
+				}
+
+				cap_countdown_interval = Time() + arena.Koth.countdown_interval
+				return
 			}
 		}
 	}
@@ -382,13 +395,16 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		// printl("attr : " + player.GetCustomAttribute("hidden maxhealth non buffed", 0))
 
 		EntFireByHandle(player, "RunScriptCode", format(@"
-
+		
+			if (self.GetCustomAttribute(`max health additive bonus`, 0)) return
 			local hp_ratio = Arenas[`%s`].hpratio.tofloat()
 			self.AddCustomAttribute(`max health additive bonus`,(self.GetMaxHealth() * hp_ratio) - self.GetMaxHealth(), -1)
 			self.AddCustomAttribute(`mod see enemy health`, 1, -1)
-			//this quirk is for reducing falldmg
+
+			//this is for reducing falldmg
 			self.AddCustomAttribute(`dmg taken increased`, 1 / hp_ratio, -1)
 			self.AddCustomAttribute(`dmg from ranged reduced`, hp_ratio, -1)
+
 			self.Regenerate(true)
 
 		", arena_name), GENERIC_DELAY, null, null)
@@ -401,8 +417,6 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			if (child instanceof CEconEntity && GetPropInt(child, STRING_NETPROP_ITEMDEF) == ID_MANTREADS)
 				EntFireByHandle(child, "Kill", "", -1, null, null)
 
-
-		// if (player.GetCustomAttribute("hidden maxhealth non buffed", 0)) return
 		EntFireByHandle(player, "RunScriptCode", format(@"
 
 			self.AddCustomAttribute(`cancel falling damage`, 1, -1)
@@ -431,9 +445,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	}
 }
 
-::MGE_Init <- function()
-{
-
+::MGE_Init <- function() {
 	local clean_map_name = {
 		"workshop/mge_training_v8_beta4b.ugc1996603816" : "Classic Training"
 		mge_training_v8_beta4b 		= "Classic Training"
@@ -494,7 +506,6 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	generator = null,
 	is_running = false
 }
-
 ::ArenaNavGenerator <- function(only_this_arena = null) {
 	local player = GetListenServerHost()
 
@@ -599,11 +610,6 @@ MGE_HUD.KeyValueFromFloat("x", MGE_HUD_POS_X)
 MGE_HUD.KeyValueFromFloat("y", MGE_HUD_POS_Y)
 SetPropBool(MGE_HUD, "m_bForcePurgeFixedupStrings", true)
 
-//EFL_KILLME effectively acts as a way to make any entity act like a preserved entity
-//something somewhere keeps cleaning up our entities on player spawn
-//this is not a good solution and causes a myriad of unintended side effects
-//notably team_round_timer does not fire its OnFinished output
-
 ::KOTH_HUD_RED <- CreateByClassname("game_text")
 KOTH_HUD_RED.KeyValueFromString("targetname", "__mge_hud_koth_red")
 KOTH_HUD_RED.KeyValueFromInt("effect", 2)
@@ -647,6 +653,7 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 				clone_dir = GAMEMODE_AUTOUPDATE_TARGET_DIR
 			},
 			callback = function(response, error) {
+				
 				//gamemode has been updated
 				if (!error && response.len()) {
 
