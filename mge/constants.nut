@@ -26,13 +26,6 @@ foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
 		if (k != "IsValid" && !(k in ROOT))
 			ROOT[k] <- i[k].bindenv(i)
 
-
-//REMOVE FOR RELEASE
-//REMOVE FOR RELEASE
-//REMOVE FOR RELEASE
-//REMOVE FOR RELEASE
-const DEBUG_ALLOW_LATE_LOADING = true
-
 //TODO: see if reducing the think interval makes any impact on 100 player?
 //we need maps that can support this many players in the first place
 //look into "infinite" maps with propper arenas
