@@ -305,8 +305,8 @@ async def VPI_MGE_UpdateServerData(info, cursor):
     if server and "addr" in server:
         kwargs['address'] = server['addr']
 
-    if (kwargs["map"].startswith("workshop/")):
-        kwargs["map"] = server['map']
+    # if (kwargs["map"].startswith("workshop/")):
+    kwargs["map"] = server['map']
         # kwargs["mission"] = server['map']
         
     update_time = kwargs.get("update_time", {})
