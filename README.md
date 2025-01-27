@@ -11,7 +11,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 
 ## Don't pack this into your map
 - I generally don't recommend you do this, this will receive live regular updates like a sourcemod plugin, and will conflict with server configs
-- Feel free to ship your own custom forks with no stat tracking (so long as I'm still in the credits), but you should modify your fork in a way that it doesn't override any existing mge scripts on the server
+- If you must pack this into your map, you should modify it so it loads in a way that it doesn't override any existing mge scripts on the server
 
 
 ## Configuration/Modifying game rules
