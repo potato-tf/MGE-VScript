@@ -443,6 +443,10 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			SetPropIntArray(self, "m_iAmmo", 9999, 2)
 		}
 	}
+	function allmeat() 
+	{
+		return
+	}
 }
 
 ::MGE_Init <- function() {

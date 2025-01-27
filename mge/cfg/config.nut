@@ -91,12 +91,22 @@ const ENDIF_HEIGHT_THRESHOLD                = 250
 
 const ALLMEAT_DAMAGE_THRESHOLD              = 0.85
 
+//damage values here do not account for rampup/falloff
+//this effectively means we are only counting shots that hit every single pellet
 ::ALLMEAT_MAX_DAMAGE <- {
-	tf_weapon_scattergun = 105,
-	tf_weapon_handgun_scout_primary = 72,
-	tf_weapon_shotgun = 90,
-	tf_weapon_pipebomblauncher = 100,
-	[ID_PANIC_ATTACK_SHOTGUN] = 108,
+	tf_weapon_scattergun = BASE_SHOTGUN_DAMAGE,
+	tf_weapon_handgun_scout_primary = BASE_SHOTGUN_DAMAGE * 0.8,
+	[ID_FORCE_A_NATURE] = BASE_SHOTGUN_DAMAGE * 1.08,
+	[ID_FESTIVE_FORCE_A_NATURE] = BASE_SHOTGUN_DAMAGE * 1.08,
+	
+	tf_weapon_shotgun_primary = BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_pyro = BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_soldier = BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_hwg = BASE_SHOTGUN_DAMAGE,
+	[ID_PANIC_ATTACK_SHOTGUN] = BASE_SHOTGUN_DAMAGE * 1.2,
+
+	tf_weapon_grenadelauncher = 100,
+	tf_weapon_pipebomblauncher = 100
 }
 //this is absolutely not the value that the .sp plugin implies it uses, 2.15 is way too high
 //on the majority of mge servers, endif force mult only barely pushes you over the threshold with a single non-DH shot to the toes
@@ -143,7 +153,9 @@ const BBALL_BALL_ANGLE_X                    = 360.0
 
 //NOTE:
 //See BBall notes about adding more spawns
-// KOTH uses index 7 for the cap point, replace "7" with "koth_cap" to use a 7th spawn point
+// KOTH uses the last index for the cap point
+// if we have 6 max spawns, cap point will be index 7
+// alternative you can replace index 7 with `koth_cap` in the plugin spawn config
 const KOTH_MAX_SPAWNS                       = 6
 
 //both of these can be overridden in mgemod_spawns.nut

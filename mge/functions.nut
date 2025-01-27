@@ -269,6 +269,12 @@
 				height_threshold = "midair_height_threshold" in _arena ? _arena.midair_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 			}
 		}
+		if (_arena.IsAllMeat)
+		{
+			_arena.AllMeat <- {
+				damage_threshold = "allmeat_damage_threshold" in _arena ? _arena.allmeat_damage_threshold : ALLMEAT_DAMAGE_THRESHOLD
+			}
+		}
 		// Grab spawn points
 		foreach(k, v in _arena)
 		{
@@ -651,7 +657,7 @@
 		if (_arena.IsAllMeat)
 		{
 			_arena.AllMeat <- {
-				damage_threshold = "damage_threshold" in _arena ? _arena.damage_threshold : ALLMEAT_DAMAGE_THRESHOLD
+				damage_threshold = "allmeat_damage_threshold" in _arena ? _arena.allmeat_damage_threshold : ALLMEAT_DAMAGE_THRESHOLD
 			}
 		}
 		local idx = ("idx" in _arena) ? _arena.idx.tointeger() : null
@@ -707,12 +713,11 @@
 					printf("[VSCRIPT MGE] Warning: Data parsing for arena '%s' failed: %s\nkey: %s, val: %s\n", arena_name, e.tostring(), k, v.tostring())
 			}
 		}
+		
+		//always grab the last index for KOTH cap point
 		local idx = (_arena.SpawnPoints.len() + 1).tostring()
 		if (_arena.IsKoth && idx in _arena)
 		{
-			// printl(arena_name)
-			// printl(_arena.IsKoth && idx in _arena)
-			// printl(_arena.SpawnPoints.len())
 			local cap_point = split(_arena[idx], " ").apply( @(str) str.tofloat() )
 			_arena.Koth.cap_point = Vector(cap_point[0], cap_point[1], cap_point[2])
 		}
@@ -1044,7 +1049,6 @@
 		{
 			i++
 			RemovePlayer(p)
-			// AddPlayer(p, arena_name)
 			EntFireByHandle(p, "RunScriptCode", format("AddPlayer(self, `%s`)", arena_name), i * GENERIC_DELAY, null, null)
 			break
 		}
@@ -1927,6 +1931,11 @@
 			arena.fraglimit = fraglimit
 			return
 		}
+		function allmeat() {
+			LoadSpawnPoints(arena_name)
+			arena.fraglimit = fraglimit
+			return
+		}
 	}
 	local ruleset_thinks = {
 		function bball() {
@@ -2325,6 +2334,9 @@
 			return
 		}
 		function midair() {
+			return
+		}
+		function allmeat() {
 			return
 		}
 	}

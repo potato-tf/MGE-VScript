@@ -28,6 +28,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | 4Player | ✅ |
 | Turris | ✅ |
 | BBall | ✅ |
+| Allmeat | ✅ |
 | Koth | ⚠️ |
 | Midair? |⚠️|
 | Ultiduo | ❌ |
@@ -89,6 +90,13 @@ If not specified, the default values can be found in `cfg/config.nut`
 - `round_start_sound_volume` - the volume of the round start sound
 
 - **BBall:**
+- Index 9-13 in the plugin spawn config can be optionally replaced with the following keyvalues:
+    - `bball_home` - the spawn point of the neutral home
+    - `bball_home_red` - the spawn point of the red home
+    - `bball_home_blue` - the spawn point of the blue home
+    - `bball_hoop_red` - the spawn point of the red hoop
+    - `bball_hoop_blue` - the spawn point of the blue hoop
+
 - `bball_hoop_size` - the radius of the hoop in hammer units
 - `bball_pickup_model` - the model of the ball pickup
 - `bball_pickup_sound` - the sound of the ball pickup
@@ -99,17 +107,30 @@ If not specified, the default values can be found in `cfg/config.nut`
 - `bball_particle_trail_blue` - the particle effect applied to players on pickup for the blue team
 
 - **Koth:**
-- `koth_capture_point_radius` - the radius of the capture point in hammer units, defaults to 30
-- `koth_capture_point_max_height` - the maximum height of the capture point in hammer units, defaults to 30
 
-- `koth_decay_rate` - the rate at which the capture point decays when not being capped in seconds, defaults to 1
-- `koth_decay_interval` - the interval at which the capture point decays in seconds, defaults to 1
+- `koth_cap` - the spawn point of the capture point
+    - If this is not specified, the last index in the map spawn config will be used as the capture point
+- `start_time_red` - the time at which the red team can start capturing the point in seconds, defaults to KOTH_START_TIME_RED in `cfg/config.nut`
+- `start_time_blu` - the time at which the blue team can start capturing the point in seconds, defaults to KOTH_START_TIME_BLUE in `cfg/config.nut`
+- `koth_capture_point_radius` - the radius of the capture point in hammer units, defaults to KOTH_CAPTURE_POINT_RADIUS in `cfg/config.nut`
+- `koth_capture_point_max_height` - the maximum height of the capture point in hammer units, defaults to KOTH_CAPTURE_POINT_MAX_HEIGHT in `cfg/config.nut`
+- `koth_decay_rate` - the rate at which the capture point decays when not being capped in seconds, defaults to KOTH_DECAY_RATE in `cfg/config.nut`
+- `koth_decay_interval` - the interval at which the capture point decays in seconds, defaults to KOTH_DECAY_INTERVAL in `cfg/config.nut`
+- `koth_additive_decay` - the additive decay rate of the capture point, defaults to KOTH_ADDITIVE_DECAY in `cfg/config.nut`
+- `koth_countdown_rate` - the rate at which the capture point counts down in seconds, defaults to KOTH_COUNTDOWN_RATE in `cfg/config.nut`
+- `koth_countdown_interval` - the interval at which the capture point counts down in seconds, defaults to KOTH_COUNTDOWN_INTERVAL in `cfg/config.nut`
+- `koth_partial_cap_rate` - the rate at which the capture point is capped in seconds, defaults to KOTH_PARTIAL_CAP_RATE in `cfg/config.nut`
+- `koth_partial_cap_interval` - the interval at which the capture point is capped in seconds, defaults to KOTH_PARTIAL_CAP_INTERVAL in `cfg/config.nut`
 
-- `koth_countdown_rate` - the rate at which the capture point counts down in seconds, defaults to 1
-- `koth_countdown_interval` - the interval at which the capture point counts down in seconds, defaults to 1
 
-- `koth_partial_cap_rate` - the rate at which the capture point is capped in seconds, defaults to 1
-- `koth_partial_cap_interval` - the interval at which the capture point is capped in seconds, defaults to 1
+## New Arena Type: Allmeat
+- Allmeat is a mode that only registers damage if your shot deals `allmeat_damage_threshold`%+ of the weapon's max damage, intended for scattergun/shotgun training.
+- `allmeat_damage_threshold` - the minimum damage % compared to max theoretical damage, defaults to ALLMEAT_DAMAGE_THRESHOLD in `cfg/config.nut`
+    - settings this to 1.0 will require 100% perfect shots, setting this to 0.0 will disable it, default is 0.85.
+- the ALLMEAT_MAX_DAMAGE table in `cfg/config.nut` contains the hardcoded max damage values for each weapon.  This table also doubles as a whitelist for which weapons are affected by allmeat.
+- Add `"allmeat" : "1"` to the arena config to enable, or turn any MGE arena into an allmeat arena by typing !ruleset allmeat.
+- allmeat is fun to type.  allmeat allmeat allmeat
+
 
 ## Chat Commands
 

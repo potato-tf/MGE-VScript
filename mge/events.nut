@@ -248,8 +248,11 @@ class MGE_Events
 		{
 			local player = GetPlayerFromUserID(params.userid)
 			if (!player) return
+
 			RemovePlayer(player, false)
-			// UpdateStats(player, player.GetScriptScope().stats, true)
+
+			if (player.IsFakeClient()) return
+
 			delete ALL_PLAYERS[player]
 		}
 
@@ -609,12 +612,40 @@ class MGE_Events
 			{
 				local weapon = params.weapon
 				if (!weapon) return
+
 				local itemdef = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
-				if (itemdef in ALLMEAT_MAX_DAMAGE && params.damage > (ALLMEAT_MAX_DAMAGE[itemdef] * ALLMEAT_DAMAGE_THRESHOLD))
-					params.damage = ALLMEAT_MAX_DAMAGE[itemdef]
-				else if (weapon.GetClassname() in ALLMEAT_MAX_DAMAGE && params.damage > (ALLMEAT_MAX_DAMAGE[weapon.GetClassname()] * ALLMEAT_DAMAGE_THRESHOLD))
-					params.damage = min(params.damage, ALLMEAT_MAX_DAMAGE[weapon.GetClassname()])
+
+				//does not account for any conditional damage bonuses/penalties
+				//this technically means quickiebomb charged shots are cheating
+				//I don't care, this is meant for shotguns
+				local damage_mult_attribs = {
+					"damage bonus" : null,
+					"damage penalty" : null,
+					"damage bonus HIDDEN" : null,
+					"damage penalty HIDDEN" : null,
+					"CARD: damage bonus" : null,
+				}
+
+				local damage_attrib_mult = 1.0
+				foreach (attrib, _ in damage_mult_attribs)
+				{
+					local val = weapon.GetAttribute(attrib, 1.0)
+					if (val)
+					{
+						damage_attrib_mult = val
+						break
+					}
+				}
+
+				printl(params.damage)
+				if (itemdef in ALLMEAT_MAX_DAMAGE && params.damage < ((ALLMEAT_MAX_DAMAGE[itemdef] * arena.AllMeat.damage_threshold) * damage_attrib_mult))
+					params.damage = 0.0
+
+				else if (weapon.GetClassname() in ALLMEAT_MAX_DAMAGE && params.damage < ((ALLMEAT_MAX_DAMAGE[weapon.GetClassname()] * arena.AllMeat.damage_threshold) * damage_attrib_mult))
+					params.damage = 0.0
+
 			}
+
 			if (victim_scope && victim.IsPlayer() && attacker != victim && (arena.IsEndif || arena.IsMidair) && params.damage_type & DMG_BLAST && !(victim.GetFlags() & FL_ONGROUND))
 			{
 				local trace_dist = arena.IsEndif ? arena.Endif.height_threshold : arena.IsMidair ? arena.Midair.height_threshold : AIRSHOT_HEIGHT_THRESHOLD
