@@ -173,13 +173,8 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
     - Check server console for any VPI related errors when you join/leave the server.
     - This will automatically create the `mge_playerdata` table in your database
  
-## VPI
-- VScript Python Interface is a tool created by Mince1844 that serializes your vscript data into JSON for an external program to read (python script in this case), then writes response data back to the scriptdata folder, allowing for two-way communication with more powerful external tools without relying on SourcePawn. 
-- MGE-VScript ships with the following VPI integrations:
-    - Database connector
-    - Github auto-updates (periodic git clones of this repo)
-    - Sending PUT requests to our webserver
-See the official VPI documentation and `vpi_interfaces.py` if you want to create your own interface functions. 
+## GitHub Auto Updates
+- If configured in `cfg/constants.nut`, the python script that handles database connections will also periodically git clone this repo to a specified directory and shorten the map restart timer.  
 
 ## NavMesh generation
 
