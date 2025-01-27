@@ -15,7 +15,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 
 
 ## Configuration/Modifying game rules
-- Most arena rules can be configured at the top of the `mge/constants.nut` file
+- Most arena rules can be configured at the top of the `mge/cfg/config.nut` file
   
 ## Features & Progress
 
