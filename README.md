@@ -144,8 +144,9 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 ### Database
 - Database tracking uses [VScript-Python Interface](https://github.com/potato-tf/VPI) to send data from vscript to python through the filesystem.
     - Install Python 3.10 or newer if you don't already have it
-    - Install MySQL (SQLite is currently not supported)
+    - Install MySQL (recommended) or SQLite
     - Install the `aiomysql` module
+        - SQLite uses `aiosqlite`
     - Add your database credentials to `tf/scripts/mge_python/vpi.py` and run this script constantly in the background, this is your database connection
         - You should create a systemd service for this on linux, or whatever the windows equivalent is
     - Check server console for any VPI related errors when you join/leave the server.
