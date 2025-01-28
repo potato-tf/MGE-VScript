@@ -1,8 +1,6 @@
 //CONFIG CONSTANTS
 const DEFAULT_LANGUAGE                        = "english"
 
-const SECRET_VPI_KEY                          = "" //set this to a random string to act as a secret key for the vpi interface
-
 /********************************************************************************************************************
  * how long to wait before restarting the map/server in seconds                                                     *
  * this uses a hack with point_intermission to trigger a changelevel to whatever the `nextlevel` cvar is set to     *
