@@ -45,12 +45,12 @@ jobs:
           # For potato.tf servers (pterodactyl user)
           for i in "22 pterodactyl@us.potato.tf" "22 pterodactyl@ustx.potato.tf" "22 pterodactyl@br.potato.tf" "27040 pterodactyl@us.potato.tf" "3438 pterodactyl@us.potato.tf" "2849 pterodactyl@us.potato.tf" "22 pterodactyl@usw2.potato.tf" "27035 pterodactyl@eu.potato.tf" "22 pterodactyl@eu2.potato.tf" "22 pterodactyl@10.243.40.231" "22 pterodactyl@sgp.potato.tf"; do a=( $i ); 
           {
-            rsync -a \ 
-            --exclude='mge/vpi/vpi_interfaces.py' \ 
+            rsync -a \
+            --exclude='mge/vpi/vpi_interfaces.py' \
             --exclude='mge/cfg/config.nut' \
             --exclude='mge/vpi/vpi.nut' \
-            -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mge ${a[1]}:/var/tf2server/tf/scripts/vscripts &
-            
+            -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mge/ ${a[1]}:/var/tf2server/tf/scripts/vscripts &
+
             rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mapspawn.nut ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge_init.nut &
           } &
           done
