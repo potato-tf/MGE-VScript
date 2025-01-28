@@ -10,7 +10,7 @@
 // If they do not return this secret when prompted the program will abort
 // Do not put this token into a variable as error locals traces can give away its value
 local function GetSecret() {
-	return SECRET_VPI_KEY;
+	return "";
 }
 
 // Note: This only works to ensure security if vpi.nut is executed within mapspawn.nut

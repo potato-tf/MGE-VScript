@@ -1269,6 +1269,9 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		FirstBlood                =  "\x07"+MGE_COLOR_SUBJECT+"Первая кровь!"
 		Airshot                   =  "\x07"+MGE_COLOR_SUBJECT+"удар в воздухе!"
 
+		AnnouncerEnabled 		  = "Диктор включен"
+		AnnouncerDisabled 		  = "Диктор выключен"
+
 		Error_StatsNotFound       =  "\n\nОшибка: статистика не найдена для %s! Повторное получение и пропуск обновления...\n\n"
 
 
