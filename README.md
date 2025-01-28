@@ -182,7 +182,7 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
     - Install MySQL (recommended) or SQLite
     - Install the `aiomysql` module
         - SQLite uses `aiosqlite`
-    - Add your database credentials to `tf/scripts/mge_python/vpi.py` (use env vars) and run this script constantly in the background, this is your database connection
+    - Add your database credentials to `tf/scripts/vscripts/mge/vpi/vpi.py` (use env vars) and run this script constantly in the background, this is your database connection
         - You should create a systemd service for this on linux, or whatever the windows equivalent is
     - Check server console for any VPI related errors when you join/leave the server.
     - This will automatically create the `mge_playerdata` table in your database
