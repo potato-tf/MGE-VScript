@@ -105,6 +105,9 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		Airshot                    = "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
 		MarketGarden               = "\x07"+MGE_COLOR_SUBJECT+"Market Garden!"
 
+		AnnouncerEnabled            = "\x07"+MGE_COLOR_BACKGROUND+"Announcer enabled."
+		AnnouncerDisabled           = "\x07"+MGE_COLOR_BACKGROUND+"Announcer disabled."
+
 		InvalidRuleset             = "\x07"+MGE_COLOR_BACKGROUND+"Invalid ruleset: %s"
 		RulesetCannotSet 		   = "\x07" + MGE_COLOR_BACKGROUND + "You cannot set custom rulesets for this arena at this time."
 		RulesetVote                = "\x07" + MGE_COLOR_BACKGROUND + "You voted to enable %s for this arena, waiting for other players to vote..."
@@ -176,6 +179,9 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		Killstreak =			"\x07"+MGE_COLOR_SUBJECT+"%s jest na killstreaku! (%s zabójstw)"
 		FirstBlood =            "\x07"+MGE_COLOR_SUBJECT+"Pierwsza krew!"
 		Airshot =               "\x07"+MGE_COLOR_SUBJECT+"Airshot!"
+
+		AnnouncerEnabled = "\x07"+MGE_COLOR_BACKGROUND+"Komentator włączony."
+		AnnouncerDisabled = "\x07"+MGE_COLOR_BACKGROUND+"Komentator wyłączony."
 
 		Error_StatsNotFound =			"\n\nBłąd: nie znaleziono statystyk dla %s! Pobieram staty od nowa i pomijam aktualizację...\n\n"
 

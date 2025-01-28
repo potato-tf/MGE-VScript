@@ -6,7 +6,7 @@ The goal of this project is to create a drop-in replacement for the SM version f
 The biggest obstacle that obviously cannot be worked around is the lack of a proper database connector.  If stat tracking is set to database mode, this gamemode copes by using an external python script to move data from disk to database.  You should be EXTREMELY careful about using this alongside untrusted maps/scripts, see below to avoid malicious maps/scripts from tampering with player stats.
 
 ## Installation
-- Drop the `mapspawn.nut` file and mge folder in your `tf/scripts/vscripts` directory.  That's it
+- Drop the `mapspawn.nut` file and `mge` folder in your `tf/scripts/vscripts` directory.  That's it
   - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
 
 ## Don't pack this into your map
@@ -43,7 +43,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | Custom spawn ordering | ❌ |
 | In-Game map configuration tool | ❌ |
 
-⚠️KOTH works but the logic is super janky right now, is Turris even that popular?
+⚠️KOTH works but the logic is super janky right now, partial cap time can go negative and you can just trade the point back and forth (doesn't contest/pause)
 
 ⚠️I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
 
@@ -53,10 +53,10 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 
 ⚠️The SQLite stuff should work fine but is untested.
 
-⚠️Ruleset voting exists but is very janky, doesn't clean itself up correctly, and is disabled by default.
+⚠️Ruleset voting is still very experimental, please report any issues you find.
 
 ## Converting your map configs
-- Open a copy of `mgemod_spawns.cfg` in VSCode/NP++/any text editor that supports regex search/replace, enable regex
+- Open a copy of your map config file (`mgemod_spawns.cfg`) in VSCode/NP++/any text editor that supports regex search/replace
 - If you're confused, Google/ask your favorite AI chat bot how to enable regex search/replace in your text editor
 
     - Find pattern: `(\s*)"([^"]+)"\s*\n\s*\{`
@@ -71,9 +71,16 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
     - Failing to index your maps will result in !add being unordered, rendering everyone's !add binds useless
 
 ## Known bugs/limitations
-- KOTH in general is a bit jank
-- Custom ruleset spawns do not rotate correctly
-- The BBall flag can sometimes not drop if you kill the player as soon as they pick it up, they will still have it on respawn.
+- KOTH is jank
+- Custom ruleset spawns may not rotate correctly
+- No Ultiduo yet, I forgot xd
+- There's no way to make a menu of arena options like SourceMod can, stuck to chat commands or a fully custom screen overlay or something even more exotic.
+- !add only supports arena indexes right now (1-18 for classic mge_training), !add viaduct for example will not work, only !add 1 will.
+- Queue cycling might be buggy and put people on the wrong teams, pls report
+- Leaderboard currently only works with a database and is disabled by default.
+- Many chat commands either aren't implemented or were changed to something else (goodbye !hitblip).
+
+I am not an MGE main and there are probably plenty of minor parity issues to hammer out (endif knockback height being the main one), pls report and major discrepancies between this and standard MGEMod behavior below.
 
 ## Adding new BBall/Koth/etc spawns:
 - BBall, Koth, and other "specialty" modes still supports reading hoop/koth point/ball spawn points/etc using the old method for backwards compatibility
@@ -141,8 +148,15 @@ All chat commands can be prefixed with any of these characters: `/\.!?`
 | add | Add yourself to a given arena index
 | remove | Remove yourself from the arena you are currently in 
 | stats | view your stats breakdown
-| ruleset | Vote to change the current arenas ruleset, for example enabling endif or ammomod
-| addbots/removebots | add/remove training bots from arena
+| ruleset | vote to change the current arenas ruleset, for example enabling endif or ammomod
+| announcer | toggle the announcer on/off
+| help/mgehelp | view the help menu
+| stats | view your stats breakdown
+| language | change your language, this will read your `cl_language` setting by default
+| handicap | set a handicap for yourself, example: `!handicap 100` will set your HP to 100
+| addbots/removebots | NOT IMPLEMENTED
+| top5 | NOT IMPLEMENTED
+| leaderboard | NOT IMPLEMENTED
 
 ## ELO/Stat Tracking
 ### SECURITY WARNING

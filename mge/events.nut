@@ -90,6 +90,12 @@ class MGE_Events
 			}
 			MGE_ClientPrint(player, 3, "CurrentHandicap", scope.handicap_hp_penalty)
 		}
+		"announcer" : function(params) {
+			local player = GetPlayerFromUserID(params.userid)
+			local scope = player.GetScriptScope()
+			scope.enable_announcer = !scope.enable_announcer
+			MGE_ClientPrint(player, 3, scope.enable_announcer ? "AnnouncerEnabled" : "AnnouncerDisabled")
+		}
 		"ruleset" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
@@ -148,7 +154,6 @@ class MGE_Events
 			else
 				MGE_ClientPrint(player, 3, "MyRankNoRating", scope.stats.wins.tostring(), scope.stats.losses.tostring())
 		}
-
 		"help" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 			MGE_ClientPrint(player, HUD_PRINTTALK, "Cmd_MGECmds")
@@ -191,50 +196,50 @@ class MGE_Events
 		//this event acts effectively like a heartbeat, so we can update the server data
 		//interestingly, the `master` server IP actually returns a valid SDR address, no port unfortunately.
 		//I'm assuming it reads the +ip arg if SDR is not enabled, since we set ours to 0.0.0.0
-		function OnGameEvent_hltv_status(params)
-		{
-			if (!HLTV_TEST || !("VPI" in ROOT)) return
+		// function OnGameEvent_hltv_status(params)
+		// {
+		// 	if (!HLTV_TEST || !("VPI" in ROOT)) return
 
-			//no port info, not useful for SDR since we get assigned a random one
-			// local ip = params.master
-			// if (ip != "0.0.0.0" && SERVER_DATA.address == 0)
-				// SERVER_DATA.address = ip
+		// 	//no port info, not useful for SDR since we get assigned a random one
+		// 	// local ip = params.master
+		// 	// if (ip != "0.0.0.0" && SERVER_DATA.address == 0)
+		// 		// SERVER_DATA.address = ip
 
-			LocalTime(local_time)
-			SERVER_DATA.update_time = local_time
-			SERVER_DATA.max_wave = counter
-			SERVER_DATA.wave = counter
-			local players = array(2, 0)
-			local spectators = 0
-			foreach (player, userid in ALL_PLAYERS)
-			{
-				if (!player || !player.IsValid() || player.IsFakeClient()) continue
+		// 	LocalTime(local_time)
+		// 	SERVER_DATA.update_time = local_time
+		// 	SERVER_DATA.max_wave = counter
+		// 	SERVER_DATA.wave = counter
+		// 	local players = array(2, 0)
+		// 	local spectators = 0
+		// 	foreach (player, userid in ALL_PLAYERS)
+		// 	{
+		// 		if (!player || !player.IsValid() || player.IsFakeClient()) continue
 
-				if (player.GetTeam() == TEAM_SPECTATOR)
-					spectators++
-				else
-					players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
-			}
-			SERVER_DATA.players_red = players[0]
-			SERVER_DATA.players_blu = players[1]
-			SERVER_DATA.players_connecting = spectators + players[0] + players[1]
-			SERVER_DATA.server_name = Convars.GetStr("hostname")
+		// 		if (player.GetTeam() == TEAM_SPECTATOR)
+		// 			spectators++
+		// 		else
+		// 			players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
+		// 	}
+		// 	SERVER_DATA.players_red = players[0]
+		// 	SERVER_DATA.players_blu = players[1]
+		// 	SERVER_DATA.players_connecting = spectators + players[0] + players[1]
+		// 	SERVER_DATA.server_name = Convars.GetStr("hostname")
 
-			VPI.AsyncCall({
-				func = "VPI_MGE_UpdateServerData",
-				kwargs = SERVER_DATA,
-				callback = function(response, error) {
-					if (error)
-					{
-						// printl(error)
-						return
-					}
-					printl(response)
-					if (SERVER_DATA.address == 0)
-						SERVER_DATA.address = response.address
-				}
-			})
-		}
+		// 	VPI.AsyncCall({
+		// 		func = "VPI_MGE_UpdateServerData",
+		// 		kwargs = SERVER_DATA,
+		// 		callback = function(response, error) {
+		// 			if (error)
+		// 			{
+		// 				// printl(error)
+		// 				return
+		// 			}
+		// 			printl(response)
+		// 			if (SERVER_DATA.address == 0)
+		// 				SERVER_DATA.address = response.address
+		// 		}
+		// 	})
+		// }
 
 		function OnGameEvent_player_activate(params)
 		{
@@ -423,7 +428,6 @@ class MGE_Events
 					MGE_ClientPrint(null, 3, "\x07FF0000[VScript MGE] WARNING: "+player+" spawned outside of arena!")
 			}
 		}
-
 		// function OnGameEvent_projectile_removed(params)
 		// {
 		// 	printl(params.attacker)
