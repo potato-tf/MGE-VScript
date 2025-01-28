@@ -36,7 +36,6 @@ COLOR = {
 ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN", "")
 WEBAPI_KEY = os.environ.get("WEBAPI_KEY", "")
 POTATO_API_KEY = os.environ.get("POTATO_API_KEY", "")
-STEAM_API_KEY = os.environ.get("STEAM_API_KEY", "")
 
 # Remove problematic characters from strings (return copy)
 def SanitizeString(string):
@@ -280,101 +279,6 @@ async def VPI_MGE_AutoUpdate(info, test=False):
                 shutil.rmtree(temp_dir, ignore_errors=True)
             except Exception as e:
                 print(COLOR['YELLOW'], f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}", COLOR['ENDC'])
-
-@WrapInterface
-async def VPI_MGE_UpdateServerData(info, cursor):
-
-    kwargs = info["kwargs"]
-    # Get required values with error checking
-    endpoint = kwargs.get("endpoint_url", "https://potato.tf/api/serverstatus")
-    if not endpoint:
-        raise ValueError("endpoint_url is required")
-        
-    if not POTATO_API_KEY:
-        raise ValueError("POTATO_API_KEY environment variable is not set")
-
-    name = kwargs.get("server_name")
-    if not name:
-        raise ValueError("server_name is required")
-
-    response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={WEBAPI_KEY}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
-
-    server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
-
-    # logger.info(f"Server: {server}")
-    if server and "addr" in server:
-        kwargs['address'] = server['addr']
-
-    # if (kwargs["map"].startswith("workshop/")):
-    kwargs["map"] = server['map']
-        # kwargs["mission"] = server['map']
-        
-    update_time = kwargs.get("update_time", {})
-    now = datetime.datetime.now()
-    timestamp = datetime.datetime(
-        year=update_time.get("year", now.year),
-        month=update_time.get("month", 1),
-        day=update_time.get("day", 1),
-        hour=update_time.get("hour", 0),
-        minute=update_time.get("minute", 0),
-        second=update_time.get("second", 0)
-    ).timestamp()
-
-    put_server_data = {
-        "serverKey": kwargs.get('server_key', ''),
-        "serverName": name,
-        "address": kwargs.get('address', ''),
-        "playersRed": int(kwargs.get('players_red', 0)),
-        "playersBlu": int(kwargs.get('players_blu', 0)),
-        "playersConnecting": int(kwargs.get('players_connecting', 0)),
-        "playersMax": int(kwargs.get('players_max', 0)),
-        "wave": int(kwargs.get('wave', 0)),
-        "maxWave": int(kwargs.get('max_wave', 0)),
-        "classes": "",
-        "mission": "",
-        # "mission": kwargs.get('map', ''),
-        "map": kwargs.get('map', ''),
-        "mapNoVersion": kwargs.get('map', ''),
-        "region": kwargs.get('region', ''),
-        "status": kwargs.get('status', ''),
-        "campaignName": kwargs.get('campaign_name', ''),
-        "timestamp": int(timestamp),
-        "domain": kwargs.get('domain', ''),
-        "matchmakingDisableTime": 0,
-        "password": kwargs.get('password', ''),
-        "inProtectedMatch": False,
-        "isFakeIp": False,
-        "steamids": [],
-        "selectedForMatchmaking": False,
-    }
-
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "auth-token": POTATO_API_KEY
-    }
-    
-    # Replace print statements with logging
-    logger.info(f"Sending PUT request to {endpoint}")
-    # logger.info(f"Request data: {put_server_data}")
-    
-    try:
-        request = requests.put(endpoint, json=put_server_data, headers=headers)
-        logger.info(f"Response status code: {request.status_code}")
-        # logger.info(f"Response text: {request.text}")
-        
-        request.raise_for_status()
-        
-        if request.text:  # Only try to parse JSON if there's a response body
-            try:
-                _response = request.json()
-            except ValueError as e:
-                logger.warning(f"Could not parse response as JSON: {str(e)}")
-    except requests.RequestException as e:
-        logger.error(f"Failed to update server data: {str(e)}")
-        raise Exception(f"Failed to update server data: {str(e)}")
-
-    return put_server_data
 
 @WrapDB
 async def VPI_MGE_UpdateServerDataDB(info, cursor):
