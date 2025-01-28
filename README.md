@@ -11,7 +11,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 
 ## Don't pack this into your map
 - I generally don't recommend you do this, this will receive live regular updates like a sourcemod plugin, and will conflict with server configs
-- Feel free to ship your own custom forks with no stat tracking (so long as I'm still in the credits), but you should modify your fork in a way that it doesn't override any existing mge scripts on the server
+- If you must pack this into your map, you should modify it so it loads in a way that it doesn't override any existing mge scripts on the server
 
 
 ## Configuration/Modifying game rules
@@ -173,13 +173,8 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
     - Check server console for any VPI related errors when you join/leave the server.
     - This will automatically create the `mge_playerdata` table in your database
  
-## VPI
-- VScript Python Interface is a tool created by Mince1844 that serializes your vscript data into JSON for an external program to read (python script in this case), then writes response data back to the scriptdata folder, allowing for two-way communication with more powerful external tools without relying on SourcePawn. 
-- MGE-VScript ships with the following VPI integrations:
-    - Database connector
-    - Github auto-updates (periodic git clones of this repo)
-    - Sending PUT requests to our webserver
-See the official VPI documentation and `vpi_interfaces.py` if you want to create your own interface functions. 
+## GitHub Auto Updates
+- If configured in `cfg/constants.nut`, the python script that handles database connections will also periodically git clone this repo to a specified directory and shorten the map restart timer.  
 
 ## NavMesh generation
 
