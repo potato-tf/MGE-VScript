@@ -1,0 +1,11 @@
+# Common ignores for all releases
+.github/ export-ignore
+.gitignore export-ignore
+
+# Simple release ignores (activated when creating release with export-ignore)
+mge/vpi/__pycache__/ export-ignore
+.github/ export-ignore
+.gitignore export-ignore
+*.bat export-ignore
+*.py export-ignore
+requirements.txt export-ignore 
