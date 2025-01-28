@@ -280,6 +280,11 @@ async def VPI_MGE_AutoUpdate(info, test=False):
             except Exception as e:
                 print(COLOR['YELLOW'], f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}", COLOR['ENDC'])
 
+@WrapInterface
+async def VPI_MGE_UpdateServerData(info, cursor):
+
+    return info
+
 @WrapDB
 async def VPI_MGE_UpdateServerDataDB(info, cursor):
     kwargs = info["kwargs"]
