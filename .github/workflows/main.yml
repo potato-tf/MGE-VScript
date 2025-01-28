@@ -47,8 +47,9 @@ jobs:
           {
             rsync -a \
             --exclude='mge/vpi/vpi_interfaces.py' \
-            --exclude='mge/cfg/config.nut' \
+            --exclude='mge/vpi/vpi_watch.bat' \
             --exclude='mge/vpi/vpi.nut' \
+            --exclude='mge/cfg/config.nut' \
             --exclude='requirements.txt' \
             --exclude='mge_windows_setup.bat' \
             -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mge ${a[1]}:/var/tf2server/tf/scripts/vscripts &
