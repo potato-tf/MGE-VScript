@@ -1,7 +1,13 @@
 //CONFIG CONSTANTS
 const DEFAULT_LANGUAGE                        = "english"
 
-const MAP_RESTART_TIMER                       = 7200 //how long to wait before restarting the map/server in seconds
+/********************************************************************************************************************
+ * how long to wait before restarting the map/server in seconds                                                     *
+ * this uses a hack with point_intermission to trigger a changelevel to whatever the `nextlevel` cvar is set to     *
+ * if this cvar is not set it will simply switch to whatever map is listed next in your `mapcyclefile`              *
+ * make sure you configure your mapcycle.txt correctly so your MGE server doesn't switch to cp_granary or something *
+ ********************************************************************************************************************/
+const MAP_RESTART_TIMER                       = 7200 
 
 /***************************************************************************************************************
  *              setting this to true will send a retry command to every player and kill worldspawn             *
@@ -12,8 +18,8 @@ const MAP_RESTART_TIMER                       = 7200 //how long to wait before r
 const SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL    = false
 
 /******************************************************************************************************
- *      if repo is (not false or "") and vpi is running, vpi will periodically git clone the repo     *
- *     if vpi detects a change it will trigger a callback function to shorten the map restart timer   *
+ * if repo is valid (not false or "") and vpi is running, vpi will periodically git clone the repo    *
+ * if vpi detects a change it will trigger a callback function to shorten the map restart timer       *
  ******************************************************************************************************/
 // const GAMEMODE_AUTOUPDATE_REPO            = "https://github.com/potato-tf/MGE-VScript.git" //the repo to clone
 const GAMEMODE_AUTOUPDATE_REPO               = false //the repo to clone
@@ -29,11 +35,13 @@ const GAMEMODE_AUTOUPDATE_INTERVAL           = 120
 const DEFAULT_FRAGLIMIT                      = 20
 const DEFAULT_ELO                            = 1600
 
-// 0 = none - No ELO or stat tracking at all
-// 1 = file (tf/scriptdata/mge_playerdata) - Recommended for servers hosted on a single physical machine
-// 2 = database (requires VPI) - Recommended for multi-region server networks, local data is still written to local storage
-// 3 = database NO fallback - Database connection only, don't write player data to files
-// if VPI is not running this will just do nothing and accumulate junk in your scriptdata folder xd
+/****************************************************************************************************************************
+ * 0 = none - No ELO or stat tracking at all                                                                                *
+ * 1 = file (tf/scriptdata/mge_playerdata) - Recommended for servers hosted on a single physical machine                    *
+ * 2 = database (requires VPI) - Recommended for multi-region server networks, local data is still written to local storage *
+ * 3 = database NO fallback - Database connection only, don't write player data to files                                    *
+ * if VPI is not running this will just do nothing and accumulate junk in your scriptdata folder xd                         *
+ ****************************************************************************************************************************/
 const ELO_TRACKING_MODE                      = 1
 const ENABLE_LEADERBOARD                     = false //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
 const REMOVE_DROPPED_WEAPONS                 = true

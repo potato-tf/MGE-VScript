@@ -2382,10 +2382,6 @@
 
 		foreach (p, _ in arena.CurrentPlayers)
 		{
-			p.GetScriptScope().ThinkTable["eeee"] <- function() {
-				// foreach(k, v in this)
-					// printl(k + " : " + v)
-			}
 			ruleset_inits[ruleset].call(p.GetScriptScope())
 			p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset]
 			if (ruleset == "bball" || ruleset == "koth")
