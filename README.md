@@ -163,12 +163,11 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 - While most existing MGE maps are safe to use, **DO NOT ENABLE ANY STAT TRACKING ON UNTRUSTED MAPS!**
     - Any MGE maps created after the VScript update can pack a mapspawn.nut file that will override ours
     - Not only will this break the gamemode, but malicious maps can target either the database or filesystem and manipulate player stats
-    - This cannot be fixed unless Valve implements another reserved file (i.e. init.nut) that runs before mapspawn.nut and can only run from the server filesystem
     - **How to check if a map is safe:**
         - Open the bsp using GCFScape, open the .zip file, and check the tf/scripts/vscripts directory in this zip file
         - If you see a mapspawn.nut file, the gamemode will either not load correctly or this map is unsafe
         - If you see any other packed script files, Ctrl+F and search for `StringToFile` or `FileToString` in every script file, if you see any of these, the map is potentially unsafe
-        - Search for `__MGE__VPI`.  If this shows up anywhere, the map is attempting to tamper with the database 
+        - You can go a step further and check the entity lumps/decompiled vmf for `runscriptcode` if you're extra paranoid
 
 ### Plain Text
 - perfect option for MGE servers running on a single physical server
@@ -177,6 +176,8 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 
 ### Database
 - Database tracking uses [VScript-Python Interface](https://github.com/potato-tf/VPI) to send data from vscript to python through the filesystem.
+    - Open `tf/scripts/vscripts/mge/cfg/config.nut` and set `ELO_TRACKING_MODE` from 1 to 2
+    - Open `tf/scripts/vscripts/mge/vpi/vpi.nut` and update line 13, change `return "";` to a random unique string.  Treat this like a password.
     - Install Python 3.10 or newer if you don't already have it
     - Install MySQL (recommended) or SQLite
     - Install the `aiomysql` module

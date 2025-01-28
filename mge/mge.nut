@@ -739,10 +739,11 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 			SERVER_DATA.players_connecting = spectators
 			SERVER_DATA.server_name = Convars.GetStr("hostname")
 
-			VPI.AsyncCall({
-				func = "VPI_MGE_UpdateServerData",
-				kwargs = SERVER_DATA,
-				callback = function(response, error) {
+			if (UPDATE_SERVER_DATA) {
+				VPI.AsyncCall({
+					func = "VPI_MGE_UpdateServerData",
+					kwargs = SERVER_DATA,
+					callback = function(response, error) {
 					if (error)
 					{
 						// printl(error)
