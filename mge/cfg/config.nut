@@ -27,7 +27,7 @@ const GAMEMODE_AUTOUPDATE_BRANCH             = "main" //the branch to clone
 const GAMEMODE_AUTOUPDATE_TARGET_DIR         = "/var/tf2server/tf/scripts/vscripts" //the directory to clone to, this should be your servers `tf/scripts/vscripts` directory
 const GAMEMODE_AUTOUPDATE_RESTART_TIME       = 300.0 //the time to wait before restarting the map in seconds
 
- //how often to check for updates in seconds (30 minutes 30*60=1800).
+ //how often to check for updates in seconds
  //GitHub will rate limit you if you try to abuse this
 const GAMEMODE_AUTOUPDATE_INTERVAL           = 120
 
@@ -40,10 +40,11 @@ const DEFAULT_ELO                            = 1600
  * 1 = file (tf/scriptdata/mge_playerdata) - Recommended for servers hosted on a single physical machine                    *
  * 2 = database (requires VPI) - Recommended for multi-region server networks, local data is still written to local storage *
  * 3 = database NO fallback - Database connection only, don't write player data to files                                    *
- * if VPI is not running this will just do nothing and accumulate junk in your scriptdata folder xd                         *
+ * if VPI is not running 2, and 3 will just do nothing and accumulate junk in your scriptdata folder xd                     *
  ****************************************************************************************************************************/
 const ELO_TRACKING_MODE                      = 1
 const ENABLE_LEADERBOARD                     = false //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
+
 const REMOVE_DROPPED_WEAPONS                 = true
 const IDLE_RESPAWN_TIME                      = 3.0 //respawn time while waiting for arena to start
 const AIRSHOT_HEIGHT_THRESHOLD               = 100
