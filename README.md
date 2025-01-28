@@ -175,7 +175,7 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 - No leaderboard support currently.
 
 ### Database
-- Database tracking uses [VScript-Python Interface](https://github.com/potato-tf/VPI) to send data from vscript to python through the filesystem.
+- Database tracking uses [VScript-Python Interface](https://github.com/Mince1844/VPI) to send data from vscript to python through the filesystem.
     - Open `tf/scripts/vscripts/mge/cfg/config.nut` and set `ELO_TRACKING_MODE` from 1 to 2
     - Open `tf/scripts/vscripts/mge/vpi/vpi.nut` and update line 13, change `return "";` to a random unique string.  Treat this like a password.
     - Install Python 3.10 or newer if you don't already have it
