@@ -31,6 +31,13 @@ const GAMEMODE_AUTOUPDATE_RESTART_TIME       = 300.0 //the time to wait before r
  //GitHub will rate limit you if you try to abuse this
 const GAMEMODE_AUTOUPDATE_INTERVAL           = 120
 
+//fires VPI_MGE_UpdateServerData every VPI_SERVERINFO_UPDATE_INTERVAL seconds
+//potato.tf uses this function to send periodic put requests to their webserver so it shows up on the website
+//this function is empty for the release version, feel free to use it for your own purposes
+//VPI_MGE_UpdateServerDataDB does work but is unused
+const UPDATE_SERVER_DATA                     = false
+const VPI_SERVERINFO_UPDATE_INTERVAL         = 3
+
 //general
 const DEFAULT_FRAGLIMIT                      = 20
 const DEFAULT_ELO                            = 1600
@@ -206,12 +213,6 @@ const KOTH_POINT_PLACEMENT_COOLDOWN         = 2.0
 //NOTE:
 //See BBall notes about adding more spawns
 const ULTIDUO_MAX_SPAWNS                    = 4
-
-//VPI related stuff
-// CONST.HLTV_TEST <- Convars.GetInt("tv_enable")
-const HLTV_TEST                             = false
-//this gets overwritten by HLTV_TEST (fixed 8 second interval)
-const VPI_SERVERINFO_UPDATE_INTERVAL        = 3
 
 const LEADERBOARD_DEBUG                     = true
 
