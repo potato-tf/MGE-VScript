@@ -117,8 +117,8 @@ If not specified, the default values can be found in `cfg/config.nut`
 
 - `koth_cap` - the spawn point of the capture point
     - If this is not specified, the last index in the map spawn config will be used as the capture point
-- `start_time_red` - the time at which the red team can start capturing the point in seconds, defaults to KOTH_START_TIME_RED in `cfg/config.nut`
-- `start_time_blu` - the time at which the blue team can start capturing the point in seconds, defaults to KOTH_START_TIME_BLUE in `cfg/config.nut`
+- `start_time_red` - starting time for red team, defaults to KOTH_START_TIME_RED in `cfg/config.nut`
+- `start_time_blu` - starting time for blue team, defaults to KOTH_START_TIME_BLUE in `cfg/config.nut`
 - `koth_capture_point_radius` - the radius of the capture point in hammer units, defaults to KOTH_CAPTURE_POINT_RADIUS in `cfg/config.nut`
 - `koth_capture_point_max_height` - the maximum height of the capture point in hammer units, defaults to KOTH_CAPTURE_POINT_MAX_HEIGHT in `cfg/config.nut`
 - `koth_decay_rate` - the rate at which the capture point decays when not being capped in seconds, defaults to KOTH_DECAY_RATE in `cfg/config.nut`
@@ -154,7 +154,6 @@ All chat commands can be prefixed with any of these characters: `/\.!?`
 | stats | view your stats breakdown
 | language | change your language, this will read your `cl_language` setting by default
 | handicap | set a handicap for yourself, example: `!handicap 100` will set your HP to 100
-| addbots/removebots | NOT IMPLEMENTED
 | top5 | NOT IMPLEMENTED
 | leaderboard | NOT IMPLEMENTED
 

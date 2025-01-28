@@ -1966,7 +1966,7 @@
 		}
 		function allmeat() {
 			LoadSpawnPoints(arena_name)
-			arena.fraglimit = fraglimit / 2
+			arena.fraglimit = ALLMEAT_DEFAULT_FRAGLIMIT
 			return
 		}
 	}

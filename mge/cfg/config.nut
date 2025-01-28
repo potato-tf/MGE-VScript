@@ -99,6 +99,7 @@ const TURRIS_REGEN_TIME                     = 5.0
 const ENDIF_HEIGHT_THRESHOLD                = 250
 
 const ALLMEAT_DAMAGE_THRESHOLD              = 0.85
+const ALLMEAT_DEFAULT_FRAGLIMIT             = 5
 
 //damage values here do not account for rampup/falloff
 //this effectively means we are only counting shots that hit every single pellet
