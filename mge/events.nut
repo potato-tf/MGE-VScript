@@ -58,35 +58,37 @@ class MGE_Events
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 
+			local arena = "arena_info" in scope && "arena" in scope.arena_info ? scope.arena_info.arena : {State = -1}
+
+			if (arena.State != AS_IDLE) return
+
 			local split_text = split(params.text, " ")
 			local split_text_len = split_text.len()
-			local mult = ToStrictNum(split_text[1], true)
-			if (split_text_len > 1 && mult)
+			local handicap = abs(ToStrictNum(split_text[1]))
+
+			if (split_text_len > 1 && handicap)
 			{
-				if (mult > 0.9)
+				if (!handicap || handicap > player.GetMaxHealth())
 				{
 					MGE_ClientPrint(player, 3, "HandicapDisabled")
-					if ("handicap_hp_mult" in scope)
+					if ("handicap_hp_penalty" in scope)
 					{
 						player.RemoveCustomAttribute("max health additive penalty")
-						delete scope.handicap_hp_mult
+						delete scope.handicap_hp_penalty
 					}
 					return
 				}
-				scope.handicap_hp_mult <- mult
+				player.AddCustomAttribute("max health additive penalty", handicap * -1.0, -1.0)
+				scope.handicap_hp_penalty <- handicap
+				player.ForceRespawn()
 			}
-			else if (!("handicap_hp_mult" in scope))
+			else if (!("handicap_hp_penalty" in scope))
 			{
 				MGE_ClientPrint(player, 3, "NoCurrentHandicap")
 				return
 
-			} else if (!mult)
-			{
-				MGE_ClientPrint(player, 3, "InvalidHandicap")
-				return
 			}
-
-			MGE_ClientPrint(player, 3, "CurrentHandicap", scope.handicap_hp_mult)
+			MGE_ClientPrint(player, 3, "CurrentHandicap", scope.handicap_hp_penalty)
 		}
 		"ruleset" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
@@ -167,7 +169,15 @@ class MGE_Events
 
 		"top5": function(params) {
 			local player = GetPlayerFromUserID(params.userid)
-			MGE_ClientPrint(player, HUD_PRINTTALK, "Visit https://potato.tf/mge_leaderboard for leaderboard stats")
+			MGE_ClientPrint(player, HUD_PRINTTALK, "Coming Soon!")
+			// if (ELO_TRACKING_MODE > 1)
+				// MGE_ClientPrint(player, HUD_PRINTTALK, "Visit https://potato.tf/mge_leaderboard for leaderboard stats")
+		}
+		"stats": function(params) {
+			local player = GetPlayerFromUserID(params.userid)
+			MGE_ClientPrint(player, HUD_PRINTTALK, "Cmd_SeeConsole")
+			foreach(k, v in player.GetScriptScope().stats)
+				ClientPrint(player, HUD_PRINTCONSOLE, k + " : " + v)
 		}
 	}
 	Events = {
@@ -291,11 +301,7 @@ class MGE_Events
 
 			ValidatePlayerClass(player, player.GetPlayerClass())
 
-			local handicap = 0
-			if ("handicap_hp_mult" in scope)
-				handicap = scope.handicap_hp
-
-			EntFireByHandle(player, "RunScriptCode",  format(@"
+			EntFireByHandle(player, "RunScriptCode",  @"
 				for (local child = self.FirstMoveChild(); child != null; child = child.NextMovePeer())
 				{
 					if (startswith(child.GetClassname(), `tf_weapon`) || startswith(child.GetClassname(), `tf_wearable`))
@@ -309,10 +315,15 @@ class MGE_Events
 						SetPropInt(child, `m_nRenderMode`, kRenderFxNone)
 					}
 				}
-				if (`handicap_hp_mult` in self.GetScriptScope() && self.GetScriptScope().handicap_hp_mult)
-					self.AddCustomAttribute(`max health additive penalty`, %d)
+				// local handicap_hp_penalty = `handicap_hp_penalty` in self.GetScriptScope() ? self.GetScriptScope().handicap_hp_penalty : 0
 
-			", handicap), GENERIC_DELAY, null, null)
+				// if (handicap_hp_penalty)
+				// {
+				// 	self.AddCustomAttribute(`max health additive penalty`, handicap_hp_penalty * - 1.0, -1.0)
+				// 	// EntFireByHandle(self, `RunScriptCode`, format(`self.TakeDamage(%f, 0, self)`, handicap_hp_penalty), GENERIC_DELAY, null, null)
+				// }
+
+			", GENERIC_DELAY, null, null)
 
 			if ("arena_info" in scope && scope.arena_info)
 			{
@@ -395,7 +406,7 @@ class MGE_Events
 					//joined spectator directly without using !remove
 					if (team == TEAM_SPECTATOR) continue
 
-					hudstr += format("%s: %d (%d)\n", scope.Name, arena.Score[team - 2], scope.stats.elo)
+					hudstr += format("%s: %d (%d)\n", scope.Name, arena.Score[team - 2], scope.stats.elo.tointeger())
 				}
 				MGE_HUD.KeyValueFromString("message", hudstr)
 				MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
@@ -506,7 +517,7 @@ class MGE_Events
 			}
 
 			foreach(p, _ in arena.CurrentPlayers)
-				hudstr += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo)
+				hudstr += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo.tointeger())
 
 			MGE_HUD.KeyValueFromString("message", hudstr)
 
@@ -521,7 +532,7 @@ class MGE_Events
 				if (arena.Score[0] >= fraglimit || arena.Score[1] >= fraglimit)
 				{
 					foreach(p, _ in arena.CurrentPlayers)
-						hudstr += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo)
+						hudstr += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo.tointeger())
 
 					foreach (p, _ in arena.CurrentPlayers)
 						EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
@@ -538,7 +549,25 @@ class MGE_Events
 				{
 					scope.ball_ent.Kill()
 					victim.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
-					BBall_SpawnBall(arena_name, victim.GetFlags() & FL_ONGROUND ? victim.EyePosition() : victim.GetOrigin())
+					local ball_pos = victim.GetFlags() & FL_ONGROUND ? victim.EyePosition() : victim.GetOrigin()
+
+					if (!("freeze_ball" in arena) || !arena.freeze_ball)
+					{
+						local ball_trace = {
+							start  = victim.GetOrigin()
+							end    = victim.GetOrigin() - Vector(0, 0, 8192)
+							mask   = MASK_PLAYERSOLID
+							ignore = victim
+						}
+
+						TraceLineEx(ball_trace)
+
+						printl(ball_trace.endpos)
+						if (ball_trace.hit && ball_trace.enthit)
+							ball_pos = ball_trace.endpos
+					}
+
+					BBall_SpawnBall(arena_name, ball_pos)
 				}
 			}
 			if (!arena.IsAmmomod)
@@ -556,32 +585,33 @@ class MGE_Events
 
 			local scope = player.GetScriptScope()
 			local team = params.team
-
 			if ("ThinkTable" in scope && "SpecThink" in scope.ThinkTable)
 				delete scope.ThinkTable.SpecThink
 
 			if (team == TEAM_SPECTATOR)
 			{
-				SetPropEntity(player, "m_hObserverTarget", MGE_LeaderboardCam)
+				if ("MGE_LeaderboardCam" in ROOT)
+					SetPropEntity(player, "m_hObserverTarget", MGE_LeaderboardCam)
 
 				local spec_cooldown_time = 0.0
-				if ("arena_info" in scope && "arena" in scope.arena_info && scope.arena_info.arena.State == AS_FIGHT)
+				local arena = "arena_info" in scope && "arena" in scope.arena_info ? scope.arena_info.arena : {State = -1}
+				if (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT)
 				{
-					MGE_ClientPrint(player, 3, "SpecRemove")
-					RemovePlayer(player)
+					// MGE_ClientPrint(player, 3, "SpecRemove")
+					RemovePlayer(player,  false)
 				}
-				scope.ThinkTable.SpecThink <-  function()
-				{
-					if (spec_cooldown_time < Time())
+				if (!player.IsFakeClient())
+					scope.ThinkTable.SpecThink <-  function()
 					{
-						MGE_ClientPrint(player, 3, "Adv")
-						spec_cooldown_time = Time() + SPECTATOR_MESSAGE_COOLDOWN
+						if (spec_cooldown_time < Time())
+						{
+							MGE_ClientPrint(player, 3, "Adv")
+							spec_cooldown_time = Time() + SPECTATOR_MESSAGE_COOLDOWN
+						}
 					}
-				}
-			} 
-			else if (team != scope.arena_info.team)
+			}
+			else if ("team" in scope.arena_info && team != scope.arena_info.team)
 				EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(self.GetScriptScope().arena_info.team, true); self.ForceRespawn()", GENERIC_DELAY, null, null)
-			
 		}
 
 		function OnScriptHook_OnTakeDamage(params)
@@ -637,10 +667,10 @@ class MGE_Events
 					}
 				}
 
-				printl(params.damage)
-				if (itemdef in ALLMEAT_MAX_DAMAGE && params.damage < ((ALLMEAT_MAX_DAMAGE[itemdef] * arena.AllMeat.damage_threshold) * damage_attrib_mult))
+				if (!(itemdef in ALLMEAT_MAX_DAMAGE) && !(weapon.GetClassname() in ALLMEAT_MAX_DAMAGE))
 					params.damage = 0.0
-
+				else if (itemdef in ALLMEAT_MAX_DAMAGE && params.damage < ((ALLMEAT_MAX_DAMAGE[itemdef] * arena.AllMeat.damage_threshold) * damage_attrib_mult))
+					params.damage = 0.0
 				else if (weapon.GetClassname() in ALLMEAT_MAX_DAMAGE && params.damage < ((ALLMEAT_MAX_DAMAGE[weapon.GetClassname()] * arena.AllMeat.damage_threshold) * damage_attrib_mult))
 					params.damage = 0.0
 

@@ -144,11 +144,54 @@
 	local config = SpawnConfigs[GetMapName()]
 
 	//custom ruleset handling
-	if (custom_ruleset_arena_name && !arena_reset)
+	if (custom_ruleset_arena_name)
 	{
 		local _arena = config[custom_ruleset_arena_name]
-		printl("RulesetVote" in _arena)
 		_arena.Score          <- array(2, 0)
+
+		if (arena_reset && "IsCustomRuleset" in _arena && _arena.IsCustomRuleset)
+		{
+			_arena.mge <- "1"
+			_arena.IsMGE <- true
+			_arena.RulesetVote <- {}
+			foreach(k, v in special_arenas)
+			{
+				if (k in _arena)
+					delete _arena[k]
+
+				_arena.RulesetVote[k] <- array(2, false)
+			}
+
+			if (_arena.IsKoth)
+			{
+				local point = _arena.Koth.cap_point
+
+				for (local prop; prop = FindByClassnameWithin(prop, "obj_teleporter", point, 128);)
+					EntFireByHandle(prop, "Kill", "", -1, null, null)
+			}
+			if (_arena.IsBBall)
+			{
+				local points = [
+
+					_arena.BBall.red_hoop,
+					_arena.BBall.blue_hoop,
+					_arena.BBall.neutral_home,
+				]
+				.apply(@(point) ToStrictNum(point, true))
+				.apply(@(point) Vector(point[0], point[1], point[2]))
+
+				foreach (point in points)
+					for (local prop; prop = FindByClassnameWithin(prop, "obj_teleporter", point, 128);)
+						EntFireByHandle(prop, "Kill", "", -1, null, null)
+			}
+			_arena.IsAmmomod 	   <- false
+			_arena.IsBBall 		   <- false
+			_arena.IsKoth		   <- false
+			_arena.IsTurris 	   <- false
+			_arena.IsEndif 		   <- false
+			_arena.IsMidair 	   <- false
+			_arena.IsAllMeat 	   <- false
+		}
 
 		//0 breaks our countdown system, default to 1
 		// _arena.cdtime         <- "cdtime" in _arena ? _arena.cdtime != "0" ? _arena.cdtime : 1 : DEFAULT_CDTIME
@@ -198,6 +241,7 @@
 				particle_pickup_generic = "bball_particle_pickup_generic" in _arena ? _arena.bball_particle_pickup_generic : BBALL_PARTICLE_PICKUP_GENERIC,
 				particle_trail_red = "bball_particle_trail_red" in _arena ? _arena.bball_particle_trail_red : BBALL_PARTICLE_TRAIL_RED,
 				particle_trail_blue = "bball_particle_trail_blue" in _arena ? _arena.bball_particle_trail_blue : BBALL_PARTICLE_TRAIL_BLUE,
+				freeze_ball = "freeze_ball" in _arena ? _arena.freeze_ball : false,
 				last_score_team = -1
 			}
 
@@ -214,11 +258,8 @@
 				if (split_spawns.len() in spawn_lens)
 					bball_points[k] <- Vector(split_spawns[0], split_spawns[1], split_spawns[2])
 			}
-			printl("test5")
-			printl("RulesetVote" in _arena)
 			_arena.BBall <- bball_points
 			BBall_SpawnBall(custom_ruleset_arena_name)
-			printl("RulesetVote" in _arena)
 
 		}
 		if (_arena.IsKoth)
@@ -227,7 +268,7 @@
 			//koth_radius is a new kv that you can set per-arena
 			_arena.Koth <- {
 				//see BBall notes about adding more spawns, koth uses the final index for cap points
-				cap_point = "koth_cap" in _arena ? _arena.koth_cap : Vector()
+				cap_point = "koth_cap" in _arena ? _arena.koth_cap : (_arena.SpawnPoints.len() + 1).tostring()
 				cap_radius = "koth_radius" in _arena ? _arena.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
 				owner_team = 0
 
@@ -307,16 +348,13 @@
 					_arena.SpawnPoints.append(spawn)
 				}
 				catch(e)
-					printf("[VSCRIPT MGE] Warning: Data parsing for arena '%s' failed: %s\nkey: %s, val: %s\n", arena_name, e.tostring(), k, v.tostring())
+					printf("[VSCRIPT MGE] Warning: Data parsing for arena failed: %s\nkey: %s, val: %s\n", e.tostring(), k, v.tostring())
 			}
 		}
 		local idx = (_arena.SpawnPoints.len() + 1).tostring()
 		if (_arena.IsKoth && idx in _arena)
 		{
-			// printl(arena_name)
-			// printl(_arena.IsKoth && idx in _arena)
-			// printl(_arena.SpawnPoints.len())
-			local cap_point = split(_arena[idx], " ").apply( @(str) str.tofloat() )
+			local cap_point = split(_arena["koth_cap" in _arena ? "koth_cap" : idx], " ").apply( @(str) str.tofloat() )
 			_arena.Koth.cap_point = Vector(cap_point[0], cap_point[1], cap_point[2])
 		}
 
@@ -504,21 +542,6 @@
 	local idx_failed = false
 	foreach(arena_name, _arena in config)
 	{
-		if (arena_reset && arena_name == custom_ruleset_arena_name)
-		{
-			_arena.mge <- "1"
-			_arena.IsMGE <- true
-			_arena.IsCustomRuleset <- false
-			_arena.RulesetVote <- {}
-			foreach(k, v in special_arenas)
-			{
-				if (k in _arena)
-					delete _arena[k]
-					// _arena[k] = "0"
-
-				_arena.RulesetVote[k] <- array(2, false)
-			}
-		}
 
 		Arenas[arena_name] <- _arena
 
@@ -611,7 +634,6 @@
 			//koth_radius is a new kv that you can set per-arena
 			_arena.Koth <- {
 				//see BBall notes about adding more spawns, koth uses the final index for cap points
-				cap_point = "koth_cap" in _arena ? _arena.koth_cap :Vector()
 				cap_radius = "koth_radius" in _arena ? _arena.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
 				owner_team = 0
 
@@ -710,16 +732,17 @@
 					_arena.SpawnPoints.append(spawn)
 				}
 				catch(e)
-					printf("[VSCRIPT MGE] Warning: Data parsing for arena '%s' failed: %s\nkey: %s, val: %s\n", arena_name, e.tostring(), k, v.tostring())
+					printf("[VSCRIPT MGE] Warning: Data parsing for arena failed: %s\nkey: %s, val: %s\n", e.tostring(), k, v.tostring())
 			}
 		}
-		
+
+		// printl(arena_name + " : " + _arena.SpawnPoints.len().tostring())
 		//always grab the last index for KOTH cap point
 		local idx = (_arena.SpawnPoints.len() + 1).tostring()
-		if (_arena.IsKoth && idx in _arena)
+		if (_arena.IsKoth)
 		{
-			local cap_point = split(_arena[idx], " ").apply( @(str) str.tofloat() )
-			_arena.Koth.cap_point = Vector(cap_point[0], cap_point[1], cap_point[2])
+			local cap_point = split(_arena["koth_cap" in _arena ? "koth_cap" : idx], " ").apply( @(str) str.tofloat() )
+			_arena.Koth.cap_point <- Vector(cap_point[0], cap_point[1], cap_point[2])
 		}
 	}
 }
@@ -909,7 +932,7 @@
 
 	if (player in current_players || arena.Queue.find(player) != null)
 	{
-		ClientPrint(player, 3, "Already in arena")
+		MGE_ClientPrint(player, HUD_PRINTTALK, "Already in arena")
 		return
 	}
 
@@ -917,7 +940,8 @@
 
 	RemovePlayer(player, false)
 
-	MGE_ClientPrint(player, 3, "ChoseArena", arena_name)
+	if (!("IsCustomRuleset" in arena) || !arena.IsCustomRuleset)
+		MGE_ClientPrint(player, HUD_PRINTTALK, "ChoseArena", arena_name)
 
 	// Enough room, add to arena
 	if (current_players.len() < arena.MaxPlayers)
@@ -926,10 +950,13 @@
 		local name = scope.Name
 		local elo = scope.stats.elo
 		// printl(arena_name)
-		local str = ELO_TRACKING_MODE ?
-			format(GetLocalizedString("JoinsArena", player), name, elo.tostring(), arena_name) :
-			format(GetLocalizedString("JoinsArenaNoStats", player), scope.Name, arena_name)
-		MGE_ClientPrint(null, 3, str)
+		if (!("IsCustomRuleset" in arena) || !arena.IsCustomRuleset)
+		{
+			local str = ELO_TRACKING_MODE ?
+				format(GetLocalizedString("JoinsArena", player), name, elo.tostring(), arena_name) :
+				format(GetLocalizedString("JoinsArenaNoStats", player), scope.Name, arena_name)
+			MGE_ClientPrint(null, HUD_PRINTTALK, str)
+		}
 	}
 	// Add to queue
 	else
@@ -939,7 +966,7 @@
 
 		local idx = arena.Queue.len() - 1
 		local str = (idx == 0) ? format(GetLocalizedString("NextInLine", player), arena.Queue.len().tostring()) : format(GetLocalizedString("InLine", player), arena.Queue.len().tostring())
-		MGE_ClientPrint(player, 3, str)
+		MGE_ClientPrint(player, HUD_PRINTTALK, str)
 	}
 }
 
@@ -985,7 +1012,7 @@
 	player.ForceChangeTeam(team, true)
 	scope.arena_info.team = team
 	player.ForceRespawn()
-	current_players[player] <- scope.stats.elo
+	current_players[player] <- scope.stats.elo.tointeger()
 
 	//shitfix, fixes CurrentPlayers not updating
 	if (!arena.IsAmmomod)
@@ -1025,14 +1052,15 @@
 			arena.Queue.remove(player)
 
 		if (player in arena.CurrentPlayers)
-		{
 			delete arena.CurrentPlayers[player]
-			SetArenaState(arena_name, AS_IDLE)
+
+		// printl("IsCustomRuleset" in arena && arena.IsCustomRuleset && !arena.IsMGE)
+		if ("IsCustomRuleset" in arena && arena.IsCustomRuleset && !arena.IsMGE && (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT))
+		{
+			LoadSpawnPoints(arena_name, true)
 		}
-		// if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
-		// {
-		// 	LoadSpawnPoints(arena_name, true)
-		// }
+
+		SetArenaState(arena_name, AS_IDLE)
 	}
 }
 
@@ -1084,12 +1112,12 @@
 
 	if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
 		return
-	
+
 
 	local winner_stats = winner.GetScriptScope().stats
 	local loser_stats = loser.GetScriptScope().stats
-	local winner_elo = winner_stats.elo
-	local loser_elo = loser_stats.elo
+	local winner_elo = winner_stats.elo.tointeger()
+	local loser_elo = loser_stats.elo.tointeger()
 
 	// Calculate expected probability
 	local expected_prob = 1.0 / (pow(10.0, (winner_elo - loser_elo).tofloat() / 400) + 1)
@@ -1125,6 +1153,11 @@
 
 	if (winner.IsFakeClient() || loser.IsFakeClient() || !ELO_TRACKING_MODE || loser2.IsFakeClient() || winner2.IsFakeClient())
 		return
+
+	loser.stats.elo = loser.stats.elo.tointeger()
+	loser2.stats.elo = loser2.stats.elo.tointeger()
+	winner.stats.elo = winner.stats.elo.tointeger()
+	winner2.stats.elo = winner2.stats.elo.tointeger()
 
 	local Losers_ELO = (loser.stats.elo + loser2.stats.elo).tofloat() / 2
 	local Winners_ELO = (winner.stats.elo + winner2.stats.elo).tofloat() / 2
@@ -1251,11 +1284,11 @@
 		if (team == TF_TEAM_RED)
 			end /= 2
 
-		idx = (idx + 1) % end
+		idx = (idx + 1) % (end - 1)
 		if (team == TF_TEAM_BLUE)
-			idx += (arena.SpawnPoints.len() / 2) - 1
+			idx += (arena.SpawnPoints.len() / 2)
 
-		printl(idx + " : " + end + " : " + arena.SpawnPoints.len())
+		// printl(idx + " : " + end + " : " + arena.SpawnPoints.len())
 		// if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
 		arena.SpawnIdx = idx
 
@@ -1333,7 +1366,6 @@
 				arena.BBall.bball_pickup_b.KeyValueFromInt("spawnflags", 1)
 				DispatchSpawn(arena.BBall.bball_pickup_b)
 			}
-
 			if (arena.IsKoth)
 			{
 				local t = arena.Koth
@@ -1347,7 +1379,6 @@
 
 				// t.is_overtime = false
 			}
-
 			local _players = array(arena.MaxPlayers, null)
 			foreach(p, _ in arena.CurrentPlayers)
 			{
@@ -1413,7 +1444,7 @@
 			local hudstr = format("%s\n", arena_name)
 			foreach(_p in _players)
 				if (_p && _p.IsValid())
-					hudstr += format("%s: %d (%d)\n", _p.GetScriptScope().Name, arena.Score[_p.GetTeam() - 2], _p.GetScriptScope().stats.elo)
+					hudstr += format("%s: %d (%d)\n", _p.GetScriptScope().Name, arena.Score[_p.GetTeam() - 2], _p.GetScriptScope().stats.elo.tointeger())
 
 			MGE_HUD.KeyValueFromString("message", hudstr)
 
@@ -1537,12 +1568,11 @@
 	local localized_string = args[2]
 	local format_args = args.slice(3).apply(@(a) a.tostring())
 
-
 	foreach (p, userid in ALL_PLAYERS)
 	{
 		if (!p || !p.IsValid() || p.IsFakeClient()) continue
 
-		local temp = UniqueString()
+		// local temp = UniqueString()
 		local str = ""
 		local scope = p.GetScriptScope()
 		local language = "Language" in scope ? scope.Language : Convars.GetClientConvarValue("cl_language", p.entindex())
@@ -1569,8 +1599,9 @@
 		if (args.len() > 3)
 			str = format.acall([this, str].extend(format_args))
 
-		ClientPrint(p, target, str)
-		if (temp in ROOT) delete ROOT[temp]
+		if (!player || p == player)
+			ClientPrint(p, target, str)
+		// if (temp in ROOT) delete ROOT[temp]
 	}
 
 }
@@ -1806,6 +1837,8 @@
 	arena.RulesetVote.clear()
 
 	arena[ruleset] <- "1"
+	arena.IsCustomRuleset <- true
+
 	local infammo_arenas = {
 		ammomod = true
 		endif = true
@@ -1917,13 +1950,13 @@
 		}
 		function ammomod() {
 			LoadSpawnPoints(arena_name)
-			arena.fraglimit = fraglimit
+			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
 			arena.hpratio = AMMOMOD_DEFAULT_HP_MULT
 			return
 		}
 		function endif() {
 			LoadSpawnPoints(arena_name)
-			arena.fraglimit = fraglimit
+			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
 			return
 		}
 		function midair() {
@@ -1933,7 +1966,7 @@
 		}
 		function allmeat() {
 			LoadSpawnPoints(arena_name)
-			arena.fraglimit = fraglimit
+			arena.fraglimit = fraglimit / 2
 			return
 		}
 	}
@@ -2127,8 +2160,8 @@
 				// if ((self.EyePosition() - hoop_trace.pos).Length() > BBALL_MAX_HOOP_DIST)
 					// return false
 
-				if (ball && ball.GetAbsAngles().x != BBALL_BALL_ANGLE_X)
-					return false
+				// if (ball && ball.GetAbsAngles().x != BBALL_BALL_ANGLE_X)
+					// return false
 
 				if (!ball && abs(hoop.GetAbsAngles().x) > BBALL_HOOP_MAX_ANGLE_X)
 					return false
@@ -2243,6 +2276,12 @@
 			local scope = self.GetScriptScope()
 
 			local point = scope.temp_point
+			if (!point || !point.IsValid())
+			{
+				RemovePlayer(self)
+				return
+			}
+
 			point.KeyValueFromVector("origin", point_trace.pos + Vector(0, 0, 10))
 			local normal_angles = VectorAngles(point_trace.plane_normal)
 			point.SetAbsAngles(QAngle(normal_angles.x, normal_angles.y, normal_angles.z) + QAngle(90, 0, 0))
@@ -2257,8 +2296,8 @@
 				// if ((self.EyePosition() - hoop_trace.pos).Length() > BBALL_MAX_HOOP_DIST)
 					// return false
 
-				if (point && point.GetAbsAngles().x != KOTH_POINT_ANGLE_X)
-					return false
+				// if (point && point.GetAbsAngles().x != KOTH_POINT_ANGLE_X)
+					// return false
 
 				if (!point && abs(point.GetAbsAngles().x) > KOTH_POINT_MAX_ANGLE_X)
 					return false
@@ -2285,7 +2324,7 @@
 					foreach(p, _ in arena.CurrentPlayers)
 						if (scope.temp_point)
 							EntFireByHandle(scope.temp_point, "Kill", "", -1, null, null)
-					
+
 					for (local hack; hack = FindByClassnameWithin(hack, "obj_teleporter", point.GetOrigin(), 200.0);)
 						EntFireByHandle(hack, "Kill", "", -1, null, null)
 
@@ -2343,6 +2382,10 @@
 
 		foreach (p, _ in arena.CurrentPlayers)
 		{
+			p.GetScriptScope().ThinkTable["eeee"] <- function() {
+				// foreach(k, v in this)
+					// printl(k + " : " + v)
+			}
 			ruleset_inits[ruleset].call(p.GetScriptScope())
 			p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset]
 			if (ruleset == "bball" || ruleset == "koth")

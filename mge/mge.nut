@@ -177,12 +177,13 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		local additive_decay = arena.Koth.additive_decay
 		local current_cappers = {}
 		local cap_contested = false
-		local point_vector = Vector()
 
 		if (typeof point == "string")
 		{
-			point_vector = split(point, " ").apply(@(v) ToStrictNum(v, true))
+			local point_vector = split(point, " ").apply(@(v) ToStrictNum(v, true))
 			point_vector = Vector(point_vector[0], point_vector[1], point_vector[2])
+
+			point = point_vector
 		}
 
 		//cap logic think
@@ -192,7 +193,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 
 			if (!player.IsAlive()) return
 
-			if ((player.GetOrigin() - point_vector).Length() < radius)
+			if ((player.GetOrigin() - point).Length() < radius)
 			{
 				if (!(player in current_cappers) || !current_cappers[player])
 					current_cappers[player] <- true
@@ -230,9 +231,9 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 
 						if ("RulesetVote" in arena && "cap_point" in arena.RulesetVote && arena.RulesetVote.cap_point && arena.RulesetVote.cap_point.IsValid())
 						{
-							local cap_point = arena.RulesetVote.cap_point
-							cap_point.SetTeam(owner_team)
-							cap_point.FirstMoveChild().SetTeam(owner_team) //glow teleporter
+							local cap_model = arena.RulesetVote.cap_point
+							cap_model.SetTeam(owner_team)
+							cap_model.FirstMoveChild().SetTeam(owner_team) //glow teleporter
 						}
 						// arena.Koth[partial_cap_amount] = owner_team == self.GetTeam() ? 0.0 : 0.99
 					}
@@ -395,7 +396,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		// printl("attr : " + player.GetCustomAttribute("hidden maxhealth non buffed", 0))
 
 		EntFireByHandle(player, "RunScriptCode", format(@"
-		
+
 			if (self.GetCustomAttribute(`max health additive bonus`, 0)) return
 			local hp_ratio = Arenas[`%s`].hpratio.tofloat()
 			self.AddCustomAttribute(`max health additive bonus`,(self.GetMaxHealth() * hp_ratio) - self.GetMaxHealth(), -1)
@@ -443,7 +444,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			SetPropIntArray(self, "m_iAmmo", 9999, 2)
 		}
 	}
-	function allmeat() 
+	function allmeat()
 	{
 		return
 	}
@@ -657,7 +658,7 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 				clone_dir = GAMEMODE_AUTOUPDATE_TARGET_DIR
 			},
 			callback = function(response, error) {
-				
+
 				//gamemode has been updated
 				if (!error && response.len()) {
 
@@ -753,12 +754,12 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 			})
 		}
 		// printl(counter)
-		if (counter < 60 && !(counter % 5))
+		// if (counter < 60 && !(counter % 5))
 		// if (!(counter % 5))
-		{
-			SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", counter)})
-			return 1
-		}
+		// {
+			// SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", counter)})
+			// return 1
+		// }
 		return 1
 	}
 

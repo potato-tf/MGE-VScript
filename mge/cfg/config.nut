@@ -84,6 +84,7 @@ const MGE_HUD_POS_Y                         = 0.15
 
 const AMMOMOD_RESPAWN_DELAY                 = 2.0
 const AMMOMOD_DEFAULT_HP_MULT 				= 6.0
+const AMMOMOD_DEFAULT_FRAGLIMIT 			= 5
 
 const TURRIS_REGEN_TIME                     = 5.0
 
@@ -98,7 +99,7 @@ const ALLMEAT_DAMAGE_THRESHOLD              = 0.85
 	tf_weapon_handgun_scout_primary = BASE_SHOTGUN_DAMAGE * 0.8,
 	[ID_FORCE_A_NATURE] = BASE_SHOTGUN_DAMAGE * 1.08,
 	[ID_FESTIVE_FORCE_A_NATURE] = BASE_SHOTGUN_DAMAGE * 1.08,
-	
+
 	tf_weapon_shotgun_primary = BASE_SHOTGUN_DAMAGE,
 	tf_weapon_shotgun_pyro = BASE_SHOTGUN_DAMAGE,
 	tf_weapon_shotgun_soldier = BASE_SHOTGUN_DAMAGE,
@@ -147,7 +148,7 @@ const BBALL_HOOP_PLACEMENT_COOLDOWN         = 2.0
 const BBALL_HOOP_POS_OFFSET                 = 60
  //setting this to 360 will allow placing hoops on the floor/ceiling.
  //Some angle forgiveness (<15) means the wall doesn't need to be perfectly flat
-const BBALL_HOOP_MAX_ANGLE_X                = 20.0
+const BBALL_HOOP_MAX_ANGLE_X                = 45.0
 
 const BBALL_BALL_ANGLE_X                    = 360.0
 
