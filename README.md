@@ -178,17 +178,16 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 - Database tracking uses [VScript-Python Interface](https://github.com/Mince1844/VPI) to send data from vscript to python through the filesystem.
     - Open `tf/scripts/vscripts/mge/cfg/config.nut` and set `ELO_TRACKING_MODE` from 1 to 2
     - Open `tf/scripts/vscripts/mge/vpi/vpi.nut` and update line 13, change `return "";` to a random unique string.  Treat this like a password.
+    - Install MySQL (recommended) or SQLite and create a database
     - Install Python 3.10 or newer if you don't already have it
-    - Install MySQL (recommended) or SQLite
-    - Install the `aiomysql` module
-        - SQLite uses `aiosqlite`
+    - Install the `aiomysql` module, SQLite uses `aiosqlite`
     - Add your database credentials to `tf/scripts/vscripts/mge/vpi/vpi.py` (use env vars) and run this script constantly in the background, this is your database connection
         - You should create a systemd service for this on linux, or whatever the windows equivalent is
     - Check server console for any VPI related errors when you join/leave the server.
     - This will automatically create the `mge_playerdata` table in your database
  
 ## GitHub Auto Updates
-- If configured in `cfg/constants.nut`, the python script that handles database connections will also periodically git clone this repo to a specified directory and shorten the map restart timer.
+- If configured in `cfg/config.nut`, the python script that handles database connections will also periodically git clone this repo to a specified directory and shorten the map restart timer.
 
 ## NavMesh generation
 
