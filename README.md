@@ -153,7 +153,7 @@ All chat commands can be prefixed with any of these characters: `/\.!?`
 | help/mgehelp | view the help menu
 | stats | view your stats breakdown
 | language | change your language, this will read your `cl_language` setting by default
-| handicap | set a handicap for yourself, example: `!handicap 100` will set your HP to 100
+| handicap | set a handicap for yourself, `!handicap 100` will set your HP to 100
 | top5 | NOT IMPLEMENTED
 | leaderboard | NOT IMPLEMENTED
 
@@ -188,7 +188,7 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
     - This will automatically create the `mge_playerdata` table in your database
  
 ## GitHub Auto Updates
-- If configured in `cfg/constants.nut`, the python script that handles database connections will also periodically git clone this repo to a specified directory and shorten the map restart timer.  
+- If configured in `cfg/constants.nut`, the python script that handles database connections will also periodically git clone this repo to a specified directory and shorten the map restart timer.
 
 ## NavMesh generation
 
