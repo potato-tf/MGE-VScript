@@ -146,7 +146,13 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 }
 
 //player think functions applied to special arenas
+//all scoring logic for koth and bball are handled here
+
+//this table is also used as a reference for all valid special arenas elsewhere in the code
+//if a new custom arena is created, you must add a function to this table (it doesn't need to do anything, see allmeat and midair)
 ::special_arenas <- {
+
+	//this logic sucks and is broken and needs to be cleaned up
 	function koth()
 	{
 
@@ -204,11 +210,8 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 						cap_contested = true
 				}
 
-				printl(cap_contested + " | " + current_cappers[player])
-				//we don't own it, start capping point
 				if (owner_team != team && partial_cap_cooldowntime < Time() && !cap_contested)
 				{
-
 					//revert enemy partial cap progress first
 					if (arena.Koth[enemy_partial_cap_amount] > 0.0)
 					{
@@ -371,7 +374,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	}
 	function midair()
 	{
-		local player = self
+		return
 	}
 	function turris()
 	{
@@ -379,7 +382,6 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		local scope = player.GetScriptScope()
 		scope.turris_cooldown <- 0.0
 		scope.ThinkTable.TurrisThink <- function() {
-			//redefine here to avoid reaching out of scope
 			if (turris_cooldown < Time())
 			{
 				player.Regenerate(true)
@@ -393,7 +395,6 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		local scope = player.GetScriptScope()
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
-		// printl("attr : " + player.GetCustomAttribute("hidden maxhealth non buffed", 0))
 
 		EntFireByHandle(player, "RunScriptCode", format(@"
 
@@ -405,6 +406,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			//this is for reducing falldmg
 			self.AddCustomAttribute(`dmg taken increased`, 1 / hp_ratio, -1)
 			self.AddCustomAttribute(`dmg from ranged reduced`, hp_ratio, -1)
+			self.AddCustomAttribute(`dmg from melee increased`, hp_ratio, -1)
 
 			self.Regenerate(true)
 
@@ -504,6 +506,8 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	Convars.SetValue("tf_weapon_criticals", 0)
 	Convars.SetValue("tf_fall_damage_disablespread", 1)
 
+	//requires a custom plugin to feed m_iszMvMPopfileName to SteamWorks_SetGameDescription
+	//might be able to do this through VPI?
 	local gamedesc = format("Potato MGE (%s)", clean_map_name[GetMapName()])
 	SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
 }

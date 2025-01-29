@@ -122,7 +122,7 @@ class MGE_Events
 
 				local valid_rulesets = ""
 				foreach (ruleset, _ in special_arenas)
-					valid_rulesets += format(", %s ", ruleset)
+					valid_rulesets += format(", %s", ruleset)
 
 				valid_rulesets = valid_rulesets.slice(1)
 				ClientPrint(player, HUD_PRINTTALK, format("\x07%sValid Rulesets:\x07%s %s", MGE_COLOR_MAIN, MGE_COLOR_SUBJECT, valid_rulesets))
@@ -299,16 +299,6 @@ class MGE_Events
 
 				local arena      = scope.arena_info.arena
 				local arena_name = scope.arena_info.name
-				//spawned into arena with waiting player, start countdown
-				// EntFireByHandle(player, "RunScriptCode", format(@"
-
-				// 	local scope 	 = self.GetScriptScope()
-				// 	local arena      = scope.arena_info.arena
-
-				// 	if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
-				// 		EntFireByHandle(self, `RunScriptCode`, `SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)`, COUNTDOWN_START_DELAY, null, null)
-
-				// ", arena_name), -1, null, null)
 
 				local _arena = Arenas[arena_name]
 
@@ -335,7 +325,8 @@ class MGE_Events
 						}
 					}
 
-				// SetSpecialArena(player, arena_name)
+
+					// SetSpecialArena(player, arena_name)
 				EntFireByHandle(player, "RunScriptCode", format("SetSpecialArena(self, `%s`)", arena_name), GENERIC_DELAY, null, null)
 
 				//spawn player
