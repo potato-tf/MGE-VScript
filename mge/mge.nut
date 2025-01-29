@@ -708,13 +708,15 @@ AddOutput(MGE_TIMER, "OnFinished", "!self", "CallScriptFunction", "MGE_DoChangel
 
 DispatchSpawn(MGE_TIMER)
 MGE_TIMER.AcceptInput("Resume", "", null, null)
+MGE_TIMER.AcceptInput("ShowInHUD", "1", null, null)
+// EntFireByHandle(MGE_TIMER, "ShowInHUD", "1", 1.0, null, null)
 
 MGE_TIMER.ValidateScriptScope()
 
 MGE_TIMER.GetScriptScope().counter <- MAP_RESTART_TIMER
 MGE_TIMER.GetScriptScope().TimerThink <- function()
 {
-	counter--
+	// counter--
 	if (counter)
 	{
 		if (!(counter % VPI_SERVERINFO_UPDATE_INTERVAL))
