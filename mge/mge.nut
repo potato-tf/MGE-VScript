@@ -713,10 +713,14 @@ MGE_TIMER.AcceptInput("ShowInHUD", "1", null, null)
 
 MGE_TIMER.ValidateScriptScope()
 
-MGE_TIMER.GetScriptScope().counter <- MAP_RESTART_TIMER
+// MGE_TIMER.GetScriptScope().counter <- MAP_RESTART_TIMER
+local time_remining_string = "m_flTimeRemaining"
+SetPropFloat(MGE_TIMER, time_remining_string, MAP_RESTART_TIMER)
 MGE_TIMER.GetScriptScope().TimerThink <- function()
 {
-	// counter--
+	local counter = GetPropFloat(MGE_TIMER, time_remaining_string)
+	counter--
+	SetPropFloat(MGE_TIMER, time_remaining_string, counter)
 	if (counter)
 	{
 		if (!(counter % VPI_SERVERINFO_UPDATE_INTERVAL))
