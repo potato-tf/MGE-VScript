@@ -166,7 +166,7 @@ async def VPI_MGE_PopulateLeaderboard(info, cursor):
 
 	return await cursor.fetchall()
 
-default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 2) - 1)
+default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 3))
 @WrapDB
 async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     kwargs = info["kwargs"]
@@ -175,7 +175,7 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     name = kwargs["name"]  # This should be properly escaped
 
     if network_id == "BOT": return
-    
+
     default_elo = kwargs.get("default_elo", 1000)
 
     if query_mode in ("read", 0):
@@ -193,7 +193,7 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
             result = await cursor.fetchall()
 
         return result
-        
+
     elif query_mode in ("write", 1):
         # Parameterized UPDATE
         set_clauses = []
@@ -201,13 +201,13 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
         for key, value in kwargs['stats'].items():
             set_clauses.append(f"{key} = %s")
             params.append(value)
-        
+
         params.append(network_id)  # Add WHERE clause param
         query = f"UPDATE mge_playerdata SET {', '.join(set_clauses)} WHERE steam_id = %s"
-        
+
         await cursor.execute(query, params)
         return await cursor.fetchall()
-
+    
 banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup.bat", "config.nut"]
 @WrapInterface
 async def VPI_MGE_AutoUpdate(info, test=False):
