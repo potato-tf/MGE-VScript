@@ -151,13 +151,13 @@ local callbacks   = {};
 local used_tokens = {};
 
 // Strip hostname of characters other than [a-z0-9_]
-local hostname = Convars.GetStr("hostname").tolower();
+local hostname = @() Convars.GetStr("hostname").tolower();
 try
 {
 	local str = "";
-	foreach (code in hostname)
+	foreach(code in hostname())
 	{
-		if (code < 33 && !endswith(hostname, "_"))
+		if (code < 33 && !endswith(hostname(), "_"))
 		{
 			str += "_";
 			continue;
@@ -170,7 +170,7 @@ try
 }
 catch (e) {}
 
-local INPUT_FILE = hostname + "_vpi_input.interface";
+local INPUT_FILE = hostname() + "_vpi_input.interface";
 
 local MAX_FILE_SIZE = 16000;
 local INT_MAX       = 2147483647;
