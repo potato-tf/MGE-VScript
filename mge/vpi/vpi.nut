@@ -170,7 +170,7 @@ try
 }
 catch (e) {}
 
-local INPUT_FILE = hostname() + "_vpi_input.interface";
+local INPUT_FILE = hostname + "_vpi_input.interface";
 
 local MAX_FILE_SIZE = 16000;
 local INT_MAX       = 2147483647;
