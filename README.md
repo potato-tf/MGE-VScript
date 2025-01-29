@@ -94,8 +94,10 @@ If not specified, the default values can be found in `cfg/config.nut`
 - `countdown_sound_volume` - the volume of the countdown sound
 - `round_start_sound` - the sound played when the round starts
 - `round_start_sound_volume` - the volume of the round start sound
+- `leaderboard_cam` - the camera position and angle for the leaderboard if leaderboard is enabled, same format as spawn positions.
+    - if this is not set and leaderboard is enabled, this will grab a random camera and spawn a new one facing the opposite direction.
 
-- **BBall:**
+**BBall:**
 - Index 9-13 in the plugin spawn config can be optionally replaced with the following keyvalues:
     - `bball_home` - the spawn point of the neutral home
     - `bball_home_red` - the spawn point of the red home
@@ -112,7 +114,7 @@ If not specified, the default values can be found in `cfg/config.nut`
 - `bball_particle_trail_red` - the particle effect applied to players on pickup for the red team
 - `bball_particle_trail_blue` - the particle effect applied to players on pickup for the blue team
 
-- **Koth:**
+**Koth:**
 
 - `koth_cap` - the spawn point of the capture point
     - If this is not specified, the last index in the map spawn config will be used as the capture point
@@ -122,15 +124,21 @@ If not specified, the default values can be found in `cfg/config.nut`
 - `koth_capture_point_max_height` - the maximum height of the capture point in hammer units, defaults to KOTH_CAPTURE_POINT_MAX_HEIGHT in `cfg/config.nut`
 - `koth_decay_rate` - the rate at which the capture point decays when not being capped in seconds, defaults to KOTH_DECAY_RATE in `cfg/config.nut`
 - `koth_decay_interval` - the interval at which the capture point decays in seconds, defaults to KOTH_DECAY_INTERVAL in `cfg/config.nut`
-- `koth_additive_decay` - the additive decay rate of the capture point, defaults to KOTH_ADDITIVE_DECAY in `cfg/config.nut`
+- `koth_additive_decay` - if set to "1", reverting enemy cap progress will stack with passive decay, defaults to KOTH_ADDITIVE_DECAY in `cfg/config.nut`
 - `koth_countdown_rate` - the rate at which the capture point counts down in seconds, defaults to KOTH_COUNTDOWN_RATE in `cfg/config.nut`
 - `koth_countdown_interval` - the interval at which the capture point counts down in seconds, defaults to KOTH_COUNTDOWN_INTERVAL in `cfg/config.nut`
 - `koth_partial_cap_rate` - the rate at which the capture point is capped in seconds, defaults to KOTH_PARTIAL_CAP_RATE in `cfg/config.nut`
 - `koth_partial_cap_interval` - the interval at which the capture point is capped in seconds, defaults to KOTH_PARTIAL_CAP_INTERVAL in `cfg/config.nut`
 
+**Endif:**midair_height_threshold
+- `endif_height_threshold` - the height threshold for airshots in hammer units, defaults to ENDIF_HEIGHT_THRESHOLD in `cfg/config.nut`
+
+**Midair:**
+- `midair_height_threshold` - the height threshold for midair, defaults to AIRSHOT_HEIGHT_THRESHOLD in `cfg/config.nut`
 
 ## New Arena Type: Allmeat
 - Allmeat is a mode that only registers damage if your shot deals `allmeat_damage_threshold`%+ of the weapon's max damage, intended for scattergun/shotgun training.
+
 - `allmeat_damage_threshold` - the minimum damage % compared to max theoretical damage, defaults to ALLMEAT_DAMAGE_THRESHOLD in `cfg/config.nut`
     - settings this to 1.0 will require 100% perfect shots, setting this to 0.0 will disable it, default is 0.85.
 - the ALLMEAT_MAX_DAMAGE table in `cfg/config.nut` contains the hardcoded max damage values for each weapon.  This table also doubles as a whitelist for which weapons are affected by allmeat.

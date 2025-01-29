@@ -194,11 +194,7 @@
 		}
 
 		//0 breaks our countdown system, default to 1
-		// _arena.cdtime         <- "cdtime" in _arena ? _arena.cdtime != "0" ? _arena.cdtime : 1 : DEFAULT_CDTIME
 		_arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
-		// _arena.classes        <- "classes" in _arena ? split(_arena.classes, " ", true) : []
-		// _arena.fraglimit      <- "fraglimit" in _arena ? _arena.fraglimit.tointeger() : DEFAULT_FRAGLIMIT
-		// _arena.SpawnIdx       <- 0
 
 		//do this instead of checking both of these everywhere
 		_arena.IsMGE          <- "mge" in _arena && _arena.mge == "1"
@@ -372,7 +368,7 @@
 	if (ENABLE_LEADERBOARD)
 	{
 		//MGE_LEADERBOARD_DATA
-		compilestring(FileToString("leaderboard.nut"))()
+		// compilestring(FileToString("leaderboard.nut"))()
 		::DoLeaderboardCam <- function()
 		{
 			//spawn our camera
@@ -398,7 +394,7 @@
 					leaderboard_cam_angles = QAngle(origin[3], origin[4], origin[5])
 
 				MGE_LeaderboardCam.SetOrigin(leaderboard_cam_pos)
-				MGE_LeaderboardCam.SetAbsAngles(leaderboard_cam_angles - QAngle(0, 180, 0))
+				MGE_LeaderboardCam.SetAbsAngles(leaderboard_cam_angles)
 				return
 			}
 
@@ -477,22 +473,14 @@
 					callback=function(response, error) {
 						if (typeof(response) != "array" || !response.len())
 						{
-							// MGE_ClientPrint(player, 3, "VPI_ReadError", "Could not populate leaderboard")
-							// MGE_ClientPrint(player, 2, "VPI_ReadError", "Could not populate leaderboard")
 							printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
 							return
 						}
 						foreach (i, r in response)
 						{
-							// foreach (j, _r in r)
-								// printl(j + " : " + _r)
 							local data = MGE_LEADERBOARD_DATA[stat]
 							data[i] = r
 						}
-						// MGE_LEADERBOARD_DATA <- data
-						// MGE_ClientPrint(player, 3, "VPI_ReadSuccess",  "Populated leaderboard")
-						// MGE_ClientPrint(player, 2, "VPI_ReadSuccess",  "Populated leaderboard")
-						// printf(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadSuccess"], data[0].tostring())
 					}
 				})
 
@@ -570,9 +558,9 @@
 		_arena.IsAllMeat      <- "allmeat" in _arena && _arena.allmeat == "1"
 
 		//new keyvalues
-		_arena.countdown_sound <- "countdown_sound" in _arena ? _arena.countdown_sound : COUNTDOWN_SOUND
-		_arena.countdown_sound_volume <- "countdown_sound_volume" in _arena ? _arena.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
-		_arena.round_start_sound <- "round_start_sound" in _arena ? _arena.round_start_sound : ROUND_START_SOUND
+		_arena.countdown_sound 		  	<- "countdown_sound" in _arena ? _arena.countdown_sound : COUNTDOWN_SOUND
+		_arena.countdown_sound_volume 	<- "countdown_sound_volume" in _arena ? _arena.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
+		_arena.round_start_sound 	  	<- "round_start_sound" in _arena ? _arena.round_start_sound : ROUND_START_SOUND
 		_arena.round_start_sound_volume <- "round_start_sound_volume" in _arena ? _arena.round_start_sound_volume : ROUND_START_SOUND_VOLUME
 		_arena.airshot_height_threshold <- "airshot_height_threshold" in _arena ? _arena.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 
@@ -583,7 +571,6 @@
 			foreach(k, _ in special_arenas)
 				_arena.RulesetVote[k] <- array(2, false)
 		}
-
 		if (_arena.IsUltiduo)
 		{
 			_arena.Ultiduo <- {
@@ -663,7 +650,6 @@
 			_arena.Koth.red_cap_time <- _arena.Koth.red_start_cap_time
 			_arena.Koth.blu_cap_time <- _arena.Koth.blu_start_cap_time
 		}
-
 		if (_arena.IsEndif)
 		{
 			_arena.Endif <- {
