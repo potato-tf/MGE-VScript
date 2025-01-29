@@ -708,16 +708,22 @@ AddOutput(MGE_TIMER, "OnFinished", "!self", "CallScriptFunction", "MGE_DoChangel
 
 DispatchSpawn(MGE_TIMER)
 MGE_TIMER.AcceptInput("Resume", "", null, null)
+MGE_TIMER.AcceptInput("ShowInHUD", "1", null, null)
+// EntFireByHandle(MGE_TIMER, "ShowInHUD", "1", 1.0, null, null)
 
 MGE_TIMER.ValidateScriptScope()
 
-MGE_TIMER.GetScriptScope().counter <- MAP_RESTART_TIMER
+// MGE_TIMER.GetScriptScope().counter <- MAP_RESTART_TIMER
+local time_remining_string = "m_flTimeRemaining"
+SetPropFloat(MGE_TIMER, time_remining_string, MAP_RESTART_TIMER)
 MGE_TIMER.GetScriptScope().TimerThink <- function()
 {
+	local counter = GetPropFloat(MGE_TIMER, time_remaining_string)
 	counter--
+	SetPropFloat(MGE_TIMER, time_remaining_string, counter)
 	if (counter)
 	{
-		if (!HLTV_TEST && !(counter % VPI_SERVERINFO_UPDATE_INTERVAL))
+		if (!(counter % VPI_SERVERINFO_UPDATE_INTERVAL))
 		{
 			LocalTime(local_time)
 			SERVER_DATA.update_time = local_time
@@ -744,15 +750,16 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 					func = "VPI_MGE_UpdateServerData",
 					kwargs = SERVER_DATA,
 					callback = function(response, error) {
-					if (error)
-					{
-						// printl(error)
-						return 1
+						if (error)
+						{
+							// printl(error)
+							return 1
+						}
+						if (SERVER_DATA.address == 0 && "address" in response)
+							SERVER_DATA.address = response.address
 					}
-					if (SERVER_DATA.address == 0 && "address" in response)
-						SERVER_DATA.address = response.address
-				}
-			})
+				})
+			}
 		}
 		// printl(counter)
 		// if (counter < 60 && !(counter % 5))

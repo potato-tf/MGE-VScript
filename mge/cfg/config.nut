@@ -7,7 +7,7 @@ const DEFAULT_LANGUAGE                        = "english"
  * if this cvar is not set it will simply switch to whatever map is listed next in your `mapcyclefile`              *
  * make sure you configure your mapcycle.txt correctly so your MGE server doesn't switch to cp_granary or something *
  ********************************************************************************************************************/
-const MAP_RESTART_TIMER                       = 7200 
+const MAP_RESTART_TIMER                       = 7200
 
 /***************************************************************************************************************
  *              setting this to true will send a retry command to every player and kill worldspawn             *
@@ -79,7 +79,7 @@ const MAX_CLEAR_SPAWN_RETRIES                = 10
 //announcer
 const ENABLE_ANNOUNCER                       = true //enable announcer quips (first blood airshots etc)
 const ANNOUNCER_VOLUME                       = 0.5 //volume of announcer quips
-const KILLSTREAK_ANNOUNCER_INTERVAL          = 5 //airshot announcer will play every KILLSTREAK_ANNOUNCER_INTERVAL number of kills
+const KILLSTREAK_ANNOUNCER_INTERVAL          = 5 //killstreak announcer will play every KILLSTREAK_ANNOUNCER_INTERVAL number of kills
 
 //round misc
 const DEFAULT_CDTIME                         = 3 //default countdown time

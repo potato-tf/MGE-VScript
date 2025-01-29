@@ -151,13 +151,13 @@ local callbacks   = {};
 local used_tokens = {};
 
 // Strip hostname of characters other than [a-z0-9_]
-local hostname = Convars.GetStr("hostname").tolower();
+local hostname = @() Convars.GetStr("hostname").tolower();
 try
 {
 	local str = "";
-	foreach (code in hostname)
+	foreach(code in hostname())
 	{
-		if (code < 33 && !endswith(hostname, "_"))
+		if (code < 33 && !endswith(hostname(), "_"))
 		{
 			str += "_";
 			continue;

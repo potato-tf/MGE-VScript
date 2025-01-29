@@ -505,7 +505,7 @@
 					{
 						if (!user_info)
 						{
-							think_override = 0.2
+							think_override = 1
 							user_info = ["NONE", -INT_MAX]
 						} else {
 							think_override = LEADERBOARD_UPDATE_INTERVAL

@@ -8,6 +8,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 ## Installation
 - Drop the `mapspawn.nut` file and `mge` folder in your `tf/scripts/vscripts` directory.  That's it
   - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
+- Alternatively, if you are not using any database integration, you can rename mapspawn.nut to something else and add `script_execute new_filename_here` to your server.cfg
 
 ## Don't pack this into your map
 - I generally don't recommend you do this, this will receive live regular updates like a sourcemod plugin, and will conflict with server configs
@@ -40,8 +41,6 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | Database tracking (SQLite) | ⚠️ |
 | Custom rulesets | ⚠️ |
 | Arbitrary team sizes | ❌ |
-| Custom spawn ordering | ❌ |
-| In-Game map configuration tool | ❌ |
 
 ⚠️KOTH works but the logic is super janky right now, partial cap time can go negative and you can just trade the point back and forth (doesn't contest/pause)
 
@@ -153,7 +152,7 @@ All chat commands can be prefixed with any of these characters: `/\.!?`
 | help/mgehelp | view the help menu
 | stats | view your stats breakdown
 | language | change your language, this will read your `cl_language` setting by default
-| handicap | set a handicap for yourself, example: `!handicap 100` will set your HP to 100
+| handicap | set a handicap for yourself, `!handicap 100` will set your HP to 100
 | top5 | NOT IMPLEMENTED
 | leaderboard | NOT IMPLEMENTED
 
@@ -175,20 +174,19 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 - No leaderboard support currently.
 
 ### Database
-- Database tracking uses [VScript-Python Interface](https://github.com/potato-tf/VPI) to send data from vscript to python through the filesystem.
+- Database tracking uses [VScript-Python Interface](https://github.com/Mince1844/VPI) to send data from vscript to python through the filesystem.
     - Open `tf/scripts/vscripts/mge/cfg/config.nut` and set `ELO_TRACKING_MODE` from 1 to 2
     - Open `tf/scripts/vscripts/mge/vpi/vpi.nut` and update line 13, change `return "";` to a random unique string.  Treat this like a password.
+    - Install MySQL (recommended) or SQLite and create a database
     - Install Python 3.10 or newer if you don't already have it
-    - Install MySQL (recommended) or SQLite
-    - Install the `aiomysql` module
-        - SQLite uses `aiosqlite`
-    - Add your database credentials to `tf/scripts/mge_python/vpi.py` (use env vars) and run this script constantly in the background, this is your database connection
+    - Install the `aiomysql` module, SQLite uses `aiosqlite`
+    - Add your database credentials to `tf/scripts/vscripts/mge/vpi/vpi.py` (use env vars) and run this script constantly in the background, this is your database connection
         - You should create a systemd service for this on linux, or whatever the windows equivalent is
     - Check server console for any VPI related errors when you join/leave the server.
     - This will automatically create the `mge_playerdata` table in your database
  
 ## GitHub Auto Updates
-- If configured in `cfg/constants.nut`, the python script that handles database connections will also periodically git clone this repo to a specified directory and shorten the map restart timer.  
+- If configured in `cfg/config.nut`, the python script that handles database connections will also periodically git clone this repo to a specified directory and shorten the map restart timer.
 
 ## NavMesh generation
 

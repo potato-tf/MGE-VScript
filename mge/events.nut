@@ -115,6 +115,19 @@ class MGE_Events
 
 			local arena_name = scope.arena_info.name
 			local ruleset_split = split(params.text, " ")
+
+			if (ruleset_split.len() == 1 || !(ruleset_split[1] in special_arenas))
+			{
+				MGE_ClientPrint(player, HUD_PRINTTALK, "InvalidRuleset", ruleset_split.len() == 1 ? "" : ruleset_split[1])
+
+				local valid_rulesets = ""
+				foreach (ruleset, _ in special_arenas)
+					valid_rulesets += format(", %s ", ruleset)
+
+				valid_rulesets = valid_rulesets.slice(1)
+				ClientPrint(player, HUD_PRINTTALK, format("\x07%sValid Rulesets:\x07%s %s", MGE_COLOR_MAIN, MGE_COLOR_SUBJECT, valid_rulesets))
+				return
+			}
 			local ruleset = ruleset_split[1]
 			local fraglimit = 2 in ruleset_split ? ruleset_split[2].tointeger() : arena.fraglimit / 2
 
@@ -442,6 +455,9 @@ class MGE_Events
 			ValidatePlayerClass(player, params["class"], true)
 
 			local scope = player.GetScriptScope()
+
+			if (player.IsFakeClient()) return
+
 			local arena = scope.arena_info.arena
 
 			if (arena.State != AS_FIGHT || arena.IsBBall || arena.IsKoth) return
@@ -642,7 +658,7 @@ class MGE_Events
 				params.damage = 0
 				return false
 			}
-			if (arena.IsAllMeat)
+			if ("IsAllMeat" in arena && arena.IsAllMeat)
 			{
 				local weapon = params.weapon
 				if (!weapon) return
@@ -680,6 +696,8 @@ class MGE_Events
 
 			}
 
+			if (victim.IsFakeClient() && !("IsEndif" in arena)) return
+
 			if (victim_scope && victim.IsPlayer() && attacker != victim && (arena.IsEndif || arena.IsMidair) && params.damage_type & DMG_BLAST && !(victim.GetFlags() & FL_ONGROUND))
 			{
 				local trace_dist = arena.IsEndif ? arena.Endif.height_threshold : arena.IsMidair ? arena.Midair.height_threshold : AIRSHOT_HEIGHT_THRESHOLD
@@ -704,10 +722,14 @@ class MGE_Events
 			local attacker = GetPlayerFromUserID(params.attacker)
 			local attacker_scope = attacker ? attacker.GetScriptScope() : {}
 
-			if (arena.State == AS_FIGHT && !arena.IsEndif && !arena.IsMidair)
+			if (!("State" in arena) && victim.IsFakeClient())
+			{
+				victim.ForceChangeTeam(TEAM_SPECTATOR, true)
+			}
+			if (!victim.IsFakeClient() && arena.State == AS_FIGHT && !arena.IsEndif && !arena.IsMidair)
 			{
 				"damage_taken" in victim_scope.stats ? victim_scope.stats.damage_taken += params.damageamount : victim_scope.stats.damage_taken <- params.damageamount
-				if (attacker)
+				if (attacker && !attacker.IsFakeClient())
 					"damage_dealt" in attacker_scope.stats ? attacker_scope.stats.damage_dealt += params.damageamount : attacker_scope.stats.damage_dealt <- params.damageamount
 			}
 
