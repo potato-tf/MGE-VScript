@@ -8,6 +8,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 ## Installation
 - Drop the `mapspawn.nut` file and `mge` folder in your `tf/scripts/vscripts` directory.  That's it
   - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
+- Alternatively, if you are not using any database integration, you can rename mapspawn.nut to something else and add `script_execute new_filename_here` to your server.cfg
 
 ## Don't pack this into your map
 - I generally don't recommend you do this, this will receive live regular updates like a sourcemod plugin, and will conflict with server configs
