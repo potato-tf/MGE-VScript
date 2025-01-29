@@ -40,8 +40,6 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | Database tracking (SQLite) | ⚠️ |
 | Custom rulesets | ⚠️ |
 | Arbitrary team sizes | ❌ |
-| Custom spawn ordering | ❌ |
-| In-Game map configuration tool | ❌ |
 
 ⚠️KOTH works but the logic is super janky right now, partial cap time can go negative and you can just trade the point back and forth (doesn't contest/pause)
 
