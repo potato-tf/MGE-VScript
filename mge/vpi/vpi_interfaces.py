@@ -172,38 +172,40 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     kwargs = info["kwargs"]
     query_mode = kwargs["query_mode"] 
     network_id = kwargs["network_id"]
-    
-    print("name" in kwargs)
-    name = kwargs["name"]
+    name = kwargs["name"]  # This should be properly escaped
 
     if network_id == "BOT": return
     
-    default_elo = kwargs["default_elo"] if "default_elo" in kwargs else 1000
+    default_elo = kwargs.get("default_elo", 1000)
 
-    if (query_mode == "read" or query_mode == 0):
-        
-        print(COLOR['CYAN'], f"Fetching player data for steam ID {network_id}", COLOR['ENDC'])
-        await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
+    if query_mode in ("read", 0):
+        # Use parameterized query
+        await cursor.execute("SELECT * FROM mge_playerdata WHERE steam_id = %s", (network_id,))
         result = await cursor.fetchall()
 
-        # If no record exists, create one with default values
         if not result:
-            print(COLOR['YELLOW'], f"No record exists for steam ID {network_id}, adding...", COLOR['ENDC'])
-            # await cursor.execute(f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES ({network_id}, {default_elo}, {default_zeroes})")
-            await cursor.execute(f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES ({network_id}, {default_elo}, {default_zeroes}, {name})")
-            await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
+            # Parameterized INSERT with proper value ordering
+            await cursor.execute(
+                f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES (%s, %s, {default_zeroes}, %s)",
+                (network_id, default_elo, name)
+            )
+            await cursor.execute("SELECT * FROM mge_playerdata WHERE steam_id = %s", (network_id,))
             result = await cursor.fetchall()
 
         return result
-    elif (query_mode == "write" or query_mode == 1):
-        # Build SET clause from stats dictionary
+        
+    elif query_mode in ("write", 1):
+        # Parameterized UPDATE
         set_clauses = []
+        params = []
         for key, value in kwargs['stats'].items():
-            set_clauses.append(f"{key} = {value}")
-        set_clause = ", ".join(set_clauses)
-
-        print(COLOR['CYAN'], f"Updating player data for steam ID {network_id} with stats: {set_clause}", COLOR['ENDC'])
-        await cursor.execute(f"UPDATE mge_playerdata SET {set_clause} WHERE steam_id = {network_id}")
+            set_clauses.append(f"{key} = %s")
+            params.append(value)
+        
+        params.append(network_id)  # Add WHERE clause param
+        query = f"UPDATE mge_playerdata SET {', '.join(set_clauses)} WHERE steam_id = %s"
+        
+        await cursor.execute(query, params)
         return await cursor.fetchall()
 
 banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup.bat", "config.nut"]
