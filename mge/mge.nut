@@ -715,8 +715,6 @@ MGE_TIMER.GetScriptScope().counter <- MAP_RESTART_TIMER
 MGE_TIMER.GetScriptScope().TimerThink <- function()
 {
 	counter--
-	printl(GetPropFloat(self, "m_flTimeRemaining") + " : " + GetPropBool(self, "m_bShowInHUD") + " : " + GetPropBool(self, "m_bAutoCountdown"))
-	SetPropFloat(self, "m_flTimeRemaining", counter)
 	if (counter)
 	{
 		if (!(counter % VPI_SERVERINFO_UPDATE_INTERVAL))
