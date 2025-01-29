@@ -762,12 +762,12 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 			}
 		}
 		// printl(counter)
-		// if (counter < 60 && !(counter % 5))
-		// if (!(counter % 5))
-		// {
-			// SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", counter)})
-			// return 1
-		// }
+		if (counter < 60 && !(counter % 5))
+		{
+			SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", counter)})
+			return 1
+		}
+
 		return 1
 	}
 
