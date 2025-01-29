@@ -1154,6 +1154,11 @@
 	if (winner.IsFakeClient() || loser.IsFakeClient() || !ELO_TRACKING_MODE || loser2.IsFakeClient() || winner2.IsFakeClient())
 		return
 
+	local arena = winner.GetScriptScope().arena_info.arena
+
+	if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
+		return
+
 	loser.stats.elo = loser.stats.elo.tointeger()
 	loser2.stats.elo = loser2.stats.elo.tointeger()
 	winner.stats.elo = winner.stats.elo.tointeger()
