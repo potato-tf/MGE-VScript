@@ -85,7 +85,7 @@ I am not an MGE main and there are probably plenty of minor parity issues to ham
 - BBall, Koth, and other "specialty" modes still supports reading hoop/koth point/ball spawn points/etc using the old method for backwards compatibility
 - The old system requires exactly 8 spawns on BBall and 6 on KOTH, with the other indexes being used for arena logic.
 - This isn't strictly necessary anymore, these arenas can now support any arbitrary number of spawn points (just make sure the number of spawns is divisible by 2)
-- If you'd like to modify spawn points for these arenas, see `constants.nut` and search for `BBALL_MAX_SPAWNS` to see how it works.
+- If you'd like to modify spawn points for these arenas, see `cfg/config.nut` and search for `BBALL_MAX_SPAWNS` to see how it works.
 
 ## New optional arena keyvalues:
 If not specified, the default values can be found in `cfg/config.nut`
@@ -130,7 +130,7 @@ If not specified, the default values can be found in `cfg/config.nut`
 - `koth_partial_cap_rate` - the rate at which the capture point is capped in seconds, defaults to KOTH_PARTIAL_CAP_RATE in `cfg/config.nut`
 - `koth_partial_cap_interval` - the interval at which the capture point is capped in seconds, defaults to KOTH_PARTIAL_CAP_INTERVAL in `cfg/config.nut`
 
-**Endif:**midair_height_threshold
+**Endif:**
 - `endif_height_threshold` - the height threshold for airshots in hammer units, defaults to ENDIF_HEIGHT_THRESHOLD in `cfg/config.nut`
 
 **Midair:**
