@@ -59,6 +59,11 @@
 		Language   = Convars.GetClientConvarValue("cl_language", player.entindex()),
 		arena_info = null,
 		queue      = null,
+		enable_announcer = true,
+		enable_hud 		 = true,
+		enable_countdown = true,
+		won_last_match 	 = false,
+		ball_ent 		 = null
 		stats      = {
 			elo = -INT_MAX
 			wins = -INT_MAX,
@@ -73,10 +78,6 @@
 			koth_points_capped = -INT_MAX,
 			name = Convars.GetClientConvarValue("name", player.entindex())
 		},
-		enable_announcer = true,
-		enable_countdown = true,
-		won_last_match = false,
-		ball_ent = null
 	}
 
 	foreach (k, v in toscope)
@@ -1440,7 +1441,7 @@
 			MGE_HUD.KeyValueFromString("message", hudstr)
 
 			foreach(_p in _players)
-				if (_p && _p.IsValid())
+				if (_p && _p.IsValid() && _p.GetScriptScope().enable_hud)
 					MGE_HUD.AcceptInput("Display", "", _p, _p)
 
 			if (arena.IsBBall)

@@ -252,12 +252,14 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 						if (owner_team == _team)
 						{
 							ent.KeyValueFromString("message", format("Cap Time: %.2f", arena.Koth[enemy_cap_amount]))
-							ent.AcceptInput("Display", "", p, p)
+							if (p.GetScriptScope().enable_hud)
+								ent.AcceptInput("Display", "", p, p)
 							continue
 						}
 						//we don't own it, show partial cap progress
 						ent.KeyValueFromString("message", format("Partial Cap: %.2f", arena.Koth[partial_cap_amount]))
-						ent.AcceptInput("Display", "", p, p)
+						if (p.GetScriptScope().enable_hud)
+							ent.AcceptInput("Display", "", p, p)
 
 					}
 					partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
@@ -327,6 +329,8 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 				//hud stuff
 				foreach(p, _ in arena.CurrentPlayers)
 				{
+					if (!p.GetScriptScope().enable_hud) continue
+
 					KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
 					KOTH_HUD_RED.AcceptInput("Display", "", p, p)
 					KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
