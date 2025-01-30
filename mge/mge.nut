@@ -714,6 +714,8 @@ DispatchSpawn(MGE_TIMER)
 MGE_TIMER.AcceptInput("Resume", "", null, null)
 
 //this crashes windows servers
+//mysteriously isolating this entire team_round_timer spawn sequence to another file doesn't crash
+//maybe EFL_KILLME being added briefly in teamplay_round_start?
 // MGE_TIMER.AcceptInput("ShowInHUD", "1", null, null)
 
 EntFireByHandle(MGE_TIMER, "ShowInHUD", "1", -1, null, null)
