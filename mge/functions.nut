@@ -1638,6 +1638,7 @@
 	}
 	else if (ELO_TRACKING_MODE > 1 && "VPI" in ROOT)
 	{
+		printl("Getting player data...")
 		VPI.AsyncCall({
 			func="VPI_MGE_ReadWritePlayerStats",
 			kwargs= {

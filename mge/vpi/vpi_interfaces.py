@@ -178,9 +178,10 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
 
     default_elo = kwargs.get("default_elo", 1000)
 
-    if query_mode in ("read", 0):
-        # Use parameterized query
-        await cursor.execute("SELECT * FROM mge_playerdata WHERE steam_id = %s", (network_id,))
+    if (query_mode == "read" or query_mode == 0):
+        
+        print(COLOR['CYAN'], f"Fetching player data for steam ID {network_id}", COLOR['ENDC'])
+        await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
         result = await cursor.fetchall()
 
         if not result:
@@ -194,7 +195,7 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
 
         return result
 
-    elif query_mode in ("write", 1):
+    elif query_mode == "write" or query_mode == 1:
         # Parameterized UPDATE
         set_clauses = []
         params = []
