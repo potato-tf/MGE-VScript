@@ -713,7 +713,7 @@ AddOutput(MGE_TIMER, "OnFinished", "!self", "CallScriptFunction", "MGE_DoChangel
 DispatchSpawn(MGE_TIMER)
 MGE_TIMER.AcceptInput("Resume", "", null, null)
 
-//this crashes windows servers?
+//this crashes windows servers
 // MGE_TIMER.AcceptInput("ShowInHUD", "1", null, null)
 
 EntFireByHandle(MGE_TIMER, "ShowInHUD", "1", -1, null, null)
