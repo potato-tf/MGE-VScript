@@ -454,7 +454,11 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	{
 		return
 	}
+	"4player" : function() {
+		return
+	}
 }
+
 
 ::MGE_Init <- function() {
 	local clean_map_name = {

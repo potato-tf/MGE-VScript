@@ -127,7 +127,7 @@ def WrapInterface(func):
 
 	return inner
 
-player_data_columns = "steam_id, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped, name"
+player_data_columns = "steam_id, name, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped"
 @WrapDB
 async def VPI_MGE_DBInit(info, cursor):
 	print(COLOR['HEADER'], "Initializing MGE database...", COLOR['ENDC'])
@@ -139,6 +139,7 @@ async def VPI_MGE_DBInit(info, cursor):
 		print(COLOR['YELLOW'], "No mge_playerdata table found, creating...", COLOR['ENDC'])
 		await cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
 			steam_id INTEGER PRIMARY KEY, 
+			name VARCHAR(255),
 			elo BIGINT, 
 			wins BIGINT, 
 			losses BIGINT, 
@@ -149,8 +150,7 @@ async def VPI_MGE_DBInit(info, cursor):
 			airshots BIGINT, 
 			market_gardens BIGINT, 
 			hoops_scored BIGINT, 
-			koth_points_capped BIGINT,
-            name VARCHAR(255))"""
+			koth_points_capped BIGINT)"""
 		)
 	finally:
 		print(COLOR['GREEN'], "MGE database initialized, check server console for '[VPI]: Database initialized successfully'", COLOR['ENDC'])
@@ -166,7 +166,7 @@ async def VPI_MGE_PopulateLeaderboard(info, cursor):
 
 	return await cursor.fetchall()
 
-default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 3))
+default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 2))
 @WrapDB
 async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     kwargs = info["kwargs"]
