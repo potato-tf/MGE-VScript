@@ -13,11 +13,16 @@ local function GetSecret() {
 	return "";
 }
 
+
+if (ELO_TRACKING_MODE < 2 && !GAMEMODE_AUTOUPDATE_REPO && !UPDATE_SERVER_DATA)
+	return
+
 // Note: This only works to ensure security if vpi.nut is executed within mapspawn.nut
 // Do not set this to false unless you handle wrapping the file functions elsewhere
 local PROTECTED_FILE_FUNCTIONS = true;
 
 // Stores which source files are allowed to use what interface functions, if the table is empty whitelist is disabled
+
 // You may match against interface function names with regexp, to do so, start and end the string with forward slash /
 // and create any pattern defined by squirrel: http://squirrel-lang.org/squirreldoc/stdlib/stdstringlib.html#the-regexp-class
 // { "source.nut" : [ "VPI_InterfaceFunctionName", @"/VPI_DB_User.*/" ] }
