@@ -41,6 +41,8 @@ local PROTECTED_FILE_FUNCTIONS = true;
 // { "source.nut" : [ "VPI_InterfaceFunctionName", @"/VPI_DB_User.*/" ] }
 local SOURCE_WHITELIST = {
 	"vpi.nut": null, // Null or empty list denotes uninhibited access
+	"functions.nut": ["VPI_MGE_ReadWritePlayerStats", "VPI_MGE_PopulateLeaderboard"],
+	"mge.nut": ["VPI_MGE_DBInit", "VPI_MGE_AutoUpdate", "VPI_MGE_UpdateServerData"],
 };
 
 // How often we normally write to file (in ticks)
@@ -1149,6 +1151,7 @@ local function GetCallFromArg(src, arg)
 	function AsyncCall(table_or_call, __challenge=false)
 	{
 		local callinfo = getstackinfos(2);
+
 		if (__challenge)
 		{
 			if (callinfo.src == "vpi.nut")
@@ -1161,7 +1164,7 @@ local function GetCallFromArg(src, arg)
 
 		if (!ValidateCaller(callinfo.src, call.func))
 		{
-			PrintMessage(null, format("VPI.AsyncCall interface call for func '%s' from script '%s' failed validation", func, callinfo.src), MSG_DEBUG);
+			PrintMessage(null, format("VPI.AsyncCall interface call for func '%s' from script '%s' failed validation", call.func, callinfo.src), MSG_DEBUG);
 			return;
 		}
 
