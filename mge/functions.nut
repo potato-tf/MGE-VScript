@@ -1574,6 +1574,8 @@
 
 		str = localized_string in MGE_Localization[language] ? MGE_Localization[language][localized_string] : localized_string
 
+		printl(str)
+
 		// if (args.len() > 3)
 		// {
 		// 	str = format("format(\"%s\"",  str)
@@ -1660,17 +1662,17 @@
 				local r = response[0]
 				scope.stats <- {
 					elo = r[1],
-					wins = r[2],
-					losses = r[3],
-					kills = r[4],
-					deaths = r[5],
-					damage_taken = r[6],
-					damage_dealt = r[7],
-					airshots = r[8],
-					market_gardens = r[9],
-					hoops_scored = r[10],
-					koth_points_capped = r[11],
-					name = r[12]
+					name = r[2],
+					wins = r[3],
+					losses = r[4],
+					kills = r[5],
+					deaths = r[6],
+					damage_taken = r[7],
+					damage_dealt = r[8],
+					airshots = r[9],
+					market_gardens = r[10],
+					hoops_scored = r[11],
+					koth_points_capped = r[12],
 				}
 				printf(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadSuccess"], GetPropString(player, "m_szNetworkIDString"))
 			}
