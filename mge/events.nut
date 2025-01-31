@@ -137,8 +137,15 @@ class MGE_Events
 			local ruleset = ruleset_split[1]
 			local fraglimit = 2 in ruleset_split ? ruleset_split[2].tointeger() : arena.fraglimit / 2
 
+			if (!("RulesetVote" in arena))
+				arena.RulesetVote <- {}
+
+			if (!(ruleset in arena.RulesetVote))
+				arena.RulesetVote[ruleset] <- array(2, false)
+
 			local votes = arena.RulesetVote[ruleset]
 			votes[player.GetTeam() - 2] = true
+
 
 			if (!votes[0] || !votes[1])
 			{
@@ -258,9 +265,26 @@ class MGE_Events
 
 			if (split_text[0][0] in valid_chars && command_only in chat_commands)
 				chat_commands[command_only](params)
+
+			//allow spectators to talk
+
+			local player = GetPlayerFromUserID(params.userid)
+			if (player.GetTeam() == TEAM_SPECTATOR)
+			{
+				local scope = player.GetScriptScope()
+				foreach(p, userid in ALL_PLAYERS)
+				{
+					if (p != player && p.GetTeam() != TEAM_SPECTATOR)
+					{
+						ClientPrint(p, HUD_PRINTTALK, format("\x07CCCCCC%s\x07 : %s", scope.Name, params.text))
+					}
+				}
+
+			}
 		}
 
 		function OnGameEvent_player_spawn(params)
+
 		{
 			PreserveEnts()
 
