@@ -30,10 +30,34 @@
 ::PreserveEnts <- function(preserve = true)
 {
 	for (local ent; ent = FindByName(ent, "__mge*");)
-		preserve ? ent.AddEFlags(EFL_KILLME) : ent.RemoveEFlags(EFL_KILLME)
+	{
+		local scope = ent.GetScriptScope()
+		if (!scope)
+		{
+			ent.ValidateScriptScope()
+			scope = ent.GetScriptScope()
+		}
+		local classname = ent.GetClassname()
+		if (preserve)
+		{
+			if (!("original_classname" in scope))
+				scope.original_classname <- ""
+			
+			if (classname != "info_target")
+				scope.original_classname = classname
+
+			ent.KeyValueFromString("classname", "info_target") //set this to a random preserved entity classname
+
+		} else if ("original_classname" in scope)
+			ent.KeyValueFromString("classname", scope.original_classname)
+
+
+		// printl(ent.GetClassname() +  " : " + scope.original_classname)
+	}
 }
 
 ::InitPlayerScope <- function(player)
+
 {
 	player.ValidateScriptScope()
 	local scope = player.GetScriptScope()
@@ -813,18 +837,12 @@
 		ClientPrint(p, 3, p == player ? "You have the ball!" : format("%s has the ball!", player.GetScriptScope().Name))
 	}
 
-	printl(ball_ent)
-
 	EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
 	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
 	EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", GENERIC_DELAY, null, null)
 
-	printl(ball_ent)
-
 	DispatchParticleEffect(player.GetTeam() == TF_TEAM_RED ? BBALL_PARTICLE_PICKUP_RED : BBALL_PARTICLE_PICKUP_BLUE, player.GetOrigin(), Vector(0, 90, 0))
 	EntFire(format("__mge_bball_trail_%d", player.GetTeam()), "StartTouch", "!activator", -1, player)
-
-	printl(ball_ent)
 }
 
 ::AddBot <- function(arena_name)
@@ -1574,7 +1592,7 @@
 
 		str = localized_string in MGE_Localization[language] ? MGE_Localization[language][localized_string] : localized_string
 
-		printl(str)
+		// printl(str)
 
 		// if (args.len() > 3)
 		// {
@@ -1654,7 +1672,7 @@
 
 				if (typeof(response) != "array" || !response.len())
 				{
-					printl(response)
+					// printl(response)
 					printf(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], GetPropString(player, "m_szNetworkIDString"))
 					return
 				}
@@ -2210,7 +2228,7 @@
 					foreach(p, _ in arena.CurrentPlayers)
 					{
 						local glow_dummy = ShowModelToPlayer(p, [BBALL_HOOP_MODEL, 0, __hoop.GetTeam()], __hoop.GetOrigin(), __hoop.GetAbsAngles(), 9999.0)
-						printl(glow_dummy)
+						// printl(glow_dummy)
 						glow_dummy.AcceptInput("SetParent", "!activator", __hoop, __hoop)
 						SetPropBool(glow_dummy, "m_bGlowEnabled", true)
 					}
