@@ -428,7 +428,7 @@ class MGE_Events
 
 			if (arena.State == AS_FIGHT)
 			{
-				attacker && "kills" in attacker_scope.stats ? attacker_scope.stats.kills++ : attacker_scope.stats.kills <- 1
+				attacker && attacker != victim && "kills" in attacker_scope.stats ? attacker_scope.stats.kills++ : attacker_scope.stats.kills <- 1
 				victim && "deaths" in victim_scope.stats ? victim_scope.stats.deaths++ : victim_scope.stats.deaths <- 1
 			}
 
@@ -674,7 +674,7 @@ class MGE_Events
 			if (!victim.IsFakeClient() && arena.State == AS_FIGHT && !arena.IsEndif && !arena.IsMidair)
 			{
 				"damage_taken" in victim_scope.stats ? victim_scope.stats.damage_taken += params.damageamount : victim_scope.stats.damage_taken <- params.damageamount
-				if (attacker && !attacker.IsFakeClient())
+				if (attacker && attacker != victim && !attacker.IsFakeClient())
 					"damage_dealt" in attacker_scope.stats ? attacker_scope.stats.damage_dealt += params.damageamount : attacker_scope.stats.damage_dealt <- params.damageamount
 			}
 
