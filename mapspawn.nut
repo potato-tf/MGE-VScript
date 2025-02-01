@@ -16,7 +16,7 @@ else
 	Include("cfg/config")
 	Include("cfg/localization")
 
-	if (ELO_TRACKING_MODE > 1 || ENABLE_LEADERBOARD || UPDATE_SERVER_DATA)
+	if (ELO_TRACKING_MODE > 1 || ENABLE_LEADERBOARD || UPDATE_SERVER_DATA || GAMEMODE_AUTOUPDATE_REPO)
 		Include("vpi/vpi")
 
 	Include("functions")
