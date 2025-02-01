@@ -214,20 +214,21 @@
 			_arena.IsEndif 		   <- false
 			_arena.IsMidair 	   <- false
 			_arena.IsAllMeat 	   <- false
+			_arena.IsUltiduo 	   <- false
 		}
 
 		//0 breaks our countdown system, default to 1
 		_arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
 
 		//do this instead of checking both of these everywhere
-		_arena.IsMGE          <- "mge" in _arena && _arena.mge == "1"
+		_arena.IsMGE          <- "mge" in _arena 	 && _arena.mge == "1"
 		_arena.IsUltiduo      <- "ultiduo" in _arena && _arena.ultiduo == "1"
-		_arena.IsKoth         <- "koth" in _arena && _arena.koth == "1"
-		_arena.IsBBall        <- "bball" in _arena && _arena.bball == "1"
+		_arena.IsKoth         <- "koth" in _arena 	 && _arena.koth == "1"
+		_arena.IsBBall        <- "bball" in _arena 	 && _arena.bball == "1"
 		_arena.IsAmmomod      <- "ammomod" in _arena && _arena.ammomod == "1"
-		_arena.IsTurris       <- "turris" in _arena && _arena.turris == "1"
-		_arena.IsEndif        <- "endif" in _arena && _arena.endif == "1"
-		_arena.IsMidair       <- "midair" in _arena && _arena.midair == "1"
+		_arena.IsTurris       <- "turris" in _arena  && _arena.turris == "1"
+		_arena.IsEndif        <- "endif" in _arena 	 && _arena.endif == "1"
+		_arena.IsMidair       <- "midair" in _arena  && _arena.midair == "1"
 		_arena.IsAllMeat      <- "allmeat" in _arena && _arena.allmeat == "1"
 
 		//new keyvalues
@@ -248,20 +249,21 @@
 			//alternative keyvalues for bball logic
 			//if you intend on adding > 8 spawns, you will need to replace your current "9" - "13" entries with these
 			local bball_points = {
-				neutral_home = "bball_home" in _arena ? _arena.bball_home : _arena["9"],
-				red_score_home = "bball_home_red" in _arena ? _arena.bball_home_red : _arena["10"],
-				blue_score_home = "bball_home_blue" in _arena ? _arena.bball_home_blue : _arena["11"],
-				red_hoop = "bball_hoop_red" in _arena ? _arena.bball_hoop_red : _arena["12"],
-				blue_hoop = "bball_hoop_blue" in _arena ? _arena.bball_hoop_blue : _arena["13"],
-				hoop_size = "bball_hoop_size" in _arena ? _arena.bball_hoop_size : BBALL_HOOP_SIZE,
-				pickup_model = "bball_pickup_model" in _arena ? _arena.bball_pickup_model : BBALL_BALL_MODEL,
-				particle_pickup_red = "bball_particle_pickup_red" in _arena ? _arena.bball_particle_pickup_red : BBALL_PARTICLE_PICKUP_RED,
-				particle_pickup_blue = "bball_particle_pickup_blue" in _arena ? _arena.bball_particle_pickup_blue : BBALL_PARTICLE_PICKUP_BLUE,
+				
+				neutral_home    		= "bball_home" in _arena ? _arena.bball_home : _arena["9"],
+				red_score_home  		= "bball_home_red" in _arena ? _arena.bball_home_red : _arena["10"],
+				blue_score_home 		= "bball_home_blue" in _arena ? _arena.bball_home_blue : _arena["11"],
+				red_hoop 				= "bball_hoop_red" in _arena ? _arena.bball_hoop_red : _arena["12"],
+				blue_hoop 				= "bball_hoop_blue" in _arena ? _arena.bball_hoop_blue : _arena["13"],
+				hoop_size				= "bball_hoop_size" in _arena ? _arena.bball_hoop_size : BBALL_HOOP_SIZE,
+				pickup_model 			= "bball_pickup_model" in _arena ? _arena.bball_pickup_model : BBALL_BALL_MODEL,
+				particle_pickup_red 	= "bball_particle_pickup_red" in _arena ? _arena.bball_particle_pickup_red : BBALL_PARTICLE_PICKUP_RED,
+				particle_pickup_blue 	= "bball_particle_pickup_blue" in _arena ? _arena.bball_particle_pickup_blue : BBALL_PARTICLE_PICKUP_BLUE,
 				particle_pickup_generic = "bball_particle_pickup_generic" in _arena ? _arena.bball_particle_pickup_generic : BBALL_PARTICLE_PICKUP_GENERIC,
-				particle_trail_red = "bball_particle_trail_red" in _arena ? _arena.bball_particle_trail_red : BBALL_PARTICLE_TRAIL_RED,
-				particle_trail_blue = "bball_particle_trail_blue" in _arena ? _arena.bball_particle_trail_blue : BBALL_PARTICLE_TRAIL_BLUE,
-				freeze_ball = "freeze_ball" in _arena ? _arena.freeze_ball : false,
-				last_score_team = -1
+				particle_trail_red 		= "bball_particle_trail_red" in _arena ? _arena.bball_particle_trail_red : BBALL_PARTICLE_TRAIL_RED,
+				particle_trail_blue		= "bball_particle_trail_blue" in _arena ? _arena.bball_particle_trail_blue : BBALL_PARTICLE_TRAIL_BLUE,
+				freeze_ball 			= "freeze_ball" in _arena ? _arena.freeze_ball : false,
+				last_score_team 		= -1
 			}
 
 			foreach (k, v in bball_points)

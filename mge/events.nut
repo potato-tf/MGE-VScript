@@ -187,7 +187,7 @@ class MGE_Events
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_MGEMod")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Add")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Remove")
-			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_First")
+			// MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_First")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Top5")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Rank")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Hud")
