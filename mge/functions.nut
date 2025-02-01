@@ -201,9 +201,7 @@
 					_arena.BBall.red_hoop,
 					_arena.BBall.blue_hoop,
 					_arena.BBall.neutral_home,
-				]
-				.apply(@(point) ToStrictNum(point, true))
-				.apply(@(point) Vector(point[0], point[1], point[2]))
+				].apply(@(point) typeof point == "string" ? ToStrictNum(point, true) : point).apply(@(point) typeof point == "array" ? Vector(point[0], point[1], point[2]) : point)
 
 				foreach (point in points)
 					for (local prop; prop = FindByClassnameWithin(prop, "obj_teleporter", point, 128);)
@@ -1294,9 +1292,10 @@
 		if (team == TF_TEAM_RED)
 			end /= 2
 
-		idx = (idx + 1) % (end - 1)
+		idx = (idx + 1) % (end - (arena.IsBBall ? 2 : 1))
 		if (team == TF_TEAM_BLUE)
 			idx += (arena.SpawnPoints.len() / 2)
+
 
 		// printl(idx + " : " + end + " : " + arena.SpawnPoints.len())
 		// if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
