@@ -1,41 +1,13 @@
-import asyncio
 import functools
 import re
-import git
-import os
-import tempfile
-import shutil
-import datetime
-import sys
-import requests
-import logging
 
-os.system('')  # enables ansi escape characters in terminal
+import vpi_config
 
-# Setup logging at the top of the file
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    stream=sys.stdout
-)
-logger = logging.getLogger('VPI_MGE')
+logger = vpi_config.LOGGER
 
-COLOR = {
-    'CYAN': '\033[96m',
-    'HEADER': '\033[95m',
-    'GREEN2': '\033[32m',
-    'YELLOW': '\033[93m',
-    'GREEN': '\033[92m',
-    'RED': '\033[91m',
-    "ENDC": '\033[0m',
-}
 # Note:
 # All interface functions should be decorated with either WrapDB or WrapInterface
 # Otherwise any errors that occur will not be handled gracefully and brick the entire program
-
-ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN", "")
-WEBAPI_KEY = os.environ.get("WEBAPI_KEY", "")
-POTATO_API_KEY = os.environ.get("POTATO_API_KEY", "")
 
 # Remove problematic characters from strings (return copy)
 def SanitizeString(string):
@@ -83,51 +55,60 @@ def ValidateUserTable(info, table):
 # Wrapper for DB interface functions
 def WrapDB(func):
 	@functools.wraps(func)
-	async def inner(info, pool):
-		conn   = await pool.acquire()
-		cursor = await conn.cursor()
+	async def inner(info):
+		try:
+			conn   = await vpi_config._GetDBConnection()
+			cursor = await conn.cursor()
+		except Exception as e:
+			LOGGER.error("Failed to establish connection to database in WrapDB due to error:", exc_info=True)
+			error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
+			return error
 
 		result = None
 		error  = None
 
 		try:
 			result = await func(info, cursor)
+			LOGGER.debug("Executing interface function with info: %s", info)
 		except Exception as e:
-			# Client expects error responses to start with [VPI ERROR]
+			LOGGER.error("Failed to execute interface function due to error:", exc_info=True)
 			error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
-			raise Exception(error)
 		finally:
 			await cursor.close()
 			if (error is None):
 				await conn.commit()
-			pool.release(conn)
+
+			if (vpi_config.DB_TYPE == "mysql"):
+				vpi_config.DB.release(conn)
 
 			if (error is None): return result
 			else:				return error
+
+	# So we can check elsewhere if a specified function was a result of this wrapper
+	inner.__WrapDB__ = True
 
 	return inner
 
 # Wrapper for generic interface functions
 def WrapInterface(func):
 	@functools.wraps(func)
-	async def inner(*args, **kwargs):
+	async def inner(info):
 		result = None
 		error  = None
 
 		try:
-			result = await func(*args, **kwargs)
+			result = await func(info)
+			LOGGER.debug("Executing interface function with info: %s", info)
 		except Exception as e:
-			# Client expects this to start with [VPI ERROR]
+			LOGGER.error("Failed to execute interface function due to error:", exc_info=True)
 			error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
-			print(error)
-			print(e)
 		finally:
 			if (error is None): return result
 			else:				return error
 
 	return inner
 
-player_data_columns = "steam_id, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped, name"
+player_data_columns = "steam_id, name, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped"
 @WrapDB
 async def VPI_MGE_DBInit(info, cursor):
 	print(COLOR['HEADER'], "Initializing MGE database...", COLOR['ENDC'])
@@ -139,6 +120,7 @@ async def VPI_MGE_DBInit(info, cursor):
 		print(COLOR['YELLOW'], "No mge_playerdata table found, creating...", COLOR['ENDC'])
 		await cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
 			steam_id INTEGER PRIMARY KEY, 
+			name VARCHAR(255),
 			elo BIGINT, 
 			wins BIGINT, 
 			losses BIGINT, 
@@ -149,8 +131,7 @@ async def VPI_MGE_DBInit(info, cursor):
 			airshots BIGINT, 
 			market_gardens BIGINT, 
 			hoops_scored BIGINT, 
-			koth_points_capped BIGINT,
-            name VARCHAR(255))"""
+			koth_points_capped BIGINT)"""
 		)
 	finally:
 		print(COLOR['GREEN'], "MGE database initialized, check server console for '[VPI]: Database initialized successfully'", COLOR['ENDC'])
@@ -166,7 +147,7 @@ async def VPI_MGE_PopulateLeaderboard(info, cursor):
 
 	return await cursor.fetchall()
 
-default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 3))
+default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 2))
 @WrapDB
 async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     kwargs = info["kwargs"]
@@ -387,5 +368,3 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
         kwargs["campaign_name"]
     ))
     return server
-
-

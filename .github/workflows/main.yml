@@ -47,8 +47,9 @@ jobs:
           {
             rsync -a \
             --exclude='mge/vpi/vpi_interfaces.py' \
-            --exclude='mge/vpi/vpi_watch.bat' \
+            --exclude='mge/vpi/vpi_config.py' \
             --exclude='mge/vpi/vpi.nut' \
+            --exclude='mge/vpi/vpi_watch.bat' \
             --exclude='mge/cfg/config.nut' \
             --exclude='requirements.txt' \
             --exclude='mge_windows_setup.bat' \
