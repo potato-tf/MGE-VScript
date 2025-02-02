@@ -363,15 +363,20 @@
 
 					local spawn = [origin, angles, TEAM_UNASSIGNED]
 
-					if (_arena.MaxPlayers > 2)
-						spawn[2] = spawn_idx < 4 ? TF_TEAM_RED : TF_TEAM_BLUE
-
 					_arena.SpawnPoints.append(spawn)
 				}
 				catch(e)
 					printf("[VSCRIPT MGE] Warning: Data parsing for arena failed: %s\nkey: %s, val: %s\n", e.tostring(), k, v.tostring())
 			}
 		}
+
+		local spawnpoints_len = _arena.SpawnPoints.len()
+		foreach(i, spawn in _arena.SpawnPoints)
+		{
+			spawn[2] = i < (spawnpoints_len - 1) / 2 ? TF_TEAM_RED : TF_TEAM_BLUE
+			printl(spawn[2])
+		}
+
 		local idx = (_arena.SpawnPoints.len() + 1).tostring()
 		if (_arena.IsKoth && idx in _arena)
 		{
@@ -581,6 +586,8 @@
 		_arena.IsEndif        <- "endif" in _arena && _arena.endif == "1"
 		_arena.IsMidair       <- "midair" in _arena && _arena.midair == "1"
 		_arena.IsAllMeat      <- "allmeat" in _arena && _arena.allmeat == "1"
+		
+		_arena.IsCustomRuleset <- false
 
 		//new keyvalues
 		_arena.countdown_sound 		  	<- "countdown_sound" in _arena ? _arena.countdown_sound : COUNTDOWN_SOUND
@@ -737,9 +744,6 @@
 
 					local spawn = [origin, angles, TEAM_UNASSIGNED]
 
-					if (_arena.MaxPlayers > 2)
-						spawn[2] = spawn_idx < 4 ? TF_TEAM_RED : TF_TEAM_BLUE
-
 					_arena.SpawnPoints.append(spawn)
 				}
 				catch(e)
@@ -747,6 +751,9 @@
 			}
 		}
 
+		local spawnpoints_len = _arena.SpawnPoints.len()
+		foreach(i, spawn in _arena.SpawnPoints)
+			spawn[2] = i < (spawnpoints_len) / 2 ? TF_TEAM_RED : TF_TEAM_BLUE
 		// printl(arena_name + " : " + _arena.SpawnPoints.len().tostring())
 		//always grab the last index for KOTH cap point
 		local idx = (_arena.SpawnPoints.len() + 1).tostring()
@@ -945,7 +952,7 @@
 
 	RemovePlayer(player, false)
 
-	if (!("IsCustomRuleset" in arena) || !arena.IsCustomRuleset)
+	if (!arena.IsCustomRuleset)
 		MGE_ClientPrint(player, HUD_PRINTTALK, "ChoseArena", arena_name)
 
 	// Enough room, add to arena
@@ -955,7 +962,7 @@
 		local name = scope.Name
 		local elo = scope.stats.elo
 		// printl(arena_name)
-		if (!("IsCustomRuleset" in arena) || !arena.IsCustomRuleset)
+		if (!arena.IsCustomRuleset)
 		{
 			local str = ELO_TRACKING_MODE ?
 				format(GetLocalizedString("JoinsArena", player), name, elo.tostring(), arena_name) :
@@ -1059,8 +1066,8 @@
 		if (player in arena.CurrentPlayers)
 			delete arena.CurrentPlayers[player]
 
-		// printl("IsCustomRuleset" in arena && arena.IsCustomRuleset && !arena.IsMGE)
-		if ("IsCustomRuleset" in arena && arena.IsCustomRuleset && !arena.IsMGE && (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT))
+		// printl(arena.IsCustomRuleset && !arena.IsMGE)
+		if (arena.IsCustomRuleset && !arena.IsMGE && (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT))
 		{
 			LoadSpawnPoints(arena_name, true)
 		}
@@ -1115,7 +1122,7 @@
 
 	local arena = winner.GetScriptScope().arena_info.arena
 
-	if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
+	if (arena.IsCustomRuleset)
 		return
 
 
@@ -1161,7 +1168,7 @@
 
 	local arena = winner.GetScriptScope().arena_info.arena
 
-	if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
+	if (arena.IsCustomRuleset)
 		return
 
 	loser.stats.elo = loser.stats.elo.tointeger()
@@ -1279,29 +1286,24 @@
 	//most non-MGE configs have fixed spawn rotations per team
 	if (!arena.IsMGE && !arena.IsEndif)
 	{
-		local end = -1
-		local idx = arena.SpawnIdx
-		if (arena.IsKoth)
-			end = KOTH_MAX_SPAWNS
-		else if (arena.IsBBall)
-			end = BBALL_MAX_SPAWNS
-		else if (arena.IsUltiduo)
-			end = ULTIDUO_MAX_SPAWNS
+		local end = arena.SpawnPoints.len() - 1
 
-		end--
+		if (arena.IsKoth && !("koth_cap" in arena) && !arena.IsCustomRuleset)
+			end--
+
+		local idx = arena.SpawnIdx
 
 		local team = player.GetTeam()
 		if (team == TF_TEAM_RED)
 			end /= 2
 
-		idx = (idx + 1) % (end - (arena.IsBBall ? 2 : 1))
+		idx = (idx + 1) % end
+
 		if (team == TF_TEAM_BLUE)
-			idx += (arena.SpawnPoints.len() / 2)
+			idx += (end / 2)
 
-
-		// printl(idx + " : " + end + " : " + arena.SpawnPoints.len())
-		// if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
 		arena.SpawnIdx = idx
+
 
 		return idx
 	}
@@ -1503,7 +1505,7 @@
 				EntFireByHandle(arena.BBall.ground_ball, "Kill", "", -1, null, null)
 			}
 
-			if ("IsCustomRuleset" in arena && arena.IsCustomRuleset)
+			if (arena.IsCustomRuleset)
 			{
 				foreach(p, _ in arena.CurrentPlayers)
 				{

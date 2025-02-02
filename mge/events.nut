@@ -333,7 +333,7 @@ class MGE_Events
 
 				//set arena state to countdown
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
-					if (!arena.IsUltiduo && !((arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && "IsCustomRuleset" in arena && arena.IsCustomRuleset))
+					if (!arena.IsUltiduo && !((arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && arena.IsCustomRuleset))
 						EntFireByHandle(player, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
 					//ultiduo
 					else if (arena.IsUltiduo)
@@ -626,7 +626,7 @@ class MGE_Events
 			// 		print("new velocity: " + victim.GetAbsVelocity())
 			// 	}
 
-			if (attacker != victim && "IsCustomRuleset" in arena && arena.IsCustomRuleset && arena.State != AS_FIGHT)
+			if (attacker != victim && arena.IsCustomRuleset && arena.State != AS_FIGHT)
 			{
 				params.damage = 0
 				return false
