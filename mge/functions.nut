@@ -1290,20 +1290,18 @@
 
 		if (arena.IsKoth && !("koth_cap" in arena) && !arena.IsCustomRuleset)
 			end--
-
+			
 		local idx = arena.SpawnIdx
 
 		local team = player.GetTeam()
 		if (team == TF_TEAM_RED)
 			end /= 2
 
-		idx = (idx + 1) % end
-
 		if (team == TF_TEAM_BLUE)
 			idx += (end / 2)
 
+		idx = (idx + 1) % end
 		arena.SpawnIdx = idx
-
 
 		return idx
 	}
