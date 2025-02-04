@@ -96,6 +96,12 @@ class MGE_Events
 			scope.enable_announcer = !scope.enable_announcer
 			MGE_ClientPrint(player, 3, scope.enable_announcer ? "AnnouncerEnabled" : "AnnouncerDisabled")
 		}
+		"hud" : function(params) {
+			local player = GetPlayerFromUserID(params.userid)
+			local scope = player.GetScriptScope()
+			scope.enable_hud = !scope.enable_hud
+			MGE_ClientPrint(player, 3, scope.enable_hud ? "HUDEnabled" : "HUDDisabled")
+		}
 		"ruleset" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
@@ -131,8 +137,15 @@ class MGE_Events
 			local ruleset = ruleset_split[1]
 			local fraglimit = 2 in ruleset_split ? ruleset_split[2].tointeger() : arena.fraglimit / 2
 
+			if (!("RulesetVote" in arena))
+				arena.RulesetVote <- {}
+
+			if (!(ruleset in arena.RulesetVote))
+				arena.RulesetVote[ruleset] <- array(2, false)
+
 			local votes = arena.RulesetVote[ruleset]
 			votes[player.GetTeam() - 2] = true
+
 
 			if (!votes[0] || !votes[1])
 			{
@@ -174,10 +187,9 @@ class MGE_Events
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_MGEMod")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Add")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Remove")
-			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_First")
+			// MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_First")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Top5")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Rank")
-			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_HitBlip")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Hud")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Handicap")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Ruleset")
@@ -253,9 +265,26 @@ class MGE_Events
 
 			if (split_text[0][0] in valid_chars && command_only in chat_commands)
 				chat_commands[command_only](params)
+
+			//allow spectators to talk
+
+			local player = GetPlayerFromUserID(params.userid)
+			if (player.GetTeam() == TEAM_SPECTATOR)
+			{
+				local scope = player.GetScriptScope()
+				foreach(p, userid in ALL_PLAYERS)
+				{
+					if (p != player && p.GetTeam() != TEAM_SPECTATOR)
+					{
+						ClientPrint(p, HUD_PRINTTALK, format("\x07CCCCCC%s\x07 : %s", scope.Name, params.text))
+					}
+				}
+
+			}
 		}
 
 		function OnGameEvent_player_spawn(params)
+
 		{
 			PreserveEnts()
 
@@ -304,7 +333,7 @@ class MGE_Events
 
 				//set arena state to countdown
 				if (arena.State == AS_IDLE && arena.CurrentPlayers.len() == arena.MaxPlayers)
-					if (!arena.IsUltiduo && !((arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && "IsCustomRuleset" in arena && arena.IsCustomRuleset))
+					if (!arena.IsUltiduo && !((arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && arena.IsCustomRuleset))
 						EntFireByHandle(player, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
 					//ultiduo
 					else if (arena.IsUltiduo)
@@ -356,22 +385,26 @@ class MGE_Events
 						sound_level = 65
 					})
 
-				//update hud
-				local hudstr = format("%s\n", arena_name)
-				foreach(p, _ in arena.CurrentPlayers)
+				if (scope.enable_hud)
 				{
-					local scope = p.GetScriptScope()
-					local team = p.GetTeam()
+					//update hud
+					local hudstr = format("%s\n", arena_name)
+					foreach(p, _ in arena.CurrentPlayers)
+					{
+						local scope = p.GetScriptScope()
+						local team = p.GetTeam()
 
-					//joined spectator directly without using !remove
-					if (team == TEAM_SPECTATOR) continue
+						//joined spectator directly without using !remove
+						if (team == TEAM_SPECTATOR) continue
 
-					hudstr += format("%s: %d (%d)\n", scope.Name, arena.Score[team - 2], scope.stats.elo.tointeger())
+						hudstr += format("%s: %d (%d)\n", scope.Name, arena.Score[team - 2], scope.stats.elo.tointeger())
+					}
+					MGE_HUD.KeyValueFromString("message", hudstr)
+					MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+					// MGE_HUD.AcceptInput("Display", "", player, player)
+					EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, player, player)
+
 				}
-				MGE_HUD.KeyValueFromString("message", hudstr)
-				MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
-				// MGE_HUD.AcceptInput("Display", "", player, player)
-				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, player, player)
 
 				// if (arena.IsBBall)
 				EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", GENERIC_DELAY, null, null)
@@ -419,7 +452,7 @@ class MGE_Events
 
 			if (arena.State == AS_FIGHT)
 			{
-				attacker && "kills" in attacker_scope.stats ? attacker_scope.stats.kills++ : attacker_scope.stats.kills <- 1
+				attacker && attacker != victim && "kills" in attacker_scope.stats ? attacker_scope.stats.kills++ : attacker_scope.stats.kills <- 1
 				victim && "deaths" in victim_scope.stats ? victim_scope.stats.deaths++ : victim_scope.stats.deaths <- 1
 			}
 
@@ -478,6 +511,7 @@ class MGE_Events
 			MGE_HUD.KeyValueFromString("message", hudstr)
 
 			foreach (p, _ in arena.CurrentPlayers)
+				if (p.GetScriptScope().enable_hud)
 				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
 
 			// Koth / bball mode doesn't count deaths
@@ -490,8 +524,11 @@ class MGE_Events
 					foreach(p, _ in arena.CurrentPlayers)
 						hudstr += format("%s: %d (%d)\n", p.GetScriptScope().Name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo.tointeger())
 
+
 					foreach (p, _ in arena.CurrentPlayers)
-						EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
+						if (p.GetScriptScope().enable_hud)
+							EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, p, p)
+
 
 					CalcArenaScore(arena_name)
 					return
@@ -589,7 +626,7 @@ class MGE_Events
 			// 		print("new velocity: " + victim.GetAbsVelocity())
 			// 	}
 
-			if (attacker != victim && "IsCustomRuleset" in arena && arena.IsCustomRuleset && arena.State != AS_FIGHT)
+			if (attacker != victim && arena.IsCustomRuleset && arena.State != AS_FIGHT)
 			{
 				params.damage = 0
 				return false
@@ -661,7 +698,7 @@ class MGE_Events
 			if (!victim.IsFakeClient() && arena.State == AS_FIGHT && !arena.IsEndif && !arena.IsMidair)
 			{
 				"damage_taken" in victim_scope.stats ? victim_scope.stats.damage_taken += params.damageamount : victim_scope.stats.damage_taken <- params.damageamount
-				if (attacker && !attacker.IsFakeClient())
+				if (attacker && attacker != victim && !attacker.IsFakeClient())
 					"damage_dealt" in attacker_scope.stats ? attacker_scope.stats.damage_dealt += params.damageamount : attacker_scope.stats.damage_dealt <- params.damageamount
 			}
 

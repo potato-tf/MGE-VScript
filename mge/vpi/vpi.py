@@ -3,73 +3,37 @@
 
 # Made by Mince (STEAM_0:0:41588292)
 
+VERSION = "1.0.0"
+
 import os
 import datetime
 import time
+import math
 import json
-import importlib
 import asyncio
-import aiomysql
-import argparse
-# from dotenv import load_dotenv
+import importlib
+from   random import randint
 
+import vpi_config
 import vpi_interfaces
 
-PARSER = argparse.ArgumentParser()
-PARSER.add_argument("--host", help="Hostname for database connection", type=str)
-PARSER.add_argument("-u", "--user", help="User for database connection", type=str)
-PARSER.add_argument("-p", "--port", help="Port for database connection", type=int)
-PARSER.add_argument("-db", "--database", help="Database to use", type=str)
-PARSER.add_argument("--password", help="Password for database connection", type=str)
-
-args = PARSER.parse_args()
-
-############################################ ENV VARS #############################################
-# Server owners modify this section
-
-# if os.path.exists("../.env"):
-	# load_dotenv('../.env')
-
-genv = os.environ.get
-
-# Modify VPI_* with your environment variables if you named them something else
-# DB_HOST     = args.host     if args.host     else genv("VPI_HOST",      "localhost")
-# DB_USER     = args.user     if args.user     else genv("VPI_USER",      "root")
-# DB_PORT	    = args.port     if args.port     else int(genv("VPI_PORT",  3306))
-# DB_DATABASE	= args.database if args.database else genv("VPI_INTERFACE", "mge")
-# DB_PASSWORD	= args.password if args.password else genv("VPI_PASSWORD", "")
-DB_HOST     = args.host     if args.host     else genv("VPI_HOST",      "localhost")
-DB_USER     = args.user     if args.user     else genv("VPI_USER",      "root")
-DB_PORT	    = args.port     if args.port     else int(genv("VPI_PORT",  3306))
-DB_DATABASE	= args.database if args.database else genv("VPI_NAME", "mge")
-DB_PASSWORD	= args.password if args.password else genv("VPI_PASS", "")
-
-SCRIPTDATA_DIR = genv("VPI_SCRIPTDATA_DIR", r"../../../../scriptdata")
-# SCRIPTDATA_DIR = r"..\..\..\..\scriptdata"
-# ----
-
-# Validation
-for env in [DB_HOST, DB_USER, DB_PORT, DB_DATABASE, SCRIPTDATA_DIR]:
-	assert env is not None
-
-if (DB_PASSWORD is None):
-	DB_PASSWORD = input(f"Enter password for {DB_USER}@{DB_HOST}:{DB_PORT} >>> ")
-	print()
-
-if (not os.path.exists(SCRIPTDATA_DIR)): raise RuntimeError("SCRIPTDATA_DIR does not exist")
+LOGGER = vpi_config.LOGGER
 
 ###################################################################################################
 
 # {
-#	  "<host>": {
-#		  "async": [ {...}, {...} ],
-#		  "chain": [
-#			  [ {...}, {...} ],
-#			  []
-#		  ]
-#	  }
+#		"<host>": {
+#			"restart_modtime": <num>,
+#			"paths": {
+#				"<filepath>": {
+#					"modtime": <num>,
+#					"async": [ {...}, {...} ],
+#				}
+#			}
+#		}
 # }
 calls = {}
+
 
 # {
 #	  "<host>": {
@@ -92,6 +56,57 @@ class Encoder(json.JSONEncoder):
 		else:
 			return super().default(o)
 
+# Emulate behavior of modulus in C / Squirrel
+def mod(a, b):
+    return (a % b + b) % b
+
+# Simple encryption algorithm based on timestamp, time, and a key
+def Encrypt(string):
+	timestamp = int(round(time.time()))
+
+	# Add a bit of randomness
+	t = mod(timestamp, 1024)        # Sin doesn't give good output for large values, keep things small
+	f = math.fabs(math.sin(16 * t)) # Give our time a bit of variance
+	h = math.floor(f * 127 + 0.5)   # Get a hash value from 0 - 127 (really this could be any number though)
+
+	# Initialization vector to provide true randomness since we always use the same key
+	# Without this the output tends to repeat quite often
+	iv = ""
+	for ch in string:
+		iv += chr(randint(35, 126))
+
+	enc = ""
+	for i, ch in enumerate(string):
+		key_index = mod(i, len(vpi_config.SECRET)) # Corresponding index in our key, loop if necessary
+		key_char  = vpi_config.SECRET[key_index]
+
+		# Encode the character; shifted using hash and key_char; limited to 32 - 127 ASCII
+		enc += chr(32 + mod(ord(ch) + h + ord(iv[i]) + ord(key_char), 95))
+
+	return {
+		"enc"       : enc,
+		"iv"        : iv,
+		"timestamp" : timestamp,
+		"ticks"     : 0,
+	}
+
+# Decryption
+def Decrypt(enc, iv, timestamp, ticks):
+	t = mod(timestamp + ticks, 1024)
+	f = math.fabs(math.sin(16 * t))
+	h = math.floor(f * 127 + 0.5)
+
+	dec = ""
+	for i, ch in enumerate(enc):
+		key_index = mod(i, len(vpi_config.SECRET))
+		key_char  = vpi_config.SECRET[key_index]
+
+		dec_char = mod(ord(ch) - 32 - h - ord(iv[i]) - ord(key_char), 95)
+		if (dec_char < 32):
+			dec_char += 95 * math.ceil((32 - dec_char) / 95.0)
+		dec += chr(dec_char)
+
+	return dec
 
 # Grab the hostname from a path
 def GetHostname(path):
@@ -108,7 +123,7 @@ def WriteCallbacksToFile():
 	delete = []
 
 	for host, info in callbacks.items():
-		path = os.path.join(SCRIPTDATA_DIR, f"{host}_vpi_input.interface")
+		path = os.path.join(vpi_config.SCRIPTDATA_DIR, f"{host}_vpi_input.interface")
 		with open(path, "a+") as f:
 			# "a+" file mode seeks to the end of the file, need to go back to the beginning
 			f.seek(0)
@@ -122,7 +137,9 @@ def WriteCallbacksToFile():
 			# Wipe the file
 			f.truncate(0)
 
-			table    = {"Calls": info}
+			table = {"Calls": info}
+			table["Identity"] = Encrypt(vpi_config.SECRET)
+
 			string   = json.dumps(table, cls=Encoder)
 			overflow = {}
 
@@ -171,45 +188,49 @@ async def ExecCalls():
 	tasks	 = [] # Tasks to gather
 	contexts = [] # Needed context for parsing task results
 
-	# Execute calls in call chain synchronously
-	async def ExecCallChain(call_chain):
-		result = None
-		for call in call_chain:
-			func = call["func"]
-			if (not func.startswith("VPI_")): continue
-			try:
-				func = getattr(vpi_interfaces, func)
-				result = await func(call, POOL)
-			except:
-				continue
-
-		return result
+	db_connected = False
+	if (vpi_config.DB_SUPPORT):
+		db_connected = await vpi_config.PingDB()
+		if (not db_connected):
+			LOGGER.warning("Could not establish connection to database! DB functions will be postponed")
 
 	# Prepare calls
-	for host, table in calls.items():
-		# Async calls can just be added to tasks directly
-		for call in table["async"]:
-			func = call["func"]
-			if (not func.startswith("VPI_")): continue
-			try:
-				func = getattr(vpi_interfaces, func)
-				tasks.append(func(call, POOL))
-				contexts.append({"host":host, "call":call})
-			except:
-				continue
+	for host, t1 in calls.items():
+		restart_modtime = t1["restart_modtime"]
+		for path, t2 in t1["paths"].copy().items():
+			modtime = t2["modtime"]
 
-		# Calls in call chains should be executed synchronously, but still add that to tasks
-		for call_chain in table["chain"]:
-			if (not len(call_chain)): continue
-			last = call_chain[-1]
-			tasks.append(ExecCallChain(call_chain))
-			contexts.append({"host":host, "call":last})
+			for call in t2["async"].copy():
+				func = call["func"]
+
+				if (func.startswith("VPI_")):
+					func = getattr(vpi_interfaces, func)
+
+					# We don't have a connection to the DB so don't bother
+					if (not db_connected and hasattr(func, "__WrapDB__")):
+						if (not vpi_config.DB_SUPPORT):
+							LOGGER.error("Database call received from client but server does not support DB operations! Discarding call to %s", func)
+							t2["async"].remove(call)
+						continue
+
+					tasks.append(func(call))
+					contexts.append({"host":host, "call":call} if (modtime >= restart_modtime) else None)
+
+				t2["async"].remove(call)
+
+			# No more calls to handle
+			if (not len(t2["async"])):
+				del t1["paths"][path]
+				continue
 
 	# Go
 	results = await asyncio.gather(*tasks)
 
 	# Set callbacks (to return results to client later)
 	for result, context in zip(results, contexts):
+		# We don't send a response to client for calls from stale files
+		if (context is None): continue
+
 		host  = context["host"]
 		call  = context["call"]
 		token = call["token"]
@@ -231,22 +252,33 @@ def ExtractCallsFromFile(path):
 
 			data = json.loads(contents)
 
-			host = GetHostname(path)
-			if (host not in calls):
-				calls[host] = {"async":[], "chain":[]}
+			ident = Decrypt(**data["Identity"])
+			if (ident != vpi_config.SECRET):
+				LOGGER.warning("Invalid identification in file: %s; ignoring", path)
+				return
 
-			calls[host]["async"].extend(data["Calls"]["async"])
-			calls[host]["chain"].extend(data["Calls"]["chain"])
+			host = GetHostname(path)
+
+			calls[host]["paths"][path]["async"].extend(data["Calls"]["async"])
 
 	except Exception as e:
-		print(f"Invalid input received from client in: \"{path}\"")
+		LOGGER.warning("Invalid structure in file: %s; ignoring", path)
 
 
-POOL = None
 async def main():
-	global POOL
-	POOL = await aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
-	print(str(POOL) + "\n")
+	LOGGER.info("VScript-Python Interface Server version %s startup", VERSION)
+
+	try:
+		if (vpi_config.DB_TYPE == "mysql"):
+			vpi_config.DB = await vpi_config.aiomysql.create_pool(host=vpi_config.DB_HOST, user=vpi_config.DB_USER, password=vpi_config.DB_PASSWORD, port=vpi_config.DB_PORT, db=vpi_config.DB_DATABASE, autocommit=False)
+		elif (vpi_config.DB_TYPE == "sqlite"):
+			vpi_config.DB = await vpi_config.aiosqlite.connect(vpi_config.DB_LITE)
+
+		if (vpi_config.DB is not None):
+			LOGGER.info("Connected to %s database using %s", vpi_config.DB_TYPE, str(vpi_config.DB))
+	except Exception as e:
+		LOGGER.critical(e)
+		return
 
 	global calls
 	global callbacks
@@ -264,23 +296,38 @@ async def main():
 			last_interface_modtime = last_modtime
 			try:
 				importlib.reload(vpi_interfaces)
+				LOGGER.info("Successfully hot-loaded changes to vpi_interfaces.py")
 			except:
-				print("INVALID INTERFACE MODULE CODE!")
+				LOGGER.error("Failed to hot-load changes to vpi_interfaces.py due to error:", exc_info=True)
 
 
-		files = os.listdir(SCRIPTDATA_DIR)
+		files = os.listdir(vpi_config.SCRIPTDATA_DIR)
 
 		for file in files:
-			path = os.path.join(SCRIPTDATA_DIR, file)
+			path = os.path.join(vpi_config.SCRIPTDATA_DIR, file)
 			host = GetHostname(path)
 			if (not host): continue
 
+			if (host not in calls):
+				calls[host] = { "restart_modtime": 0, "paths": {} }
+
+			path_mtime = os.path.getmtime(path)
+
 			# Client tells us our callbacks list is outdated (e.g. map change)
 			if (file.endswith("_restart.interface")):
+				mtime = calls[host]["restart_modtime"]
+
+				if (path_mtime >= mtime):
+					calls[host]["restart_modtime"] = path_mtime
+
 				if (host in callbacks): del callbacks[host]
 				os.remove(path)
+
 			# Grab info from clients
 			elif (file.endswith("_output.interface")):
+				if (path not in calls[host]["paths"]):
+					calls[host]["paths"][path] = { "modtime": path_mtime, "async": [] }
+
 				ExtractCallsFromFile(path)
 				os.remove(path)
 
@@ -289,8 +336,5 @@ async def main():
 
 		# Send results to clients
 		WriteCallbacksToFile()
-
-		calls = {}
-
 
 asyncio.run(main())
