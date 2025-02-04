@@ -503,7 +503,7 @@
 					callback=function(response, error) {
 						if (typeof(response) != "array" || !response.len())
 						{
-							printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
+							// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
 							return
 						}
 						foreach (i, r in response)
