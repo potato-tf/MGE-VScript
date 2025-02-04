@@ -947,6 +947,11 @@
 
 	local scope = player.GetScriptScope()
 
+	//somehow we didn't get our stats, fetch again on arena join
+	if (scope.stats.elo == -INT_MAX && ELO_TRACKING_MODE == 2)
+		GetStats(player)
+
+
 	RemovePlayer(player, false)
 
 	if (!arena.IsCustomRuleset)
@@ -1660,6 +1665,7 @@
 		printl("Getting player data...")
 		VPI.AsyncCall({
 			func="VPI_MGE_ReadWritePlayerStats",
+			timeout = 15.0,
 			kwargs= {
 				query_mode="read",
 				network_id=steam_id_slice,
