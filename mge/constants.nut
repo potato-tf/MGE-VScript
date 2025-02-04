@@ -1,4 +1,4 @@
-const MGE_VERSION = "0.1.0"
+const MGE_VERSION = "0.2.0"
 ::ROOT <- getroottable()
 ::CONST <- getconsttable()
 
