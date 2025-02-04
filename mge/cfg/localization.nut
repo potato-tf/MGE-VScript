@@ -108,6 +108,9 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		AnnouncerEnabled            = "\x07"+MGE_COLOR_BACKGROUND+"Announcer enabled."
 		AnnouncerDisabled           = "\x07"+MGE_COLOR_BACKGROUND+"Announcer disabled."
 
+		HUDDisabled 			   = "\x07"+MGE_COLOR_BACKGROUND+"HUD disabled."
+		HUDEnabled	 			   = "\x07"+MGE_COLOR_BACKGROUND+"HUD enabled."
+
 		InvalidRuleset             = "\x07"+MGE_COLOR_BACKGROUND+"Invalid ruleset: %s"
 		RulesetCannotSet 		   = "\x07" + MGE_COLOR_BACKGROUND + "You cannot set custom rulesets for this arena at this time."
 		RulesetVote                = "\x07" + MGE_COLOR_BACKGROUND + "You voted to enable %s for this arena, waiting for other players to vote..."
