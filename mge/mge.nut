@@ -252,12 +252,14 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 						if (owner_team == _team)
 						{
 							ent.KeyValueFromString("message", format("Cap Time: %.2f", arena.Koth[enemy_cap_amount]))
-							ent.AcceptInput("Display", "", p, p)
+							if (p.GetScriptScope().enable_hud)
+								ent.AcceptInput("Display", "", p, p)
 							continue
 						}
 						//we don't own it, show partial cap progress
 						ent.KeyValueFromString("message", format("Partial Cap: %.2f", arena.Koth[partial_cap_amount]))
-						ent.AcceptInput("Display", "", p, p)
+						if (p.GetScriptScope().enable_hud)
+							ent.AcceptInput("Display", "", p, p)
 
 					}
 					partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
@@ -327,6 +329,8 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 				//hud stuff
 				foreach(p, _ in arena.CurrentPlayers)
 				{
+					if (!p.GetScriptScope().enable_hud) continue
+
 					KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
 					KOTH_HUD_RED.AcceptInput("Display", "", p, p)
 					KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
@@ -450,7 +454,11 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	{
 		return
 	}
+	"4player" : function() {
+		return
+	}
 }
+
 
 ::MGE_Init <- function() {
 	local clean_map_name = {
@@ -722,23 +730,39 @@ EntFireByHandle(MGE_TIMER, "ShowInHUD", "1", -1, null, null)
 
 MGE_TIMER.ValidateScriptScope()
 
-local time_remaining_string = "m_flTimeRemaining"
-MGE_TIMER.GetScriptScope().TimerThink <- function()
+local timer_scope = MGE_TIMER.GetScriptScope()
+timer_scope.time_left <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+timer_scope.base_timestamp <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+
+timer_scope.InputSetTime <- function() {
+
+	timer_scope.base_timestamp = GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+	return true
+
+}
+timer_scope.Inputsettime <- timer_scope.InputSetTime
+
+timer_scope.TimerThink <- function()
 {
-	local counter = GetPropFloat(MGE_TIMER, time_remaining_string)
-	counter--
-	SetPropFloat(MGE_TIMER, time_remaining_string, counter)
-	if (counter)
+
+	local time_left = base_timestamp - Time()
+
+
+	// printl(time_left + " : " + base_timestamp)
+	
+
+	if (time_left > 0)
 	{
-		if (!(counter % VPI_SERVERINFO_UPDATE_INTERVAL))
+		if (!(time_left % VPI_SERVERINFO_UPDATE_INTERVAL))
 		{
 			LocalTime(local_time)
 			SERVER_DATA.update_time = local_time
-			SERVER_DATA.max_wave = counter
-			SERVER_DATA.wave = counter
+			SERVER_DATA.max_wave = time_left
+			SERVER_DATA.wave = time_left
 			local players = array(2, 0)
 			local spectators = 0
 			foreach (player, userid in ALL_PLAYERS)
+
 			{
 				if (!player || !player.IsValid() || player.IsFakeClient()) continue
 
@@ -760,27 +784,28 @@ MGE_TIMER.GetScriptScope().TimerThink <- function()
 						if (error)
 						{
 							// printl(error)
-							return 1
+							return 3
 						}
 						if (SERVER_DATA.address == 0 && "address" in response)
 							SERVER_DATA.address = response.address
+
 					}
 				})
 			}
 		}
-		// printl(counter)
-		if (counter < 60 && !(counter % 5))
-		{
-			SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", counter)})
-			return 1
-		}
+		
+		// Show countdown message in last minute
+		if (time_left < 60 && !(time_left.tointeger() % 10))
+			SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", time_left.tointeger())})
+		
 
-		return 1
+		return -1
 	}
 
-	// MGE_DoChangelevel()
+	delete timer_scope.TimerThink
 }
 AddThinkToEnt(MGE_TIMER, "TimerThink")
+
 
 ::MGE_DoChangelevel <- function() {
 

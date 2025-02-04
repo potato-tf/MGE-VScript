@@ -15,8 +15,12 @@ else
 	Include("itemdef_constants")
 	Include("cfg/config")
 	Include("cfg/localization")
-	Include("vpi/vpi")
+
+	if (CONST.ELO_TRACKING_MODE > 1 || CONST.ENABLE_LEADERBOARD || CONST.UPDATE_SERVER_DATA || CONST.GAMEMODE_AUTOUPDATE_REPO)
+		Include("vpi/vpi")
+
 	Include("functions")
 	Include("events")
 	Include("mge")
+
 }
