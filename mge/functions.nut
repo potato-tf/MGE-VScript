@@ -42,7 +42,7 @@
 		{
 			if (!("original_classname" in scope))
 				scope.original_classname <- ""
-			
+
 			if (classname != "info_target")
 				scope.original_classname = classname
 
@@ -249,7 +249,7 @@
 			//alternative keyvalues for bball logic
 			//if you intend on adding > 8 spawns, you will need to replace your current "9" - "13" entries with these
 			local bball_points = {
-				
+
 				neutral_home    		= "bball_home" in _arena ? _arena.bball_home : _arena["9"],
 				red_score_home  		= "bball_home_red" in _arena ? _arena.bball_home_red : _arena["10"],
 				blue_score_home 		= "bball_home_blue" in _arena ? _arena.bball_home_blue : _arena["11"],
@@ -586,7 +586,7 @@
 		_arena.IsEndif        <- "endif" in _arena && _arena.endif == "1"
 		_arena.IsMidair       <- "midair" in _arena && _arena.midair == "1"
 		_arena.IsAllMeat      <- "allmeat" in _arena && _arena.allmeat == "1"
-		
+
 		_arena.IsCustomRuleset <- false
 
 		//new keyvalues
@@ -1290,7 +1290,7 @@
 
 		if (arena.IsKoth && !("koth_cap" in arena) && !arena.IsCustomRuleset)
 			end--
-			
+
 		local idx = arena.SpawnIdx
 
 		local team = player.GetTeam()
