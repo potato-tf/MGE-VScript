@@ -1677,8 +1677,8 @@
 
 				local r = response[0]
 				scope.stats <- {
-					elo = r[1],
-					name = r[2],
+					name = r[1],
+					elo = r[2],
 					wins = r[3],
 					losses = r[4],
 					kills = r[5],
