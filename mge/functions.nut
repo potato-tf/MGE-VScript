@@ -50,9 +50,6 @@
 
 		} else if ("original_classname" in scope)
 			ent.KeyValueFromString("classname", scope.original_classname)
-
-
-		// printl(ent.GetClassname() +  " : " + scope.original_classname)
 	}
 }
 
