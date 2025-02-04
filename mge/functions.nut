@@ -947,6 +947,11 @@
 
 	local scope = player.GetScriptScope()
 
+	//somehow we didn't get our stats, fetch again on arena join
+	if (scope.stats.elo == -INT_MAX && ELO_TRACKING_MODE == 2)
+		GetStats(player)
+
+
 	RemovePlayer(player, false)
 
 	if (!arena.IsCustomRuleset)
