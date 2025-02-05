@@ -749,7 +749,7 @@ timer_scope.TimerThink <- function()
 
 
 	// printl(time_left + " : " + base_timestamp)
-	
+
 
 	if (time_left > 0)
 	{
@@ -793,11 +793,11 @@ timer_scope.TimerThink <- function()
 				})
 			}
 		}
-		
+
 		// Show countdown message in last minute
-		if (time_left < 60 && !(time_left.tointeger() % 10))
+		if (time_left < 60 && !(time_left % 10))
 			SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", time_left.tointeger())})
-		
+
 
 		return -1
 	}
