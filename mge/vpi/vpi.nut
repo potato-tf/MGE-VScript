@@ -4,7 +4,6 @@
 // Made by Mince (STEAM_0:0:41588292)
 
 local VERSION = "1.0.0";
-
 ////////////////////////////////////////// SCRIPT VARS //////////////////////////////////////////
 // Server owners modify this section
 
@@ -653,6 +652,73 @@ ParseTokens = function(tokens, start_index=0)
 }
 
 local JSON = {
+	function Encode(val, _depth=0)
+	{
+		if (_depth > MAXDEPTH) throw "Possible cyclic reference";
+
+		local s = "";
+		switch (typeof val)
+		{
+		case "table":
+		case "class":
+			foreach (k, v in val)
+				if (typeof v != "function")
+					s += ",\"" + k + "\":" + Encode(v, _depth+1);
+
+			return "{" + ( s.len() ? s.slice(1) : s ) + "}";
+
+		case "array":
+			local len = val.len();
+			if (!len) return "[]";
+
+			foreach (i, e in val)
+				s += Encode(val[i], _depth+1) + (i != len - 1 ? "," : "");
+
+			return "[" + s + "]";
+
+		case "integer":
+		case "float":
+		case "bool":
+			return val.tostring();
+
+		case "null":
+			return "null";
+
+		case "instance":
+			if ("_encode" in val && typeof val._encode == "function")
+				return Encode(val._encode(), _depth+1);
+			else
+			{
+				try
+				{
+					// _nexti
+					foreach (k, v in val)
+						s += ",\"" + k + "\":" + Encode(v, _depth+1);
+				}
+				catch (e)
+				{
+					foreach (k, v in val.getclass())
+						if (typeof v != "function")
+							s += ",\"" + k + "\":" + Encode(val[k], _depth+1);
+				}
+
+				return "{" + (s.len() ? s.slice(1) : s) + "}";
+			}
+
+		default:
+			return "\"" + Escape(val.tostring()) + "\"";
+		}
+	},
+
+	function Decode(str)
+	{
+		local tokens = Tokenize(str);
+		return ParseTokens(tokens);
+	},
+};
+
+//marked unsafe since map scripts can override this variable name
+::JSON_UNSAFE <- {
 	function Encode(val, _depth=0)
 	{
 		if (_depth > MAXDEPTH) throw "Possible cyclic reference";

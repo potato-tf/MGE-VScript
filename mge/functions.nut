@@ -575,6 +575,7 @@
 
 		//do this instead of checking both of these everywhere
 		_arena.IsMGE          <- "mge" in _arena && _arena.mge == "1"
+		_arena.IsInfammo	  <- "infammo" in _arena && _arena.infammo == "1"
 		_arena.IsUltiduo      <- "ultiduo" in _arena && _arena.ultiduo == "1"
 		_arena.IsKoth         <- "koth" in _arena && _arena.koth == "1"
 		_arena.IsBBall        <- "bball" in _arena && _arena.bball == "1"
@@ -1115,12 +1116,12 @@
 
 
 ::CalcELO <- function(winner, loser) {
-	// Early validation
-	if (!ELO_TRACKING_MODE || !winner || !loser ||
-		!winner.IsValid() || !loser.IsValid() ||
-		winner.IsFakeClient() || loser.IsFakeClient()) {
-		return
-	}
+
+	// if (!ELO_TRACKING_MODE || !winner || !loser ||
+		// !winner.IsValid() || !loser.IsValid() ||
+		// winner.IsFakeClient() || loser.IsFakeClient()) {
+		// return
+	// }
 
 	local arena = winner.GetScriptScope().arena_info.arena
 
@@ -1161,8 +1162,24 @@
 	// Update stats in database/file
 	UpdateStats(winner, winner_stats, false)
 	UpdateStats(loser, loser_stats, false)
+
+	if (PER_ARENA_LOGGING)
+	{
+		local log_data = {
+			arena_name  = winner.GetScriptScope().arena_info.name
+			score 	    = arena.Score
+			fraglimit   = arena.fraglimit
+			winner      = winner_stats
+			loser       = loser_stats
+			winner_gain = winner_gain
+			loser_loss  = loser_loss
+		}
+		printl(JSON_UNSAFE.Encode(log_data))
+	}
 }
 
+
+//TODO, refactor CalcELO into something that can accept any arbitrary number of players instead
 ::CalcELO2 <- function(winner, winner2, loser, loser2) {
 
 	if (winner.IsFakeClient() || loser.IsFakeClient() || !ELO_TRACKING_MODE || loser2.IsFakeClient() || winner2.IsFakeClient())
@@ -1214,7 +1231,6 @@
 ::CalcArenaScore <- function(arena_name)
 {
 	local arena = Arenas[arena_name]
-
 	local fraglimit = arena.fraglimit.tointeger()
 
 	//round over
@@ -1222,32 +1238,69 @@
 	{
 		local winner, loser
 
-		foreach(p, _ in arena.CurrentPlayers)
+		if (arena.MaxPlayers == 2)
 		{
-			if (arena.Score[0] >= fraglimit && p.GetTeam() == TF_TEAM_RED)
-				winner = p
-			else if (arena.Score[1] >= fraglimit && p.GetTeam() == TF_TEAM_BLUE)
-				winner = p
-			else
-				loser = p
+			foreach(p, _ in arena.CurrentPlayers)
+			{
+				if ((arena.Score[0] >= fraglimit && p.GetTeam() == TF_TEAM_RED) || (arena.Score[1] >= fraglimit && p.GetTeam() == TF_TEAM_BLUE))
+					winner = p
+				else
+					loser = p
+			}
+
+			local loser_scope = loser ? loser.GetScriptScope() : false
+			local winner_scope = winner ? winner.GetScriptScope() : false
+
+			if (!winner || !loser) return
+
+			loser_scope.won_last_match = false
+			winner_scope.won_last_match = true
+
+			MGE_ClientPrint(null, 3, "XdefeatsY",
+				winner_scope.Name,
+				winner_scope.stats.elo.tostring(),
+				loser_scope.Name,
+				loser_scope.stats.elo.tostring(),
+				fraglimit.tostring(),
+				arena_name)
+			CalcELO(winner, loser)
 		}
+		else
+		{
+			local losers  = []
+			local winners = []
 
-		local loser_scope = loser ? loser.GetScriptScope() : false
-		local winner_scope = winner ? winner.GetScriptScope() : false
+			foreach(p, _ in arena.CurrentPlayers)
+			{
+				local scope = p.GetScriptScope()
+				if (arena.Score[0] >= fraglimit && p.GetTeam() == TF_TEAM_RED)
+				{
+					winners.append(p)
+					scope.won_last_match = true
+				}
+				else if (arena.Score[1] >= fraglimit && p.GetTeam() == TF_TEAM_BLUE)
+				{
+					winners.append(p)
+					scope.won_last_match = true
+				}
+				else
+				{
+					losers.append(p)
+					scope.won_last_match = false
+				}
 
-		if (!winner || !loser) return
+			}
 
-		loser_scope.won_last_match = false
-		winner_scope.won_last_match = true
+			MGE_ClientPrint(null, 3, "XdefeatsY",
+				format("%s, %s", winners[0].GetScriptScope().Name, winners[1].GetScriptScope().Name),
+				format("%s, %s", winners[0].GetScriptScope().stats.elo.tostring(), winners[1].GetScriptScope().stats.elo.tostring()),
+				format("%s, %s", losers[0].GetScriptScope().Name, losers[1].GetScriptScope().Name),
+				format("%s, %s", losers[0].GetScriptScope().stats.elo.tostring(), losers[1].GetScriptScope().stats.elo.tostring()),
+				fraglimit.tostring(),
+				arena_name)
 
-		MGE_ClientPrint(null, 3, "XdefeatsY",
-			winner_scope.Name,
-			winner_scope.stats.elo.tostring(),
-			loser_scope.Name,
-			loser_scope.stats.elo.tostring(),
-			fraglimit.tostring(),
-		arena_name)
-		CalcELO(winner, loser)
+			CalcELO2(winners[0], winners[1], losers[0], losers[1])
+		}
 		SetArenaState(arena_name, AS_AFTERFIGHT)
 	}
 }
