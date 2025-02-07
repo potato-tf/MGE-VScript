@@ -1299,6 +1299,10 @@
 		local winner_id = GetPropString(winner, "m_szNetworkIDString")
 		local loser_id = GetPropString(loser, "m_szNetworkIDString")
 
+		local winner2_id = GetPropString(winner2, "m_szNetworkIDString")
+		local loser2_id = GetPropString(loser2, "m_szNetworkIDString")
+
+
 		local filename = format("mge_arenalogs/%s|%s_%s|%s_%s_%d.json", winner_id.slice(5, winner_id.find("]")), winner2_id.slice(5, winner2_id.find("]")), loser_id.slice(5, loser_id.find("]")), loser2_id.slice(5, loser2_id.find("]")), arena_name, GetUnixTimestamp(time))
 
 		StringToFile(filename, JSON_UNSAFE.Encode(log_data))
