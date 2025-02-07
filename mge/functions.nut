@@ -151,6 +151,51 @@
 	catch (_)
 		return
 }
+
+
+::GetUnixTimestamp <- function(time)
+{
+    local SECONDS_IN_DAY  = 86400
+    local SECONDS_IN_YEAR = 31536000
+
+    local SECONDS_IN_LEAP_YEAR = 31622400
+    local MONTH_DAYS = [null, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    local MONTH_DAYS_LEAP = [null, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    local EPOCH = {
+        year = 1970,
+        month = 1,
+        day = 1,
+        hour = 0,
+        minute = 0,
+        second = 0,
+    }
+
+    local timestamp = 0;
+
+    local time_year = time.year, epoch_year = EPOCH.year
+    // Years
+    for (local i = epoch_year; i < time_year; ++i)
+        timestamp += ((i % 4 == 0) ? SECONDS_IN_LEAP_YEAR : SECONDS_IN_YEAR)
+
+    // Months
+    for (local i = EPOCH.month; i < time.month; ++i)
+    {
+        if (time.year % 4 == 0)
+            timestamp += (MONTH_DAYS_LEAP[i] * SECONDS_IN_DAY)
+        else
+            timestamp += (MONTH_DAYS[i] * SECONDS_IN_DAY)
+    }
+
+    // Days
+    timestamp += ((time.day - EPOCH.day) * SECONDS_IN_DAY)
+
+
+    // The rest
+    timestamp += (time.hour * 3600) + (time.minute * 60) + time.second
+
+    return timestamp
+}
+
  //calling this function with no arena argument passed will
  //load spawn points for all arenas
  //configure rulesets (bball koth etc)
@@ -1165,8 +1210,9 @@
 
 	if (PER_ARENA_LOGGING)
 	{
+		local arena_name = winner.GetScriptScope().arena_info.name
 		local log_data = {
-			arena_name  = winner.GetScriptScope().arena_info.name
+			arena_name  = arena_name
 			score 	    = arena.Score
 			fraglimit   = arena.fraglimit
 			winner      = winner_stats
@@ -1174,10 +1220,21 @@
 			winner_gain = winner_gain
 			loser_loss  = loser_loss
 		}
-		printl(JSON_UNSAFE.Encode(log_data))
+
+		local time = {}
+		LocalTime(time)
+
+		local winner_id = GetPropString(winner, "m_szNetworkIDString")
+		local loser_id = GetPropString(loser, "m_szNetworkIDString")
+
+		local filename = format("mge_arenalogs/%s_%s_%s_%d.json", winner_id.slice(5, winner_id.find("]")), loser_id, arena_name, GetUnixTimestamp(time))
+
+		StringToFile(filename, JSON_UNSAFE.Encode(log_data))
+		//TODO: Test this more, maybe we were doing it wrong when it was crashing
+		// ::StringToFile_Threaded <- @() StringToFile(filename, JSON_UNSAFE.Encode(log_data))
+		// newthread(StringToFile_Threaded).call()
 	}
 }
-
 
 //TODO, refactor CalcELO into something that can accept any arbitrary number of players instead
 ::CalcELO2 <- function(winner, winner2, loser, loser2) {
@@ -1209,6 +1266,46 @@
 	loser.stats.elo -= loserscore
 	loser2.stats.elo -= loserscore
 
+	// Print results to players
+	MGE_ClientPrint(winner, HUD_PRINTTALK, "GainedPoints", winnerscore.tostring())
+	MGE_ClientPrint(winner2, HUD_PRINTTALK, "GainedPoints", winnerscore.tostring())
+	MGE_ClientPrint(loser, HUD_PRINTTALK, "LostPoints", loserscore.tostring())
+	MGE_ClientPrint(loser2, HUD_PRINTTALK, "LostPoints", loserscore.tostring())
+
+	// Update stats in database/file
+	UpdateStats(winner, winner_stats, false)
+	UpdateStats(winner2, winner_stats, false)
+	UpdateStats(loser, loser_stats, false)
+	UpdateStats(loser2, loser_stats, false)
+
+	if (PER_ARENA_LOGGING)
+	{
+		local arena_name = winner.GetScriptScope().arena_info.name
+		local log_data = {
+			arena_name  = arena_name
+			score 	    = arena.Score
+			fraglimit   = arena.fraglimit
+			winner      = winner_stats
+			winner2     = winner2_stats
+			loser       = loser_stats
+			loser2      = loser2_stats
+			winner_gain = winnerscore
+			loser_loss  = loserscore
+		}
+
+		local time = {}
+		LocalTime(time)
+
+		local winner_id = GetPropString(winner, "m_szNetworkIDString")
+		local loser_id = GetPropString(loser, "m_szNetworkIDString")
+
+		local filename = format("mge_arenalogs/%s|%s_%s|%s_%s_%d.json", winner_id.slice(5, winner_id.find("]")), winner2_id.slice(5, winner2_id.find("]")), loser_id.slice(5, loser_id.find("]")), loser2_id.slice(5, loser2_id.find("]")), arena_name, GetUnixTimestamp(time))
+
+		StringToFile(filename, JSON_UNSAFE.Encode(log_data))
+		//TODO: Test this more, maybe we were doing it wrong when it was crashing
+		// ::StringToFile_Threaded <- @() StringToFile(filename, JSON_UNSAFE.Encode(log_data))
+		// newthread(StringToFile_Threaded).call()
+	}
 	// local winner_team_slot = (g_iPlayerSlot[winner] > 2) ? (g_iPlayerSlot[winner] - 2) : g_iPlayerSlot[winner]
 	// local loser_team_slot = (g_iPlayerSlot[loser] > 2) ? (g_iPlayerSlot[loser] - 2) : g_iPlayerSlot[loser]
 
