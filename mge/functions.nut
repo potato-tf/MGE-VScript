@@ -1830,7 +1830,7 @@
 
 				if (typeof(response) != "array" || !response.len())
 				{
-					// printl(response)
+					printl(response)
 					printf(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], GetPropString(player, "m_szNetworkIDString"))
 					return
 				}
