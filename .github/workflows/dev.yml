@@ -57,9 +57,9 @@ jobs:
             rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mapspawn.nut ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge_init.nut &
           
            #sync config file from US server
-            rsync -a -e "ssh -p 27040 -o StrictHostKeyChecking=no" pterodactyl@us.potato.tf:/var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_config.py ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_config.py &
-            rsync -a -e "ssh -p 27040 -o StrictHostKeyChecking=no" pterodactyl@us.potato.tf:/var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_interfaces.py ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_interfaces.py &
-            rsync -a -e "ssh -p 27040 -o StrictHostKeyChecking=no" pterodactyl@us.potato.tf:/var/tf2server/tf/scripts/vscripts/mge/cfg/config.nut ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/cfg/config.nut &
+            ssh -p 27040 -o StrictHostKeyChecking=no pterodactyl@us.potato.tf "rsync -a /var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_config.py ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_config.py" &
+            ssh -p 27040 -o StrictHostKeyChecking=no pterodactyl@us.potato.tf "rsync -a /var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_interfaces.py ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_interfaces.py" &
+            ssh -p 27040 -o StrictHostKeyChecking=no pterodactyl@us.potato.tf "rsync -a /var/tf2server/tf/scripts/vscripts/mge/cfg/config.nut ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/cfg/config.nut" &
           } &
 
 
