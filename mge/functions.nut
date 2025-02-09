@@ -1819,7 +1819,7 @@
 		printl("Getting player data...")
 		VPI.AsyncCall({
 			func="VPI_MGE_ReadWritePlayerStats",
-			timeout = 15.0,
+			// timeout = 3.0,
 			kwargs= {
 				query_mode="read",
 				network_id=steam_id_slice,
