@@ -36,6 +36,7 @@ jobs:
         run: |
             ssh-agent -a $SSH_AUTH_SOCK > /dev/null
             ssh-add - <<< "${{ secrets.DEPLOY_KEY }}"
+            ssh-add - <<< "${{ secrets.DEPLOY_KEY_CONFIG }}"
         
       # Runs a set of commands using the runners shell
       - name: Sync with game servers
