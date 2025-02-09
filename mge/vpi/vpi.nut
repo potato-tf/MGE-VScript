@@ -117,11 +117,13 @@ local function PrintMessage(player, msg, level=MSG_MISC, notify=NOTIFY_CONSOLE)
 		throw msg;
 }
 
-if (!GetSecret().len())
+local is_potato_server = Convars.GetValue("sv_tags").find("potato");
+
+if (!GetSecret().len() && !is_potato_server)
 	PrintMessage(null, "Please set your secret token", MSG_ERROR, NOTIFY_CHAT);
 
 local lateload = (Entities.FindByName(null, "bignet") != null);
-if (lateload)
+if (lateload && !is_potato_server)
 	PrintMessage(null, "Late loading is not permitted as it is a security risk, please load in mapspawn.nut", MSG_ERROR, NOTIFY_CHAT);
 
 local ROOT = getroottable();
