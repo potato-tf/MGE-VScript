@@ -29,7 +29,7 @@ except:
 # It's used to identify files created by VPI
 SECRET = r""
 BYPASS_SECRET = False #do not set this to true unless you know what you're doing
-if (not SECRET):
+if (not SECRET and not BYPASS_SECRET):
 	raise RuntimeError("Please set your secret token")
 
 # Change this to your scriptdata directory
