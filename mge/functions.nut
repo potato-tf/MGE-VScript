@@ -2552,7 +2552,6 @@
 		function allmeat() {
 			return
 		}
-
 		"4player" : function() {
 			return
 		}

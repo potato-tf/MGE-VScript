@@ -28,6 +28,7 @@ except:
 # This should be the same token returned in the GetSecret function in vpi.nut
 # It's used to identify files created by VPI
 SECRET = r""
+BYPASS_SECRET = False #do not set this to true unless you know what you're doing
 if (not SECRET):
 	raise RuntimeError("Please set your secret token")
 
