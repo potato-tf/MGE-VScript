@@ -2552,9 +2552,14 @@
 		function allmeat() {
 			return
 		}
+
+		"4player" : function() {
+			return
+		}
 	}
 
 		foreach (p, _ in arena.CurrentPlayers)
+
 		{
 			ruleset_inits[ruleset].call(p.GetScriptScope())
 			p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset]
