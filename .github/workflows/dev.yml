@@ -36,11 +36,17 @@ jobs:
         run: |
             mkdir -p ~/.ssh
             ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+            # Write primary deploy key
             echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
-            echo "${{ secrets.DEPLOY_KEY_CONFIG }}" > ~/.ssh/deploy_key_config
-            chmod 600 ~/.ssh/deploy_key ~/.ssh/deploy_key_config
-            ssh-add ~/.ssh/deploy_key
-            ssh-add ~/.ssh/deploy_key_config
+            chmod 600 ~/.ssh/deploy_key
+            ssh-add ~/.ssh/deploy_key || exit 1
+            
+            # Only try to add config key if it exists and is not empty
+            if [ ! -z "${{ secrets.DEPLOY_KEY_CONFIG }}" ]; then
+                echo "${{ secrets.DEPLOY_KEY_CONFIG }}" > ~/.ssh/deploy_key_config
+                chmod 600 ~/.ssh/deploy_key_config
+                ssh-add ~/.ssh/deploy_key_config || echo "Warning: Could not load deploy_key_config"
+            fi
         
       # Runs a set of commands using the runners shell
       - name: Sync with game servers
