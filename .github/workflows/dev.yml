@@ -36,7 +36,6 @@ jobs:
         run: |
             ssh-agent -a $SSH_AUTH_SOCK > /dev/null
             ssh-add - <<< "${{ secrets.DEPLOY_KEY }}"
-            ssh-add - <<< "${{ secrets.DEPLOY_KEY_CONFIG }}"
         
       # Runs a set of commands using the runners shell
       - name: Sync with game servers
@@ -56,12 +55,6 @@ jobs:
             -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mge ${a[1]}:/var/tf2server/tf/scripts/vscripts &
 
             rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mapspawn.nut ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge_init.nut &
-          
-           #sync config file from US server
-            ssh -vv -p 27040 -o StrictHostKeyChecking=no pterodactyl@us.potato.tf "rsync -a /var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_config.py ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_config.py"
-            ssh -vv -p 27040 -o StrictHostKeyChecking=no pterodactyl@us.potato.tf "rsync -a /var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_interfaces.py ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_interfaces.py"
-            ssh -vv -p 27040 -o StrictHostKeyChecking=no pterodactyl@us.potato.tf "rsync -a /var/tf2server/tf/scripts/vscripts/mge/cfg/config.nut ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/cfg/config.nut"
-
           } &
           done
           wait
