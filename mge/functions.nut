@@ -2140,6 +2140,9 @@
 			arena.fraglimit = ALLMEAT_DEFAULT_FRAGLIMIT
 			return
 		}
+		"4player" : function() {
+			return
+		}
 	}
 	local ruleset_thinks = {
 		function bball() {
