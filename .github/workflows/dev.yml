@@ -34,9 +34,13 @@ jobs:
         env:
             SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
+            mkdir -p ~/.ssh
             ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-            ssh-add - <<< "${{ secrets.DEPLOY_KEY }}"
-            ssh-add - <<< "${{ secrets.DEPLOY_KEY_CONFIG }}"
+            echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
+            echo "${{ secrets.DEPLOY_KEY_CONFIG }}" > ~/.ssh/deploy_key_config
+            chmod 600 ~/.ssh/deploy_key ~/.ssh/deploy_key_config
+            ssh-add ~/.ssh/deploy_key
+            ssh-add ~/.ssh/deploy_key_config
         
       # Runs a set of commands using the runners shell
       - name: Sync with game servers
