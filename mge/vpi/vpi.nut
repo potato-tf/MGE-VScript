@@ -117,7 +117,7 @@ local function PrintMessage(player, msg, level=MSG_MISC, notify=NOTIFY_CONSOLE)
 		throw msg;
 }
 
-local is_potato_server = Convars.GetValue("sv_tags").find("potato");
+local is_potato_server = Convars.GetStr("sv_tags").find("potato");
 
 if (!GetSecret().len() && !is_potato_server)
 	PrintMessage(null, "Please set your secret token", MSG_ERROR, NOTIFY_CHAT);
