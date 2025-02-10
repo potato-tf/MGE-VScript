@@ -232,9 +232,14 @@
 			if (_arena.IsKoth)
 			{
 				local point = _arena.Koth.cap_point
-
+				if (typeof point == "string")
+				{
+					local split_point = split(point, " ").apply(@(str) str.tofloat())
+					point = Vector(split_point[0], split_point[1], split_point[2])
+				}
 				for (local prop; prop = FindByClassnameWithin(prop, "obj_teleporter", point, 128);)
 					EntFireByHandle(prop, "Kill", "", -1, null, null)
+
 			}
 			if (_arena.IsBBall)
 			{
