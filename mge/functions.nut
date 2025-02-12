@@ -1136,7 +1136,7 @@
 
 		SetArenaState(arena_name, AS_IDLE)
 
-		scope.arena_info.name = "<SPECTATING>"
+	//	scope.arena_info.name = "<SPECTATING>"
 	}
 }
 
