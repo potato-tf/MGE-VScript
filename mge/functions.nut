@@ -1566,10 +1566,6 @@
 
 				p.ForceRespawn()
 
-				//it might be better to remove this in AS_FIGHT instead of using the timer
-				//there's probably a good reason to remove no_attack separate from the countdown but I'm not sure what
-				p.AddCustomAttribute("no_attack", 1.0, countdown_time)
-
 				if (p.GetScriptScope().enable_countdown)
 				{
 					for (local i = 0; i < countdown_time; ++i)
