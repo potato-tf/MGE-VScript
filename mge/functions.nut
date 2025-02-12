@@ -1521,15 +1521,8 @@
 
 	local arenaStates = {
 		[AS_IDLE] = function() {
-			
-			local countdown_time = arena.cdtime.tointeger()
 
 			arena.Score <- array(2, 0)
-
-			if (arena.IsCustomRuleset) return
-
-			foreach(p, _ in arena.CurrentPlayers)
-				p.AddCustomAttribute("no_attack", 1.0, -1)
 		},
 		[AS_COUNTDOWN] = function() {
 
@@ -1573,6 +1566,7 @@
 			local _players = array(arena.MaxPlayers, null)
 			foreach(p, _ in arena.CurrentPlayers)
 			{
+				p.AddCustomAttribute("no_attack", 1.0, countdown_time)
 
 				if (p.GetTeam() == TEAM_SPECTATOR) continue
 
