@@ -612,7 +612,7 @@ class MGE_Events
 			}
 			else if (params.oldteam != TEAM_SPECTATOR && team > TEAM_SPECTATOR)
 			{
-				printf("AUTOTEAM SWITCH BLOCKED! removing %s from arena", scope.Name)
+				printf("AUTOTEAM SWITCH BLOCKED! removing %s from arena\n", scope.Name)
 				RemovePlayer(player)
 			}
 			//TODO: AddToArena will update arena_info.team when it shouldn't if the player uses "autoteam"
