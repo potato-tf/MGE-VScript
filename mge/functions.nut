@@ -40,6 +40,15 @@
 		local classname = ent.GetClassname()
 		if (preserve)
 		{
+			//this ent doesn't like having its classname changed
+			//EFL_KILLME seemingly doesn't have any major side effects here
+			//(besides blocking Kill inputs)
+			if (classname == "info_observer_point")
+			{
+				preserve ? ent.AddEFlags(EFL_KILLME): ent.RemoveEFlags(EFL_KILLME)
+				continue
+			}
+
 			if (!("original_classname" in scope))
 				scope.original_classname <- ""
 
@@ -1126,6 +1135,8 @@
 		}
 
 		SetArenaState(arena_name, AS_IDLE)
+
+		scope.arena_info.name = "<SPECTATING>"
 	}
 }
 
@@ -1511,6 +1522,11 @@
 	local arenaStates = {
 		[AS_IDLE] = function() {
 			arena.Score <- array(2, 0)
+
+			if (arena.IsCustomRuleset) return
+
+			foreach(p, _ in arena.CurrentPlayers)
+				p.AddCustomAttribute("no_attack", 1.0, countdown_time)
 		},
 		[AS_COUNTDOWN] = function() {
 
@@ -1636,6 +1652,7 @@
 					if (scope.ball_ent && scope.ball_ent.IsValid())
 						scope.ball_ent.Kill()
 				}
+				p.RemoveCustomAttribute("no_attack")
 			}
 		},
 		[AS_AFTERFIGHT] = function() {
@@ -2146,9 +2163,13 @@
 		}
 	}
 	local ruleset_thinks = {
+
+		//absolute formatting nightmare
+		//does not cleanly map to in-game behavior when reading top to bottom
+		//TODO: clean up the annotation/glow code
+		//it barely works, the glow in particular pretty much never works correctly
+
 		function bball() {
-			// printl(arena.RulesetVote.validatedhoops)
-			// printl("temp_ball" in self.GetScriptScope())
 			local scope = self.GetScriptScope()
 			if (hoop_cooldown > Time()) return
 
@@ -2357,9 +2378,6 @@
 				hoop.GetScriptScope().hoop_validated <- false
 				local hoops = []
 
-				//TODO: clean up this awful annotation/glow code
-				//it barely works, the glow in particular pretty much never works correctly
-
 				foreach(p, _ in arena.CurrentPlayers)
 				{
 					local _scope = p.GetScriptScope()
@@ -2558,23 +2576,23 @@
 		}
 	}
 
-		foreach (p, _ in arena.CurrentPlayers)
+	foreach (p, _ in arena.CurrentPlayers)
 
+	{
+		ruleset_inits[ruleset].call(p.GetScriptScope())
+		p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset]
+		if (ruleset == "bball" || ruleset == "koth")
 		{
-			ruleset_inits[ruleset].call(p.GetScriptScope())
-			p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset]
-			if (ruleset == "bball" || ruleset == "koth")
-			{
-				for(local child = p.FirstMoveChild(); child != null; child = child.NextMovePeer())
-					if (startswith(child.GetClassname(), "tf_weapon"))
-					{
-						SetPropInt(child, "m_nRenderMode", kRenderTransColor)
-						SetPropInt(child, "m_clrRender", 0)
-					}
-				p.AddCustomAttribute("no_attack", 1, -1)
-				p.AddCustomAttribute("disable weapon switch", 1, -1)
-			}
+			for(local child = p.FirstMoveChild(); child != null; child = child.NextMovePeer())
+				if (startswith(child.GetClassname(), "tf_weapon"))
+				{
+					SetPropInt(child, "m_nRenderMode", kRenderTransColor)
+					SetPropInt(child, "m_clrRender", 0)
+				}
+			p.AddCustomAttribute("no_attack", 1, -1)
+			p.AddCustomAttribute("disable weapon switch", 1, -1)
 		}
+	}
 
 	return
 }
