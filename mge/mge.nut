@@ -794,9 +794,18 @@ timer_scope.TimerThink <- function()
 			}
 		}
 
+		local hinted = false
 		// Show countdown message in last minute
-		if (time_left < 60 && !(time_left % 10))
-			SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", time_left.tointeger())})
+		if (time_left < 60 && !(time_left.tointeger() % 10))
+		{
+			if (!hinted)
+			{
+				SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", time_left.tointeger())})
+				hinted = true
+			}
+		} else {
+			hinted = false
+		}
 
 
 		return -1

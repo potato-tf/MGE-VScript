@@ -276,7 +276,7 @@ class MGE_Events
 				{
 					if (p != player && p.GetTeam() != TEAM_SPECTATOR)
 					{
-						ClientPrint(p, HUD_PRINTTALK, format("\x07CCCCCC\x07 %s \x07 : %s", scope.Name, params.text))
+						ClientPrint(p, HUD_PRINTTALK, format("\x07CCCCCC %s \x07FBECCB : %s", scope.Name, params.text))
 					}
 				}
 
