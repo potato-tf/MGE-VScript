@@ -267,20 +267,20 @@ class MGE_Events
 				chat_commands[command_only](params)
 
 			//allow spectators to talk
+			//turns out this isn't necessary
 
-			local player = GetPlayerFromUserID(params.userid)
-			if (player.GetTeam() == TEAM_SPECTATOR)
-			{
-				local scope = player.GetScriptScope()
-				foreach(p, userid in ALL_PLAYERS)
-				{
-					if (p != player && p.GetTeam() != TEAM_SPECTATOR)
-					{
-						ClientPrint(p, HUD_PRINTTALK, format("\x07CCCCCC %s \x07FBECCB : %s", scope.Name, params.text))
-					}
-				}
-
-			}
+			// local player = GetPlayerFromUserID(params.userid)
+			// if (player.GetTeam() == TEAM_SPECTATOR)
+			// {
+			// 	local scope = player.GetScriptScope()
+			// 	foreach(p, userid in ALL_PLAYERS)
+			// 	{
+			// 		if (p != player && p.GetTeam() != TEAM_SPECTATOR)
+			// 		{
+			// 			ClientPrint(p, HUD_PRINTTALK, format("\x07CCCCCC %s \x07FBECCB : %s", scope.Name, params.text))
+			// 		}
+			// 	}
+			// }
 		}
 
 		function OnGameEvent_player_spawn(params)
