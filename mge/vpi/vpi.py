@@ -253,7 +253,7 @@ def ExtractCallsFromFile(path):
 			data = json.loads(contents)
 
 			ident = Decrypt(**data["Identity"])
-			if (ident != vpi_config.SECRET):
+			if (ident != vpi_config.SECRET and not vpi_config.BYPASS_SECRET):
 				LOGGER.warning("Invalid identification in file: %s; ignoring", path)
 				return
 

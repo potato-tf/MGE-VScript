@@ -276,7 +276,7 @@ class MGE_Events
 				{
 					if (p != player && p.GetTeam() != TEAM_SPECTATOR)
 					{
-						ClientPrint(p, HUD_PRINTTALK, format("\x07CCCCCC%s\x07 : %s", scope.Name, params.text))
+						ClientPrint(p, HUD_PRINTTALK, format("\x07CCCCCC %s \x07FBECCB : %s", scope.Name, params.text))
 					}
 				}
 
@@ -437,10 +437,17 @@ class MGE_Events
 
 		function OnGameEvent_player_death(params)
 		{
-			if (REMOVE_DROPPED_WEAPONS) EntFire("tf_dropped_weapon", "Kill")
+			if (REMOVE_DROPPED_WEAPONS)
+				EntFire("tf_dropped_weapon", "Kill")
+
 			EntFire("tf_ammo_pack", "Kill")
 			local victim = GetPlayerFromUserID(params.userid)
 			local attacker = GetPlayerFromUserID(params.attacker)
+
+			//disable freezecam
+			//this is probably what's causing the no sound bug
+			//likely spawning players after freeze cam starts but before it actually "starts"
+			SetPropEntity(victim, "m_hObserverTarget", null)
 
 			local victim_scope = victim.GetScriptScope()
 			local attacker_scope = attacker ? attacker.GetScriptScope() : victim_scope
@@ -603,8 +610,14 @@ class MGE_Events
 						}
 					}
 			}
-			else if ("team" in scope.arena_info && team != scope.arena_info.team)
-				EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(self.GetScriptScope().arena_info.team, true); self.ForceRespawn()", GENERIC_DELAY, null, null)
+			else if (params.oldteam != TEAM_SPECTATOR && team > TEAM_SPECTATOR)
+			{
+				printf("AUTOTEAM SWITCH BLOCKED! removing %s from arena\n", scope.Name)
+				RemovePlayer(player)
+			}
+			//TODO: AddToArena will update arena_info.team when it shouldn't if the player uses "autoteam"
+			// else if ("team" in scope.arena_info && team != scope.arena_info.team)
+				// EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(self.GetScriptScope().arena_info.team, true); self.ForceRespawn()", GENERIC_DELAY, null, null)
 		}
 
 		function OnScriptHook_OnTakeDamage(params)
@@ -669,7 +682,7 @@ class MGE_Events
 
 			}
 
-			if (victim.IsFakeClient() && !("IsEndif" in arena)) return
+			if (victim.IsFakeClient()) return
 
 			if (victim_scope && victim.IsPlayer() && attacker != victim && (arena.IsEndif || arena.IsMidair) && params.damage_type & DMG_BLAST && !(victim.GetFlags() & FL_ONGROUND))
 			{
@@ -704,14 +717,11 @@ class MGE_Events
 
 			//set this here instead of OnTakeDamage since damage_force isn't set until after damage is applied
 			//TODO: test this again, it wasn't working before due to multiplying vectors correctly and might work fine in OnTakeDamage
-			if ("endif" in arena && arena.endif == "1")
+			if (arena.IsEndif)
 			{
-				if (!("midair" in arena) || arena.midair == "0")
-				{
-					local old_vel = victim.GetAbsVelocity()
-					local vel = Vector(old_vel.x * ENDIF_FORCE_MULT.x, old_vel.y * ENDIF_FORCE_MULT.y, old_vel.z * ENDIF_FORCE_MULT.z)
-					victim.SetAbsVelocity(vel)
-				}
+				local old_vel = victim.GetAbsVelocity()
+				local vel = Vector(old_vel.x * ENDIF_FORCE_MULT.x, old_vel.y * ENDIF_FORCE_MULT.y, old_vel.z * ENDIF_FORCE_MULT.z)
+				victim.SetAbsVelocity(vel)
 			}
 		}
 	}

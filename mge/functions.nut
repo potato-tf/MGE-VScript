@@ -40,6 +40,15 @@
 		local classname = ent.GetClassname()
 		if (preserve)
 		{
+			//this ent doesn't like having its classname changed
+			//EFL_KILLME seemingly doesn't have any major side effects here
+			//(besides blocking Kill inputs)
+			if (classname == "info_observer_point")
+			{
+				preserve ? ent.AddEFlags(EFL_KILLME): ent.RemoveEFlags(EFL_KILLME)
+				continue
+			}
+
 			if (!("original_classname" in scope))
 				scope.original_classname <- ""
 
@@ -151,6 +160,51 @@
 	catch (_)
 		return
 }
+
+
+::GetUnixTimestamp <- function(time)
+{
+    local SECONDS_IN_DAY  = 86400
+    local SECONDS_IN_YEAR = 31536000
+
+    local SECONDS_IN_LEAP_YEAR = 31622400
+    local MONTH_DAYS = [null, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    local MONTH_DAYS_LEAP = [null, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    local EPOCH = {
+        year = 1970,
+        month = 1,
+        day = 1,
+        hour = 0,
+        minute = 0,
+        second = 0,
+    }
+
+    local timestamp = 0;
+
+    local time_year = time.year, epoch_year = EPOCH.year
+    // Years
+    for (local i = epoch_year; i < time_year; ++i)
+        timestamp += ((i % 4 == 0) ? SECONDS_IN_LEAP_YEAR : SECONDS_IN_YEAR)
+
+    // Months
+    for (local i = EPOCH.month; i < time.month; ++i)
+    {
+        if (time.year % 4 == 0)
+            timestamp += (MONTH_DAYS_LEAP[i] * SECONDS_IN_DAY)
+        else
+            timestamp += (MONTH_DAYS[i] * SECONDS_IN_DAY)
+    }
+
+    // Days
+    timestamp += ((time.day - EPOCH.day) * SECONDS_IN_DAY)
+
+
+    // The rest
+    timestamp += (time.hour * 3600) + (time.minute * 60) + time.second
+
+    return timestamp
+}
+
  //calling this function with no arena argument passed will
  //load spawn points for all arenas
  //configure rulesets (bball koth etc)
@@ -187,9 +241,14 @@
 			if (_arena.IsKoth)
 			{
 				local point = _arena.Koth.cap_point
-
+				if (typeof point == "string")
+				{
+					local split_point = split(point, " ").apply(@(str) str.tofloat())
+					point = Vector(split_point[0], split_point[1], split_point[2])
+				}
 				for (local prop; prop = FindByClassnameWithin(prop, "obj_teleporter", point, 128);)
 					EntFireByHandle(prop, "Kill", "", -1, null, null)
+
 			}
 			if (_arena.IsBBall)
 			{
@@ -575,6 +634,7 @@
 
 		//do this instead of checking both of these everywhere
 		_arena.IsMGE          <- "mge" in _arena && _arena.mge == "1"
+		_arena.IsInfammo	  <- "infammo" in _arena && _arena.infammo == "1"
 		_arena.IsUltiduo      <- "ultiduo" in _arena && _arena.ultiduo == "1"
 		_arena.IsKoth         <- "koth" in _arena && _arena.koth == "1"
 		_arena.IsBBall        <- "bball" in _arena && _arena.bball == "1"
@@ -1075,6 +1135,8 @@
 		}
 
 		SetArenaState(arena_name, AS_IDLE)
+
+	//	scope.arena_info.name = "<SPECTATING>"
 	}
 }
 
@@ -1115,12 +1177,12 @@
 
 
 ::CalcELO <- function(winner, loser) {
-	// Early validation
-	if (!ELO_TRACKING_MODE || !winner || !loser ||
-		!winner.IsValid() || !loser.IsValid() ||
-		winner.IsFakeClient() || loser.IsFakeClient()) {
-		return
-	}
+
+	// if (!ELO_TRACKING_MODE || !winner || !loser ||
+		// !winner.IsValid() || !loser.IsValid() ||
+		// winner.IsFakeClient() || loser.IsFakeClient()) {
+		// return
+	// }
 
 	local arena = winner.GetScriptScope().arena_info.arena
 
@@ -1161,8 +1223,36 @@
 	// Update stats in database/file
 	UpdateStats(winner, winner_stats, false)
 	UpdateStats(loser, loser_stats, false)
+
+	if (PER_ARENA_LOGGING)
+	{
+		local arena_name = winner.GetScriptScope().arena_info.name
+		local log_data = {
+			arena_name  = arena_name
+			score 	    = arena.Score
+			fraglimit   = arena.fraglimit
+			winner      = winner_stats
+			loser       = loser_stats
+			winner_gain = winner_gain
+			loser_loss  = loser_loss
+		}
+
+		local time = {}
+		LocalTime(time)
+
+		local winner_id = GetPropString(winner, "m_szNetworkIDString")
+		local loser_id = GetPropString(loser, "m_szNetworkIDString")
+
+		local filename = format("mge_arenalogs/%s_%s_%s_%d.json", winner_id.slice(5, winner_id.find("]")), loser_id, arena_name, GetUnixTimestamp(time))
+
+		StringToFile(filename, JSON_UNSAFE.Encode(log_data))
+		//TODO: Test this more, maybe we were doing it wrong when it was crashing
+		// ::StringToFile_Threaded <- @() StringToFile(filename, JSON_UNSAFE.Encode(log_data))
+		// newthread(StringToFile_Threaded).call()
+	}
 }
 
+//TODO, refactor CalcELO into something that can accept any arbitrary number of players instead
 ::CalcELO2 <- function(winner, winner2, loser, loser2) {
 
 	if (winner.IsFakeClient() || loser.IsFakeClient() || !ELO_TRACKING_MODE || loser2.IsFakeClient() || winner2.IsFakeClient())
@@ -1192,6 +1282,50 @@
 	loser.stats.elo -= loserscore
 	loser2.stats.elo -= loserscore
 
+	// Print results to players
+	MGE_ClientPrint(winner, HUD_PRINTTALK, "GainedPoints", winnerscore.tostring())
+	MGE_ClientPrint(winner2, HUD_PRINTTALK, "GainedPoints", winnerscore.tostring())
+	MGE_ClientPrint(loser, HUD_PRINTTALK, "LostPoints", loserscore.tostring())
+	MGE_ClientPrint(loser2, HUD_PRINTTALK, "LostPoints", loserscore.tostring())
+
+	// Update stats in database/file
+	UpdateStats(winner, winner_stats, false)
+	UpdateStats(winner2, winner_stats, false)
+	UpdateStats(loser, loser_stats, false)
+	UpdateStats(loser2, loser_stats, false)
+
+	if (PER_ARENA_LOGGING)
+	{
+		local arena_name = winner.GetScriptScope().arena_info.name
+		local log_data = {
+			arena_name  = arena_name
+			score 	    = arena.Score
+			fraglimit   = arena.fraglimit
+			winner      = winner_stats
+			winner2     = winner2_stats
+			loser       = loser_stats
+			loser2      = loser2_stats
+			winner_gain = winnerscore
+			loser_loss  = loserscore
+		}
+
+		local time = {}
+		LocalTime(time)
+
+		local winner_id = GetPropString(winner, "m_szNetworkIDString")
+		local loser_id = GetPropString(loser, "m_szNetworkIDString")
+
+		local winner2_id = GetPropString(winner2, "m_szNetworkIDString")
+		local loser2_id = GetPropString(loser2, "m_szNetworkIDString")
+
+
+		local filename = format("mge_arenalogs/%s|%s_%s|%s_%s_%d.json", winner_id.slice(5, winner_id.find("]")), winner2_id.slice(5, winner2_id.find("]")), loser_id.slice(5, loser_id.find("]")), loser2_id.slice(5, loser2_id.find("]")), arena_name, GetUnixTimestamp(time))
+
+		StringToFile(filename, JSON_UNSAFE.Encode(log_data))
+		//TODO: Test this more, maybe we were doing it wrong when it was crashing
+		// ::StringToFile_Threaded <- @() StringToFile(filename, JSON_UNSAFE.Encode(log_data))
+		// newthread(StringToFile_Threaded).call()
+	}
 	// local winner_team_slot = (g_iPlayerSlot[winner] > 2) ? (g_iPlayerSlot[winner] - 2) : g_iPlayerSlot[winner]
 	// local loser_team_slot = (g_iPlayerSlot[loser] > 2) ? (g_iPlayerSlot[loser] - 2) : g_iPlayerSlot[loser]
 
@@ -1214,7 +1348,6 @@
 ::CalcArenaScore <- function(arena_name)
 {
 	local arena = Arenas[arena_name]
-
 	local fraglimit = arena.fraglimit.tointeger()
 
 	//round over
@@ -1222,32 +1355,69 @@
 	{
 		local winner, loser
 
-		foreach(p, _ in arena.CurrentPlayers)
+		if (arena.MaxPlayers == 2)
 		{
-			if (arena.Score[0] >= fraglimit && p.GetTeam() == TF_TEAM_RED)
-				winner = p
-			else if (arena.Score[1] >= fraglimit && p.GetTeam() == TF_TEAM_BLUE)
-				winner = p
-			else
-				loser = p
+			foreach(p, _ in arena.CurrentPlayers)
+			{
+				if ((arena.Score[0] >= fraglimit && p.GetTeam() == TF_TEAM_RED) || (arena.Score[1] >= fraglimit && p.GetTeam() == TF_TEAM_BLUE))
+					winner = p
+				else
+					loser = p
+			}
+
+			local loser_scope = loser ? loser.GetScriptScope() : false
+			local winner_scope = winner ? winner.GetScriptScope() : false
+
+			if (!winner || !loser) return
+
+			loser_scope.won_last_match = false
+			winner_scope.won_last_match = true
+
+			MGE_ClientPrint(null, 3, "XdefeatsY",
+				winner_scope.Name,
+				winner_scope.stats.elo.tostring(),
+				loser_scope.Name,
+				loser_scope.stats.elo.tostring(),
+				fraglimit.tostring(),
+				arena_name)
+			CalcELO(winner, loser)
 		}
+		else
+		{
+			local losers  = []
+			local winners = []
 
-		local loser_scope = loser ? loser.GetScriptScope() : false
-		local winner_scope = winner ? winner.GetScriptScope() : false
+			foreach(p, _ in arena.CurrentPlayers)
+			{
+				local scope = p.GetScriptScope()
+				if (arena.Score[0] >= fraglimit && p.GetTeam() == TF_TEAM_RED)
+				{
+					winners.append(p)
+					scope.won_last_match = true
+				}
+				else if (arena.Score[1] >= fraglimit && p.GetTeam() == TF_TEAM_BLUE)
+				{
+					winners.append(p)
+					scope.won_last_match = true
+				}
+				else
+				{
+					losers.append(p)
+					scope.won_last_match = false
+				}
 
-		if (!winner || !loser) return
+			}
 
-		loser_scope.won_last_match = false
-		winner_scope.won_last_match = true
+			MGE_ClientPrint(null, 3, "XdefeatsY",
+				format("%s, %s", winners[0].GetScriptScope().Name, winners[1].GetScriptScope().Name),
+				format("%s, %s", winners[0].GetScriptScope().stats.elo.tostring(), winners[1].GetScriptScope().stats.elo.tostring()),
+				format("%s, %s", losers[0].GetScriptScope().Name, losers[1].GetScriptScope().Name),
+				format("%s, %s", losers[0].GetScriptScope().stats.elo.tostring(), losers[1].GetScriptScope().stats.elo.tostring()),
+				fraglimit.tostring(),
+				arena_name)
 
-		MGE_ClientPrint(null, 3, "XdefeatsY",
-			winner_scope.Name,
-			winner_scope.stats.elo.tostring(),
-			loser_scope.Name,
-			loser_scope.stats.elo.tostring(),
-			fraglimit.tostring(),
-		arena_name)
-		CalcELO(winner, loser)
+			CalcELO2(winners[0], winners[1], losers[0], losers[1])
+		}
 		SetArenaState(arena_name, AS_AFTERFIGHT)
 	}
 }
@@ -1351,6 +1521,7 @@
 
 	local arenaStates = {
 		[AS_IDLE] = function() {
+
 			arena.Score <- array(2, 0)
 		},
 		[AS_COUNTDOWN] = function() {
@@ -1395,6 +1566,7 @@
 			local _players = array(arena.MaxPlayers, null)
 			foreach(p, _ in arena.CurrentPlayers)
 			{
+				p.AddCustomAttribute("no_attack", 1.0, countdown_time)
 
 				if (p.GetTeam() == TEAM_SPECTATOR) continue
 
@@ -1406,10 +1578,6 @@
 
 
 				p.ForceRespawn()
-
-				//it might be better to remove this in AS_FIGHT instead of using the timer
-				//there's probably a good reason to remove no_attack separate from the countdown but I'm not sure what
-				p.AddCustomAttribute("no_attack", 1.0, countdown_time)
 
 				if (p.GetScriptScope().enable_countdown)
 				{
@@ -1481,6 +1649,7 @@
 					if (scope.ball_ent && scope.ball_ent.IsValid())
 						scope.ball_ent.Kill()
 				}
+				p.RemoveCustomAttribute("no_attack")
 			}
 		},
 		[AS_AFTERFIGHT] = function() {
@@ -1665,7 +1834,7 @@
 		printl("Getting player data...")
 		VPI.AsyncCall({
 			func="VPI_MGE_ReadWritePlayerStats",
-			timeout = 15.0,
+			// timeout = 15.0,
 			kwargs= {
 				query_mode="read",
 				network_id=steam_id_slice,
@@ -1676,7 +1845,7 @@
 
 				if (typeof(response) != "array" || !response.len())
 				{
-					// printl(response)
+					printl(response)
 					printf(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], GetPropString(player, "m_szNetworkIDString"))
 					return
 				}
@@ -1986,11 +2155,18 @@
 			arena.fraglimit = ALLMEAT_DEFAULT_FRAGLIMIT
 			return
 		}
+		"4player" : function() {
+			return
+		}
 	}
 	local ruleset_thinks = {
+
+		//absolute formatting nightmare
+		//does not cleanly map to in-game behavior when reading top to bottom
+		//TODO: clean up the annotation/glow code
+		//it barely works, the glow in particular pretty much never works correctly
+
 		function bball() {
-			// printl(arena.RulesetVote.validatedhoops)
-			// printl("temp_ball" in self.GetScriptScope())
 			local scope = self.GetScriptScope()
 			if (hoop_cooldown > Time()) return
 
@@ -2199,9 +2375,6 @@
 				hoop.GetScriptScope().hoop_validated <- false
 				local hoops = []
 
-				//TODO: clean up this awful annotation/glow code
-				//it barely works, the glow in particular pretty much never works correctly
-
 				foreach(p, _ in arena.CurrentPlayers)
 				{
 					local _scope = p.GetScriptScope()
@@ -2395,24 +2568,28 @@
 		function allmeat() {
 			return
 		}
+		"4player" : function() {
+			return
+		}
 	}
 
-		foreach (p, _ in arena.CurrentPlayers)
+	foreach (p, _ in arena.CurrentPlayers)
+
+	{
+		ruleset_inits[ruleset].call(p.GetScriptScope())
+		p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset]
+		if (ruleset == "bball" || ruleset == "koth")
 		{
-			ruleset_inits[ruleset].call(p.GetScriptScope())
-			p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset]
-			if (ruleset == "bball" || ruleset == "koth")
-			{
-				for(local child = p.FirstMoveChild(); child != null; child = child.NextMovePeer())
-					if (startswith(child.GetClassname(), "tf_weapon"))
-					{
-						SetPropInt(child, "m_nRenderMode", kRenderTransColor)
-						SetPropInt(child, "m_clrRender", 0)
-					}
-				p.AddCustomAttribute("no_attack", 1, -1)
-				p.AddCustomAttribute("disable weapon switch", 1, -1)
-			}
+			for(local child = p.FirstMoveChild(); child != null; child = child.NextMovePeer())
+				if (startswith(child.GetClassname(), "tf_weapon"))
+				{
+					SetPropInt(child, "m_nRenderMode", kRenderTransColor)
+					SetPropInt(child, "m_clrRender", 0)
+				}
+			p.AddCustomAttribute("no_attack", 1, -1)
+			p.AddCustomAttribute("disable weapon switch", 1, -1)
 		}
+	}
 
 	return
 }

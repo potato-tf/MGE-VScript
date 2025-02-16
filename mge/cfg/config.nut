@@ -57,6 +57,9 @@ const IDLE_RESPAWN_TIME                      = 3.0 //respawn time while waiting 
 const AIRSHOT_HEIGHT_THRESHOLD               = 100
 const SPECTATOR_MESSAGE_COOLDOWN             = 25.0
 
+//writes JSON logs after each match
+const PER_ARENA_LOGGING                      = true
+
 //leaderboard
 const LEADERBOARD_FORWARD_OFFSET             = 12
 const LEADERBOARD_VERTICAL_OFFSET            = 6
