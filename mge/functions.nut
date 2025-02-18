@@ -1136,7 +1136,7 @@
 
 		SetArenaState(arena_name, AS_IDLE)
 
-		player.RemoveEFlag(EFL_REMOVE_FROM_ARENA)
+		player.RemoveEFlags(EFL_REMOVE_FROM_ARENA)
 
 	//	scope.arena_info.name = "<SPECTATING>"
 	}
