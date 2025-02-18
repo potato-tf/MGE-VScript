@@ -1122,8 +1122,9 @@
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
 
-		if (arena.Queue.find(player) != null)
-			arena.Queue.remove(player)
+		local queue = arena.Queue
+		if (queue.find(player) != null)
+			queue.remove(queue.find(player))
 
 		if (player in arena.CurrentPlayers)
 			delete arena.CurrentPlayers[player]
