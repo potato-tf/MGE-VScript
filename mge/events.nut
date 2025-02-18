@@ -51,7 +51,7 @@ class MGE_Events
 			local player = GetPlayerFromUserID(params.userid)
 			// local scope = player.GetScriptScope()
 
-			player.AddEFlag(EFL_REMOVE_FROM_ARENA)
+			player.AddEFlags(EFL_REMOVE_FROM_ARENA)
 			CycleQueue(player.GetScriptScope().arena_info.name)
 			// RemovePlayer(player)
 		}
