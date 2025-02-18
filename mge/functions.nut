@@ -1136,6 +1136,8 @@
 
 		SetArenaState(arena_name, AS_IDLE)
 
+		player.RemoveEFlag(EFL_REMOVE_FROM_ARENA)
+
 	//	scope.arena_info.name = "<SPECTATING>"
 	}
 }
@@ -1162,7 +1164,7 @@
 	local next_player = queue[0]
 
 	foreach (p, _ in arena.CurrentPlayers)
-		if (!p.GetScriptScope().won_last_match)
+		if (!p.GetScriptScope().won_last_match || p.IsEFlagSet(EFL_REMOVE_FROM_ARENA))
 			RemovePlayer(p)
 
 	AddToArena(next_player, arena_name)
