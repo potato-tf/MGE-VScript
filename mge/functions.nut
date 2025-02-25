@@ -1459,21 +1459,25 @@
 	{
 		local end = arena.SpawnPoints.len() - 1
 
+		//if koth_cap is not set in the mge config, KOTH uses the last index for the cap zone
 		if (arena.IsKoth && !("koth_cap" in arena) && !arena.IsCustomRuleset)
 			end--
 
 		local idx = arena.SpawnIdx
 
 		local team = player.GetTeam()
+		//halve the end point for red (first half of the spawn points)
 		if (team == TF_TEAM_RED)
 			end /= 2
 
+		//add half the current index for blue (second half of the spawn points)
 		if (team == TF_TEAM_BLUE)
 			idx += (end / 2)
 
 		idx = (idx + 1) % end
 		arena.SpawnIdx = idx
 
+		printl(Convars.GetClientConvarValue("name", player.entindex()) + " :\n " + player.GetTeam() + " :\n " + idx)
 		return idx
 	}
 
