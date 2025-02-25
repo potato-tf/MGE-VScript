@@ -1122,8 +1122,9 @@
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
 
-		if (arena.Queue.find(player) != null)
-			arena.Queue.remove(player)
+		local queue = arena.Queue
+		if (queue.find(player) != null)
+			queue.remove(queue.find(player))
 
 		if (player in arena.CurrentPlayers)
 			delete arena.CurrentPlayers[player]
@@ -1135,6 +1136,8 @@
 		}
 
 		SetArenaState(arena_name, AS_IDLE)
+
+		player.RemoveEFlags(EFL_REMOVE_FROM_ARENA)
 
 	//	scope.arena_info.name = "<SPECTATING>"
 	}
@@ -1148,21 +1151,17 @@
 
 	if (!queue.len())
 	{
-		local i = 0
 		foreach (p, _ in arena.CurrentPlayers)
-		{
-			i++
-			RemovePlayer(p)
-			EntFireByHandle(p, "RunScriptCode", format("AddPlayer(self, `%s`)", arena_name), i * GENERIC_DELAY, null, null)
-			break
-		}
+			if (p.IsEFlagSet(EFL_REMOVE_FROM_ARENA))
+				RemovePlayer(p)
+
 		return
 	}
 
 	local next_player = queue[0]
 
 	foreach (p, _ in arena.CurrentPlayers)
-		if (!p.GetScriptScope().won_last_match)
+		if (!p.GetScriptScope().won_last_match || p.IsEFlagSet(EFL_REMOVE_FROM_ARENA))
 			RemovePlayer(p)
 
 	AddToArena(next_player, arena_name)

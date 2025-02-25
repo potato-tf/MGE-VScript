@@ -51,7 +51,12 @@ class MGE_Events
 			local player = GetPlayerFromUserID(params.userid)
 			// local scope = player.GetScriptScope()
 
-			RemovePlayer(player)
+			if (!("name" in player.GetScriptScope().arena_info))
+				return
+
+			player.AddEFlags(EFL_REMOVE_FROM_ARENA)
+			CycleQueue(player.GetScriptScope().arena_info.name)
+			// RemovePlayer(player)
 		}
 		"handicap" : function(params) {
 
