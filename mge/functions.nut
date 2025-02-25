@@ -1151,14 +1151,10 @@
 
 	if (!queue.len())
 	{
-		local i = 0
 		foreach (p, _ in arena.CurrentPlayers)
-		{
-			i++
-			RemovePlayer(p)
-			EntFireByHandle(p, "RunScriptCode", format("AddPlayer(self, `%s`)", arena_name), i * GENERIC_DELAY, null, null)
-			break
-		}
+			if (p.IsEFlagSet(EFL_REMOVE_FROM_ARENA))
+				RemovePlayer(p)
+
 		return
 	}
 
