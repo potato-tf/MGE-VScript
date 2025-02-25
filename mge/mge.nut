@@ -741,6 +741,7 @@ timer_scope.InputSetTime <- function() {
 
 }
 timer_scope.Inputsettime <- timer_scope.InputSetTime
+timer_scope.hinted <- false
 
 timer_scope.TimerThink <- function()
 {
@@ -794,7 +795,6 @@ timer_scope.TimerThink <- function()
 			}
 		}
 
-		local hinted = false
 		// Show countdown message in last minute
 		if (time_left < 60 && !(time_left.tointeger() % 10))
 		{
@@ -802,9 +802,8 @@ timer_scope.TimerThink <- function()
 			{
 				SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", time_left.tointeger())})
 				hinted = true
+				EntFireByHandle(self, "RunScriptCode", "self.GetScriptScope().hinted = false", 1.1, null, null)
 			}
-		} else {
-			hinted = false
 		}
 
 
