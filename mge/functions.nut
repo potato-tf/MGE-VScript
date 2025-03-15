@@ -621,7 +621,7 @@
 
 		_arena.CurrentPlayers <- {}
 		_arena.Queue          <- []
-		_arena.SpawnPoints    <- []
+		_arena.SpawnPoints    <- array(SPAWN_POINTS_ABSOLUTE_MAX, null)
 		_arena.Score          <- array(2, 0)
 		_arena.State          <- AS_IDLE
 		//0 breaks our countdown system, default to 1
@@ -782,7 +782,6 @@
 			{
 				try
 				{
-
 					if (
 						(_arena.IsBBall && spawn_idx > BBALL_MAX_SPAWNS) ||
 						(_arena.IsKoth && spawn_idx > KOTH_MAX_SPAWNS) 	||
@@ -800,22 +799,30 @@
 						angles = QAngle(split_spawns[3], split_spawns[4], split_spawns[5])
 
 					local spawn = [origin, angles, TEAM_UNASSIGNED]
-
-					_arena.SpawnPoints.append(spawn)
+					if (spawn_idx > SPAWN_POINTS_ABSOLUTE_MAX)
+					{
+						error(format("Spawn index out of bounds: %d.  See SPAWN_POINTS_ABSOLUTE_MAX in constants.nut", spawn_idx))
+					}
+					_arena.SpawnPoints[spawn_idx] = spawn
 				}
 				catch(e)
 					printf("[VSCRIPT MGE] Warning: Data parsing for arena failed: %s\nkey: %s, val: %s\n", e.tostring(), k, v.tostring())
 			}
 		}
+		for (local i = _arena.SpawnPoints.len() - 1; i >= 0; i--)
+		{
+			if (_arena.SpawnPoints[i] == null)
+				_arena.SpawnPoints.remove(i)
+		}
 
 		local spawnpoints_len = _arena.SpawnPoints.len()
 		foreach(i, spawn in _arena.SpawnPoints)
-			spawn[2] = i < (spawnpoints_len) / 2 ? TF_TEAM_RED : TF_TEAM_BLUE
-		// printl(arena_name + " : " + _arena.SpawnPoints.len().tostring())
+				spawn[2] = i < spawnpoints_len / 2 ? TF_TEAM_RED : TF_TEAM_BLUE
+
 		//always grab the last index for KOTH cap point
-		local idx = (_arena.SpawnPoints.len() + 1).tostring()
 		if (_arena.IsKoth)
 		{
+			local idx = (_arena.SpawnPoints.len() + 1).tostring()
 			local cap_point = split(_arena["koth_cap" in _arena ? "koth_cap" : idx], " ").apply( @(str) str.tofloat() )
 			_arena.Koth.cap_point <- Vector(cap_point[0], cap_point[1], cap_point[2])
 		}
@@ -1427,7 +1434,6 @@
 	local spawns  = arena.SpawnPoints
 	local mindist = ("mindist" in arena) ? arena.mindist.tofloat() : 0.0;
 	local idx = arena.SpawnIdx
-
 	for (local i = 0; i < MAX_CLEAR_SPAWN_RETRIES; ++i)
 	{
 		idx = GetNextSpawnPoint(player, arena_name)
@@ -1454,32 +1460,38 @@
 {
 	local arena = Arenas[arena_name]
 
-	//most non-MGE configs have fixed spawn rotations per team
 	if (!arena.IsMGE && !arena.IsEndif)
-	{
-		local end = arena.SpawnPoints.len() - 1
-
-		//if koth_cap is not set in the mge config, KOTH uses the last index for the cap zone
-		if (arena.IsKoth && !("koth_cap" in arena) && !arena.IsCustomRuleset)
-			end--
-
-		local idx = arena.SpawnIdx
-
-		local team = player.GetTeam()
-		//halve the end point for red (first half of the spawn points)
-		if (team == TF_TEAM_RED)
-			end /= 2
-
-		//add half the current index for blue (second half of the spawn points)
-		if (team == TF_TEAM_BLUE)
-			idx += (end / 2)
-
-		idx = (idx + 1) % end
-		arena.SpawnIdx = idx
-
-		printl(Convars.GetClientConvarValue("name", player.entindex()) + " :\n " + player.GetTeam() + " :\n " + idx)
-		return idx
-	}
+    {
+        local spawnpoints_len = arena.SpawnPoints.len()
+        local team = player.GetTeam()
+        local idx = arena.SpawnIdx
+        
+        // Calculate the midpoint - this is where RED team ends and BLU team begins
+        local midpoint = spawnpoints_len / 2
+        
+        // Determine valid index range based on team
+        local start_idx = (team == TF_TEAM_RED) ? 0 : midpoint
+        local end_idx = (team == TF_TEAM_RED) ? midpoint - 1 : spawnpoints_len - 1
+        
+        // Ensure idx is within the valid range for this team
+        if (idx < start_idx || idx > end_idx)
+            idx = start_idx
+        else
+            idx = (idx + 1 <= end_idx) ? idx + 1 : start_idx
+        
+        // Update the arena's spawn index for next time
+        arena.SpawnIdx = idx
+        
+        // Debug output
+		// printl("Selected spawn index: " + idx + " (Range: " + start_idx + "-" + end_idx + ")")
+        // foreach(i, spawn in arena.SpawnPoints)
+        // {
+        //     DebugDrawText(spawn[0], format("index: %d", i), false, 40.0)
+        //     DebugDrawText(spawn[0] - Vector(0, 0, 10), format("team: %d", spawn[2]), false, 40.0)
+        // }
+        
+        return idx
+    }
 
 	local shuffleModes = {
 		[0] = function() {
