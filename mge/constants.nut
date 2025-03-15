@@ -33,6 +33,14 @@ const PLAYER_THINK_INTERVAL = -1
 
 const GENERIC_DELAY = 0.1 //many things are delayed by this amount on player spawn and other important EntFires
 
+// Maximum number of spawn points allowed in an arena
+// this can safely be expanded to whatever, but I don't think any arenas will need more than 32
+// if you're making a custom map/arena with >32 spawns, increase this value
+
+// LoadSpawnPoints iterates over this value twice on map load/custom ruleset load
+// don't just set it to some crazy high number to make it go away
+const SPAWN_POINTS_ABSOLUTE_MAX = 32
+
 // Arena status
 const AS_IDLE         = 0
 const AS_COUNTDOWN    = 1
