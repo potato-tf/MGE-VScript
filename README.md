@@ -10,10 +10,12 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
   - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
 - Alternatively, if you are not using any database integration, you can rename mapspawn.nut to something else and add `script_execute new_filename_here` to your server.cfg
 
-## Don't pack this into your map
-- I generally don't recommend you do this, this will receive live regular updates like a sourcemod plugin, and will conflict with server configs
-- If you must pack this into your map, you should modify it so it loads in a way that it doesn't override any existing mge scripts on the server
+## ~~Don't pack this into your map~~
+- ~~I generally don't recommend you do this, this will receive live regular updates like a sourcemod plugin, and will conflict with server configs~~
+- If you pack this into your map, you should modify it so it loads in a way that it doesn't override any existing mge scripts on the server
 
+Striking out this disclaimer because the gamemode is in a fairly stable state currently with many major kinks ironed out.
+That being said, expect this to receive periodic updates and bug fixes.  !ruleset still needs to be fixed up in many places, ultiduo is still not properly tested, and koth still has issues.
 
 ## Configuration/Modifying game rules
 - Most arena rules can be configured at the top of the `mge/cfg/config.nut` file
@@ -32,7 +34,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | Allmeat | ✅ |
 | Koth | ⚠️ |
 | Midair? |⚠️|
-| Ultiduo | ❌ |
+| Ultiduo | ⚠️ |
 | Plain text ELO/stat tracking | ✅ |
 | Quake-style announcer lines (toggleable) | ✅ |
 | Localization | ⚠️ |
@@ -46,6 +48,8 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 
 ⚠️I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
 
+⚠️There is untested ultiduo support, it's probably still got some issues.
+
 ⚠️Theres a few AI translations in here. PRs fixing the AI translations listed in `mge/cfg/localization.nut`  would be appreciated
 
 ⚠️See below for navmesh warning, tl;dr it's very slow and will still generate bad navs on the more abstract arenas (oihguv, chillypunch, etc)
@@ -53,6 +57,8 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 ⚠️The SQLite stuff should work fine but is untested.
 
 ⚠️Ruleset voting is still very experimental, please report any issues you find.
+
+❌I want to add support for doing any team size you want at some point, like 1v2 or 5v5 or something.  It would probably need some significant rewrites in a few places so it's currently on the backburner.
 
 ## Converting your map configs
 - Open a copy of your map config file (`mgemod_spawns.cfg`) in VSCode/NP++/any text editor that supports regex search/replace
