@@ -21,7 +21,7 @@ if (!("ConstantNamingConvention" in ROOT))
 	}
 }
 
-foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
+foreach(i in [NetProps, Entities, EntityOutputs, NavMesh, Convars])
 	foreach (k, v in i.getclass())
 		if (k != "IsValid" && !(k in ROOT))
 			ROOT[k] <- i[k].bindenv(i)

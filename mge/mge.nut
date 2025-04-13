@@ -104,17 +104,14 @@ LocalTime(local_time)
 
 EntFire("worldspawn", "RunScriptCode", @"
 
-	local hostname = Convars.GetStr(`hostname`)
+	local hostname = GetStr(`hostname`)
 	local _split = split(hostname, `#`)
 	local _split_region = _split.len() == 1 ? [``, `]`] : split(_split[1], `[`)
-	SERVER_DATA.server_name = Convars.GetStr(`hostname`)
+	SERVER_DATA.server_name = GetStr(`hostname`)
 	SERVER_DATA.server_key = _split.len() == 1 ? `` : _split[1].slice(0, _split[1].find(`[`))
-	SERVER_DATA.region =  _split_region[1].slice(0, _split_region[1].find(`]`))
+	SERVER_DATA.region = _split_region.len() == 1 ? `` : _split_region[1].slice(0, _split_region[1].find(`]`))
 ", 5)
 
-// printl("\n\n" + SERVER_DATA.server_key + "\n\n")
-// printl(SERVER_DATA.region)
-// printl()
 
 if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	::MGE_LEADERBOARD_DATA <- {
@@ -155,11 +152,11 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	//this logic sucks and is broken and needs to be cleaned up
 	function koth()
 	{
-
 		local player = self
 		local scope = player.GetScriptScope()
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
+		local arena_players = arena.CurrentPlayers.keys()
 
 		if (arena.State == AS_IDLE)
 		{
@@ -181,7 +178,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		local cap_amount = team == TF_TEAM_RED ? "red_cap_time" : "blu_cap_time"
 		local enemy_cap_amount = team == TF_TEAM_RED ? "blu_cap_time" : "red_cap_time"
 		local additive_decay = arena.Koth.additive_decay
-		local current_cappers = {}
+		local current_cappers = arena.Koth.current_cappers
 		local cap_contested = false
 
 		if (typeof point == "string")
@@ -191,14 +188,12 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 
 			point = point_vector
 		}
-
 		//cap logic think
 		scope.ThinkTable.KothThink <- function()
 		{
 			local owner_team = arena.Koth.owner_team
 
 			if (!player.IsAlive()) return
-
 			if ((player.GetOrigin() - point).Length() < radius)
 			{
 				if (!(player in current_cappers) || !current_cappers[player])
@@ -207,9 +202,12 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 				foreach(p, is_capping in current_cappers)
 				{
 					if (p.GetTeam() != player.GetTeam() && is_capping)
+					{
 						cap_contested = true
+						break
+					}
+					cap_contested = false
 				}
-
 				if (owner_team != team && partial_cap_cooldowntime < Time() && !cap_contested)
 				{
 					//revert enemy partial cap progress first
@@ -242,26 +240,44 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 					}
 
 					//hud stuff
-					foreach(p, _ in arena.CurrentPlayers)
+					local _team = player.GetTeam()
+					local str = ["", ""]
+					if (arena.Koth[partial_cap_amount] != 0.0)
+						str[_team == TF_TEAM_RED ? 0 : 1] = format("Partial Cap: %.2f", arena.Koth[partial_cap_amount])
+					if (arena.Koth[enemy_partial_cap_amount] != 0.0)
+						str[_team == TF_TEAM_RED ? 1 : 0] = format("Partial Cap: %.2f", arena.Koth[enemy_partial_cap_amount])
+
+
+					// if (arena.Koth[partial_cap_amount] != 0.0)
+					// 	str[_team == TF_TEAM_RED ? 0 : 1] += format("\nPartial Cap: %.2f", arena.Koth[partial_cap_amount])
+
+					// if (owner_team == _team)
+					// {
+					// 	ent.KeyValueFromString("message", format("Cap Time: %.2f", arena.Koth[enemy_cap_amount]))
+					// 	if (p.GetScriptScope().enable_hud)
+					// 		ent.AcceptInput("Display", "", p, p)
+					// }
+					// else if (arena.Koth[enemy_partial_cap_amount] != 0.0 || arena.Koth[partial_cap_amount] != 0.0)
+					// {
+					// 	ent.KeyValueFromString("message", format("Partial Cap: %.2f", arena.Koth[partial_cap_amount]))
+					// 	if (p.GetScriptScope().enable_hud)
+					// 		ent.AcceptInput("Display", "", p, p)
+					// }
+
+					foreach(p in arena_players)
 					{
-						local _team = p.GetTeam()
-						local ent = _team == TF_TEAM_RED ? KOTH_HUD_RED : KOTH_HUD_BLU
-						local str = ""
-
-						//we own it, show cap time
-						if (owner_team == _team)
-						{
-							ent.KeyValueFromString("message", format("Cap Time: %.2f", arena.Koth[enemy_cap_amount]))
-							if (p.GetScriptScope().enable_hud)
-								ent.AcceptInput("Display", "", p, p)
-							continue
-						}
-						//we don't own it, show partial cap progress
-						ent.KeyValueFromString("message", format("Partial Cap: %.2f", arena.Koth[partial_cap_amount]))
 						if (p.GetScriptScope().enable_hud)
-							ent.AcceptInput("Display", "", p, p)
+						{
+							KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d\n%s", arena.Koth.red_cap_time.tointeger(), str[0]))
+							KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d\n%s", arena.Koth.blu_cap_time.tointeger(), str[1]))
 
+							KOTH_HUD_RED.AcceptInput("Display", "", p, p)
+							KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
+						}
 					}
+					KOTH_HUD_RED.KeyValueFromString("message", "")
+					KOTH_HUD_BLU.KeyValueFromString("message", "")
+
 					partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
 					return
 				}
@@ -272,7 +288,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 				current_cappers[player] <- false
 
 				//start decaying partial cap
-				if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount])
+				if (cap_decay_interval < Time() && arena.Koth[partial_cap_amount] > 0.0)
 				{
 					arena.Koth[partial_cap_amount] -= arena.Koth.decay_rate
 					cap_decay_interval = Time() + arena.Koth.decay_interval
@@ -308,7 +324,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 					[10] = "10sec"
 				}
 				if (_cap_amount in _announcer_sound)
-					foreach(p, _ in arena.CurrentPlayers)
+					foreach(p in arena_players)
 						EmitSoundEx({
 							sound_name = format("vo/announcer_ends_%s.mp3", _announcer_sound[_cap_amount]),
 							entity = p,
@@ -318,7 +334,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 						})
 
 				else if (_cap_amount < 6)
-					foreach(p, _ in arena.CurrentPlayers)
+					foreach(p in arena_players)
 						EmitSoundEx({
 							sound_name = format("vo/announcer_ends_%dsec.mp3", _cap_amount),
 							entity = p,
@@ -327,7 +343,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
 						})
 				//hud stuff
-				foreach(p, _ in arena.CurrentPlayers)
+				foreach(p in arena_players)
 				{
 					if (!p.GetScriptScope().enable_hud) continue
 
@@ -348,8 +364,10 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		local scope = player.GetScriptScope()
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
+		local arena_players = arena.CurrentPlayers.keys()
 		local team = player.GetTeam()
 		local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
+
 		scope.ThinkTable.BBallThink <- function() {
 
 			if (scope.ball_ent && scope.ball_ent.IsValid())
@@ -369,7 +387,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 					arena.BBall.last_score_team = team
 					BBall_SpawnBall(arena_name)
 
-					foreach(p, _ in arena.CurrentPlayers)
+					foreach(p in arena_players)
 						p.ForceRespawn()
 					return
 				}
@@ -437,7 +455,9 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	{
 		local player = self
 		local scope = player.GetScriptScope()
+
 		scope.ThinkTable.InfAmmoThink <- function() {
+
 			local weapon = player.GetActiveWeapon()
 			local itemid = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
 			if (weapon && weapon.Clip1() < weapon.GetMaxClip1() && itemid != ID_BEGGARS_BAZOOKA)
@@ -504,114 +524,24 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	HandleRoundStart()
 	LoadSpawnPoints()
 
-	Convars.SetValue("mp_humans_must_join_team", "spectator")
-	Convars.SetValue("mp_autoteambalance", 0)
-	Convars.SetValue("mp_teams_unbalance_limit", 0)
-	Convars.SetValue("mp_scrambleteams_auto", 0)
-	Convars.SetValue("mp_tournament", 0)
-	Convars.SetValue("mp_chattime", 1.0)
+	SetValue("mp_humans_must_join_team", "spectator")
+	SetValue("mp_autoteambalance", 0)
+	SetValue("mp_teams_unbalance_limit", 0)
+	SetValue("mp_scrambleteams_auto", 0)
+	SetValue("mp_tournament", 0)
+	SetValue("mp_chattime", 1.0)
 
-	Convars.SetValue("tf_weapon_criticals", 0)
-	Convars.SetValue("tf_fall_damage_disablespread", 1)
+	SetValue("tf_weapon_criticals", 0)
+	SetValue("tf_fall_damage_disablespread", 1)
 
 	//requires a custom plugin to feed m_iszMvMPopfileName to SteamWorks_SetGameDescription
 	//might be able to do this through VPI?
 	local gamedesc = format("Potato MGE (%s)", clean_map_name[GetMapName()])
 	SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
 }
-::nav_generation_state <- {
-	generator = null,
-	is_running = false
-}
-::ArenaNavGenerator <- function(only_this_arena = null) {
-	local player = GetListenServerHost()
 
-	local progress = 0
-	if (!only_this_arena) {
-		local arenas_len = Arenas.len()
-		foreach(arena_name, arena in Arenas) {
-			local generate_delay = 0.0
-			progress++
-			// Process spawn points for current arena
-			foreach(spawn_point in arena.SpawnPoints) {
-				generate_delay += 0.01
-				EntFireByHandle(player, "RunScriptCode", format(@"
-					local origin = Vector(%f, %f, %f)
-					self.SetOrigin(origin)
-					self.SnapEyeAngles(QAngle(90, 0, 0))
-						SendToConsole(`nav_mark_walkable`)
-						printl(`Marking Spawn Point: ` + origin)
-				", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), generate_delay, null, null)
-			}
-
-			// Schedule nav generation for current arena
-			EntFire("bignet", "RunScriptCode", format(@"
-				ClientPrint(null, 3, `Areas marked!`)
-				ClientPrint(null, 3, `Generating nav...`)
-				SendToConsole(`host_thread_mode -1`)
-				SendToConsole(`nav_generate_incremental`)
-				ClientPrint(null, 3, `Progress: ` + %d +`/`+ %d)
-			", progress,arenas_len), generate_delay + GENERIC_DELAY)
-
-			yield
-		}
-	} else {
-		local arena = Arenas[only_this_arena]
-		local generate_delay = 0.0
-		foreach(spawn_point in arena.SpawnPoints) {
-			generate_delay += 0.01
-			EntFireByHandle(player, "RunScriptCode", format(@"
-				local origin = Vector(%f, %f, %f)
-				self.SetOrigin(origin)
-				self.SnapEyeAngles(QAngle(90, 0, 0))
-					SendToConsole(`nav_mark_walkable`)
-					printl(`Marking Spawn Point: ` + origin)
-			", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), generate_delay, null, null)
-		}
-
-		// Schedule nav generation for current arena
-		EntFire("bignet", "RunScriptCode", @"
-			ClientPrint(null, 3, `Areas marked!`)
-			ClientPrint(null, 3, `Generating nav...`)
-			SendToConsole(`host_thread_mode -1`)
-			SendToConsole(`nav_generate_incremental`)
-		", generate_delay + GENERIC_DELAY)
-	}
-}
-
-::ResumeNavGeneration <- function() {
-	if (!nav_generation_state.is_running || !nav_generation_state.generator) return
-
-	if (nav_generation_state.generator.getstatus() == "dead") {
-		nav_generation_state.is_running = false
-		return
-	}
-
-	resume nav_generation_state.generator
-}
-
-::MGE_CreateNav <- function(only_this_arena = null) {
-	local player = GetListenServerHost()
-	player.SetMoveType(MOVETYPE_NOCLIP, MOVECOLLIDE_DEFAULT)
-
-	if (!Arenas.len())
-		LoadSpawnPoints()
-
-	AddPlayer(player, Arenas_List[0])
-
-	player.ValidateScriptScope()
-	player.GetScriptScope().NavThink <- function() {
-		if (!Convars.GetInt("host_thread_mode")) {
-			ResumeNavGeneration()
-		}
-		return 1
-	}
-	AddThinkToEnt(player, "NavThink")
-
-	// Start generating
-	nav_generation_state.generator = ArenaNavGenerator(only_this_arena)
-	nav_generation_state.is_running = true
-}
+for (local hud; hud = FindByName(hud, "__mge*");)
+	EntFireByHandle(hud, "Kill", "", -1, null, null)
 
 ::MGE_HUD <- CreateByClassname("game_text")
 MGE_HUD.KeyValueFromString("targetname", "__mge_hud")
@@ -654,6 +584,8 @@ KOTH_HUD_BLU.KeyValueFromInt("channel", 6)
 KOTH_HUD_BLU.KeyValueFromFloat("x", KOTH_HUD_BLU_POS_X)
 KOTH_HUD_BLU.KeyValueFromFloat("y", KOTH_HUD_BLU_POS_Y)
 SetPropBool(KOTH_HUD_BLU, "m_bForcePurgeFixedupStrings", true)
+
+EntFire("bignet", "RunScriptCode", "DispatchSpawn(MGE_HUD); DispatchSpawn(KOTH_HUD_RED); DispatchSpawn(KOTH_HUD_BLU)", GENERIC_DELAY)
 
 ::MGE_CHANGELEVEL <- CreateByClassname("point_intermission")
 MGE_CHANGELEVEL.KeyValueFromString("targetname", "__mge_changelevel")
@@ -749,9 +681,6 @@ timer_scope.TimerThink <- function()
 	local time_left = base_timestamp - Time()
 
 
-	// printl(time_left + " : " + base_timestamp)
-
-
 	if (time_left > 0)
 	{
 		if (!(time_left % VPI_SERVERINFO_UPDATE_INTERVAL))
@@ -775,7 +704,7 @@ timer_scope.TimerThink <- function()
 			SERVER_DATA.players_red = players[0]
 			SERVER_DATA.players_blu = players[1]
 			SERVER_DATA.players_connecting = spectators
-			SERVER_DATA.server_name = Convars.GetStr("hostname")
+			SERVER_DATA.server_name = GetStr("hostname")
 
 			if (UPDATE_SERVER_DATA) {
 				VPI.AsyncCall({
@@ -784,7 +713,6 @@ timer_scope.TimerThink <- function()
 					callback = function(response, error) {
 						if (error)
 						{
-							// printl(error)
 							return 3
 						}
 						if (SERVER_DATA.address == 0 && "address" in response)
@@ -819,13 +747,13 @@ AddThinkToEnt(MGE_TIMER, "TimerThink")
 
 	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)
 	{
-		Convars.SetValue("mp_chattime", 9999.0)
+		SetValue("mp_chattime", 9999.0)
 		EntFire("__mge_changelevel", "Activate") //do this anyway just to bring up the scoreboard/"end the round" instead of suddenly kicking everyone out
 		EntFire("player", "RunScriptCode", "EntFire(`__mge_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
 		EntFire("worldspawn", "Kill", "", 1.03)
 		return
 	}
-	Convars.SetValue("mp_chattime", 1.0)
+	SetValue("mp_chattime", 1.0)
 	EntFire("__mge_changelevel", "Activate")
 }
 MGE_Init()
