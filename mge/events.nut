@@ -308,9 +308,11 @@ class MGE_Events
 				}
 				local scope = self.GetScriptScope()
 				local handicap_hp_penalty = `handicap_hp_penalty` in scope ? scope.handicap_hp_penalty : false
-				local arena = `arena_info` in scope ? scope.arena_info.arena : false
+				local arena = `arena_info` in scope && `arena` in scope.arena_info ? scope.arena_info.arena : false
 
-				if (arena && arena.State == AS_COUNTDOWN)
+				if (!arena) return
+
+				if (arena.State == AS_COUNTDOWN)
 				{
 					self.AddCustomAttribute(`no_attack`, 1.0, -1.0)
 				}
@@ -415,9 +417,7 @@ class MGE_Events
 			{
 				// tf_bot_quota spawned bots will always be forced to a team and cause error spew when they attack eachother in the void
 				if (player.IsFakeClient())
-				{
 					EntFireByHandle(player, "RunScriptCode", "self.AddBotAttribute(IGNORE_ENEMIES); self.TakeDamage(99999, DMG_GENERIC, self)", GENERIC_DELAY, null, null)
-				}
 				else if (player.GetTeam() != TEAM_UNASSIGNED)
 					MGE_ClientPrint(null, 3, "\x07FF0000[VScript MGE] WARNING: '%s' spawned outside of arena!", scope.player_name)
 			}
@@ -570,7 +570,6 @@ class MGE_Events
 
 						TraceLineEx(ball_trace)
 
-						printl(ball_trace.endpos)
 						if (ball_trace.hit && ball_trace.enthit)
 							ball_pos = ball_trace.endpos
 					}

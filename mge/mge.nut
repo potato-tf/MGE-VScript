@@ -149,7 +149,6 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 //if a new custom arena is created, you must add a function to this table (it doesn't need to do anything, see allmeat and midair)
 ::special_arenas <- {
 
-	//this logic sucks and is broken and needs to be cleaned up
 	function koth()
 	{
 		local player = self
@@ -236,7 +235,6 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 							cap_model.SetTeam(owner_team)
 							cap_model.FirstMoveChild().SetTeam(owner_team) //glow teleporter
 						}
-						// arena.Koth[partial_cap_amount] = owner_team == self.GetTeam() ? 0.0 : 0.99
 					}
 
 					//hud stuff
@@ -246,23 +244,6 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 						str[_team == TF_TEAM_RED ? 0 : 1] = format("Partial Cap: %.2f", arena.Koth[partial_cap_amount])
 					if (arena.Koth[enemy_partial_cap_amount] != 0.0)
 						str[_team == TF_TEAM_RED ? 1 : 0] = format("Partial Cap: %.2f", arena.Koth[enemy_partial_cap_amount])
-
-
-					// if (arena.Koth[partial_cap_amount] != 0.0)
-					// 	str[_team == TF_TEAM_RED ? 0 : 1] += format("\nPartial Cap: %.2f", arena.Koth[partial_cap_amount])
-
-					// if (owner_team == _team)
-					// {
-					// 	ent.KeyValueFromString("message", format("Cap Time: %.2f", arena.Koth[enemy_cap_amount]))
-					// 	if (p.GetScriptScope().enable_hud)
-					// 		ent.AcceptInput("Display", "", p, p)
-					// }
-					// else if (arena.Koth[enemy_partial_cap_amount] != 0.0 || arena.Koth[partial_cap_amount] != 0.0)
-					// {
-					// 	ent.KeyValueFromString("message", format("Partial Cap: %.2f", arena.Koth[partial_cap_amount]))
-					// 	if (p.GetScriptScope().enable_hud)
-					// 		ent.AcceptInput("Display", "", p, p)
-					// }
 
 					foreach(p in arena_players)
 					{
@@ -342,6 +323,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 							channel = CHAN_STREAM,
 							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
 						})
+
 				//hud stuff
 				foreach(p in arena_players)
 				{
