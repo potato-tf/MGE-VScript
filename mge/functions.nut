@@ -1574,7 +1574,7 @@
 		[AS_IDLE] = function() {
 
 			arena.Score <- array(2, 0)
-			if (arena.IsBBall)
+			if (arena.IsBBall && arena.BBall.ground_ball)
 			{
 				EntFireByHandle(arena.BBall.bball_pickup_r, "Kill", "", -1, null, null)
 				EntFireByHandle(arena.BBall.bball_pickup_b, "Kill", "", -1, null, null)
@@ -1597,6 +1597,7 @@
 				arena.BBall.bball_pickup_r.KeyValueFromInt("attachment_type", 4)
 				arena.BBall.bball_pickup_r.KeyValueFromInt("spawnflags", 1)
 				DispatchSpawn(arena.BBall.bball_pickup_r)
+				SetPropBool(arena.BBall.bball_pickup_r, "m_bForcePurgeFixedUpStrings", true)
 
 				arena.BBall.bball_pickup_b <- CreateByClassname("trigger_particle")
 				arena.BBall.bball_pickup_b.KeyValueFromString("targetname", "__mge_bball_trail_3")
@@ -1605,6 +1606,7 @@
 				arena.BBall.bball_pickup_b.KeyValueFromInt("attachment_type", 4)
 				arena.BBall.bball_pickup_b.KeyValueFromInt("spawnflags", 1)
 				DispatchSpawn(arena.BBall.bball_pickup_b)
+				SetPropBool(arena.BBall.bball_pickup_b, "m_bForcePurgeFixedUpStrings", true)
 			}
 			if (arena.IsKoth)
 			{
