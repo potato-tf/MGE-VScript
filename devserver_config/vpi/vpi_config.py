@@ -42,13 +42,14 @@ DB_SUPPORT = False
 # What type?
 DB_TYPE = "mysql" # mysql or sqlite
 
+import aiomysql
+import argparse
+
 if (DB_SUPPORT):
 	DB = None
 
 	DB_TYPE = DB_TYPE.lower()
 	if (DB_TYPE == "mysql"):
-		import aiomysql
-		import argparse
 
 		# An alternative to using environment variables or setting the default values in this file is to
 		# specify them with command line options when you run vpi.py (ideally in a service)
@@ -77,7 +78,6 @@ if (DB_SUPPORT):
 			print()
 
 	elif (DB_TYPE == "sqlite"):
-		import aiosqlite
 
         # Put the path to your .db file here
 		DB_LITE = "test.db"
