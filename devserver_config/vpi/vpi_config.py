@@ -33,7 +33,7 @@ if (not SECRET and not BYPASS_SECRET):
 	raise RuntimeError("Please set your secret token")
 
 # Change this to your scriptdata directory
-SCRIPTDATA_DIR = genv("VPI_SCRIPTDATA_DIR", r"C:\Program Files (x86)\Steam\steamapps\common\Team Fortress 2\tf\scriptdata")
+SCRIPTDATA_DIR = genv("SCRIPTDATA_DIR", r"C:\Program Files (x86)\Steam\steamapps\common\Team Fortress 2\tf\scriptdata")
 if (not os.path.exists(SCRIPTDATA_DIR)): raise RuntimeError("SCRIPTDATA_DIR does not exist")
 
 # Are you going to be interacting with a database?
@@ -152,7 +152,7 @@ if (USE_COLOR):
 else:
 	CONSOLE_FORMATTER = FILE_FORMATTER
 
-CONSOLE_HANDLER = logging.StreamHandler(stream=sys.stdout)
+CONSOLE_HANDLER = logging.StreamHandler(stream=sys.stderr)
 CONSOLE_HANDLER.setLevel(LOG_MIN_CONSOLE_LEVEL)
 CONSOLE_HANDLER.setFormatter(CONSOLE_FORMATTER)
 CONSOLE_HANDLER.addFilter(lambda _: LOG_USE_CONSOLE)

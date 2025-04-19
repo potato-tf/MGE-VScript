@@ -44,6 +44,8 @@ local SOURCE_WHITELIST = {
 	"mge.nut": ["VPI_MGE_DBInit", "VPI_MGE_AutoUpdate", "VPI_MGE_UpdateServerData"],
 };
 
+local SCRIPTDATA_DIR = "mge_playerdata";
+
 // How often we normally write to file (in ticks)
 local WRITE_INTERVAL = 198; // 3 s
 
@@ -209,7 +211,7 @@ if (PROTECTED_FILE_FUNCTIONS)
 		if (typeof(str)  != "string") return;
 		if (!ValidateFileCaller(callinfo.src, file)) return;
 
-		stringtofile(file, str);
+		stringtofile(format("%s/%s", SCRIPTDATA_DIR, file), str);
 	};
 
 	::FileToString <- function(file, __challenge=false) {
@@ -224,7 +226,7 @@ if (PROTECTED_FILE_FUNCTIONS)
 		if (typeof(file) != "string") return;
 		if (!ValidateFileCaller(callinfo.src, file)) return;
 
-		return filetostring(file);
+		return filetostring(format("%s/%s", SCRIPTDATA_DIR, file));
 	};
 }
 
