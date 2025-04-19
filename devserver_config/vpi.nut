@@ -61,7 +61,7 @@ local URGENT_WRITE_MAX_COUNT = 3; // How many urgent calls per WRITE_INTERVAL ar
 local urgent_write_count     = 0;
 
 // How many seconds to wait for response before call times out
-local CALLBACK_TIMEOUT = 3.0;
+local CALLBACK_TIMEOUT = 10.0;
 // How often we check on timeouts (in ticks)
 local CALLBACK_TIMEOUT_CHECK_INTERVAL = 33; // 0.5s
 
