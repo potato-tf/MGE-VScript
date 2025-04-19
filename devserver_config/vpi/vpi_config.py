@@ -37,7 +37,7 @@ SCRIPTDATA_DIR = genv("SCRIPTDATA_DIR", r"C:\Program Files (x86)\Steam\steamapps
 if (not os.path.exists(SCRIPTDATA_DIR)): raise RuntimeError("SCRIPTDATA_DIR does not exist")
 
 # Are you going to be interacting with a database?
-DB_SUPPORT = False
+DB_SUPPORT = True
 
 # What type?
 DB_TYPE = "mysql" # mysql or sqlite
