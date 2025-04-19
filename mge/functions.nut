@@ -1092,7 +1092,7 @@
 		team = player.GetTeam()
 	}
 	// Choose the team with the lower amount of players
-	local red  = 0, blue = 0
+	local red = 0, blue = 0
 	foreach(p, _ in arena.CurrentPlayers)
 	{
 		if (p.GetTeam() == TF_TEAM_RED)
