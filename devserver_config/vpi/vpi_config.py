@@ -140,11 +140,18 @@ if (USE_COLOR):
 else:
 	CONSOLE_FORMATTER = FILE_FORMATTER
 
-CONSOLE_HANDLER = logging.StreamHandler(stream=sys.stderr)
+CONSOLE_HANDLER = logging.StreamHandler(stream=sys.stdout)
 CONSOLE_HANDLER.setLevel(LOG_MIN_CONSOLE_LEVEL)
 CONSOLE_HANDLER.setFormatter(CONSOLE_FORMATTER)
 CONSOLE_HANDLER.addFilter(lambda _: LOG_USE_CONSOLE)
 LOGGER.addHandler(CONSOLE_HANDLER)
+
+CONSOLE_ERROR_HANDLER = logging.StreamHandler(stream=sys.stderr)
+CONSOLE_ERROR_HANDLER.setLevel(logging.ERROR)
+CONSOLE_ERROR_HANDLER.setFormatter(CONSOLE_FORMATTER)
+CONSOLE_ERROR_HANDLER.addFilter(lambda _: LOG_USE_CONSOLE)
+LOGGER.addHandler(CONSOLE_ERROR_HANDLER)
+
 
 FILE_HANDLER = TimedRotatingFileHandler("vpi.log", when="W0", encoding="utf-8", backupCount=5, delay=True)
 FILE_HANDLER.setLevel(LOG_MIN_FILE_LEVEL)
