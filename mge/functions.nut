@@ -1116,9 +1116,11 @@
 	arena.CurrentPlayers[player] <- scope.stats.elo.tointeger()
 
 	// Spawn (goto player_spawn)
+	player.AddEFlags(EFL_ADDING_TO_ARENA)
 	player.ForceChangeTeam(team, true)
 	scope.arena_info.team = team
 	player.ForceRegenerateAndRespawn()
+	player.RemoveEFlags(EFL_ADDING_TO_ARENA)
 
 	if (player.IsFakeClient())
 		player.RemoveBotAttribute(IGNORE_ENEMIES)

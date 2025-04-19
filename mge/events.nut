@@ -617,7 +617,7 @@ class MGE_Events
 						}
 					}
 			}
-			else if (params.oldteam > TEAM_SPECTATOR && team > TEAM_SPECTATOR)
+			else if (params.oldteam > TEAM_SPECTATOR && team > TEAM_SPECTATOR && !player.IsEFlagSet(EFL_ADDING_TO_ARENA))
 			{
 				if (!player.IsFakeClient())
 				{
