@@ -3,7 +3,7 @@ import re
 
 import vpi_config
 
-logger = vpi_config.LOGGER
+LOGGER = vpi_config.LOGGER
 
 # Note:
 # All interface functions should be decorated with either WrapDB or WrapInterface
