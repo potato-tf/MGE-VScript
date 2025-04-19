@@ -111,13 +111,13 @@ def WrapInterface(func):
 player_data_columns = "steam_id, name, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped"
 @WrapDB
 async def VPI_MGE_DBInit(info, cursor):
-	print(COLOR['HEADER'], "Initializing MGE database...", COLOR['ENDC'])
+	LOGGER.info("Initializing MGE database...")
 	# await cursor.execute("CREATE TABLE IF NOT EXISTS mge_leaderboard (steam_id TEXT PRIMARY KEY, elo INTEGER)")
 
 	try:
 		await cursor.execute(f"SELECT {player_data_columns} FROM mge_playerdata LIMIT 1")
 	except Exception as e:
-		print(COLOR['YELLOW'], "No mge_playerdata table found, creating...", COLOR['ENDC'])
+		LOGGER.info("No mge_playerdata table found, creating...")
 		await cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
 			steam_id INTEGER PRIMARY KEY, 
 			name VARCHAR(255),
@@ -134,7 +134,7 @@ async def VPI_MGE_DBInit(info, cursor):
 			koth_points_capped BIGINT)"""
 		)
 	finally:
-		print(COLOR['GREEN'], "MGE database initialized, check server console for '[VPI]: Database initialized successfully'", COLOR['ENDC'])
+		LOGGER.info("MGE database initialized, check server console for '[VPI]: Database initialized successfully'")
 	return await cursor.fetchall()
 
 DEFAULT_MAX_LEADERBOARD_ENTRIES = 7
@@ -161,7 +161,8 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
 
     if (query_mode == "read" or query_mode == 0):
         
-        print(COLOR['CYAN'], f"Fetching player data for steam ID {network_id}", COLOR['ENDC'])
+        # print(COLOR['CYAN'], f"Fetching player data for steam ID {network_id}", COLOR['ENDC'])
+        LOGGER.info(f"Fetching player data for steam ID {network_id}")
         await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
         result = await cursor.fetchall()
 
@@ -211,13 +212,13 @@ async def VPI_MGE_AutoUpdate(info, test=False):
         branch = kwargs["branch"] if "branch" in kwargs else "main"
         clone_dir = kwargs["clone_dir"] if "clone_dir" in kwargs else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if not repo_url:
-            print(COLOR['RED'], "[VPI] Error: No repository URL provided", COLOR['ENDC'])
+            LOGGER.error("[VPI] Error: No repository URL provided")
             return []
 
         # Create temp directory for clone
         temp_dir = tempfile.mkdtemp()
 
-        print(COLOR['GREEN2'], f"Cloning repository {repo_url} into {temp_dir}", COLOR['ENDC'])
+        LOGGER.info(f"Cloning repository {repo_url} into {temp_dir}")
         # Clone the repository using GitPython
         repo = git.Repo.clone_from(repo_url, temp_dir, branch=branch)
 
@@ -243,7 +244,7 @@ async def VPI_MGE_AutoUpdate(info, test=False):
                         if f1.read() != f2.read():
                             changed_files.append(relative_path)
 	
-        print(COLOR['GREEN'], f"Changed files: {changed_files}", COLOR['ENDC'])
+        LOGGER.info(f"Changed files: {changed_files}")
 
         #move changed files to the clone directory
         for file in changed_files:
@@ -253,7 +254,7 @@ async def VPI_MGE_AutoUpdate(info, test=False):
         return changed_files
 
     except Exception as e:
-        print(COLOR['RED'], f"[VPI] Error during auto-update: {str(e)}", COLOR['ENDC'])
+        LOGGER.error(f"[VPI] Error during auto-update: {str(e)}")
         return []
 
     finally:
@@ -262,7 +263,7 @@ async def VPI_MGE_AutoUpdate(info, test=False):
             try:
                 shutil.rmtree(temp_dir, ignore_errors=True)
             except Exception as e:
-                print(COLOR['YELLOW'], f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}", COLOR['ENDC'])
+                LOGGER.warning(f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}")
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
