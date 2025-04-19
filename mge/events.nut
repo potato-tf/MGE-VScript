@@ -452,6 +452,10 @@ class MGE_Events
 				EntFire("tf_dropped_weapon", "Kill")
 
 			EntFire("tf_ammo_pack", "Kill")
+
+			if (params.death_flags & TF_DEATH_FEIGN_DEATH)
+				return
+
 			local victim = GetPlayerFromUserID(params.userid)
 			local attacker = GetPlayerFromUserID(params.attacker)
 			local victim_origin = victim.GetOrigin()
