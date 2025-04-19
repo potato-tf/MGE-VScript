@@ -49,6 +49,32 @@ DB_PORT	    =  int(genv("DB_PORT",  3306))
 DB_DATABASE	=  genv("DB_INTERFACE", "interface")
 DB_PASSWORD	=  genv("DB_PASSWORD")
 
+# Get a connection to the current database
+async def _GetDBConnection():
+	if (DB_TYPE == "mysql"):
+		return await DB.acquire() # Pool
+	elif (DB_TYPE == "sqlite"):
+		return DB # Connection
+	else:
+		return
+
+DB = None
+# Ping the database to see if we're connected
+async def PingDB():
+	try:
+		conn = await _GetDBConnection()
+		try:
+			cursor = await conn.cursor()
+			await cursor.execute("SELECT 1")
+			return True
+		except:
+			return False
+		finally:
+			if (DB_TYPE == "mysql"):
+				DB.release(conn)
+	except:
+		return False
+
 if (DB_SUPPORT):
 	DB = None
 
@@ -70,31 +96,6 @@ if (DB_SUPPORT):
 
 	else:
 		raise RuntimeError("DB_TYPE must be either 'mysql' or 'sqlite'")
-
-	# Get a connection to the current database
-	async def _GetDBConnection():
-		if (DB_TYPE == "mysql"):
-			return await DB.acquire() # Pool
-		elif (DB_TYPE == "sqlite"):
-			return DB # Connection
-		else:
-			return
-
-	# Ping the database to see if we're connected
-	async def PingDB():
-		try:
-			conn = await _GetDBConnection()
-			try:
-				cursor = await conn.cursor()
-				await cursor.execute("SELECT 1")
-				return True
-			except:
-				return False
-			finally:
-				if (DB_TYPE == "mysql"):
-					DB.release(conn)
-		except:
-			return False
 
 # ====================================================================================================================== #
 
