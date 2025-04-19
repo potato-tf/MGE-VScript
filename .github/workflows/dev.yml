@@ -49,11 +49,17 @@ jobs:
             --exclude='mge/vpi/vpi_interfaces.py' \
             --exclude='mge/vpi/vpi_config.py' \
             --exclude='mge/vpi/vpi_watch.bat' \
+            --exclude='mge/vpi/vpi.nut' \
+            --exclude='mge/cfg/config.nut' \
             --exclude='requirements.txt' \
             --exclude='mge_windows_setup.bat' \
-            -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mge ${a[1]}:/var/tf2server/tf/scripts/vscripts
+            -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mge ${a[1]}:/var/tf2server/tf/scripts/vscripts &
 
-            rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mapspawn.nut ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge_init.nut
+            # Sync config files
+            rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./devserver_config/vpi.nut ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/vpi/vpi.nut &
+            rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./devserver_config/config.nut ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/cfg/config.nut &
+            rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./devserver_config/vpi_config.py ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge/vpi/vpi_config.py &
+            rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mapspawn.nut ${a[1]}:/var/tf2server/tf/scripts/vscripts/mge_init.nut &
           } &
           done
           wait
