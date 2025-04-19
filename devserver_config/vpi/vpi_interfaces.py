@@ -169,7 +169,7 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
         if not result:
             # Parameterized INSERT with proper value ordering
             await cursor.execute(
-                f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES (%s, %s, {default_zeroes}, %s)",
+                f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES (%s, %s, %s, {default_zeroes})",
                 (network_id, name, default_elo)
             )
             await cursor.execute("SELECT * FROM mge_playerdata WHERE steam_id = %s", (network_id,))
