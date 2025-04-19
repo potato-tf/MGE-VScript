@@ -43,31 +43,17 @@ DB_SUPPORT = False
 DB_TYPE = "mysql" # mysql or sqlite
 
 import aiomysql
-import argparse
+DB_HOST     =  genv("DB_HOST",      "localhost")
+DB_USER     =  genv("DB_USER",      "user")
+DB_PORT	    =  int(genv("DB_PORT",  3306))
+DB_DATABASE	=  genv("DB_INTERFACE", "interface")
+DB_PASSWORD	=  genv("DB_PASSWORD")
 
 if (DB_SUPPORT):
 	DB = None
 
 	DB_TYPE = DB_TYPE.lower()
 	if (DB_TYPE == "mysql"):
-
-		# An alternative to using environment variables or setting the default values in this file is to
-		# specify them with command line options when you run vpi.py (ideally in a service)
-		PARSER = argparse.ArgumentParser()
-		PARSER.add_argument("--host", help="Hostname for database connection", type=str)
-		PARSER.add_argument("-u", "--user", help="User for database connection", type=str)
-		PARSER.add_argument("-p", "--port", help="Port for database connection", type=int)
-		PARSER.add_argument("-db", "--database", help="Database to use", type=str)
-		PARSER.add_argument("--password", help="Password for database connection", type=str)
-
-		args = PARSER.parse_args()
-
-		# Change to your database info
-		DB_HOST     = args.host     if args.host     else genv("DB_HOST",      "localhost")
-		DB_USER     = args.user     if args.user     else genv("DB_USER",      "user")
-		DB_PORT	    = args.port     if args.port     else int(genv("DB_PORT",  3306))
-		DB_DATABASE	= args.database if args.database else genv("DB_INTERFACE", "interface")
-		DB_PASSWORD	= args.password if args.password else genv("DB_PASSWORD")
 
 		# Validation
 		for env in [DB_HOST, DB_USER, DB_PORT, DB_DATABASE, SCRIPTDATA_DIR]:
