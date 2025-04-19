@@ -1741,7 +1741,6 @@
 		},
 	}
 	arenaStates[state]()
-	printl(arena_name + " state: " + state)
 }
 ::SetSpecialArena <- function(player, arena_name) {
 
