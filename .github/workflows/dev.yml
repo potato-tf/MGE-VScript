@@ -49,7 +49,6 @@ jobs:
             --exclude='mge/vpi/vpi_interfaces.py' \
             --exclude='mge/vpi/vpi_config.py' \
             --exclude='mge/vpi/vpi_watch.bat' \
-            --exclude='mge/cfg/config.nut' \
             --exclude='requirements.txt' \
             --exclude='mge_windows_setup.bat' \
             -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mge ${a[1]}:/var/tf2server/tf/scripts/vscripts
