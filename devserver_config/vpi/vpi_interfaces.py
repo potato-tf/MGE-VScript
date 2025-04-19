@@ -147,7 +147,7 @@ async def VPI_MGE_PopulateLeaderboard(info, cursor):
 
 	return await cursor.fetchall()
 
-default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 2))
+default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 3))
 @WrapDB
 async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     kwargs = info["kwargs"]
