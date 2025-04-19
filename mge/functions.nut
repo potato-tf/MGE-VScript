@@ -1574,11 +1574,14 @@
 		[AS_IDLE] = function() {
 
 			arena.Score <- array(2, 0)
-			if (arena.IsBBall && arena.BBall.ground_ball)
+			if (arena.IsBBall)
 			{
-				EntFireByHandle(arena.BBall.bball_pickup_r, "Kill", "", -1, null, null)
-				EntFireByHandle(arena.BBall.bball_pickup_b, "Kill", "", -1, null, null)
-				EntFireByHandle(arena.BBall.ground_ball, "Kill", "", -1, null, null)
+				if (arena.BBall.bball_pickup_r && arena.BBall.bball_pickup_r.IsValid())
+					EntFireByHandle(arena.BBall.bball_pickup_r, "Kill", "", -1, null, null)
+				if (arena.BBall.bball_pickup_b && arena.BBall.bball_pickup_b.IsValid())
+					EntFireByHandle(arena.BBall.bball_pickup_b, "Kill", "", -1, null, null)
+				if (arena.BBall.ground_ball && arena.BBall.ground_ball.IsValid())
+					EntFireByHandle(arena.BBall.ground_ball, "Kill", "", -1, null, null)
 			}
 		},
 		[AS_COUNTDOWN] = function() {
