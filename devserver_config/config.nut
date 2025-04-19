@@ -35,7 +35,7 @@ const GAMEMODE_AUTOUPDATE_INTERVAL           = 120
 //potato.tf uses this function to send periodic put requests to their webserver so it shows up on the website
 //this function is empty for the release version, feel free to use it for your own purposes
 //VPI_MGE_UpdateServerDataDB does work but is unused
-const UPDATE_SERVER_DATA                     = false
+const UPDATE_SERVER_DATA                     = true
 const VPI_SERVERINFO_UPDATE_INTERVAL         = 3
 
 //general
