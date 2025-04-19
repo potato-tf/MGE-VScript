@@ -1846,8 +1846,11 @@
 
 	if (!ELO_TRACKING_MODE || player.IsFakeClient()) return
 
-	local scope = player.GetScriptScope()
 	local steam_id = GetPropString(player, "m_szNetworkIDString")
+
+	if (steam_id == "BOT") return
+
+	local scope = player.GetScriptScope()
 	local steam_id_slice = steam_id.slice(5, steam_id.find("]"))
 	local filename = format("mge_playerdata/%s.nut", steam_id_slice)
 
