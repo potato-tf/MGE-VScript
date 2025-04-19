@@ -265,9 +265,37 @@ async def VPI_MGE_AutoUpdate(info, test=False):
             except Exception as e:
                 LOGGER.warning(f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}")
 
+import requests
+import datetime
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
+    kwargs = info["kwargs"]
 
+    # Convert time dictionary to datetime object
+    time_data = kwargs["update_time"]
+
+    timestamp = datetime.datetime(
+        year=time_data.get("year", datetime.datetime.now().year),
+        month=time_data.get("month", 1),
+        day=time_data.get("day", 1),
+        hour=time_data.get("hour", 0),
+        minute=time_data.get("minute", 0),
+        second=time_data.get("second", 0)
+    ).strftime('%Y-%m-%d %H:%M:%S')
+
+    name = kwargs["server_name"]
+
+    response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={vpi_config.STEAM_API_KEY}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
+
+    server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
+
+    if server and "address" in server:
+        kwargs['address'] = server['address']
+    
+    if (kwargs["map"].startswith("workshop/")):
+        kwargs["map"] = server['map']
+    
+    requests.post(rf"https://potato.tf/api/serverstatus", headers={"auth-token": vpi_config.WEBSITE_API_KEY}, json=kwargs)
     return info
 
 @WrapDB
@@ -288,7 +316,7 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
 
     name = kwargs["server_name"]
 
-    response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
+    response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={STEAM_API_KEY}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
 
