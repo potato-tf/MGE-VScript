@@ -268,7 +268,7 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 import requests
 import datetime
 @WrapInterface
-async def VPI_MGE_UpdateServerData(info, cursor):
+async def VPI_MGE_UpdateServerData(info):
     kwargs = info["kwargs"]
 
     # Convert time dictionary to datetime object
