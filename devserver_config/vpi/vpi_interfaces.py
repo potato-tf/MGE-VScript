@@ -306,7 +306,7 @@ async def VPI_MGE_UpdateServerData(info):
             camelcase_kwargs[key] = value
     
     kwargs = camelcase_kwargs
-    requests.put(kwargs['endpoint_url'], headers={"auth-token": vpi_config.WEB_API_KEY}, json=kwargs)
+    requests.put(kwargs["endpointUrl"], headers={"auth-token": vpi_config.WEB_API_KEY}, json=kwargs)
     return info
 
 @WrapDB
