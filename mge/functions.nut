@@ -2680,6 +2680,7 @@
 		else
 			returnstring += s
 	}
+	returnstring += str[strlen - 1].tochar()
 	return returnstring
 }
 
