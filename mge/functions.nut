@@ -2673,14 +2673,13 @@
 		start = index + findwhatlen
 		previndex = start
 	}
-	local splitlist_len = splitlist.len()
+	local splitlist_len = splitlist.len() - 1
 	foreach (index, s in splitlist) {
 		if (index < splitlist_len)
 			returnstring += format("%s%s", s, replace)
 		else
 			returnstring += s
 	}
-	returnstring += str[strlen - 1].tochar()
 	return returnstring
 }
 
