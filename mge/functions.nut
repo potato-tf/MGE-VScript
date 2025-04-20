@@ -86,11 +86,9 @@
 				if (player.IsFakeClient()) return
 
 				local command = strip(GetClientConvarValue("cl_class", player_entindex))
-				if (command == cvarhijack) return
+				if (strip(command) == "" || command == cvarhijack) return
 
-				local command_only = split(command, " ", true)
-				if (!command_only.len()) return
-				command_only = command_only[0]
+				local command_only = strip(split(command, " ", true)[0])
 
 				if (command_only in MGE_Events.chat_commands)
 					MGE_Events.chat_commands[command_only]({userid = ALL_PLAYERS[player], text = command})
