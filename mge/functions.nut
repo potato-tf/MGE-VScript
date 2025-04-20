@@ -2659,7 +2659,7 @@
 	local charlist 	= array(str.len(), "")
 
 	foreach (i, c in str)
-		charlist[i] = c == findwhat[0] ? replace : c
+		charlist[i] = c == findwhat[0] ? replace[0] : c
 
 	foreach(c in charlist)
 		returnstring += c.tochar()
