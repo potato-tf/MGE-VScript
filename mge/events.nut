@@ -201,7 +201,7 @@ class MGE_Events
 				return
 			}
 
-			local stat = split(text, " ").len() > 1 ? split(text, " ")[1].tolower() : "elo"
+			local stat = split(text, " ").len() > 1 ? split(text, " ",  true)[1].tolower() : "elo"
 
 			local data = ""
 			if (stat == "elo")
@@ -220,6 +220,12 @@ class MGE_Events
 							data += format("%s: %s\n", MGE_LEADERBOARD_DATA[leaderboard_stat][i][2], MGE_LEADERBOARD_DATA[leaderboard_stat][i][1].tostring())
 						break
 					}
+			}
+
+			if (data == "")
+			{
+				MGE_ClientPrint(player, HUD_PRINTTALK, "top5error")
+				return
 			}
 
 			MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Title", format(" (%s)\n%s", leaderboard_stat, data))
