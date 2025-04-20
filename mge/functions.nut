@@ -467,8 +467,7 @@
 	// if (ELO_TRACKING_MODE == 2 && ENABLE_LEADERBOARD)
 	if (ENABLE_LEADERBOARD)
 	{
-		//MGE_LEADERBOARD_DATA
-		// compilestring(FileToString("leaderboard.nut"))()
+		//misleading name, also handles the actual leaderboard
 		::DoLeaderboardCam <- function()
 		{
 			//spawn our camera
@@ -547,74 +546,80 @@
 			MGE_Leaderboard.ValidateScriptScope()
 
 			local think_override = LEADERBOARD_UPDATE_INTERVAL
-			MGE_Leaderboard.GetScriptScope().UpdateLeaderboard <- function() {
+			//cache these off in a separate table so the perf counter can find them
+			local leaderboard_scope = {
+				function UpdateLeaderboard() {
 
-				// Store the keys and current index to track progress across yields
-				if (!("_current_stat_index" in this))
-					this._current_stat_index <- 0
+					// Store the keys and current index to track progress across yields
+					if (!("_current_stat_index" in this))
+						this._current_stat_index <- 0
 
-				local stat_keys = MGE_LEADERBOARD_DATA.keys()
+					local stat_keys = MGE_LEADERBOARD_DATA.keys()
 
-				local stat_index = this._current_stat_index
+					local stat_index = this._current_stat_index
 
-				local stat = stat_keys[stat_index in stat_keys ? stat_index : 0]
+					local stat = stat_keys[stat_index in stat_keys ? stat_index : 0]
 
-				local column_name = ""
-				split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
-				column_name = column_name.slice(1)
+					local column_name = ""
+					split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
+					column_name = column_name.slice(1)
 
-				VPI.AsyncCall({
-					func="VPI_MGE_PopulateLeaderboard",
-					kwargs= {
-						order_filter = column_name,
-						max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
-					},
-					callback=function(response, error) {
-						if (typeof(response) != "array" || !response.len())
-						{
-							// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
-							return
+					VPI.AsyncCall({
+						func="VPI_MGE_PopulateLeaderboard",
+						kwargs= {
+							order_filter = column_name,
+							max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
+						},
+						callback=function(response, error) {
+							if (typeof(response) != "array" || !response.len())
+							{
+								// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
+								return
+							}
+							foreach (i, r in response)
+							{
+								local data = MGE_LEADERBOARD_DATA[stat]
+								data[i] = r
+							}
 						}
-						foreach (i, r in response)
+					})
+
+					// Process one stat per yield
+					if (this._current_stat_index < stat_keys.len()) {
+						local steamid_list = MGE_LEADERBOARD_DATA[stat]
+
+						local message = format("          %s:\n", stat)
+						foreach(i, user_info in steamid_list)
 						{
-							local data = MGE_LEADERBOARD_DATA[stat]
-							data[i] = r
+							if (!user_info)
+							{
+								think_override = 1
+								user_info = ["NONE", -INT_MAX]
+							} else {
+								think_override = LEADERBOARD_UPDATE_INTERVAL
+							}
+
+							local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
+							message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 						}
+						MGE_Leaderboard.KeyValueFromString("message", message)
+
+						this._current_stat_index++
+						yield
 					}
-				})
 
-				// Process one stat per yield
-				if (this._current_stat_index < stat_keys.len()) {
-					local steamid_list = MGE_LEADERBOARD_DATA[stat]
-
-					local message = format("          %s:\n", stat)
-					foreach(i, user_info in steamid_list)
-					{
-						if (!user_info)
-						{
-							think_override = 1
-							user_info = ["NONE", -INT_MAX]
-						} else {
-							think_override = LEADERBOARD_UPDATE_INTERVAL
-						}
-
-						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
-						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
-					}
-					MGE_Leaderboard.KeyValueFromString("message", message)
-
-					this._current_stat_index++
-					yield
+					// Reset index and refresh data when done with all stats
+					this._current_stat_index = 0
 				}
+				function LeaderboardThink() {
+					local gen = UpdateLeaderboard()
+					resume gen
+					return think_override
+				}
+			}
+			foreach (k, v in leaderboard_scope)
+				MGE_Leaderboard.GetScriptScope()[k] <- v
 
-				// Reset index and refresh data when done with all stats
-				this._current_stat_index = 0
-			}
-			MGE_Leaderboard.GetScriptScope().LeaderboardThink <- function() {
-				local gen = UpdateLeaderboard()
-				resume gen
-				return think_override
-			}
 			AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
 		}
 		//delay this until ents are spawned
