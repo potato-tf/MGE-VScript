@@ -87,6 +87,14 @@ LocalTime(local_time)
 	players_red = 0
 	region = ""
 	server_name = ""
+	classes = ""
+	is_fake_ip = false
+	steam_ids = []
+	in_protected_match = false
+	matchmaking_disable_time = 0
+	server_key = ""
+	server_name = ""
+
 	status = "Waiting for players"
 	update_time = {
 		year = local_time.year
