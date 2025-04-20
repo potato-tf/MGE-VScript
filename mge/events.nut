@@ -193,7 +193,37 @@ class MGE_Events
 
 		"top5": function(params) {
 			local player = GetPlayerFromUserID(params.userid)
-			MGE_ClientPrint(player, HUD_PRINTTALK, "Coming Soon!")
+			local text = params.text
+
+			if (!ENABLE_LEADERBOARD)
+			{
+				MGE_ClientPrint(player, HUD_PRINTTALK, "top5error")
+				return
+			}
+
+			local stat = split(text, " ").len() > 1 ? split(text, " ")[1].tolower() : "elo"
+
+			local data = ""
+			if (stat == "elo")
+			{
+				MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Title", " (ELO)", MGE_LEADERBOARD_DATA.ELO)
+
+				for (local i = 0; i < 5; i++)
+					data += format("%s: %s\n", MGE_LEADERBOARD_DATA.ELO[i][2], MGE_LEADERBOARD_DATA.ELO[i][1])
+			}
+			else
+			{
+				foreach(leaderboard_stat, data in MGE_LEADERBOARD_DATA)
+					if (leaderboard_stat == stat || startswith(leaderboard_stat, stat))
+					{
+						for (local i = 0; i < 5; i++)
+							data += format("%s: %s\n", MGE_LEADERBOARD_DATA[leaderboard_stat][i][2], MGE_LEADERBOARD_DATA[leaderboard_stat][i][1])
+						break
+					}
+			}
+
+			MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Title", format(" (%s)\n%s", leaderboard_stat, data))
+
 			// if (ELO_TRACKING_MODE > 1)
 				// MGE_ClientPrint(player, HUD_PRINTTALK, "Visit https://potato.tf/mge_leaderboard for leaderboard stats")
 		}

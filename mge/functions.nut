@@ -548,6 +548,7 @@
 
 			local think_override = LEADERBOARD_UPDATE_INTERVAL
 			MGE_Leaderboard.GetScriptScope().UpdateLeaderboard <- function() {
+
 				// Store the keys and current index to track progress across yields
 				if (!("_current_stat_index" in this))
 					this._current_stat_index <- 0
@@ -557,8 +558,6 @@
 				local stat_index = this._current_stat_index
 
 				local stat = stat_keys[stat_index in stat_keys ? stat_index : 0]
-
-				// printl("populating leaderboard")
 
 				local column_name = ""
 				split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
@@ -599,8 +598,6 @@
 							think_override = LEADERBOARD_UPDATE_INTERVAL
 						}
 
-						// foreach( u in user_info)
-							// printl(u)
 						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
 						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 					}
@@ -1836,6 +1833,9 @@
 			// printl(typeof a)
 		if (args.len() > 3)
 			str = format.acall([this, str].extend(format_args))
+
+		if (player && !endswith(str, "\x01"))
+			str = format("%s\x01", str)
 
 		if (!player || p == player)
 			ClientPrint(p, target, str)
