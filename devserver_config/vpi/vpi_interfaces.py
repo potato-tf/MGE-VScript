@@ -294,7 +294,7 @@ async def VPI_MGE_UpdateServerData(info):
     
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']
-    requests.put(rf"https://potato.tf/api/serverstatus", headers={"auth-token": vpi_config.STEAM_API_KEY}, json=kwargs)
+    requests.put(rf"https://potato.tf/api/serverstatus", headers={"auth-token": vpi_config.WEBSITE_API_KEY}, json=kwargs)
     return info
 
 @WrapDB
