@@ -17,7 +17,7 @@ const MAP_RESTART_TIMER                       = 7200
  *              setting this to true will send a retry command to every player and kill worldspawn             *
  *   this obviously assumes you use a watchdog script/systemd/etc to restart the server automatically on crash *
  *         we should find a better way to kill the server that doesn't trigger an accelerator crash dump       *
- *    this will not work if your server launch times are longer than 25 seconds (default retry attempt time)   *
+ *    this will not work if your server startup time is longer than 25 seconds (default retry attempt time)    *
  ***************************************************************************************************************/
 const SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL    = false
 
@@ -35,10 +35,12 @@ const GAMEMODE_AUTOUPDATE_RESTART_TIME       = 300.0 //the time to wait before r
  //GitHub will rate limit you if you try to abuse this
 const GAMEMODE_AUTOUPDATE_INTERVAL           = 120
 
-//fires VPI_MGE_UpdateServerData every VPI_SERVERINFO_UPDATE_INTERVAL seconds
-//potato.tf uses this function to send periodic put requests to their webserver so it shows up on the website
-//this function is empty for the release version, feel free to use it for your own purposes
-//VPI_MGE_UpdateServerDataDB does work but is unused
+/******************************************************************************************************************
+ * fires VPI_MGE_UpdateServerData every VPI_SERVERINFO_UPDATE_INTERVAL seconds                                 	  *
+ * potato.tf uses this function to send periodic PUT requests to their webserver so it shows up on the website 	  *
+ * you will need to add your steam API key and webserver API key to your env vars (see vpi_config.py)			  *
+ * VPI_MGE_UpdateServerDataDB does work but is unused                                                          	  *
+ ******************************************************************************************************************/
 const UPDATE_SERVER_DATA                     = true
 const VPI_SERVERINFO_UPDATE_INTERVAL         = 8
 

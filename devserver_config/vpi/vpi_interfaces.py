@@ -111,31 +111,60 @@ def WrapInterface(func):
 player_data_columns = "steam_id, name, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped"
 @WrapDB
 async def VPI_MGE_DBInit(info, cursor):
-	LOGGER.info("Initializing MGE database...")
+    LOGGER.info("Initializing MGE database...")
 	# await cursor.execute("CREATE TABLE IF NOT EXISTS mge_leaderboard (steam_id TEXT PRIMARY KEY, elo INTEGER)")
 
-	try:
-		await cursor.execute(f"SELECT {player_data_columns} FROM mge_playerdata LIMIT 1")
-	except Exception as e:
-		LOGGER.info("No mge_playerdata table found, creating...")
-		await cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
-			steam_id INTEGER PRIMARY KEY, 
-			name VARCHAR(255),
-			elo BIGINT, 
-			wins BIGINT, 
-			losses BIGINT, 
-			kills BIGINT, 
-			deaths BIGINT, 
-			damage_taken BIGINT, 
-			damage_dealt BIGINT, 
-			airshots BIGINT, 
-			market_gardens BIGINT, 
-			hoops_scored BIGINT, 
-			koth_points_capped BIGINT)"""
-		)
-	finally:
-		LOGGER.info("MGE database initialized, check server console for '[VPI]: Database initialized successfully'")
-	return await cursor.fetchall()
+    try:
+        await cursor.execute(f"SELECT {player_data_columns} FROM mge_playerdata LIMIT 1")
+    except Exception as e:
+        LOGGER.info("No mge_playerdata table found, creating...")
+        try:
+            await cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
+                steam_id INTEGER PRIMARY KEY, 
+                name VARCHAR(255),
+                elo BIGINT, 
+                wins BIGINT, 
+                losses BIGINT, 
+                kills BIGINT, 
+                deaths BIGINT, 
+                damage_taken BIGINT, 
+                damage_dealt BIGINT, 
+                airshots BIGINT, 
+                market_gardens BIGINT, 
+                hoops_scored BIGINT, 
+                koth_points_capped BIGINT)"""
+            )
+        except Exception as e:
+            if "Unknown database" in str(e) or "doesn't exist" in str(e):
+                LOGGER.info("No mge database found, creating...")
+                temp_conn = mysql.connector.connect(
+                    host=vpi_config.DB_HOST,
+                    user=vpi_config.DB_USER,
+                    password=vpi_config.DB_PASSWORD,
+                    port=vpi_config.DB_PORT
+                )
+                temp_cursor = temp_conn.cursor()
+                await temp_cursor.execute(f"CREATE DATABASE IF NOT EXISTS {vpi_config.DB_DATABASE}")
+                await temp_cursor.execute(f"USE {vpi_config.DB_DATABASE}")
+                await temp_cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
+                    steam_id INTEGER PRIMARY KEY, 
+                    name VARCHAR(255),
+                    elo BIGINT, 
+                    wins BIGINT, 
+                    losses BIGINT, 
+                    kills BIGINT, 
+                    deaths BIGINT, 
+                    damage_taken BIGINT, 
+                    damage_dealt BIGINT, 
+                    airshots BIGINT, 
+                    market_gardens BIGINT, 
+                    hoops_scored BIGINT, 
+                    koth_points_capped BIGINT)"""
+                )
+                temp_conn.close()
+    finally:
+        LOGGER.info("MGE database initialized, check server console for '[VPI]: Database initialized successfully'")
+    return await cursor.fetchall()
 
 DEFAULT_MAX_LEADERBOARD_ENTRIES = 7
 @WrapDB
@@ -289,8 +318,8 @@ async def VPI_MGE_UpdateServerData(info):
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
 
-    if server and "address" in server:
-        kwargs['address'] = server['address']
+    if server and "addr" in server:
+        kwargs['address'] = server['addr']
     
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']
@@ -331,8 +360,8 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
 
     server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
 
-    if server and "address" in server:
-        kwargs['address'] = server['address']
+    if server and "addr" in server:
+        kwargs['address'] = server['addr']
 
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']

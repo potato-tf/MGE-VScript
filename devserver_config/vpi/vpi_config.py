@@ -40,16 +40,28 @@ if (not os.path.exists(SCRIPTDATA_DIR)): raise RuntimeError("SCRIPTDATA_DIR does
 DB_SUPPORT = True
 
 # What type?
-DB_TYPE = "mysql" # mysql or sqlite
+DB_TYPE		  =  genv("DB_TYPE",        "mysql") # mysql or sqlite
+DB_HOST       =  genv("DB_HOST",        "localhost")
+DB_USER       =  genv("DB_USER",        "root")
+DB_PORT	      =  int(genv("DB_PORT",    3306))
+DB_DATABASE	  =  genv("DB_INTERFACE",   "mge")
+DB_PASSWORD	  =  genv("DB_PASSWORD",    "")
+DB_LITE       =  genv("DB_LITE",        "sqlite_filename.db")
+STEAM_API_KEY =  genv("STEAM_API_KEY",  "000000")
+WEB_API_KEY   =  genv("WEB_API_KEY", 	"000000")
 
-import aiomysql
-DB_HOST     =  genv("DB_HOST",      "localhost")
-DB_USER     =  genv("DB_USER",      "user")
-DB_PORT	    =  int(genv("DB_PORT",  3306))
-DB_DATABASE	=  genv("DB_INTERFACE", "interface")
-DB_PASSWORD	=  genv("DB_PASSWORD")
-STEAM_API_KEY = genv("STEAM_API_KEY")
-WEB_API_KEY = genv("WEB_API_KEY")
+aiomysql = None
+aiosqlite = None
+
+if DB_TYPE == "mysql" or DB_TYPE == "":
+    if DB_TYPE == "":
+        DB_TYPE = "mysql"
+    import aiomysql as _aiomysql
+    aiomysql = _aiomysql
+
+elif DB_TYPE == "sqlite":
+    import aiosqlite as _aiosqlite
+    aiosqlite = _aiosqlite
 
 # Get a connection to the current database
 async def _GetDBConnection():
