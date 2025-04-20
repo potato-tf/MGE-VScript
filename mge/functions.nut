@@ -88,7 +88,7 @@
 				local command = strip(GetClientConvarValue("cl_class", player_entindex))
 				if (command == cvarhijack) return
 
-				local command_only = strip(split(command, " "))
+				local command_only = split(command, " ", true)
 				if (!command_only.len()) return
 				command_only = command_only[0]
 
