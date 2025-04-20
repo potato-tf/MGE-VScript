@@ -197,7 +197,7 @@ class MGE_Events
 
 			if (!ENABLE_LEADERBOARD)
 			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "top5error")
+				MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Error")
 				return
 			}
 
