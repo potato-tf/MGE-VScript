@@ -88,7 +88,9 @@
 				local command = strip(GetClientConvarValue("cl_class", player_entindex))
 				if (command == cvarhijack) return
 
-				local command_only = strip(split(command, " ")[0])
+				local command_only = strip(split(command, " "))
+				if (!command_only.len()) return
+				command_only = command_only[0]
 
 				if (command_only in MGE_Events.chat_commands)
 					MGE_Events.chat_commands[command_only]({userid = ALL_PLAYERS[player], text = command})
@@ -2660,6 +2662,7 @@
 	local strlen = str.len()
 	local start = 0
 	local previndex = 0
+	str = format("%s", str)
 	while (start < strlen) {
 		local index = str.find(findwhat, start)
 		if (index == null) {
@@ -2680,6 +2683,7 @@
 		else
 			returnstring += s
 	}
+	returnstring = returnstring.slice(1, returnstring.len() - 1)
 	return returnstring
 }
 
