@@ -129,6 +129,9 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_WriteError             = "[VPI]: Error writing data for user %s.\n"
 		VPI_AutoUpdateError 	   = "[VPI]: Autoupdate failed, couldn't clone repository.\n[VPI]: Repository: %s"
 		VPI_AutoUpdateSuccess      = "[VPI]: Autoupdate successful! (%s) sending changelevel..."
+
+		AdminScript 			   = "Executing admin script: %s"
+		ServerCommandDisabled 	   = "admin scripts require 'sv_allow_point_servercommand always'"
 	}
 	polish = {
 		MenuTitle  =			"Dołącz do areny..."

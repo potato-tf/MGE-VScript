@@ -232,6 +232,22 @@ class MGE_Events
 			foreach(k, v in player.GetScriptScope().stats)
 				ClientPrint(player, HUD_PRINTCONSOLE, k + " : " + v)
 		}
+
+		"adminscript": function(params) {
+			local player = GetPlayerFromUserID(params.userid)
+			local steam_id = GetPropString(player, "m_szNetworkIDString")
+			local script = split(params.text, " ", true)[1]
+			if (GetStr("sv_allow_point_servercommand") != "always")
+			{
+				MGE_ClientPrint(player, HUD_PRINTTALK, "ServerCommandDisabled")
+				return
+			}
+			if (steam_id in ADMIN_LIST) {
+				MGE_ClientPrint(player, HUD_PRINTTALK, "AdminScript", script)
+				script = StringReplace(script, "'", "\"")
+				SendToServerConsole(format("script %s", script))
+			}
+		}
 	}
 	Events = {
 		function OnGameEvent_teamplay_round_start(params)

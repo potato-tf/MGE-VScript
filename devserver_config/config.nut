@@ -1,3 +1,7 @@
+::ADMIN_LIST <- {
+	"[U:1:28266263]" : "Braindawg"
+}
+
 //CONFIG CONSTANTS
 const DEFAULT_LANGUAGE                        = "english"
 

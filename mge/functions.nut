@@ -1810,8 +1810,13 @@
 		local scope = p.GetScriptScope()
 		local language = "language" in scope ? scope.language : GetClientConvarValue("cl_language", p.entindex())
 
+		// try default language
 		if (!(language in MGE_Localization))
 			language = DEFAULT_LANGUAGE
+
+		// fall back to english
+		if (language == DEFAULT_LANGUAGE &&  ( !(language in MGE_Localization) || !(localized_string in MGE_Localization[language]) ) )
+			language = "english"
 
 		str = localized_string in MGE_Localization[language] ? MGE_Localization[language][localized_string] : localized_string
 
@@ -2646,6 +2651,35 @@
 	}
 
 	return
+}
+
+::StringReplace <- function(str, findwhat, replace) {
+	local returnstring = ""
+	local findwhatlen  = findwhat.len()
+	local splitlist	   = []
+	local strlen = str.len()
+
+	local start = 0
+	local previndex = 0
+	while (start < strlen) {
+		local index = str.find(findwhat, start)
+		if (index == null) {
+			if (start < strlen - 1)
+				splitlist.append(str.slice(start))
+			break
+		}
+
+		splitlist.append(str.slice(previndex, index))
+
+		start = index + findwhatlen
+		previndex = start
+	}
+
+	local splitlist_len = splitlist.len() - 1
+	foreach (index, s in splitlist)
+		returnstring += index < splitlist_len ? format("%s%s", s, replace) : s
+
+	return returnstring
 }
 
 ::nav_generation_state <- {
