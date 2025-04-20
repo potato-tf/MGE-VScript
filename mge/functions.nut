@@ -2656,15 +2656,14 @@
 ::StringReplace <- function(str, findwhat, replace) {
 	local returnstring = ""
 	local findwhatlen  = findwhat.len()
-	local splitlist	   = []
-	local strlen = str.len()
+	local splitlist	   = [];
 
 	local start = 0
 	local previndex = 0
-	while (start < strlen) {
+	while (start < str.len()) {
 		local index = str.find(findwhat, start)
 		if (index == null) {
-			if (start < strlen - 1)
+			if (start < str.len() - 1)
 				splitlist.append(str.slice(start))
 			break
 		}
@@ -2675,9 +2674,12 @@
 		previndex = start
 	}
 
-	local splitlist_len = splitlist.len() - 1
-	foreach (index, s in splitlist)
-		returnstring += index < splitlist_len ? format("%s%s", s, replace) : s
+	foreach (index, s in splitlist) {
+		if (index < splitlist.len() - 1)
+			returnstring += s + replace;
+		else
+			returnstring += s
+	}
 
 	return returnstring
 }
