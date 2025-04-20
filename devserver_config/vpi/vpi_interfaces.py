@@ -294,6 +294,7 @@ async def VPI_MGE_UpdateServerData(info):
     
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']
+
     # Convert dict keys from snake_case to camelCase before sending the request
     camelcase_kwargs = {}
     for key, value in kwargs.items():
@@ -305,7 +306,7 @@ async def VPI_MGE_UpdateServerData(info):
             camelcase_kwargs[key] = value
     
     kwargs = camelcase_kwargs
-    requests.put(rf"{kwargs['endpoint_url']}", headers={"auth-token": vpi_config.WEB_API_KEY}, json=kwargs)
+    requests.put(kwargs['endpoint_url'], headers={"auth-token": vpi_config.WEB_API_KEY}, json=kwargs)
     return info
 
 @WrapDB
