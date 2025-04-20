@@ -36,7 +36,7 @@ const GAMEMODE_AUTOUPDATE_INTERVAL           = 120
 //this function is empty for the release version, feel free to use it for your own purposes
 //VPI_MGE_UpdateServerDataDB does work but is unused
 const UPDATE_SERVER_DATA                     = true
-const VPI_SERVERINFO_UPDATE_INTERVAL         = 3
+const VPI_SERVERINFO_UPDATE_INTERVAL         = 8
 
 //general
 const DEFAULT_FRAGLIMIT                      = 20
@@ -50,7 +50,7 @@ const DEFAULT_ELO                            = 1600
  * if VPI is not running 2, and 3 will just do nothing and accumulate junk in your scriptdata folder xd                     *
  ****************************************************************************************************************************/
 const ELO_TRACKING_MODE                      = 2
-const ENABLE_LEADERBOARD                     = false //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
+const ENABLE_LEADERBOARD                     = true //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
 
 const REMOVE_DROPPED_WEAPONS                 = true
 const IDLE_RESPAWN_TIME                      = 3.0 //respawn time while waiting for arena to start
