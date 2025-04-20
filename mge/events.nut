@@ -209,7 +209,7 @@ class MGE_Events
 				MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Title", " (ELO)", MGE_LEADERBOARD_DATA.ELO)
 
 				for (local i = 0; i < 5; i++)
-					data += format("%s: %s\n", MGE_LEADERBOARD_DATA.ELO[i][2], MGE_LEADERBOARD_DATA.ELO[i][1])
+					data += format("%s: %s\n", MGE_LEADERBOARD_DATA.ELO[i][2], MGE_LEADERBOARD_DATA.ELO[i][1].tostring())
 			}
 			else
 			{
@@ -217,7 +217,7 @@ class MGE_Events
 					if (leaderboard_stat == stat || startswith(leaderboard_stat, stat))
 					{
 						for (local i = 0; i < 5; i++)
-							data += format("%s: %s\n", MGE_LEADERBOARD_DATA[leaderboard_stat][i][2], MGE_LEADERBOARD_DATA[leaderboard_stat][i][1])
+							data += format("%s: %s\n", MGE_LEADERBOARD_DATA[leaderboard_stat][i][2], MGE_LEADERBOARD_DATA[leaderboard_stat][i][1].tostring())
 						break
 					}
 			}
