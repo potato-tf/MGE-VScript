@@ -2657,11 +2657,7 @@
 
 ::CharReplace <- function(str, findwhat, replace) {
 	local returnstring = ""
-	local findwhatlen  = findwhat.len()
-	local strlen 	   = str.len()
 	local charlist 	   = array(strlen)
-	local start 	   = 0
-	local previndex    = 0
 
 	foreach (i, c in str)
 		charlist[i] = c == findwhat ? replace : c
