@@ -49,7 +49,7 @@ DB_PORT	    =  int(genv("DB_PORT",  3306))
 DB_DATABASE	=  genv("DB_INTERFACE", "interface")
 DB_PASSWORD	=  genv("DB_PASSWORD")
 STEAM_API_KEY = genv("STEAM_API_KEY")
-WEBSITE_API_KEY = genv("WEBSITE_API_KEY")
+WEB_API_KEY = genv("WEB_API_KEY")
 
 # Get a connection to the current database
 async def _GetDBConnection():
