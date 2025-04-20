@@ -294,7 +294,18 @@ async def VPI_MGE_UpdateServerData(info):
     
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']
-    requests.put(rf"https://potato.tf/api/serverstatus", headers={"auth-token": vpi_config.WEB_API_KEY}, json=kwargs)
+    # Convert dict keys from snake_case to camelCase before sending the request
+    camelcase_kwargs = {}
+    for key, value in kwargs.items():
+        if "_" in key:
+            parts = key.split("_")
+            camel_key = parts[0] + "".join(part.capitalize() for part in parts[1:])
+            camelcase_kwargs[camel_key] = value
+        else:
+            camelcase_kwargs[key] = value
+    
+    kwargs = camelcase_kwargs
+    requests.put(rf"{kwargs['endpoint_url']}", headers={"auth-token": vpi_config.WEB_API_KEY}, json=kwargs)
     return info
 
 @WrapDB
