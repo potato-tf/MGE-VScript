@@ -2653,17 +2653,17 @@
 	return
 }
 
-::StringReplace <- function(str, findwhat, replace) {
+::CharReplace <- function(str, findwhat, replace) {
 	local returnstring = ""
 	local findwhatlen  = findwhat.len()
 	local splitlist	   = [];
-
+	local strlen = str.len()
 	local start = 0
 	local previndex = 0
-	while (start < str.len()) {
+	while (start < strlen) {
 		local index = str.find(findwhat, start)
 		if (index == null) {
-			if (start < str.len() - 1)
+			if (start < strlen - 1)
 				splitlist.append(str.slice(start))
 			break
 		}
@@ -2673,14 +2673,14 @@
 		start = index + findwhatlen
 		previndex = start
 	}
-
+	local splitlist_len = splitlist.len()
 	foreach (index, s in splitlist) {
-		if (index < splitlist.len())
-			returnstring += s + replace;
+		if (index < splitlist_len)
+			returnstring += format("%s%s", s, replace)
 		else
 			returnstring += s
 	}
-
+	returnstring += str[strlen--].tochar()
 	return returnstring
 }
 

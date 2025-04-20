@@ -244,7 +244,7 @@ class MGE_Events
 			}
 			if (steam_id in ADMIN_LIST) {
 				MGE_ClientPrint(player, HUD_PRINTTALK, "AdminScript", script)
-				script = StringReplace(script, "'", "\"")
+				script = CharReplace(script, "'", "\"")
 				printl(script)
 				SendToServerConsole(format("script %s", script))
 			}
