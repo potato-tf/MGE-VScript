@@ -2675,7 +2675,7 @@
 	}
 
 	foreach (index, s in splitlist) {
-		if (index < splitlist.len() - 1)
+		if (index < splitlist.len())
 			returnstring += s + replace;
 		else
 			returnstring += s
