@@ -2656,11 +2656,12 @@
 }
 
 ::CharReplace <- function(str, findwhat, replace) {
+
 	local returnstring = ""
-	local charlist 	   = array(strlen)
+	local charlist 	= array(str.len(), "")
 
 	foreach (i, c in str)
-		charlist[i] = c == findwhat ? replace : c
+		charlist[i] = c == findwhat[0] ? replace : c
 
 	foreach(c in charlist)
 		returnstring += c.tochar()
