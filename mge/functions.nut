@@ -2658,32 +2658,17 @@
 ::CharReplace <- function(str, findwhat, replace) {
 	local returnstring = ""
 	local findwhatlen  = findwhat.len()
-	local splitlist	   = [];
-	local strlen = str.len()
-	local start = 0
-	local previndex = 0
-	str = format("%s", str)
-	while (start < strlen) {
-		local index = str.find(findwhat, start)
-		if (index == null) {
-			if (start < strlen - 1)
-				splitlist.append(str.slice(start))
-			break
-		}
+	local strlen 	   = str.len()
+	local charlist 	   = array(strlen)
+	local start 	   = 0
+	local previndex    = 0
 
-		splitlist.append(str.slice(previndex, index))
+	foreach (i, c in str)
+		charlist[i] = c == findwhat ? replace : c
 
-		start = index + findwhatlen
-		previndex = start
-	}
-	local splitlist_len = splitlist.len() - 1
-	foreach (index, s in splitlist) {
-		if (index < splitlist_len)
-			returnstring += format("%s%s", s, replace)
-		else
-			returnstring += s
-	}
-	returnstring = returnstring.slice(1, returnstring.len() - 1)
+	foreach(c in charlist)
+		returnstring += c.tochar()
+
 	return returnstring
 }
 
