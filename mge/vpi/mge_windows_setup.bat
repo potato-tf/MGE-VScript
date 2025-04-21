@@ -7,7 +7,6 @@ echo ------------------------------
 echo MGE Database Setup for windows
 echo ------------------------------
 echo THIS SCRIPT MUST BE RUN FROM /scripts/vscripts/mge/vpi/
-timeout 3 /nobreak
 echo Install python and required packages?
 echo This is required for the database, auto-updates, etc.
 choice /C YN
@@ -23,7 +22,6 @@ if not errorlevel 2 (
     echo Skipping python install...
     echo See requirements.txt for required modules
     echo mysql requires aiomysql, sqlite requires aiosqlite
-    timeout 3 /nobreak
 )
 choice /C YN /M "Configure database?"
 if not errorlevel 2 (
@@ -35,12 +33,11 @@ if not errorlevel 2 (
     echo XAMPP will install mysql/mariadb
     echo DBeaver will allow you to manage/view your database
     echo -------------------------------------------------------------------
-    timeout 5 /nobreak
-    echo Enter mysql or sqlite.  Default is mysql:
+    echo.
+    echo Enter mysql or sqlite:
     set /p dbtype=
-    if "%dbtype%"=="" ( set dbtype="mysql" )
-    echo %dbtype%
-    if /I "%dbtype%"=="mysql" (
+    if "!dbtype!"=="" ( set dbtype=mysql )
+    if /I "!dbtype!"=="mysql" (
         pip install aiomysql
         echo Enter your database credentials:
         echo Skipping this step will create a database with the default values in vpi_config.py
@@ -55,26 +52,32 @@ if not errorlevel 2 (
         echo Password:
         set /p dbpass=
 
-        if "%dbport%"=="" ( set dbport="3306" )
+        if "!dbport!"=="" ( set dbport=3306 )
 
-        echo Writing database credentials to .env...
+        echo Writing database credentials to env...
         (
-            echo DB_HOST       ="!dbhost!"
-            echo DB_USER       ="!dbuser!"
-            echo DB_PORT       ="!dbport!"
-            echo DB_DATABASE   ="!dbname!"
-            echo DB_PASSWORD   ="!dbpass!"
-            echo SCRIPTDATA_DIR="../../../../scriptdata"
-        ) > mge\.env
-    ) else if /I "%dbtype%"=="sqlite" (
+            echo DB_TYPE       =!dbtype!
+            echo DB_HOST       =!dbhost!
+            echo DB_USER       =!dbuser!
+            echo DB_PORT       =!dbport!
+            echo DB_INTERFACE  =!dbname!
+            echo DB_PASSWORD   =!dbpass!
+            echo SCRIPTDATA_DIR="../../../../../../../scriptdata"
+        ) > env
+        echo env file created, database will be created on server start
+    ) else if /I "!dbtype!"=="sqlite" (
         pip install aiosqlite
         echo Select your database file:
         for /f "delims=" %%a in ('powershell -Command "Add-Type -AssemblyName System.Windows.Forms; $fileBrowser = New-Object System.Windows.Forms.OpenFileDialog; $fileBrowser.Title = 'Select a SQLite database file'; $fileBrowser.Filter = 'SQLite Database (*.db;*.sqlite;*.db3)|*.db;*.sqlite;*.db3|All files (*.*)|*.*'; $fileBrowser.ShowDialog() | Out-Null; $fileBrowser.FileName"') do set "dbFilePath=%%a"
-        echo Writing database path to .env...
+        echo Writing database path to env...
         (
-            echo DB_LITE="!dbFilePath!"
-        ) > mge\.env
+            echo DB_TYPE       =!dbtype!
+            echo DB_LITE=!dbFilePath!
+            echo SCRIPTDATA_DIR="../../../../../../../scriptdata"
+        ) > env
     )
+    echo STEAM_API_KEY=00000 >> env
+    echo WEB_API_KEY=00000 >> env
     pause
 ) else (
     rem continue
@@ -84,14 +87,16 @@ choice /C YN /M "Auto-start MGE service on startup or crash?"
 
 if not errorlevel 2 (
     echo Configuring auto-start service...
+    sc stop vpi_mge_service
+    sc delete vpi_mge_service
     sc create vpi_mge_service binPath= "python vpi.py" DisplayName= "MGE Python Service" start= auto
     sc failure vpi_mge_service reset= 0 actions= restart/1000
-    echo Service created!
+    echo Starting VPI...
+    sc start vpi_mge_service
 ) else (
-    rem continue
+    echo Starting VPI...
+    python vpi.py
 )
-echo Starting VPI...
-python mge/vpi/vpi.py
 
 echo VPI SETUP COMPLETE!
 pause

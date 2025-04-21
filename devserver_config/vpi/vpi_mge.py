@@ -277,6 +277,28 @@ async def main():
 		if (vpi_config.DB is not None):
 			LOGGER.info("Connected to %s database using %s", vpi_config.DB_TYPE, str(vpi_config.DB))
 	except Exception as e:
+		if ("Unknown database" in str(e) or "doesn't exist" in str(e)):
+			LOGGER.info("No mge database found, creating...")
+			temp_conn = await vpi_config.aiomysql.create_pool(host=vpi_config.DB_HOST, user=vpi_config.DB_USER, password=vpi_config.DB_PASSWORD, port=vpi_config.DB_PORT, autocommit=False)
+			temp_cursor = temp_conn.cursor()
+			await temp_cursor.execute(f"CREATE DATABASE IF NOT EXISTS {vpi_config.DB_DATABASE}")
+			await temp_cursor.execute(f"USE {vpi_config.DB_DATABASE}")
+			await temp_cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
+				steam_id INTEGER PRIMARY KEY, 
+				name VARCHAR(255),
+				elo BIGINT, 
+				wins BIGINT, 
+				losses BIGINT, 
+				kills BIGINT, 
+				deaths BIGINT, 
+				damage_taken BIGINT, 
+				damage_dealt BIGINT, 
+				airshots BIGINT, 
+				market_gardens BIGINT, 
+				hoops_scored BIGINT, 
+				koth_points_capped BIGINT)"""
+			)
+			temp_conn.close()
 		LOGGER.critical(e)
 		return
 
