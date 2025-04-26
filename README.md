@@ -68,16 +68,13 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
     - Failing to index your maps will result in !add being unordered, rendering everyone's !add binds useless
 
 ## Known bugs/limitations
-- KOTH is jank
-- Custom ruleset spawns may not rotate correctly
 - No Ultiduo yet, I forgot xd
 - There's no way to make a menu of arena options like SourceMod can, stuck to chat commands or a fully custom screen overlay or something even more exotic.
 - !add only supports arena indexes right now (1-18 for classic mge_training), !add viaduct for example will not work, only !add 1 will.
-- Queue cycling might be buggy and put people on the wrong teams, pls report
 - Leaderboard currently only works with a database and is disabled by default.
 - Many chat commands either aren't implemented or were changed to something else (goodbye !hitblip).
 
-I am not an MGE main and there are probably plenty of minor parity issues to hammer out (endif knockback height being the main one), pls report and major discrepancies between this and standard MGEMod behavior below.
+I am not an MGE main and there are probably plenty of minor parity issues to hammer out, pls report any discrepancies between this and standard MGEMod behavior.
 
 ## Adding new BBall/Koth/etc spawns:
 - BBall, Koth, and other "specialty" modes still supports reading hoop/koth point/ball spawn points/etc using the old method for backwards compatibility
