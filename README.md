@@ -30,7 +30,7 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | Turris | ✅ |
 | BBall | ✅ |
 | Allmeat | ✅ |
-| Koth | ⚠️ |
+| Koth | ✅ |
 | Midair? |⚠️|
 | Ultiduo | ❌ |
 | Plain text ELO/stat tracking | ✅ |
@@ -41,8 +41,6 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | Database tracking (SQLite) | ⚠️ |
 | Custom rulesets | ⚠️ |
 | Arbitrary team sizes | ❌ |
-
-⚠️KOTH works but the logic is super janky right now, partial cap time can go negative and you can just trade the point back and forth (doesn't contest/pause)
 
 ⚠️I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
 
