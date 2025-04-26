@@ -1,9 +1,8 @@
 import functools
 import re
-
 import vpi_config
 
-logger = vpi_config.LOGGER
+LOGGER = vpi_config.LOGGER
 
 # Note:
 # All interface functions should be decorated with either WrapDB or WrapInterface
@@ -111,13 +110,13 @@ def WrapInterface(func):
 player_data_columns = "steam_id, name, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped"
 @WrapDB
 async def VPI_MGE_DBInit(info, cursor):
-	print(COLOR['HEADER'], "Initializing MGE database...", COLOR['ENDC'])
+	LOGGER.info("Initializing MGE database...")
 	# await cursor.execute("CREATE TABLE IF NOT EXISTS mge_leaderboard (steam_id TEXT PRIMARY KEY, elo INTEGER)")
 
 	try:
 		await cursor.execute(f"SELECT {player_data_columns} FROM mge_playerdata LIMIT 1")
 	except Exception as e:
-		print(COLOR['YELLOW'], "No mge_playerdata table found, creating...", COLOR['ENDC'])
+		LOGGER.warning("No mge_playerdata table found, creating...")
 		await cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
 			steam_id INTEGER PRIMARY KEY, 
 			name VARCHAR(255),
@@ -134,7 +133,7 @@ async def VPI_MGE_DBInit(info, cursor):
 			koth_points_capped BIGINT)"""
 		)
 	finally:
-		print(COLOR['GREEN'], "MGE database initialized, check server console for '[VPI]: Database initialized successfully'", COLOR['ENDC'])
+		LOGGER.info("MGE database initialized, check server console for '[VPI]: Database initialized successfully'")
 	return await cursor.fetchall()
 
 DEFAULT_MAX_LEADERBOARD_ENTRIES = 7
@@ -147,7 +146,7 @@ async def VPI_MGE_PopulateLeaderboard(info, cursor):
 
 	return await cursor.fetchall()
 
-default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 2))
+default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 3))
 @WrapDB
 async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     kwargs = info["kwargs"]
@@ -161,15 +160,15 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
 
     if (query_mode == "read" or query_mode == 0):
         
-        print(COLOR['CYAN'], f"Fetching player data for steam ID {network_id}", COLOR['ENDC'])
+        LOGGER.info(f"Fetching player data for steam ID {network_id}")
         await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
         result = await cursor.fetchall()
 
         if not result:
             # Parameterized INSERT with proper value ordering
             await cursor.execute(
-                f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES (%s, %s, {default_zeroes}, %s)",
-                (network_id, default_elo, name)
+                f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES (%s, %s, %s, {default_zeroes})",
+                (network_id, name, default_elo)
             )
             await cursor.execute("SELECT * FROM mge_playerdata WHERE steam_id = %s", (network_id,))
             result = await cursor.fetchall()
@@ -190,7 +189,7 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
         await cursor.execute(query, params)
         return await cursor.fetchall()
     
-banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup.bat", "config.nut"]
+banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup.bat", "config.nut", "vpi_config.py"]
 @WrapInterface
 async def VPI_MGE_AutoUpdate(info, test=False):
     """
@@ -211,13 +210,16 @@ async def VPI_MGE_AutoUpdate(info, test=False):
         branch = kwargs["branch"] if "branch" in kwargs else "main"
         clone_dir = kwargs["clone_dir"] if "clone_dir" in kwargs else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if not repo_url:
-            print(COLOR['RED'], "[VPI] Error: No repository URL provided", COLOR['ENDC'])
+            LOGGER.error("[VPI] Error: No repository URL provided")
             return []
 
+        os = vpi_config.os
+        git = vpi_config.git
         # Create temp directory for clone
-        temp_dir = tempfile.mkdtemp()
+        temp_dir = os.path.join(os.getcwd(), "__temp_mge_autoupdate")
+        os.makedirs(temp_dir, exist_ok=True)
 
-        print(COLOR['GREEN2'], f"Cloning repository {repo_url} into {temp_dir}", COLOR['ENDC'])
+        LOGGER.info(f"Cloning repository {repo_url}")
         # Clone the repository using GitPython
         repo = git.Repo.clone_from(repo_url, temp_dir, branch=branch)
 
@@ -227,7 +229,6 @@ async def VPI_MGE_AutoUpdate(info, test=False):
 
         for root, _, files in os.walk(temp_dir):
             for file in files:
-                # Skip .git directory
                 if any(banned in file for banned in banned_files) or any(banned in root for banned in banned_files):
                     continue
 
@@ -243,26 +244,57 @@ async def VPI_MGE_AutoUpdate(info, test=False):
                         if f1.read() != f2.read():
                             changed_files.append(relative_path)
 	
-        print(COLOR['GREEN'], f"Changed files: {changed_files}", COLOR['ENDC'])
+        LOGGER.info(f"Changed files: {changed_files}")
 
         #move changed files to the clone directory
         for file in changed_files:
-            shutil.move(os.path.join(temp_dir, file), os.path.join(clone_dir, file))
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(os.path.join(clone_dir, file)), exist_ok=True)
+            # Copy the file
+            os.rename(os.path.join(temp_dir, file), os.path.join(clone_dir, file))
 
 
         return changed_files
 
     except Exception as e:
-        print(COLOR['RED'], f"[VPI] Error during auto-update: {str(e)}", COLOR['ENDC'])
+        LOGGER.error(f"[VPI] Error during auto-update: {str(e)}")
         return []
 
     finally:
         # Cleanup temp directory
         if 'temp_dir' in locals():
             try:
-                shutil.rmtree(temp_dir, ignore_errors=True)
+
+                if 'repo' in locals() and repo:
+                    repo.close()
+
+                from shutil import rmtree
+
+                git_dir = os.path.join(temp_dir, '.git')
+                if os.path.exists(git_dir):
+                    from subprocess import run, PIPE
+                    run(['attrib', '-r', '-h', '-s', '/s', '/d', git_dir], shell=True, stderr=PIPE)
+
+                    for root, dirs, files in os.walk(git_dir, topdown=False):
+                        for file in files:
+                            try:
+                                os.chmod(os.path.join(root, file), 0o777)
+                                os.remove(os.path.join(root, file))
+                            except:
+                                pass
+                        for dir in dirs:
+                            try:
+                                os.chmod(os.path.join(root, dir), 0o777)
+                                os.rmdir(os.path.join(root, dir))
+                            except:
+                                pass
+
+                rmtree(temp_dir, ignore_errors=True)
+
+                if os.path.exists(temp_dir):
+                    LOGGER.warning(f"Could not remove temp directory {temp_dir} completely")
             except Exception as e:
-                print(COLOR['YELLOW'], f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}", COLOR['ENDC'])
+                LOGGER.warning(f"Could not clean up temp directory {temp_dir}: {str(e)}")
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info, cursor):
@@ -271,100 +303,5 @@ async def VPI_MGE_UpdateServerData(info, cursor):
 
 @WrapDB
 async def VPI_MGE_UpdateServerDataDB(info, cursor):
-    kwargs = info["kwargs"]
-
-    # Convert time dictionary to datetime object
-    time_data = kwargs["update_time"]
-
-    timestamp = datetime.datetime(
-        year=time_data.get("year", datetime.datetime.now().year),
-        month=time_data.get("month", 1),
-        day=time_data.get("day", 1),
-        hour=time_data.get("hour", 0),
-        minute=time_data.get("minute", 0),
-        second=time_data.get("second", 0)
-    ).strftime('%Y-%m-%d %H:%M:%S')
-
-    name = kwargs["server_name"]
-
-    response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?access_token={ACCESS_TOKEN}&limit=50000&filter=\gamedir\tf\gametype\mge\gametype\potato")
-
-    server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
-
-    if server and "address" in server:
-        kwargs['address'] = server['address']
-
-    if (kwargs["map"].startswith("workshop/")):
-        kwargs["map"] = server['map']
-        # kwargs["mission"] = server['map']
-
-    await cursor.execute("""
-        CREATE TABLE IF NOT EXISTS mge_serverdata (
-            server_key VARCHAR(255),
-            address VARCHAR(255),
-            classes VARCHAR(255),
-            map VARCHAR(255),
-            max_wave INTEGER,
-            mission VARCHAR(255),
-            players_blu INTEGER,
-            players_connecting INTEGER,
-            players_max INTEGER,
-            players_red INTEGER,
-            region VARCHAR(255),
-            server_name VARCHAR(255),
-            status VARCHAR(255),
-            update_time VARCHAR(255),
-            wave INTEGER,
-            campaign_name VARCHAR(255),
-            domain VARCHAR(255),
-            in_protected_match BIT,
-            matchmaking_disable_time FLOAT,
-            password VARCHAR(255),
-            is_fake_ip BIT,
-            PRIMARY KEY (server_key, region, campaign_name)
-        )"""
-    )
-    await cursor.execute("""
-        INSERT INTO mge_serverdata (
-            server_key, address, classes, map, max_wave, mission, 
-            players_blu, players_connecting, players_max, players_red,
-            region, server_name, status, update_time, wave, campaign_name,
-            domain, in_protected_match, matchmaking_disable_time, password, is_fake_ip
-        ) VALUES (
-            %s, %s, '', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            NULL, NULL, NULL, NULL, NULL
-        )
-        ON DUPLICATE KEY UPDATE
-            address = VALUES(address),
-            classes = VALUES(classes),
-            map = VALUES(map),
-            max_wave = VALUES(max_wave),
-            mission = VALUES(mission),
-            players_blu = VALUES(players_blu),
-            players_connecting = VALUES(players_connecting),
-            players_max = VALUES(players_max),
-            players_red = VALUES(players_red),
-            region = VALUES(region),
-            server_name = VALUES(server_name),
-            status = VALUES(status),
-            update_time = VALUES(update_time),
-            wave = VALUES(wave),
-            campaign_name = VALUES(campaign_name)
-    """, (
-        kwargs["server_key"],
-        kwargs["address"], 
-        kwargs["map"],
-        kwargs["max_wave"],
-        kwargs["mission"],
-        kwargs["players_blu"],
-        kwargs["players_connecting"],
-        kwargs["players_max"], 
-        kwargs["players_red"],
-        kwargs["region"],
-        kwargs["server_name"],
-        kwargs["status"],
-        timestamp,
-        kwargs["wave"],
-        kwargs["campaign_name"]
-    ))
-    return server
+    
+    return info

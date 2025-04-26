@@ -1,3 +1,7 @@
+::ADMIN_LIST <- {
+	"[U:1:28266263]" : "Braindawg"
+}
+
 //CONFIG CONSTANTS
 const DEFAULT_LANGUAGE                        = "english"
 
@@ -98,7 +102,7 @@ const ROUND_START_SOUND_VOLUME               = 0.5
 
 //hud
 //see KOTH section for KOTH hud
-const MGE_HUD_POS_X                         = 0.2
+const MGE_HUD_POS_X                         = 0.1
 const MGE_HUD_POS_Y                         = 0.15
 
 const AMMOMOD_RESPAWN_DELAY                 = 2.0
@@ -202,10 +206,10 @@ const KOTH_RED_HUD_COLOR                    = "255 80 80"
 const KOTH_BLU_HUD_COLOR                    = "80 80 255"
 
 const KOTH_HUD_RED_POS_X                    = 0.6
-const KOTH_HUD_RED_POS_Y                    = 0.4
+const KOTH_HUD_RED_POS_Y                    = 0.3
 
 const KOTH_HUD_BLU_POS_X                    = 0.6
-const KOTH_HUD_BLU_POS_Y                    = 0.3
+const KOTH_HUD_BLU_POS_Y                    = 0.4
 
 //all koth settings below are for custom ruleset koth only
 

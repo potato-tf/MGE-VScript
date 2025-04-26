@@ -22,7 +22,11 @@ else
 		CONST.UPDATE_SERVER_DATA 		||
 		CONST.GAMEMODE_AUTOUPDATE_REPO 	||
 		CONST.PER_ARENA_LOGGING
-	) Include("vpi/vpi")
+	) {
+		Include("vpi/vpi")
+		// create a dummy file to make the directory
+		StringToFile("_mge_mkdir_", "")
+	}
 
 	Include("functions")
 	Include("events")

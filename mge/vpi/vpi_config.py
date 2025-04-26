@@ -32,82 +32,108 @@ BYPASS_SECRET = False #do not set this to true unless you know what you're doing
 if (not SECRET and not BYPASS_SECRET):
 	raise RuntimeError("Please set your secret token")
 
-# Change this to your scriptdata directory
-SCRIPTDATA_DIR = genv("VPI_SCRIPTDATA_DIR", r"C:\Program Files (x86)\Steam\steamapps\common\Team Fortress 2\tf\scriptdata")
-if (not os.path.exists(SCRIPTDATA_DIR)): raise RuntimeError("SCRIPTDATA_DIR does not exist")
+def find_env_vars(var = None, default = ""):
+	env_vars = {}
+	if os.path.exists("env"):
+		with open("env", "r") as f:
+			for line in f:
+				if "=" in line and (var is None or line.startswith(var)):
+					key, value = line.split("=")
+					env_vars[r""+key.strip()] = r""+value.strip().removesuffix('"')
+					if var is not None: break
+
+	elif var is not None:
+		env_vars[r""+var] = r""+genv(var, default)
+	return env_vars
+
+env = find_env_vars()
+_dir = os.path.abspath(__file__)
+SCRIPTDATA_DIR = os.path.normpath(os.path.join(_dir, env["SCRIPTDATA_DIR"]))
+print(SCRIPTDATA_DIR)
+if (not os.path.exists(SCRIPTDATA_DIR)): raise RuntimeError(f"{SCRIPTDATA_DIR} does not exist")
 
 # Are you going to be interacting with a database?
-DB_SUPPORT = False
+DB_SUPPORT = True
+
+# Default values if no env vars or env file is found
+DB_TYPE = "mysql"
+DB_HOST = "localhost"
+DB_USER = "root"
+DB_PORT = 3306
+DB_DATABASE = "mge"
+DB_PASSWORD = ""
+DB_LITE = "sqlite_filename.db"
+STEAM_API_KEY = "000000"
+WEB_API_KEY = "000000"
+
+aiomysql = None
+aiosqlite = None
+
+if DB_SUPPORT:
+	DB_TYPE		  = env["DB_TYPE"]
+	DB_HOST       = env["DB_HOST"]
+	DB_USER       = env["DB_USER"]
+	DB_PORT	      = int(env["DB_PORT"])
+	DB_DATABASE	  = env["DB_INTERFACE"]
+	DB_PASSWORD	  = env["DB_PASSWORD"]
+	STEAM_API_KEY = env["STEAM_API_KEY"]
+	WEB_API_KEY   = env["WEB_API_KEY"]
+
+	if DB_TYPE != "sqlite":
+		import aiomysql as _aiomysql
+		aiomysql = _aiomysql
+	else:
+		DB_LITE = env["DB_LITE"]
+		import aiosqlite as _aiosqlite
+		aiosqlite = _aiosqlite
+
+# Get a connection to the current database
+async def _GetDBConnection():
+	if (DB_TYPE == "mysql"):
+		return await DB.acquire() # Pool
+	elif (DB_TYPE == "sqlite"):
+		return DB # Connection
+	else:
+		return
+
+DB = None
+# Ping the database to see if we're connected
+async def PingDB():
+	try:
+		conn = await _GetDBConnection()
+		try:
+			cursor = await conn.cursor()
+			await cursor.execute("SELECT 1")
+			return True
+		except:
+			return False
+		finally:
+			if (DB_TYPE == "mysql"):
+				DB.release(conn)
+	except:
+		return False
+
 if (DB_SUPPORT):
 	DB = None
 
-	# What type?
-	DB_TYPE = "mysql" # mysql or sqlite
-
 	DB_TYPE = DB_TYPE.lower()
 	if (DB_TYPE == "mysql"):
-		import aiomysql
-		import argparse
-
-		# An alternative to using environment variables or setting the default values in this file is to
-		# specify them with command line options when you run vpi.py (ideally in a service)
-		PARSER = argparse.ArgumentParser()
-		PARSER.add_argument("--host", help="Hostname for database connection", type=str)
-		PARSER.add_argument("-u", "--user", help="User for database connection", type=str)
-		PARSER.add_argument("-p", "--port", help="Port for database connection", type=int)
-		PARSER.add_argument("-db", "--database", help="Database to use", type=str)
-		PARSER.add_argument("--password", help="Password for database connection", type=str)
-
-		args = PARSER.parse_args()
-
-		# Change to your database info
-		DB_HOST     = args.host     if args.host     else genv("VPI_HOST",      "localhost")
-		DB_USER     = args.user     if args.user     else genv("VPI_USER",      "user")
-		DB_PORT	    = args.port     if args.port     else int(genv("VPI_PORT",  3306))
-		DB_DATABASE	= args.database if args.database else genv("VPI_INTERFACE", "interface")
-		DB_PASSWORD	= args.password if args.password else genv("VPI_PASSWORD")
 
 		# Validation
-		for env in [DB_HOST, DB_USER, DB_PORT, DB_DATABASE, SCRIPTDATA_DIR]:
-			assert env is not None
+		for db_env in [DB_HOST, DB_USER, DB_PORT, DB_DATABASE, SCRIPTDATA_DIR]:
+			assert db_env is not None
 
 		if (DB_PASSWORD is None):
 			DB_PASSWORD = input(f"Enter password for {DB_USER}@{DB_HOST}:{DB_PORT} >>> ")
 			print()
 
 	elif (DB_TYPE == "sqlite"):
-		import aiosqlite
 
         # Put the path to your .db file here
 		DB_LITE = "test.db"
 
 	else:
 		raise RuntimeError("DB_TYPE must be either 'mysql' or 'sqlite'")
-
-	# Get a connection to the current database
-	async def _GetDBConnection():
-		if (DB_TYPE == "mysql"):
-			return await DB.acquire() # Pool
-		elif (DB_TYPE == "sqlite"):
-			return DB # Connection
-		else:
-			return
-
-	# Ping the database to see if we're connected
-	async def PingDB():
-		try:
-			conn = await _GetDBConnection()
-			try:
-				cursor = await conn.cursor()
-				await cursor.execute("SELECT 1")
-				return True
-			except:
-				return False
-			finally:
-				if (DB_TYPE == "mysql"):
-					DB.release(conn)
-		except:
-			return False
 
 # ====================================================================================================================== #
 

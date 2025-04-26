@@ -1,4 +1,4 @@
-const MGE_VERSION = "0.3.0"
+const MGE_VERSION = "0.4.0"
 ::ROOT <- getroottable()
 ::CONST <- getconsttable()
 
@@ -21,7 +21,7 @@ if (!("ConstantNamingConvention" in ROOT))
 	}
 }
 
-foreach (i in [NetProps, Entities, EntityOutputs, NavMesh])
+foreach(i in [NetProps, Entities, EntityOutputs, NavMesh, Convars])
 	foreach (k, v in i.getclass())
 		if (k != "IsValid" && !(k in ROOT))
 			ROOT[k] <- i[k].bindenv(i)
@@ -54,7 +54,7 @@ const SINGLE_TICK = 0.015
 const INT_COLOR_WHITE = 16777215
 
 //redefine EFlags
-const EFL_USER = 1048576 // EFL_IS_BEING_LIFTED_BY_BARNACLE
+const EFL_ADDING_TO_ARENA = 1048576 // EFL_IS_BEING_LIFTED_BY_BARNACLE
 const EFL_REMOVE_FROM_ARENA = 1073741824 //EFL_NO_PHYSCANNON_INTERACTION
 
 // Weapon slots
