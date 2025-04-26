@@ -566,6 +566,7 @@
 
 					VPI.AsyncCall({
 						func="VPI_MGE_PopulateLeaderboard",
+						timeout = INT_MAX, // don't know why this keeps throwing errors, it's fetching data fine
 						kwargs= {
 							order_filter = column_name,
 							max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
@@ -592,12 +593,10 @@
 						foreach(i, user_info in steamid_list)
 						{
 							if (!user_info)
-							{
-								think_override = 1
 								user_info = ["NONE", -INT_MAX]
-							} else {
-								think_override = LEADERBOARD_UPDATE_INTERVAL
-							}
+
+							// cycle through and fetch user stats faster if the leaderboard is empty
+							think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
 
 							local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
 							message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])

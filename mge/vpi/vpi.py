@@ -277,8 +277,26 @@ async def main():
 		if (vpi_config.DB is not None):
 			LOGGER.info("Connected to %s database using %s", vpi_config.DB_TYPE, str(vpi_config.DB))
 	except Exception as e:
-		LOGGER.critical(e)
-		return
+		if "Unknown database" in str(e):
+			LOGGER.critical("Database not found! Creating a new one...")
+			if (vpi_config.DB_TYPE == "mysql"):
+				vpi_config.DB = await vpi_config.aiomysql.create_pool(host=vpi_config.DB_HOST, user=vpi_config.DB_USER, password=vpi_config.DB_PASSWORD, port=vpi_config.DB_PORT, autocommit=False)
+				tempconn = await vpi_config.DB.acquire()
+				cursor = await tempconn.cursor()
+				await cursor.execute("CREATE DATABASE IF NOT EXISTS " + vpi_config.DB_DATABASE)
+				await cursor.close()
+				vpi_config.DB = await vpi_config.aiomysql.create_pool(host=vpi_config.DB_HOST, user=vpi_config.DB_USER, password=vpi_config.DB_PASSWORD, port=vpi_config.DB_PORT, db=vpi_config.DB_DATABASE, autocommit=False)
+			elif (vpi_config.DB_TYPE == "sqlite"):
+				vpi_config.DB = await vpi_config.aiosqlite.connect(vpi_config.DB_LITE)
+				cursor = await vpi_config.DB.acquire().cursor
+				await cursor.execute("CREATE DATABASE IF NOT EXISTS " + vpi_config.DB_DATABASE)
+				await vpi_config.DB.commit()
+				await cursor.close()
+				vpi_config.DB = await vpi_config.aiosqlite.connect(vpi_config.DB_LITE)
+
+		else:
+			LOGGER.critical(e)
+			return
 
 	global calls
 	global callbacks

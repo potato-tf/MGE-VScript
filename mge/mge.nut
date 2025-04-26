@@ -501,7 +501,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		*/
 	}
 
-	if (ELO_TRACKING_MODE == 2)
+	if (ELO_TRACKING_MODE > 1)
 	{
 		printl(MGE_Localization[DEFAULT_LANGUAGE]["VPI_InitDB"])
 		VPI.AsyncCall({
@@ -597,7 +597,11 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 				//gamemode has been updated
 				if (!error && response.len()) {
 
-					MGE_ClientPrint(null, 3, "GamemodeUpdate", counter > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : counter)
+					local time_left = MGE_TIMER.GetScriptScope().base_timestamp - Time()
+
+					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
+					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
+					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
 
 					printl("Files changed:")
 
@@ -606,15 +610,14 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 
 					printl("[MGE VScript] Got new gamemode version via git")
 
-					if (counter > GAMEMODE_AUTOUPDATE_RESTART_TIME)
+					if (time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME)
 					{
 						printl("[MGE VScript] updating map restart time...")
-						counter = GAMEMODE_AUTOUPDATE_RESTART_TIME
 						EntFire("__mge_timer", "SetTime", format("%d", GAMEMODE_AUTOUPDATE_RESTART_TIME))
 					}
 
 				} else if (!response.len()) {
-					printl("No updates found")
+					printl("[MGE VScript] No gamemode updates found")
 				}
 			}
 		})
@@ -668,9 +671,7 @@ timer_scope.hinted <- false
 
 timer_scope.TimerThink <- function()
 {
-
 	local time_left = base_timestamp - Time()
-
 
 	if (time_left > 0)
 	{
