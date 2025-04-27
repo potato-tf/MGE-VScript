@@ -43,7 +43,7 @@ jobs:
             SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
           # For potato.tf servers (pterodactyl user)
-          for i in "22 pterodactyl@us.potato.tf" "22 pterodactyl@ustx.potato.tf" "22 pterodactyl@br.potato.tf" "22 pterodactyl@usw2.potato.tf" "27035 pterodactyl@eu.potato.tf" "22 pterodactyl@eu1.potato.tf" "22 pterodactyl@sgp.potato.tf"; do a=( $i ); 
+          for i in "22 pterodactyl@us.potato.tf" "22 pterodactyl@ustx.potato.tf" "22 pterodactyl@br.potato.tf" "22 pterodactyl@usw2.potato.tf" "27035 pterodactyl@eu.potato.tf" "22 pterodactyl@fr.potato.tf" "22 pterodactyl@sgp.potato.tf"; do a=( $i ); 
           {
             chmod +x ./devserver_config/vpi/*.py
 
