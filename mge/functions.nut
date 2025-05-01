@@ -1296,24 +1296,29 @@
 	if (arena.IsCustomRuleset)
 		return
 
-	loser.stats.elo = loser.stats.elo.tointeger()
-	loser2.stats.elo = loser2.stats.elo.tointeger()
-	winner.stats.elo = winner.stats.elo.tointeger()
-	winner2.stats.elo = winner2.stats.elo.tointeger()
+	local loser_scope = loser.GetScriptScope()
+	local loser2_scope = loser2.GetScriptScope()
+	local winner_scope = winner.GetScriptScope()
+	local winner2_scope = winner2.GetScriptScope()
 
-	local Losers_ELO = (loser.stats.elo + loser2.stats.elo).tofloat() / 2
-	local Winners_ELO = (winner.stats.elo + winner2.stats.elo).tofloat() / 2
+	loser_scope.stats.elo = loser_scope.stats.elo.tointeger()
+	loser2_scope.stats.elo = loser2_scope.stats.elo.tointeger()
+	winner_scope.stats.elo = winner_scope.stats.elo.tointeger()
+	winner2_scope.stats.elo = winner2_scope.stats.elo.tointeger()
+
+	local Losers_ELO = (loser_scope.stats.elo + loser2_scope.stats.elo).tofloat() / 2
+	local Winners_ELO = (winner_scope.stats.elo + winner2_scope.stats.elo).tofloat() / 2
 
 	// ELO formula
 	local El = 1 / (pow(10.0, (Winners_ELO - Losers_ELO) / 400) + 1)
 	local k = (Winners_ELO >= 2400) ? 10 : 15
 	local winnerscore = floor(k * El + 0.5)
-	winner.stats.elo += winnerscore
-	winner2.stats.elo += winnerscore
+	winner_scope.stats.elo += winnerscore
+	winner2_scope.stats.elo += winnerscore
 	k = (Losers_ELO >= 2400) ? 10 : 15
 	local loserscore = floor(k * El + 0.5)
-	loser.stats.elo -= loserscore
-	loser2.stats.elo -= loserscore
+	loser_scope.stats.elo -= loserscore
+	loser2_scope.stats.elo -= loserscore
 
 	// Print results to players
 	MGE_ClientPrint(winner, HUD_PRINTTALK, "GainedPoints", winnerscore.tostring())
