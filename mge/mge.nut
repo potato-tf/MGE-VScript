@@ -164,7 +164,6 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		local scope = player.GetScriptScope()
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
-		local arena_players = arena.CurrentPlayers.keys()
 
 		if (arena.State == AS_IDLE)
 		{
@@ -200,6 +199,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		scope.ThinkTable.KothThink <- function()
 		{
 			local owner_team = arena.Koth.owner_team
+			local arena_players = arena.CurrentPlayers.keys()
 
 			if (!player.IsAlive()) return
 			if ((player.GetOrigin() - point).Length() < radius)
