@@ -104,7 +104,7 @@ LocalTime(local_time)
 		minute = local_time.minute
 		second = local_time.second
 	}
-	domain = "potato.tf"
+	domain = "us.potato.tf"
 	password = ""
 	wave = 0
 	campaign_name = "MGE"
