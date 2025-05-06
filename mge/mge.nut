@@ -104,7 +104,7 @@ LocalTime(local_time)
 		minute = local_time.minute
 		second = local_time.second
 	}
-	domain = "us.potato.tf"
+	domain = "potato.tf"
 	password = ""
 	wave = 0
 	campaign_name = "MGE"
@@ -118,6 +118,7 @@ EntFire("worldspawn", "RunScriptCode", @"
 	SERVER_DATA.server_name = GetStr(`hostname`)
 	SERVER_DATA.server_key = _split.len() == 1 ? `` : _split[1].slice(0, _split[1].find(`[`))
 	SERVER_DATA.region = _split_region.len() == 1 ? `` : _split_region[1].slice(0, _split_region[1].find(`]`))
+	if (SERVER_DATA.region == `usa`) SERVER_DATA.region = `us`
 	SERVER_DATA.domain = format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
 ", 5)
 
