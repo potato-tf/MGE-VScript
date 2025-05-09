@@ -472,14 +472,62 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 
 
 ::MGE_Init <- function() {
-	local clean_map_name = {
-		"workshop/mge_training_v8_beta4b.ugc1996603816" : "Classic Training"
-		mge_training_v8_beta4b 		= "Classic Training"
-		mge_chillypunch_final4_fix2 = "Chillypunch"
-		mge_triumph_beta7_rc1 		= "Triumph"
-		mge_oihguv_sucks_b5 		= "Oihguv"
-		mge_oihguv_sucks_a12 		= "Oihguv"
+	local map_stuff = {
+
+		"workshop/mge_training_v8_beta4b.ugc1996603816" : {
+			nice_name = "Classic Training"
+			init_func = function() {
+
+				printl("Creating spawn points\n")
+				local red_spawn = SpawnEntityFromTable("info_player_teamspawn", {
+					targetname = "__mge_spawn_override_2"
+					TeamNum = TF_TEAM_RED
+					origin = Vector(-3774.000000, 7788.000000, -1516.229980)
+					spawnflags = 511
+				})
+				DispatchSpawn(red_spawn)
+
+				local blu_spawn = SpawnEntityFromTable("info_player_teamspawn", {
+					targetname = "__mge_spawn_override_3"
+					TeamNum = TF_TEAM_BLUE
+					origin = Vector(-3774.000000, 7758.000000, -1516.229980)
+					spawnflags = 511
+				})
+				DispatchSpawn(blu_spawn)
+
+				local override = SpawnEntityFromTable("trigger_player_respawn_override", {
+					targetname = "__mge_spawnfix"
+					spawnflags = 1
+					solid = 2
+					"OnStartTouch#1" : "!self,RunScriptCode,printl(activator),0,-1"
+				})
+				override.SetSolid(2)
+				override.SetSize(Vector(), Vector(1, 1, 1))
+			}
+		},
+
+		mge_training_v8_beta4b 		= {
+			nice_name = "Classic Training"
+		},
+
+		mge_chillypunch_final4_fix2 = {
+			nice_name = "Chillypunch"
+		},
+
+		mge_triumph_beta7_rc1 		= {
+			nice_name = "Triumph"
+		},
+		
+		mge_oihguv_sucks_b5 		= {
+			nice_name = "Oihguv"
+		},
+		
+		mge_oihguv_sucks_a12 		= {
+			nice_name = "Oihguv"
+		},
 	}
+	if ("init_func" in map_stuff[GetMapName()])
+		map_stuff[GetMapName()].init_func()
 	printl("[VScript MGE] Loaded, moving all active players to spectator")
 
 	for (local i = 1; i <= MAX_CLIENTS; i++)
@@ -527,12 +575,12 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 
 	//requires a custom plugin to feed m_iszMvMPopfileName to SteamWorks_SetGameDescription
 	//might be able to do this through VPI?
-	local gamedesc = format("Potato MGE (%s)", clean_map_name[GetMapName()])
+	local gamedesc = format("Potato MGE (%s)", map_stuff[GetMapName()].nice_name)
 	SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
 }
 
-for (local hud; hud = FindByName(hud, "__mge*");)
-	EntFireByHandle(hud, "Kill", "", -1, null, null)
+for (local cleanup; cleanup = FindByName(cleanup, "__mge*");)
+	EntFireByHandle(cleanup, "Kill", "", -1, null, null)
 
 ::MGE_HUD <- CreateByClassname("game_text")
 MGE_HUD.KeyValueFromString("targetname", "__mge_hud")
