@@ -45,7 +45,7 @@
 			// this ent doesn't like having its classname changed
 			// EFL_KILLME seemingly doesn't have any major side effects here
 			// (besides blocking Kill inputs)
-			if (classname == "info_observer_point")
+			if (classname == "info_observer_point" || classname == "trigger_player_respawn_override")
 			{
 				preserve ? ent.AddEFlags(EFL_KILLME): ent.RemoveEFlags(EFL_KILLME)
 				continue

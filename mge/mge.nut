@@ -478,7 +478,6 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			nice_name = "Classic Training"
 			init_func = function() {
 
-				printl("Creating spawn points\n")
 				local red_spawn = SpawnEntityFromTable("info_player_teamspawn", {
 					targetname = "__mge_spawn_override_2"
 					TeamNum = TF_TEAM_RED

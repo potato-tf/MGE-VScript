@@ -336,7 +336,6 @@ class MGE_Events
 				scope = player.GetScriptScope()
 			}
 			local spawnfix = FindByName(null, "__mge_spawnfix")
-			printl(spawnfix)
 			if (spawnfix)
 			{
 				spawnfix.AcceptInput("SetRespawnName", format("__mge_spawn_override_%d", player.GetTeam()), player, player)
