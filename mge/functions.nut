@@ -42,12 +42,12 @@
 		local classname = ent.GetClassname()
 		if (preserve)
 		{
-			// this ent doesn't like having its classname changed
+			// these ents don't like having classname changed
 			// EFL_KILLME seemingly doesn't have any major side effects here
 			// (besides blocking Kill inputs)
 			if (classname == "info_observer_point" || classname == "trigger_player_respawn_override")
 			{
-				preserve ? ent.AddEFlags(EFL_KILLME): ent.RemoveEFlags(EFL_KILLME)
+				preserve ? ent.AddEFlags(EFL_KILLME) : ent.RemoveEFlags(EFL_KILLME)
 				continue
 			}
 
@@ -63,6 +63,40 @@
 		} else if ("original_classname" in scope)
 			ent.KeyValueFromString("classname", scope.original_classname)
 	}
+}
+
+// many mge maps only have a single respawn point
+// this spams console with "no valid spawns for class" errors for every player spawn
+// this will stop the spam after the first player spawn
+// some maps (chillypunch) also use cap logic to override the global respawn times
+::RespawnFix <- function() 
+{
+	local base_spawn = FindByClassname(null, "info_player_teamspawn")
+
+	// will be null for > 1 spawn point
+	if (!base_spawn) return
+
+	local red_spawn = SpawnEntityFromTable("info_player_teamspawn", {
+		targetname = "__mge_spawn_override_2"
+		TeamNum = TF_TEAM_RED
+		origin = base_spawn.GetOrigin() + Vector(0, 10, 0)
+		spawnflags = 511
+	})
+
+	local blu_spawn = SpawnEntityFromTable("info_player_teamspawn", {
+		targetname = "__mge_spawn_override_3"
+		TeamNum = TF_TEAM_BLUE
+		origin = base_spawn.GetOrigin() + Vector(0, -10, 0)
+		spawnflags = 511
+	})
+
+	::MGE_RESPAWN_OVERRIDE <- SpawnEntityFromTable("trigger_player_respawn_override", {
+		targetname = "__mge_player_respawn_override"
+		RespawnTime = 99999
+		spawnflags = 1
+	})
+	MGE_RESPAWN_OVERRIDE.SetSolid(2)
+	MGE_RESPAWN_OVERRIDE.SetSize(Vector(), Vector(1, 1, 1))
 }
 
 ::InitPlayerScope <- function(player)
@@ -157,7 +191,7 @@
 	else
 		ForceChangeClass(player, ("scout" in classes) ? TF_CLASS_SCOUT : ArenaClasses.find(classes[0]))
 
-	MGE_ClientPrint(player, 3, "ClassIsNotAllowed", newclass)
+	MGE_ClientPrint(player, HUD_PRINTTALK, "ClassIsNotAllowed", newclass)
 }
 // tointeger() allows trailing garbage (e.g. "123abc")
 // This will only allow strictly integers (also floats with only zeroes: e.g "1.00")
@@ -171,6 +205,35 @@
 		return float ? str.tofloat() : str.tointeger()
 	catch (_)
 		return
+}
+
+::KVStringToVectorOrQAngle <- function(str, angles = false, startidx = 0)
+{
+	local split = (str.find(",") ? split(str, ",", true) : split(str, " ", true)).apply(@(str) ToStrictNum(str, true))
+
+	// if (split.len() < 3 || split.find(null))
+	// this is allegedly faster
+	local errorstr = "KVString CONVERSION ERROR: %s"
+	if (!(2 in split))
+	{
+		error(format(errorstr, "Not enough values (need at least 3)"))
+		return angles ? QAngle() : Vector()
+	}
+	local invalid = split.find(null)
+	if (invalid != null)
+	{
+		local invalid_kvstringidx = invalid
+		if (invalid)
+		{
+			local invalid_mod = invalid % 3
+			invalid_kvstringidx = !invalid_mod ? 2 : invalid_mod - 1
+		}
+
+		local kvstringvalue = angles ? ["yaw", "pitch", "roll"] : ["x", "y", "z"]
+		error(format(errorstr, "Could not convert string to number for KVString %s (index %d)", kvstringvalue[invalid_kvstringidx], invalid))
+		return angles ? QAngle() : Vector()
+	}
+	return angles ? QAngle(split[startidx], split[startidx + 1], split[startidx + 2]) : Vector(split[startidx], split[startidx + 1], split[startidx + 2])
 }
 
 
@@ -255,12 +318,10 @@
 				local point = _arena.Koth.cap_point
 				if (typeof point == "string")
 				{
-					local split_point = split(point, " ").apply(@(str) str.tofloat())
-					point = Vector(split_point[0], split_point[1], split_point[2])
+					point = KVStringToVectorOrQAngle(point)
 				}
 				for (local prop; prop = FindByClassnameWithin(prop, "obj_teleporter", point, 128);)
 					EntFireByHandle(prop, "Kill", "", -1, null, null)
-
 			}
 			if (_arena.IsBBall)
 			{
@@ -358,7 +419,7 @@
 			//koth_radius is a new kv that you can set per-arena
 			_arena.Koth <- {
 				//see BBall notes about adding more spawns, koth uses the final index for cap points
-				cap_point = "koth_cap" in _arena ? _arena.koth_cap : (_arena.SpawnPoints.len() + 1).tostring()
+				cap_point = "koth_cap" in _arena || "cap_trigger" in _arena ? "cap_trigger" in _arena ? FindByName(null, _arena.cap_trigger).GetOrigin() : _arena.koth_cap : (_arena.SpawnPoints.len() + 1).tostring()
 				cap_radius = "koth_radius" in _arena ? _arena.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
 				owner_team = 0
 				current_cappers = {}
@@ -372,7 +433,6 @@
 
 				red_start_cap_time = "start_time_red" in _arena ? _arena.start_time_red : KOTH_START_TIME_RED
 				blu_start_cap_time = "start_time_blu" in _arena ? _arena.start_time_blu : KOTH_START_TIME_BLUE
-
 
 				decay_rate 		     = "koth_decay_rate" in _arena ? _arena.koth_decay_rate : KOTH_DECAY_RATE,
 				decay_interval	     = "koth_decay_interval" in _arena ? _arena.koth_decay_interval : KOTH_DECAY_INTERVAL,
@@ -441,18 +501,13 @@
 		}
 
 		local spawnpoints_len = _arena.SpawnPoints.len()
+
 		foreach(i, spawn in _arena.SpawnPoints)
-		{
 			spawn[2] = i < (spawnpoints_len - 1) / 2 ? TF_TEAM_RED : TF_TEAM_BLUE
-			printl(spawn[2])
-		}
 
 		local idx = (_arena.SpawnPoints.len() + 1).tostring()
-		if (_arena.IsKoth && idx in _arena)
-		{
-			local cap_point = split(_arena["koth_cap" in _arena ? "koth_cap" : idx], " ").apply( @(str) str.tofloat() )
-			_arena.Koth.cap_point = Vector(cap_point[0], cap_point[1], cap_point[2])
-		}
+		if (_arena.IsKoth && ("koth_cap" in _arena || idx in _arena))
+			_arena.Koth.cap_point = KVStringToVectorOrQAngle(_arena["koth_cap" in _arena ? "koth_cap" : idx])
 
 		//rulset updated, re-add everyone to the arena
 		Arenas[custom_ruleset_arena_name] <- _arena
@@ -492,7 +547,7 @@
 				else if (origin_len == 6)
 					leaderboard_cam_angles = QAngle(origin[3], origin[4], origin[5])
 
-				MGE_LeaderboardCam.SetOrigin(leaderboard_cam_pos)
+				MGE_LeaderboardCam.SetAbsOrigin(leaderboard_cam_pos)
 				MGE_LeaderboardCam.SetAbsAngles(leaderboard_cam_angles)
 				return
 			}
@@ -528,7 +583,7 @@
 			local random_cam = valid_cams.len() == 1 ? valid_cams[0] : valid_cams[RandomInt(0, valid_cams.len() - 1)]
 			local random_cam_angle_inverse = (random_cam.GetAbsAngles() - QAngle(0, 180, 0))
 
-			MGE_LeaderboardCam.SetOrigin(random_cam.GetOrigin())
+			MGE_LeaderboardCam.SetAbsOrigin(random_cam.GetOrigin())
 			MGE_LeaderboardCam.SetAbsAngles(random_cam_angle_inverse)
 
 			local leaderboard_pos = (random_cam.GetOrigin() + (random_cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET)) + Vector(0, 0, LEADERBOARD_VERTICAL_OFFSET)
@@ -540,7 +595,7 @@
 			MGE_Leaderboard.KeyValueFromInt("textsize", LEADERBOARD_TEXT_SIZE)
 			MGE_Leaderboard.KeyValueFromString("color", "255 255 255")
 			MGE_Leaderboard.KeyValueFromInt("orientation", 1)
-			MGE_Leaderboard.SetOrigin(leaderboard_pos)
+			MGE_Leaderboard.SetAbsOrigin(leaderboard_pos)
 			SetPropBool(MGE_Leaderboard, "m_bForcePurgeFixedUpStrings", true)
 			DispatchSpawn(MGE_Leaderboard)
 			MGE_Leaderboard.ValidateScriptScope()
@@ -839,9 +894,17 @@
 		//always grab the last index for KOTH cap point
 		if (_arena.IsKoth)
 		{
-			local idx = (_arena.SpawnPoints.len() + 1).tostring()
-			local cap_point = split(_arena["koth_cap" in _arena ? "koth_cap" : idx], " ").apply( @(str) str.tofloat() )
-			_arena.Koth.cap_point <- Vector(cap_point[0], cap_point[1], cap_point[2])
+			if ("cap_trigger" in _arena || "cap" in _arena)
+			{
+				EntFire("worldspawn", "RunScriptCode", format(@"
+					local _arena = Arenas[`%s`]
+					local point = `cap_trigger` in _arena && !(`cap` in _arena) ? _arena.cap_trigger : _arena.cap
+					_arena.Koth.cap_point <- FindByName(null, point).GetCenter()
+				", arena_name), 0.1)
+			} else {
+				local idx = (_arena.SpawnPoints.len() + 1).tostring()
+				_arena.Koth.cap_point <- KVStringToVectorOrQAngle(_arena["koth_cap" in _arena ? "koth_cap" : idx])
+			}
 		}
 	}
 }
@@ -875,7 +938,7 @@
 	// printl(bball_points.neutral_home)
 
 	//I did this specifically to annoy mince
-	ground_ball.SetOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
+	ground_ball.SetAbsOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
 
 	AddOutput(ground_ball, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self);", 0.0, 1)
 	AddOutput(ground_ball, "OnPlayerTouch", "!self", "Kill", "", SINGLE_TICK, 1)
@@ -906,7 +969,7 @@
 
 	local ball_ent = CreateByClassname("funCBaseFlex")
 
-	ball_ent.SetOrigin(player.GetOrigin())
+	ball_ent.SetAbsOrigin(player.GetOrigin())
 	ball_ent.SetModel(BBALL_BALL_MODEL)
 	ball_ent.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 	ball_ent.SetSolid(SOLID_NONE)
@@ -1205,7 +1268,7 @@
 	SetArenaState(arena_name, AS_IDLE)
 
 	foreach(i, p in queue)
-		MGE_ClientPrint(p, 3, "InLine", (i + 1))
+		MGE_ClientPrint(p, HUD_PRINTTALK, "InLine", (i + 1))
 }
 
 
@@ -1249,9 +1312,9 @@
 
 	// Print results to players
 	if (winner.IsValid())
-		MGE_ClientPrint(winner, 3, "GainedPoints", winner_gain.tostring())
+		MGE_ClientPrint(winner, HUD_PRINTTALK, "GainedPoints", winner_gain.tostring())
 	if (loser.IsValid())
-		MGE_ClientPrint(loser, 3, "LostPoints", loser_loss.tostring())
+		MGE_ClientPrint(loser, HUD_PRINTTALK, "LostPoints", loser_loss.tostring())
 
 	// Update stats in database/file
 	UpdateStats(winner, winner_stats, false)
@@ -1421,7 +1484,7 @@
 			loser_scope.won_last_match = false
 			winner_scope.won_last_match = true
 
-			MGE_ClientPrint(null, 3, "XdefeatsY",
+			MGE_ClientPrint(null, HUD_PRINTTALK, "XdefeatsY",
 				winner_scope.player_name,
 				winner_scope.stats.elo.tostring(),
 				loser_scope.player_name,
@@ -1456,7 +1519,7 @@
 
 			}
 
-			MGE_ClientPrint(null, 3, "XdefeatsY",
+			MGE_ClientPrint(null, HUD_PRINTTALK, "XdefeatsY",
 				format("%s, %s", winners[0].GetScriptScope().player_name, winners[1].GetScriptScope().player_name),
 				format("%s, %s", winners[0].GetScriptScope().stats.elo.tostring(), winners[1].GetScriptScope().stats.elo.tostring()),
 				format("%s, %s", losers[0].GetScriptScope().player_name, losers[1].GetScriptScope().player_name),
@@ -1599,7 +1662,7 @@
 			if (arena.IsBBall)
 			{
 				if (arena.BBall.ground_ball.IsValid())
-					arena.BBall.ground_ball.SetOrigin(arena.BBall.neutral_home)
+					arena.BBall.ground_ball.SetAbsOrigin(arena.BBall.neutral_home)
 
 				arena.BBall.bball_pickup_r <- CreateByClassname("trigger_particle")
 				arena.BBall.bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_2")
@@ -2019,7 +2082,7 @@
 	if (input.len() > 2) dummy.KeyValueFromString("angles", input[2].tostring())
 
 	if (player && player.IsValid())
-		player.SetOrigin(dummy.GetOrigin())
+		player.SetAbsOrigin(dummy.GetOrigin())
 
 	DispatchSpawn(dummy)
 	dummy.AcceptInput("Break", "", player, player)
@@ -2326,7 +2389,7 @@
 					if (votepos[0] && votepos[1] && (votepos[0] - votepos[1]).Length() < 200.0)
 					{
 						local groundball = arena.RulesetVote.ground_ball
-						groundball.SetOrigin(ball.GetOrigin())
+						groundball.SetAbsOrigin(ball.GetOrigin())
 						groundball.SetAbsAngles(ball.GetAbsAngles())
 
 						// arena.bball_hoop_red <- scope.hoop.GetScriptScope().basket.ToKVString()
@@ -2577,7 +2640,7 @@
 					arena.koth_cap <- point.GetOrigin().ToKVString()
 
 					local cap_point = arena.RulesetVote.cap_point
-					cap_point.SetOrigin(point.GetOrigin())
+					cap_point.SetAbsOrigin(point.GetOrigin())
 
 					foreach(p in arena_players)
 						if (scope.temp_point)
@@ -2694,7 +2757,7 @@
 				generate_delay += 0.01
 				EntFireByHandle(player, "RunScriptCode", format(@"
 					local origin = Vector(%f, %f, %f)
-					self.SetOrigin(origin)
+					self.SetAbsOrigin(origin)
 					self.SnapEyeAngles(QAngle(90, 0, 0))
 						SendToConsole(`nav_mark_walkable`)
 						printl(`Marking Spawn Point: ` + origin)
@@ -2719,7 +2782,7 @@
 			generate_delay += 0.01
 			EntFireByHandle(player, "RunScriptCode", format(@"
 				local origin = Vector(%f, %f, %f)
-				self.SetOrigin(origin)
+				self.SetAbsOrigin(origin)
 				self.SnapEyeAngles(QAngle(90, 0, 0))
 					SendToConsole(`nav_mark_walkable`)
 					printl(`Marking Spawn Point: ` + origin)

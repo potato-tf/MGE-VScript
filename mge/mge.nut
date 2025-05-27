@@ -430,8 +430,14 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		local player = self
 
 		for (local child = player.FirstMoveChild(); child; child = child.NextMovePeer())
+		{
 			if (child instanceof CEconEntity && GetPropInt(child, STRING_NETPROP_ITEMDEF) == ID_MANTREADS)
-				EntFireByHandle(child, "Kill", "", -1, null, null)
+			{
+				ENDIF_DELETE_MANTREADS ? EntFireByHandle(child, "Kill", "", -1, null, null) : RemovePlayer(player)
+				MGE_ClientPrint(player, HUD_PRINTTALK, "EndifMantreads")
+				break
+			}
+		}
 
 		EntFireByHandle(player, "RunScriptCode", format(@"
 
@@ -476,41 +482,17 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 
 		"workshop/mge_training_v8_beta4b.ugc1996603816" : {
 			nice_name = "Classic Training"
-			init_func = function() {
-
-				local red_spawn = SpawnEntityFromTable("info_player_teamspawn", {
-					targetname = "__mge_spawn_override_2"
-					TeamNum = TF_TEAM_RED
-					origin = Vector(-3774.000000, 7788.000000, -1516.229980)
-					spawnflags = 511
-				})
-				DispatchSpawn(red_spawn)
-
-				local blu_spawn = SpawnEntityFromTable("info_player_teamspawn", {
-					targetname = "__mge_spawn_override_3"
-					TeamNum = TF_TEAM_BLUE
-					origin = Vector(-3774.000000, 7758.000000, -1516.229980)
-					spawnflags = 511
-				})
-				DispatchSpawn(blu_spawn)
-
-				local override = SpawnEntityFromTable("trigger_player_respawn_override", {
-					targetname = "__mge_spawnfix"
-					spawnflags = 1
-					solid = 2
-					"OnStartTouch#1" : "!self,RunScriptCode,printl(activator),0,-1"
-				})
-				override.SetSolid(2)
-				override.SetSize(Vector(), Vector(1, 1, 1))
-			}
+			init_func = RespawnFix
 		},
 
 		mge_training_v8_beta4b 		= {
 			nice_name = "Classic Training"
+			init_func = RespawnFix
 		},
 
 		mge_chillypunch_final4_fix2 = {
 			nice_name = "Chillypunch"
+			init_func = RespawnFix
 		},
 
 		mge_triumph_beta7_rc1 		= {
@@ -646,9 +628,9 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 
 					local time_left = MGE_TIMER.GetScriptScope().base_timestamp - Time()
 
-					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
-					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
-					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
+					MGE_ClientPrint(null, HUD_PRINTTALK, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
+					MGE_ClientPrint(null, HUD_PRINTTALK, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
+					MGE_ClientPrint(null, HUD_PRINTTALK, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
 
 					printl("Files changed:")
 
