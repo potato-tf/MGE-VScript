@@ -10,9 +10,8 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
   - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
 - Alternatively, if you are not using any database integration, you can rename mapspawn.nut to something else and add `script_execute new_filename_here` to your server.cfg
 
-## Don't pack this into your map
-- I generally don't recommend you do this, this will receive live regular updates like a sourcemod plugin, and will conflict with server configs
-- If you must pack this into your map, you should modify it so it loads in a way that it doesn't override any existing mge scripts on the server
+## Don't pack this into your map (yet)
+This gamemode is still WIP and has some bugs/missing features that still need to be cleaned up.  If you're interested in packing this into a map, please let me know.
 
 
 ## Configuration/Modifying game rules
