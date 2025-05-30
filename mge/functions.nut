@@ -2291,7 +2291,6 @@
 				if (arena.RulesetVote.readytovalidate[0] && arena.RulesetVote.readytovalidate[1] && (self.GetOrigin() - hoop.GetScriptScope().basket).Length() < BBALL_HOOP_SIZE)
 				{
 					hoop_validated = true,
-					printl(self.GetTeam())
 					arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- hoop.GetScriptScope().basket.ToKVString()
 
 					// add some constant to this value to singify it's a bball annotation
@@ -2788,4 +2787,18 @@
 	// Start generating
 	nav_generation_state.generator = ArenaNavGenerator(only_this_arena)
 	nav_generation_state.is_running = true
+}
+
+::MGE_DoChangelevel <- function() {
+
+	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)
+	{
+		SetValue("mp_chattime", 9999.0)
+		EntFire("__mge_changelevel", "Activate") //do this anyway just to bring up the scoreboard/"end the round" instead of suddenly kicking everyone out
+		EntFire("player", "RunScriptCode", "EntFire(`__mge_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
+		EntFire("worldspawn", "Kill", "", 1.03)
+		return
+	}
+	SetValue("mp_chattime", 1.0)
+	EntFire("__mge_changelevel", "Activate")
 }

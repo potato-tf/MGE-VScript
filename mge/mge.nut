@@ -736,19 +736,4 @@ timer_scope.TimerThink <- function()
 	delete timer_scope.TimerThink
 }
 AddThinkToEnt(MGE_TIMER, "TimerThink")
-
-
-::MGE_DoChangelevel <- function() {
-
-	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)
-	{
-		SetValue("mp_chattime", 9999.0)
-		EntFire("__mge_changelevel", "Activate") //do this anyway just to bring up the scoreboard/"end the round" instead of suddenly kicking everyone out
-		EntFire("player", "RunScriptCode", "EntFire(`__mge_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
-		EntFire("worldspawn", "Kill", "", 1.03)
-		return
-	}
-	SetValue("mp_chattime", 1.0)
-	EntFire("__mge_changelevel", "Activate")
-}
 MGE_Init()

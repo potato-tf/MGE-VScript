@@ -58,8 +58,6 @@
 
 		local base_spawn = Entities.FindByClassname(null, `info_player_teamspawn`)
 
-		printl(base_spawn)
-
 		// will be null for > 1 spawn point
 		if (!base_spawn) return
 
@@ -69,7 +67,6 @@
 			origin = base_spawn.GetOrigin() + Vector(0, 0, 10)
 			spawnflags = 511
 		})
-		red_spawn.AddEFlags(EFL_KILLME)
 
 		local blu_spawn = SpawnEntityFromTable(`info_player_teamspawn`, {
 			targetname = `__mge_spawn_override_3`
@@ -77,7 +74,6 @@
 			origin = base_spawn.GetOrigin() + Vector(0, 0, 20)
 			spawnflags = 511
 		})
-		blu_spawn.AddEFlags(EFL_KILLME)
 
 		::MGE_RESPAWN_OVERRIDE <- SpawnEntityFromTable(`trigger_player_respawn_override`, {
 			targetname = `__mge_player_respawn_override`

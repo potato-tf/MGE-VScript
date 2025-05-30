@@ -236,16 +236,16 @@ class MGE_Events
 		"adminscript": function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 			local steam_id = GetPropString(player, "m_szNetworkIDString")
-			local script = split(params.text, " ", true)[1]
+			local script = ""
+			local splitscript = (split(params.text, " ", true).slice(1)).apply(@(s) script += s + " ")
 			if (GetStr("sv_allow_point_servercommand") != "always")
 			{
 				MGE_ClientPrint(player, HUD_PRINTTALK, "ServerCommandDisabled")
 				return
 			}
 			if (steam_id in ADMIN_LIST) {
-				MGE_ClientPrint(player, HUD_PRINTTALK, "AdminScript", script)
 				script = CharReplace(script, "'", "\"")
-				printl(script)
+				MGE_ClientPrint(player, HUD_PRINTTALK, "AdminScript", script)
 				SendToServerConsole(format("script %s", script))
 			}
 		}
@@ -335,12 +335,10 @@ class MGE_Events
 				player.ValidateScriptScope()
 				scope = player.GetScriptScope()
 			}
-			local spawnfix = FindByName(null, "__mge_player_respawn_override")
-			printl(spawnfix)
-			if (spawnfix)
+			if (MGE_RESPAWN_OVERRIDE)
 			{
-				spawnfix.AcceptInput("SetRespawnName", format("__mge_spawn_override_%d", player.GetTeam()), player, player)
-				spawnfix.AcceptInput("StartTouch", "", player, player)
+				MGE_RESPAWN_OVERRIDE.AcceptInput("SetRespawnName", format("__mge_spawn_override_%d", player.GetTeam()), player, player)
+				MGE_RESPAWN_OVERRIDE.AcceptInput("StartTouch", "!activator", player, player)
 			}
 
 			ValidatePlayerClass(player, player.GetPlayerClass())
