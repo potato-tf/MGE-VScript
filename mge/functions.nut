@@ -65,40 +65,6 @@
 	}
 }
 
-// many mge maps only have a single respawn point
-// this spams console with "no valid spawns for class" errors for every player spawn
-// this will stop the spam after the first player spawn
-// some maps (chillypunch) also use cap logic to override the global respawn times
-::RespawnFix <- function() 
-{
-	local base_spawn = FindByClassname(null, "info_player_teamspawn")
-
-	// will be null for > 1 spawn point
-	if (!base_spawn) return
-
-	local red_spawn = SpawnEntityFromTable("info_player_teamspawn", {
-		targetname = "__mge_spawn_override_2"
-		TeamNum = TF_TEAM_RED
-		origin = base_spawn.GetOrigin() + Vector(0, 10, 0)
-		spawnflags = 511
-	})
-
-	local blu_spawn = SpawnEntityFromTable("info_player_teamspawn", {
-		targetname = "__mge_spawn_override_3"
-		TeamNum = TF_TEAM_BLUE
-		origin = base_spawn.GetOrigin() + Vector(0, -10, 0)
-		spawnflags = 511
-	})
-
-	::MGE_RESPAWN_OVERRIDE <- SpawnEntityFromTable("trigger_player_respawn_override", {
-		targetname = "__mge_player_respawn_override"
-		RespawnTime = 99999
-		spawnflags = 1
-	})
-	MGE_RESPAWN_OVERRIDE.SetSolid(2)
-	MGE_RESPAWN_OVERRIDE.SetSize(Vector(), Vector(1, 1, 1))
-}
-
 ::InitPlayerScope <- function(player)
 {
 	player.ValidateScriptScope()
@@ -292,7 +258,7 @@
  // passing an arena name and setting arena_reset to true will convert the existing arena to a standard MGE arena
 ::LoadSpawnPoints <-  function(custom_ruleset_arena_name = null, arena_reset = false)
 {
-	local config = SpawnConfigs[GetMapName()]
+	local config = SpawnConfigs[MAPNAME_CONFIG_OVERRIDE]
 
 	//custom ruleset handling
 	if (custom_ruleset_arena_name)
@@ -900,6 +866,12 @@
 					local _arena = Arenas[`%s`]
 					local point = `cap_trigger` in _arena && !(`cap` in _arena) ? _arena.cap_trigger : _arena.cap
 					_arena.Koth.cap_point <- FindByName(null, point).GetCenter()
+
+					if (`cap_trigger` in _arena)
+					{
+						local cap_trigger = FindByName(null, _arena.cap_trigger)
+						_arena.Koth.partial_cap_rate <- 1 / (GetPropFloat(cap_trigger, `m_flCapTime`) / _arena.Koth.partial_cap_interval)
+					}
 				", arena_name), 0.1)
 			} else {
 				local idx = (_arena.SpawnPoints.len() + 1).tostring()
@@ -1136,7 +1108,6 @@
 	else
 	{
 		arena.Queue.append(player)
-		scope.queue <- arena.Queue
 
 		local idx = arena.Queue.len() - 1
 		local str = (idx == 0) ? format(GetLocalizedString("NextInLine", player), arena.Queue.len().tostring()) : format(GetLocalizedString("InLine", player), arena.Queue.len().tostring())
@@ -1149,7 +1120,6 @@
 	local scope = player.GetScriptScope()
 	local arena = Arenas[arena_name]
 
-	scope.queue <- null
 	scope.arena_info <- {
 		arena = arena,
 		name  = arena_name,
@@ -1202,26 +1172,15 @@
 	if (changeteam && player.GetTeam() != TEAM_SPECTATOR)
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
 
-	if (scope.queue)
-	{
-		for (local i = scope.queue.len() - 1; i >= 0; --i)
-			if (scope.queue[i] == player)
-			{
-				scope.queue.remove(i)
-				break
-			}
-
-		scope.queue <- null
-	}
-
 	if (scope.arena_info)
 	{
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
 
 		local queue = arena.Queue
-		if (queue.find(player) != null)
-			queue.remove(queue.find(player))
+		local player_idx = queue.find(player)
+		if (player_idx != null)
+			queue.remove(player_idx)
 
 		if (player in arena.CurrentPlayers)
 			delete arena.CurrentPlayers[player]
@@ -1251,6 +1210,7 @@
 			if (p.IsEFlagSet(EFL_REMOVE_FROM_ARENA))
 				RemovePlayer(p)
 
+		SetArenaState(arena_name, AS_IDLE)
 		return
 	}
 
@@ -1516,7 +1476,6 @@
 					losers.append(p)
 					scope.won_last_match = false
 				}
-
 			}
 
 			MGE_ClientPrint(null, HUD_PRINTTALK, "XdefeatsY",
@@ -1647,12 +1606,14 @@
 			arena.Score <- array(2, 0)
 			if (arena.IsBBall)
 			{
-				if (arena.BBall.bball_pickup_r && arena.BBall.bball_pickup_r.IsValid())
-					EntFireByHandle(arena.BBall.bball_pickup_r, "Kill", "", -1, null, null)
-				if (arena.BBall.bball_pickup_b && arena.BBall.bball_pickup_b.IsValid())
-					EntFireByHandle(arena.BBall.bball_pickup_b, "Kill", "", -1, null, null)
-				if (arena.BBall.ground_ball && arena.BBall.ground_ball.IsValid())
-					EntFireByHandle(arena.BBall.ground_ball, "Kill", "", -1, null, null)
+				local ball_ent = ["bball_pickup_r", "bball_pickup_b", "ground_ball"]
+
+				foreach(ent in ball_ent)
+					if (ent in arena.BBall && arena.BBall[ent] && arena.BBall[ent].IsValid())
+						EntFireByHandle(arena.BBall[ent], "Kill", "", -1, null, null)
+
+				foreach(player in arena_players)
+					EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", -1, null, null)
 			}
 		},
 		[AS_COUNTDOWN] = function() {
@@ -1661,7 +1622,7 @@
 
 			if (arena.IsBBall)
 			{
-				if (arena.BBall.ground_ball.IsValid())
+				if ("ground_ball" in arena.BBall && arena.BBall.ground_ball && arena.BBall.ground_ball.IsValid())
 					arena.BBall.ground_ball.SetAbsOrigin(arena.BBall.neutral_home)
 
 				arena.BBall.bball_pickup_r <- CreateByClassname("trigger_particle")
@@ -1799,12 +1760,8 @@
 				arena.Koth.current_cappers.clear()
 
 			if (arena.IsCustomRuleset)
-			{
 				foreach(p in arena_players)
-				{
-					RemovePlayer(p, true)
-				}
-			}
+					RemovePlayer(p)
 
 			EntFire("bignet", "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
 		},

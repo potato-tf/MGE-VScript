@@ -155,7 +155,8 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 //all scoring logic for koth and bball are handled here
 
 //this table is also used as a reference for all valid special arenas elsewhere in the code
-//if a new custom arena is created, you must add a function to this table (it doesn't need to do anything, see allmeat and midair)
+//if a new custom arena is created, you must add a function to this table
+// (it doesn't need to do anything, see allmeat, 4player, and midair)
 ::special_arenas <- {
 
 	function koth()
@@ -374,7 +375,11 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 					team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
 					"hoops_scored" in scope.stats ? scope.stats.hoops_scored++ : scope.stats.hoops_scored <- 1
 					CalcArenaScore(arena_name)
-
+					if (arena.State == AS_AFTERFIGHT)
+					{
+						arena.BBall.last_score_team = -1
+						return
+					}
 					arena.BBall.last_score_team = team
 					BBall_SpawnBall(arena_name)
 
@@ -471,44 +476,13 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	{
 		return
 	}
-	"4player" : function() {
+	"4player" : function() { //function names that start with a number need this special syntax
 		return
 	}
 }
 
-
 ::MGE_Init <- function() {
-	local map_stuff = {
 
-		"workshop/mge_training_v8_beta4b.ugc1996603816" : {
-			nice_name = "Classic Training"
-			init_func = RespawnFix
-		},
-
-		mge_training_v8_beta4b 		= {
-			nice_name = "Classic Training"
-			init_func = RespawnFix
-		},
-
-		mge_chillypunch_final4_fix2 = {
-			nice_name = "Chillypunch"
-			init_func = RespawnFix
-		},
-
-		mge_triumph_beta7_rc1 		= {
-			nice_name = "Triumph"
-		},
-		
-		mge_oihguv_sucks_b5 		= {
-			nice_name = "Oihguv"
-		},
-		
-		mge_oihguv_sucks_a12 		= {
-			nice_name = "Oihguv"
-		},
-	}
-	if ("init_func" in map_stuff[GetMapName()])
-		map_stuff[GetMapName()].init_func()
 	printl("[VScript MGE] Loaded, moving all active players to spectator")
 
 	for (local i = 1; i <= MAX_CLIENTS; i++)
@@ -556,7 +530,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 
 	//requires a custom plugin to feed m_iszMvMPopfileName to SteamWorks_SetGameDescription
 	//might be able to do this through VPI?
-	local gamedesc = format("Potato MGE (%s)", map_stuff[GetMapName()].nice_name)
+	local gamedesc = format("Potato MGE (%s)", MGE_MAPINFO[GetMapName()].nice_name)
 	SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
 }
 

@@ -336,6 +336,7 @@ class MGE_Events
 				scope = player.GetScriptScope()
 			}
 			local spawnfix = FindByName(null, "__mge_player_respawn_override")
+			printl(spawnfix)
 			if (spawnfix)
 			{
 				spawnfix.AcceptInput("SetRespawnName", format("__mge_spawn_override_%d", player.GetTeam()), player, player)
@@ -410,7 +411,6 @@ class MGE_Events
 						}
 					}
 
-					// SetSpecialArena(player, arena_name)
 				EntFireByHandle(player, "RunScriptCode", format("SetSpecialArena(self, `%s`)", arena_name), GENERIC_DELAY, null, null)
 
 				//spawn player
@@ -660,7 +660,7 @@ class MGE_Events
 				// if (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT)
 				// {
 					// MGE_ClientPrint(player, HUD_PRINTTALK, "SpecRemove")
-					RemovePlayer(player,  false)
+					RemovePlayer(player, false)
 				// }
 				if (!player.IsFakeClient())
 					scope.ThinkTable.SpecThink <- function()

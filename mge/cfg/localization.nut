@@ -5,6 +5,7 @@
  * - DaanBox (Dutch)       		*
  * - Xybo (Swedish)		   		*
  * - Sgt Table (Spanish)   		*
+ * - <Anonymous> (Latam)		*
  * - Royal (Vietnamese)    		*
  * - Lyney (Thai)		   		*
  * - Toxicologist (Czech)  		*
@@ -16,7 +17,7 @@
  * - NextinHKRY (Italian)  		*
  * - Gregarious (Romanian) 		*
  * - Snowy (Romanian) 	   		*
- * - call_it_true (Chinese)		* these 3 did both Simplified and Traditional
+ * - call_it_true (Chinese)		* both Simplified and Traditional
  * - pepper_1656 (Chinese)		*
  * - bonkthequality (Chinese)	*
  ********************************/
@@ -31,7 +32,6 @@
  * - Turkish                                                     *
  * - Swedish                                                     *
  * - Norwegian                                                   *
- * - Latam (from verified Spanish translation)                   *
  * - Korean                                                      *
  * - Japanese                                                    *
  *****************************************************************/
