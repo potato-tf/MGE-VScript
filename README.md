@@ -31,7 +31,7 @@ This gamemode is still WIP and has some bugs/missing features that still need to
 | Allmeat | ✅ |
 | Koth | ✅ |
 | Midair? |⚠️|
-| Ultiduo | ❌ |
+| Ultiduo | ⚠️ |
 | Plain text ELO/stat tracking | ✅ |
 | Quake-style announcer lines (toggleable) | ✅ |
 | Localization | ⚠️ |
@@ -40,6 +40,8 @@ This gamemode is still WIP and has some bugs/missing features that still need to
 | Database tracking (SQLite) | ⚠️ |
 | Custom rulesets | ⚠️ |
 | Arbitrary team sizes | ❌ |
+
+⚠️Ultiduo code does exist, but it's not tested.  If you run ultiduo and run into issues please let me know.
 
 ⚠️I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
 
