@@ -92,7 +92,6 @@ LocalTime(local_time)
 	steam_ids = []
 	in_protected_match = false
 	matchmaking_disable_time = 0
-	server_key = ""
 	server_name = ""
 
 	status = "Waiting for players"
