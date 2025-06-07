@@ -57,6 +57,7 @@ jobs:
             # Sync config files
             rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./devserver_config/vpi ${a[1]}:/var/tf2server_noplugins/tf/scripts/vscripts/mge
             rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./devserver_config/config.nut ${a[1]}:/var/tf2server_noplugins/tf/scripts/vscripts/mge/cfg/config.nut
+            rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./devserver_config/localization.nut ${a[1]}:/var/tf2server_noplugins/tf/scripts/vscripts/mge/cfg/localization.nut
             rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mapspawn.nut ${a[1]}:/var/tf2server_noplugins/tf/scripts/vscripts/mge_init.nut
           } &
           done
