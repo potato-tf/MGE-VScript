@@ -558,7 +558,6 @@ class MGE_Events
 				}
 				//we've hit an airshot
 				else if (
-					params.rocket_jump &&
 					params.damagebits & DMG_BLAST &&
 					TraceLine(victim_origin, victim_origin - Vector(0, 0, trace_dist), victim) == 1
 				) {
