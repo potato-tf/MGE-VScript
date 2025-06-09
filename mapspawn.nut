@@ -126,6 +126,9 @@
 		nice_name = "Oihguv"
 	},
 }
+if (!(MAPNAME_CONFIG_OVERRIDE in MGE_MAPINFO))
+	return
+
 if ("init_func" in MGE_MAPINFO[MAPNAME_CONFIG_OVERRIDE])
 	MGE_MAPINFO[MAPNAME_CONFIG_OVERRIDE].init_func()
 
