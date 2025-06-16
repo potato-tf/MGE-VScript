@@ -1,5 +1,6 @@
 ::ADMIN_LIST <- {
-	"[U:1:28266263]" : "Braindawg"
+	"[U:1:28266263]" : "Braindawg",
+	"[U:1:5202410]"  : "Hell-met"
 }
 
 //CONFIG CONSTANTS
