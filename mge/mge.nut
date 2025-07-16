@@ -74,7 +74,7 @@ foreach (sound in StockSounds)
 local local_time = {}
 LocalTime(local_time)
 ::SERVER_DATA <- {
-	endpoint_url = "https://potato.tf/api/serverstatus"
+	endpoint_url = "https://archive.potato.tf/api/serverstatus"
 	server_key = ""
 	address = 0
 	map = GetMapName()
