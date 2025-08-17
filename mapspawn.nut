@@ -162,8 +162,8 @@ else
 		Include("vpi/vpi")
 
 		// create scriptdata directories
-		FileToString("mge_playerdata/")
-		FileToString("mge_arenalogs/")
+		FileToString("mge_playerdata/ ")
+		FileToString("mge_arenalogs/ ")
 	}
 
 	Include("functions")
