@@ -660,7 +660,8 @@ class MGE_Events
 					RemovePlayer(player, false)
 				// }
 				if (!player.IsFakeClient())
-					scope.ThinkTable.SpecThink <- function()
+				{
+					function SpecThink()
 					{
 						if (spec_cooldown_time < Time())
 						{
@@ -668,6 +669,8 @@ class MGE_Events
 							spec_cooldown_time = Time() + SPECTATOR_MESSAGE_COOLDOWN
 						}
 					}
+					scope.ThinkTable.SpecThink <- SpecThink
+				}
 			}
 			else if (params.oldteam > TEAM_SPECTATOR && team > TEAM_SPECTATOR && !player.IsEFlagSet(EFL_ADDING_TO_ARENA))
 			{

@@ -1,4 +1,4 @@
-::HandleRoundStart <- function()
+function ROOT::HandleRoundStart()
 {
 	PreserveEnts()
 	EntFire("bignet", "RunScriptCode", "PreserveEnts(false)", GENERIC_DELAY)
@@ -16,7 +16,10 @@
 	{
 		player_manager.ValidateScriptScope()
 		local prop_array_size = GetPropArraySize(player_manager, "m_flNextRespawnTime")
-		player_manager.GetScriptScope().HideRespawnText <- function() {
+		PlayerManagerScope <- player_manager.GetScriptScope()
+
+		function PlayerManagerScope::HideRespawnText() 
+		{
 			foreach (player, userid in ALL_PLAYERS)
 			{
 				if (!player || !player.IsValid() || player.IsFakeClient()) continue
@@ -25,11 +28,12 @@
 			}
 			return -1
 		}
+
 		AddThinkToEnt(player_manager, "HideRespawnText")
 	}
 }
 
-::PreserveEnts <- function(preserve = true)
+function ROOT::PreserveEnts(preserve = true)
 {
 	for (local ent; ent = FindByName(ent, "__mge*");)
 	{
@@ -65,10 +69,10 @@
 	}
 }
 
-::InitPlayerScope <- function(player)
+function ROOT::InitPlayerScope(player)
 {
 	player.ValidateScriptScope()
-	local scope = player.GetScriptScope()
+	scope <- player.GetScriptScope()
 	local player_entindex = player.entindex()
 
 	// Clear scope
@@ -125,21 +129,24 @@
 	foreach (k, v in toscope)
 		scope[k] <- v
 
-	scope.PlayerThink <- function() {
-		foreach(name, func in scope.ThinkTable)
-			func.call(scope)
+	function scope::PlayerThink() {
+
+		foreach(name, func in ThinkTable)
+			func()
+
 		return PLAYER_THINK_INTERVAL
 	}
+
 	AddThinkToEnt(player, "PlayerThink")
 }
 
-::ForceChangeClass <- function(player, classIndex)
+function ROOT::ForceChangeClass(player, classIndex)
 {
 	player.SetPlayerClass(classIndex)
 	SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", classIndex)
 }
 
-::ValidatePlayerClass <- function(player, newclass, pre=false)
+function ROOT::ValidatePlayerClass(player, newclass, pre=false)
 {
 	local scope = player.GetScriptScope()
 	if (!("arena_info" in scope) || !scope.arena_info) return
@@ -161,7 +168,7 @@
 }
 // tointeger() allows trailing garbage (e.g. "123abc")
 // This will only allow strictly integers (also floats with only zeroes: e.g "1.00")
-::ToStrictNum <-  function(str, float = false)
+function ROOT::ToStrictNum(str, float = false)
 {
 //	local rex = regexp(@"-?[0-9]+(\.0+)?")  // [-](digit)[.(>0 zeroes)]
 	local rex = regexp(@"-?[0-9]+(\.[0-9]+)?")
@@ -173,7 +180,7 @@
 		return
 }
 
-::KVStringToVectorOrQAngle <- function(str, angles = false, startidx = 0)
+function ROOT::KVStringToVectorOrQAngle(str, angles = false, startidx = 0)
 {
 	local split = (str.find(",") ? split(str, ",", true) : split(str, " ", true)).apply(@(str) ToStrictNum(str, true))
 
@@ -203,7 +210,7 @@
 }
 
 
-::GetUnixTimestamp <- function(time)
+function ROOT::GetUnixTimestamp(time)
 {
     local SECONDS_IN_DAY  = 86400
     local SECONDS_IN_YEAR = 31536000
@@ -256,7 +263,7 @@
  // it does NOT initialize anything, only modifies the existing data
 
  // passing an arena name and setting arena_reset to true will convert the existing arena to a standard MGE arena
-::LoadSpawnPoints <-  function(custom_ruleset_arena_name = null, arena_reset = false)
+function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = false)
 {
 	local config = SpawnConfigs[MAPNAME_CONFIG_OVERRIDE]
 
@@ -489,7 +496,7 @@
 	if (ENABLE_LEADERBOARD)
 	{
 		//misleading name, also handles the actual leaderboard
-		::DoLeaderboardCam <- function()
+		function ROOT::DoLeaderboardCam()
 		{
 			//spawn our camera
 			::MGE_LeaderboardCam <- CreateByClassname("info_observer_point")
@@ -592,7 +599,7 @@
 							order_filter = column_name,
 							max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
 						},
-						callback=function(response, error) {
+						function callback(response, error) {
 							if (typeof(response) != "array" || !response.len())
 							{
 								// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
@@ -881,7 +888,7 @@
 	}
 }
 
-::AllMeat_FindWeapon <- function(weapon)
+function ROOT::AllMeat_FindWeapon(weapon)
 {
 	local itemdef = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
 
@@ -895,7 +902,7 @@
 }
 
 
-::BBall_SpawnBall <-  function(arena_name, origin_override = null, custom_ruleset_arena = false)
+function ROOT::BBall_SpawnBall(arena_name, origin_override = null, custom_ruleset_arena = false)
 {
 	local arena = Arenas[arena_name]
 	local bball_points = custom_ruleset_arena ? {} : arena.BBall
@@ -931,7 +938,7 @@
 	EntFireByHandle(ground_ball, "RunScriptCode", "DispatchSpawn(self)", 0.2, null, null)
 }
 
-::BBall_Pickup <- function(player)
+function ROOT::BBall_Pickup(player)
 {
 	if (!player.IsAlive()) return
 
@@ -982,7 +989,7 @@
 	EntFire(format("__mge_bball_trail_%d", player.GetTeam()), "StartTouch", "!activator", -1, player)
 }
 
-::AddBot <- function(arena_name)
+function ROOT::AddBot(arena_name)
 {
 	if (typeof(arena_name) == "string" && !(arena_name in Arenas)) return
 	if (typeof(arena_name) == "integer")
@@ -1018,7 +1025,7 @@
 	AddPlayer((bot) ? bot : abot, arena_name)
 }
 
-::RemoveBot <- function(arena_name, all=false)
+function ROOT::RemoveBot(arena_name, all=false)
 {
 	if (typeof(arena_name) == "string" && !(arena_name in Arenas)) return
 	if (typeof(arena_name) == "integer")
@@ -1061,13 +1068,13 @@
 	}
 }
 
-::RemoveAllBots <- function()
+function ROOT::RemoveAllBots()
 {
 	foreach (arena_name, _ in Arenas)
 		RemoveBot(arena_name, true)
 }
 
-::AddPlayer <- function(player, arena_name)
+function ROOT::AddPlayer(player, arena_name)
 {
 	local arena = Arenas[arena_name]
 
@@ -1115,7 +1122,7 @@
 	}
 }
 
-::AddToArena <- function(player, arena_name)
+function ROOT::AddToArena(player, arena_name)
 {
 	local scope = player.GetScriptScope()
 	local arena = Arenas[arena_name]
@@ -1160,7 +1167,7 @@
 		player.RemoveBotAttribute(IGNORE_ENEMIES)
 }
 
-::RemovePlayer <- function(player, changeteam=true)
+function ROOT::RemovePlayer(player, changeteam=true)
 {
 	local scope = player.GetScriptScope()
 
@@ -1197,7 +1204,7 @@
 	}
 }
 
-::CycleQueue <- function(arena_name)
+function ROOT::CycleQueue(arena_name)
 {
 	local arena = Arenas[arena_name]
 
@@ -1232,7 +1239,7 @@
 }
 
 
-::CalcELO <- function(winner, loser) {
+function ROOT::CalcELO(winner, loser) {
 
 	// if (!ELO_TRACKING_MODE || !winner || !loser ||
 		// !winner.IsValid() || !loser.IsValid() ||
@@ -1309,7 +1316,7 @@
 }
 
 //TODO, refactor CalcELO into something that can accept any arbitrary number of players instead
-::CalcELO2 <- function(winner, winner2, loser, loser2) {
+function ROOT::CalcELO2(winner, winner2, loser, loser2) {
 
 	if (winner.IsFakeClient() || loser.IsFakeClient() || !ELO_TRACKING_MODE || loser2.IsFakeClient() || winner2.IsFakeClient())
 		return
@@ -1406,7 +1413,7 @@
 	//     ClientPrint(loser2, 3, format("You lost %d points!", loserscore))
 }
 
-::CalcArenaScore <- function(arena_name)
+function ROOT::CalcArenaScore(arena_name)
 {
 	local arena = Arenas[arena_name]
 
@@ -1492,7 +1499,7 @@
 	}
 }
 
-::TryGetClearSpawnPoint <- function(player, arena_name)
+function ROOT::TryGetClearSpawnPoint(player, arena_name)
 {
 	local arena   = Arenas[arena_name]
 	local spawns  = arena.SpawnPoints
@@ -1520,7 +1527,7 @@
 	return idx
 }
 
-::GetNextSpawnPoint <- function(player, arena_name)
+function ROOT::GetNextSpawnPoint(player, arena_name)
 {
 	local arena = Arenas[arena_name]
 
@@ -1558,10 +1565,12 @@
     }
 
 	local shuffleModes = {
-		[0] = function() {
+
+		function randomshuffle() {
 			arena.SpawnIdx = (arena.SpawnIdx + 1) % arena.SpawnPoints.len()
 		},
-		[1] = function() {
+
+		function classicrandom() {
 
 			if (!("SpawnPointsOriginal" in arena))
 			{
@@ -1577,31 +1586,45 @@
 			}
 			arena.SpawnIdx = (arena.SpawnIdx + 1) % arena.SpawnPoints.len()
 		},
-		[2] = function() {
+
+		function randomexcept() {
+
 			while (player.GetScriptScope().last_spawn_point == arena.SpawnIdx)
 				arena.SpawnIdx = RandomInt(0, arena.SpawnPoints.len() - 1)
+
 		},
-		// [3] = function() {
-		// 	return
-		// },
+
+		function truerandom() {
+			arena.SpawnIdx = RandomInt(0, arena.SpawnPoints.len() - 1)
+		},
+
+		// [0] = this.randomshuffle,
+		// [1] = this.classicrandom,
+		// [2] = this.randomexcept,
+		// [3] = this.truerandom
 	}
 
-	if (SPAWN_SHUFFLE_MODE in shuffleModes)
-		shuffleModes[SPAWN_SHUFFLE_MODE]()
-	else
-		arena.SpawnIdx = RandomInt(0, arena.SpawnPoints.len() - 1)
+	// just in case
+	shuffleModes[0] <- shuffleModes.randomshuffle.bindenv(shuffleModes)
+	shuffleModes[1] <- shuffleModes.classicrandom.bindenv(shuffleModes)
+	shuffleModes[2] <- shuffleModes.randomexcept.bindenv(shuffleModes)
+	shuffleModes[3] <- shuffleModes.truerandom.bindenv(shuffleModes)
+
+	shuffleModes[SPAWN_SHUFFLE_MODE in shuffleModes ? SPAWN_SHUFFLE_MODE : 0]()
+	
 
 	return arena.SpawnIdx
 }
 
-::SetArenaState <- function(arena_name, state) {
+function ROOT::SetArenaState(arena_name, state) {
 	local arena = Arenas[arena_name]
 	arena.State = state
 
 	local arena_players = arena.CurrentPlayers.keys()
 
 	local arenaStates = {
-		[AS_IDLE] = function() {
+
+		function AS_IDLE() {
 
 			arena.Score <- array(2, 0)
 			if (arena.IsBBall)
@@ -1616,7 +1639,8 @@
 					EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", -1, null, null)
 			}
 		},
-		[AS_COUNTDOWN] = function() {
+
+		function AS_COUNTDOWN() {
 
 			local countdown_time = arena.cdtime.tointeger()
 
@@ -1718,7 +1742,9 @@
 				BBall_SpawnBall(arena_name)
 
 		},
-		[AS_FIGHT] = function() {
+
+		function AS_FIGHT() {
+
 			foreach(p in arena_players)
 			{
 				local scope = p.GetScriptScope()
@@ -1734,7 +1760,9 @@
 				p.RemoveCustomAttribute("no_attack")
 			}
 		},
-		[AS_AFTERFIGHT] = function() {
+
+		function AS_AFTERFIGHT() {
+
 			foreach(p in arena_players)
 			{
 				//20-0
@@ -1766,9 +1794,15 @@
 			EntFire("bignet", "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
 		},
 	}
+
+	arenaStates[AS_IDLE]       <- arenaStates.AS_IDLE.bindenv(arenaStates)
+	arenaStates[AS_COUNTDOWN]  <- arenaStates.AS_COUNTDOWN.bindenv(arenaStates)
+	arenaStates[AS_FIGHT]      <- arenaStates.AS_FIGHT.bindenv(arenaStates)
+	arenaStates[AS_AFTERFIGHT] <- arenaStates.AS_AFTERFIGHT.bindenv(arenaStates)
+
 	arenaStates[state]()
 }
-::SetSpecialArena <- function(player, arena_name) {
+function ROOT::SetSpecialArena(player, arena_name) {
 
 	local arena = Arenas[arena_name]
 
@@ -1785,7 +1819,7 @@
 	}
 }
 
-::PlayAnnouncer <- function(player, sound_name) {
+function ROOT::PlayAnnouncer(player, sound_name) {
 
 	if (!ENABLE_ANNOUNCER || !player.GetScriptScope().enable_announcer) return
 
@@ -1798,7 +1832,7 @@
 	})
 }
 
-::GetLocalizedString <-  function(string, player = null) {
+function ROOT::GetLocalizedString(string, player = null) {
 
 	local str = false
 
@@ -1822,7 +1856,7 @@
 	return str
 }
 
-::MGE_ClientPrint <-  function(...) {
+function ROOT::MGE_ClientPrint(...) {
 
 	local args = vargv
 	local player = args[0]
@@ -1877,7 +1911,7 @@
 	}
 }
 
-::GetStats <- function(player) {
+function ROOT::GetStats(player) {
 
 	if (!ELO_TRACKING_MODE || player.IsFakeClient()) return
 
@@ -1930,7 +1964,7 @@
 				default_elo=DEFAULT_ELO,
 				name = scope.player_name
 			},
-			callback=function(response, error) {
+			function callback(response, error) {
 
 				if (typeof(response) != "array" || !response.len())
 				{
@@ -1960,7 +1994,7 @@
 	}
 }
 
-::UpdateStats <-  function(player, _stats = {}, additive = false) {
+function ROOT::UpdateStats(player, _stats = {}, additive = false) {
 	local scope = player.GetScriptScope()
 	local steam_id = GetPropString(player, "m_szNetworkIDString")
 	local steam_id_slice = steam_id == "BOT" ? "BOT" : steam_id.slice(5, steam_id.find("]"))
@@ -2004,7 +2038,7 @@
 					stats=_stats,
 					additive=additive
 				},
-				callback=function(response, error) {
+				function callback(response, error) {
 					printf(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_WriteError" : "VPI_WriteSuccess"], GetPropString(player, "m_szNetworkIDString"))
 				}
 			})
@@ -2019,7 +2053,7 @@
 					stats=_stats,
 					additive=additive
 				},
-				callback=function(response, error) {
+				function callback(response, error) {
 					printf(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_WriteError" : "VPI_WriteSuccess"], GetPropString(player, "m_szNetworkIDString"))
 				}
 			})
@@ -2027,7 +2061,7 @@
 	}
 }
 
-::SendUsermessage <-  function(usermessage, input, player = null)
+function ROOT::SendUsermessage(usermessage, input, player = null)
 {
 	local dummy = CreateByClassname("prop_dynamic")
 
@@ -2045,7 +2079,7 @@
 	dummy.AcceptInput("Break", "", player, player)
 }
 
-::ShowModelToPlayer <-  function(_player, model = ["models/player/heavy.mdl", 0, 0], pos = Vector(), ang = QAngle(), duration = 9999.0)
+function ROOT::ShowModelToPlayer(_player, model = ["models/player/heavy.mdl", 0, 0], pos = Vector(), ang = QAngle(), duration = 9999.0)
 {
     PrecacheModel(model[0])
     local proxy_entity = CreateByClassname("obj_teleporter") // not using SpawnEntityFromTable as that creates spawning noises
@@ -2069,7 +2103,7 @@
     return proxy_entity;
 }
 //taken from popext (originally made by fellen)
-::VectorAngles <- function(forward)
+function ROOT::VectorAngles(forward)
 {
 	local yaw, pitch
 	if ( forward.y == 0.0 && forward.x == 0.0 ) {
@@ -2091,7 +2125,7 @@
 	return QAngle(pitch, yaw, 0.0)
 }
 
-::SwitchWeaponSlot <-  function(player, slot, delay = -2)
+function ROOT::SwitchWeaponSlot(player, slot, delay = -2)
 {
 
 	if (delay == -2)
@@ -2099,7 +2133,7 @@
 	else
 		EntFireByHandle(MGE_CLIENTCOMMAND, "Command", format("slot%d", slot), delay, player, player)
 }
-::SetCustomArenaRuleset <- function(arena_name, ruleset, fraglimit = 5)
+function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 {
 	local arena = Arenas[arena_name]
 	local arena_players = arena.CurrentPlayers.keys()
@@ -2681,7 +2715,7 @@
 	return
 }
 
-::CharReplace <- function(str, findwhat, replace) {
+function ROOT::CharReplace(str, findwhat, replace) {
 
 	local returnstring = ""
 	local charlist 	= array(str.len(), "")
@@ -2699,7 +2733,7 @@
 	generator = null,
 	is_running = false
 }
-::ArenaNavGenerator <- function(only_this_arena = null) {
+function ROOT::ArenaNavGenerator(only_this_arena = null) {
 	local player = GetListenServerHost()
 
 	local progress = 0
@@ -2755,7 +2789,7 @@
 	}
 }
 
-::ResumeNavGeneration <- function() {
+function ROOT::ResumeNavGeneration() {
 	if (!nav_generation_state.is_running || !nav_generation_state.generator) return
 
 	if (nav_generation_state.generator.getstatus() == "dead") {
@@ -2766,7 +2800,8 @@
 	resume nav_generation_state.generator
 }
 
-::MGE_CreateNav <- function(only_this_arena = null) {
+function ROOT::MGE_CreateNav(only_this_arena = null) {
+
 	local player = GetListenServerHost()
 	player.SetMoveType(MOVETYPE_NOCLIP, MOVECOLLIDE_DEFAULT)
 
@@ -2775,11 +2810,13 @@
 
 	AddPlayer(player, Arenas_List[0])
 
-	player.ValidateScriptScope()
-	player.GetScriptScope().NavThink <- function() {
-		if (!GetInt("host_thread_mode")) {
+	scope <- player.ValidateScriptScope(), player.GetScriptScope()
+
+	function scope::NavThink() {
+
+		if (!GetInt("host_thread_mode"))
 			ResumeNavGeneration()
-		}
+
 		return 1
 	}
 	AddThinkToEnt(player, "NavThink")
@@ -2789,7 +2826,7 @@
 	nav_generation_state.is_running = true
 }
 
-::MGE_DoChangelevel <- function() {
+function ROOT::MGE_DoChangelevel() {
 
 	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)
 	{

@@ -114,7 +114,7 @@ EntFire("worldspawn", "RunScriptCode", @"
 	local hostname = GetStr(`hostname`)
 	local _split = split(hostname, `#`)
 	local _split_region = _split.len() == 1 ? [``, `]`] : split(_split[1], `[`)
-	SERVER_DATA.server_name = GetStr(`hostname`)
+	SERVER_DATA.server_name = hostname
 	SERVER_DATA.server_key = _split.len() == 1 ? `` : _split[1].slice(0, _split[1].find(`[`))
 	SERVER_DATA.region = _split_region.len() == 1 ? `` : _split_region[1].slice(0, _split_region[1].find(`]`))
 	SERVER_DATA.domain = SERVER_DATA.region == `USA` ? `us.potato.tf` : format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
@@ -161,7 +161,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	function koth()
 	{
 		local player = self
-		local scope = player.GetScriptScope()
+		scope <- player.GetScriptScope()
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
 
@@ -196,7 +196,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			point = point_vector
 		}
 		//cap logic think
-		scope.ThinkTable.KothThink <- function()
+		function scope::ThinkTable::KothThink()
 		{
 			local owner_team = arena.Koth.owner_team
 			local arena_players = arena.CurrentPlayers.keys()
@@ -352,14 +352,14 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	function bball()
 	{
 		local player = self
-		local scope = player.GetScriptScope()
+		scope <- player.GetScriptScope()
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
 		local arena_players = arena.CurrentPlayers.keys()
 		local team = player.GetTeam()
 		local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
 
-		scope.ThinkTable.BBallThink <- function() {
+		function scope::ThinkTable::BBallThink() {
 
 			if (scope.ball_ent && scope.ball_ent.IsValid())
 			{
@@ -396,9 +396,9 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	function turris()
 	{
 		local player = self
-		local scope = player.GetScriptScope()
+		scope <- player.GetScriptScope()
 		scope.turris_cooldown <- 0.0
-		scope.ThinkTable.TurrisThink <- function() {
+		function scope::ThinkTable::TurrisThink() {
 			if (turris_cooldown < Time())
 			{
 				player.Regenerate(true)
@@ -455,9 +455,9 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	function infammo()
 	{
 		local player = self
-		local scope = player.GetScriptScope()
+		scope <- player.GetScriptScope()
 
-		scope.ThinkTable.InfAmmoThink <- function() {
+		function scope::ThinkTable::InfAmmoThink() {
 
 			local weapon = player.GetActiveWeapon()
 			local itemid = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
@@ -480,7 +480,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	}
 }
 
-::MGE_Init <- function() {
+function ROOT::MGE_Init() {
 
 	printl("[VScript MGE] Loaded, moving all active players to spectator")
 
@@ -508,7 +508,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		printl(MGE_Localization[DEFAULT_LANGUAGE]["VPI_InitDB"])
 		VPI.AsyncCall({
 			func = "VPI_MGE_DBInit",
-			callback = function(response, error) {
+			function callback (response, error) {
 				printl(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_DBInitError" : "VPI_DBInitSuccess"])
 			}
 		})
@@ -586,7 +586,9 @@ MGE_CHANGELEVEL.KeyValueFromString("targetname", "__mge_changelevel")
 if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 {
 	MGE_CHANGELEVEL.ValidateScriptScope()
-	MGE_CHANGELEVEL.GetScriptScope().AutoUpdate <- function() {
+	ChangelevelScope <- MGE_CHANGELEVEL.GetScriptScope()
+
+	function ChangelevelScope::AutoUpdate() {
 		VPI.AsyncCall({
 			func = "VPI_MGE_AutoUpdate",
 			kwargs = {
@@ -594,7 +596,7 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 				branch = GAMEMODE_AUTOUPDATE_BRANCH,
 				clone_dir = GAMEMODE_AUTOUPDATE_TARGET_DIR
 			},
-			callback = function(response, error) {
+			function callback(response, error) {
 
 				//gamemode has been updated
 				if (!error && response.len()) {
@@ -658,20 +660,20 @@ EntFireByHandle(MGE_TIMER, "ShowInHUD", "1", -1, null, null)
 
 MGE_TIMER.ValidateScriptScope()
 
-local timer_scope = MGE_TIMER.GetScriptScope()
-timer_scope.time_left <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
-timer_scope.base_timestamp <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+TimerScope <- MGE_TIMER.GetScriptScope()
+TimerScope.time_left <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+TimerScope.base_timestamp <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
 
-timer_scope.InputSetTime <- function() {
+function TimerScope::InputSetTime() {
 
-	timer_scope.base_timestamp = GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+	base_timestamp = GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
 	return true
 
 }
-timer_scope.Inputsettime <- timer_scope.InputSetTime
-timer_scope.hinted <- false
+TimerScope.Inputsettime <- TimerScope.InputSetTime
+TimerScope.hinted <- false
 
-timer_scope.TimerThink <- function()
+function TimerScope::TimerThink()
 {
 	local time_left = base_timestamp - Time()
 
@@ -701,10 +703,12 @@ timer_scope.TimerThink <- function()
 			SERVER_DATA.server_name = GetStr("hostname")
 
 			if (UPDATE_SERVER_DATA) {
+
 				VPI.AsyncCall({
 					func = "VPI_MGE_UpdateServerData",
 					kwargs = SERVER_DATA,
-					callback = function(response, error) {
+
+					function callback(response, error) {
 						if (error)
 						{
 							return 3
@@ -732,7 +736,7 @@ timer_scope.TimerThink <- function()
 		return -1
 	}
 
-	delete timer_scope.TimerThink
+	delete TimerScope.TimerThink
 }
 AddThinkToEnt(MGE_TIMER, "TimerThink")
 MGE_Init()

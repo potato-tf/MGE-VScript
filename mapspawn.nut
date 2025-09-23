@@ -51,7 +51,7 @@
 // this spams console with "no valid spawns for class" errors for every player spawn
 // this will stop the spam after the first player spawn
 // some maps (chillypunch) also use cap logic to override the global respawn times
-::MGE_RespawnFix <- function()
+function MGE_RespawnFix()
 {
 	// delay until ents are spawned
 	EntFire("worldspawn", "RunScriptCode", @"
@@ -92,14 +92,14 @@
 
 	"workshop/mge_training_v8_beta4b.ugc1996603816" : {
 		nice_name = "Classic Training"
-		init_func = function() {
+		function init_func () {
 			MAPNAME_CONFIG_OVERRIDE = "mge_training_v8_beta4b"
 			MGE_RespawnFix()
 		}
 	},
 	"workshop/mge_chillypunch_final4_fix2.ugc3490315512" : {
 		nice_name = "Chillypunch"
-		init_func = function() {
+		function init_func () {
 			MAPNAME_CONFIG_OVERRIDE = "mge_chillypunch_final4_fix2"
 			MGE_RespawnFix()
 		}
