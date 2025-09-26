@@ -47,12 +47,12 @@ jobs:
           {
             chmod +x ./devserver_config/vpi/*.py
 
-            rsync -a \
+            rsync --mkpath -a \
             --exclude='mge/vpi' \
             --exclude='mge/cfg/config.nut' \
             --exclude='requirements.txt' \
             --exclude='mge_windows_setup.bat' \
-            -e --mkpath "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mge ${a[1]}:/var/tf2server_noplugins/tf/scripts/vscripts
+            -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mge ${a[1]}:/var/tf2server_noplugins/tf/scripts/vscripts
 
             # Sync config files
             rsync --mkpath -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./devserver_config/vpi ${a[1]}:/var/tf2server_noplugins/tf/scripts/vscripts/mge
