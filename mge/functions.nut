@@ -572,80 +572,83 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 			SetPropBool(MGE_Leaderboard, "m_bForcePurgeFixedUpStrings", true)
 			DispatchSpawn(MGE_Leaderboard)
 			MGE_Leaderboard.ValidateScriptScope()
+			LeaderboardScope <- MGE_Leaderboard.GetScriptScope()
 
 			local think_override = LEADERBOARD_UPDATE_INTERVAL
-			//cache these off in a separate table so the perf counter can find them
-			local leaderboard_scope = {
-				function UpdateLeaderboard() {
+			function LeaderboardScope::UpdateLeaderboard() {
 
-					// Store the keys and current index to track progress across yields
-					if (!("_current_stat_index" in this))
-						this._current_stat_index <- 0
+				// Store the keys and current index to track progress across yields
+				if (!("_current_stat_index" in this))
+					this._current_stat_index <- 0
 
-					local stat_keys = MGE_LEADERBOARD_DATA.keys()
+				local stat_keys = MGE_LEADERBOARD_DATA.keys()
 
-					local stat_index = this._current_stat_index
+				local stat_index = this._current_stat_index
 
-					local stat = stat_keys[stat_index in stat_keys ? stat_index : 0]
+				local stat = stat_keys[stat_index in stat_keys ? stat_index : 0]
 
-					local column_name = ""
-					split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
-					column_name = column_name.slice(1)
+				local column_name = ""
+				split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
+				column_name = column_name.slice(1)
 
-					VPI.AsyncCall({
-						func="VPI_MGE_PopulateLeaderboard",
-						timeout = INT_MAX, // don't know why this keeps throwing errors, it's fetching data fine
-						kwargs= {
-							order_filter = column_name,
-							max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
-						},
-						function callback(response, error) {
-							if (typeof(response) != "array" || !response.len())
-							{
-								// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
-								return
-							}
-							foreach (i, r in response)
-							{
-								local data = MGE_LEADERBOARD_DATA[stat]
-								data[i] = r
-							}
-						}
-					})
-
-					// Process one stat per yield
-					if (this._current_stat_index < stat_keys.len()) {
-						local steamid_list = MGE_LEADERBOARD_DATA[stat]
-
-						local message = format("          %s:\n", stat)
-						foreach(i, user_info in steamid_list)
+				VPI.AsyncCall({
+					func="VPI_MGE_PopulateLeaderboard",
+					timeout = INT_MAX, // don't know why this keeps throwing errors, it's fetching data fine
+					kwargs= {
+						order_filter = column_name,
+						max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
+					},
+					function callback(response, error) {
+						if (typeof(response) != "array" || !response.len())
 						{
-							if (!user_info)
-								user_info = ["NONE", -INT_MAX]
-
-							// cycle through and fetch user stats faster if the leaderboard is empty
-							think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
-
-							local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
-							message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
+							// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
+							return
 						}
-						MGE_Leaderboard.KeyValueFromString("message", message)
-
-						this._current_stat_index++
-						yield
+						foreach (i, r in response)
+						{
+							local data = MGE_LEADERBOARD_DATA[stat]
+							data[i] = r
+						}
 					}
+				})
 
-					// Reset index and refresh data when done with all stats
-					this._current_stat_index = 0
+				// Process one stat per yield
+				if (this._current_stat_index < stat_keys.len()) {
+					local steamid_list = MGE_LEADERBOARD_DATA[stat]
+
+					local message = format("          %s:\n", stat)
+					foreach(i, user_info in steamid_list)
+					{
+						if (!user_info)
+							user_info = ["NONE", -INT_MAX]
+
+						// cycle through and fetch user stats faster if the leaderboard is empty
+						think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
+
+						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
+						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
+					}
+					MGE_Leaderboard.KeyValueFromString("message", message)
+
+					this._current_stat_index++
+					yield
 				}
-				function LeaderboardThink() {
-					local gen = UpdateLeaderboard()
-					resume gen
-					return think_override
-				}
+
+				// Reset index and refresh data when done with all stats
+				this._current_stat_index = 0
 			}
-			foreach (k, v in leaderboard_scope)
-				MGE_Leaderboard.GetScriptScope()[k] <- v
+
+			local gen
+			function LeaderboardScope::LeaderboardThink() {
+
+				if (!gen)
+					gen = UpdateLeaderboard()
+				else if (gen.getstatus() == "dead")
+					gen = UpdateLeaderboard()
+
+				resume gen
+				return think_override
+			}
 
 			AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
 		}

@@ -14,11 +14,11 @@ except:
 # Environment Variables:
 # VPI_SCRIPTDATA_DIR - tf/scriptdata directory
 # If MySQL Database:
-#	VPI_HOST         - hostname
-#	VPI_USER         - user
-#	VPI_PORT         - port
-#	VPI_INTERFACE    - database name
-#	VPI_PASSWORD     - password
+#	DB_HOST         - hostname
+#	DB_USER         - user
+#	DB_PORT         - port
+#	DB_DATABASE     - database name
+#	DB_PASSWORD     - password
 
 # If you don't want to set environment variables feel free to simply set the default values below instead
 # They're mainly for when you host your source code publicly
@@ -74,7 +74,7 @@ if DB_SUPPORT:
 	DB_HOST       = env["DB_HOST"]
 	DB_USER       = env["DB_USER"]
 	DB_PORT	      = int(env["DB_PORT"])
-	DB_DATABASE	  = env["DB_INTERFACE"]
+	DB_DATABASE	  = env["DB_DATABASE"]
 	DB_PASSWORD	  = env["DB_PASSWORD"]
 	STEAM_API_KEY = env["STEAM_API_KEY"]
 	WEB_API_KEY   = env["WEB_API_KEY"]
