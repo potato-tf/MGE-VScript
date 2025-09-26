@@ -38,9 +38,9 @@
 
 // Color codes:
 //classic MGE
-//const MGE_COLOR_MAIN 404EED - Green
-//const MGE_COLOR_SUBJECT 32CD32 - Light green
-//const MGE_COLOR_BACKGROUND 808000 - Olive
+//const MGE_COLOR_MAIN = "404EED" - Green
+//const MGE_COLOR_SUBJECT = "32CD32" - Light green
+//const MGE_COLOR_BACKGROUND = "808000" - Olive
 
 //new MGE
 const MGE_COLOR_MAIN = "FFD700"
