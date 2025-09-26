@@ -5,7 +5,7 @@
  * - DaanBox (Dutch)       		*
  * - Xybo (Swedish)		   		*
  * - Sgt Table (Spanish)   		*
- * - <Anonymous> (Latam)		*
+ * - Reshi643 (Latam)		    *
  * - Royal (Vietnamese)    		*
  * - Lyney (Thai)		   		*
  * - Toxicologist (Czech)  		*
