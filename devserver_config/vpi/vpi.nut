@@ -506,7 +506,7 @@ local function Tokenize(str)
 }
 
 local ParseTokens;
-ParseTokens = function(tokens, start_index=0)
+function ParseTokens(tokens, start_index=0)
 {
 	local next_index = start_index + 1;
 
@@ -897,11 +897,11 @@ local function SetDestroyCallback(entity, callback)
 			id       = entity.GetScriptId(),
 			index    = entity.entindex(),
 			callback = callback,
-			_get = function(k)
+			function _get(k)
 			{
 				return parent[k];
 			},
-			_delslot = function(k)
+			function _delslot(k)
 			{
 				if (k == id)
 				{
@@ -986,7 +986,7 @@ local VPICallInfo = class
 		// Squirrel has no private members or way to detect instance modification
 		// so we provide closure getters instead for sensitive data that should not be tampered with
 		local script = s;
-		GetScript    = function() { return script };
+		function GetScript() { return script };
 
 		func     = f;
 		urgent   = u;
