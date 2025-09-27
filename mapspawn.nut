@@ -151,7 +151,14 @@ else
 	Include("cfg/localization")
 	
 	// the VPI system for passing vscript data to python
-	// if you're just hosting a single server and don't enable the leaderboard in config.nut, none of this will be used
+	// If you are just hosting a single server and just want basic MGE functionality 
+	// with local, file-based ELO tracking, you can ignore all of this.
+
+	// VPI is used for: 
+	// - external mysql/sqlite database connection
+	// - pulling leaderboard stats from the database
+	// - gamemode auto-updates via github
+	// - per-arena JSON logging
 	if (
 		CONST.ELO_TRACKING_MODE > 1 	||
 		CONST.ENABLE_LEADERBOARD 		||

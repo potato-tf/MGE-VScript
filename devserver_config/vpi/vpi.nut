@@ -10,7 +10,7 @@ local VERSION = "1.0.0";
 /*
 // Uncomment and use this on a listen server to generate a secret before you do anything
 // ent_fire !self callscriptfunction GenerateSecret
-::GenerateSecret <- function(n=128) {
+function ROOT::GenerateSecret(n=128) {
 	local s = "";
 	for (local i = 0; i < n; ++i)
 	{
@@ -198,7 +198,8 @@ if (PROTECTED_FILE_FUNCTIONS)
 			return (src == "vpi.nut");
 	}
 
-	::StringToFile <- function(file, str, __challenge=false) {
+	function ROOT::StringToFile(file, str, __challenge=false) {
+
 		local callinfo = getstackinfos(2);
 		if (__challenge)
 		{
@@ -214,7 +215,8 @@ if (PROTECTED_FILE_FUNCTIONS)
 		stringtofile(format("%s/%s", SCRIPTDATA_DIR, file), str);
 	};
 
-	::FileToString <- function(file, __challenge=false) {
+	function ROOT::FileToString(file, __challenge=false) {
+
 		local callinfo = getstackinfos(2);
 		if (__challenge)
 		{
@@ -1280,11 +1282,11 @@ if (!SCRIPT_ENTITY)
 	SCRIPT_ENTITY = SpawnEntityFromTable("move_rope", { targetname = "__vpi_think" });
 
 SCRIPT_ENTITY.ValidateScriptScope();
-local SCRIPT_SCOPE = SCRIPT_ENTITY.GetScriptScope();
+VPI_SCRIPT_SCOPE <- SCRIPT_ENTITY.GetScriptScope();
 
-SCRIPT_SCOPE.readwritetick <- 0;
-SCRIPT_SCOPE.ticks <- 0;
-SCRIPT_SCOPE.Think <- function() {
+VPI_SCRIPT_SCOPE.readwritetick <- 0;
+VPI_SCRIPT_SCOPE.ticks <- 0;
+function VPI_SCRIPT_SCOPE::VPI_Think() {
 	// Check for tampering
 	try { ValidateIntegrity(); }
 	// Terminate
@@ -1364,10 +1366,11 @@ SCRIPT_SCOPE.Think <- function() {
 
 	return -1;
 };
-AddThinkToEnt(SCRIPT_ENTITY, "Think");
+AddThinkToEnt(SCRIPT_ENTITY, "VPI_Think");
 
 // Make sure we get any pending calls out to the server
 SetDestroyCallback(SCRIPT_ENTITY, function() {
+
 	if (should_write_before_destroy)
 		WriteCallList(CombineCallLists(), true);
 
