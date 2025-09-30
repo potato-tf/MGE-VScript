@@ -74,7 +74,7 @@ if DB_SUPPORT:
 	DB_HOST       = env["DB_HOST"]
 	DB_USER       = env["DB_USER"]
 	DB_PORT	      = int(env["DB_PORT"])
-	DB_DATABASE	  = env["DB_DATABASE"]
+	DB_DATABASE	  = env["DB_INTERFACE"]
 	DB_PASSWORD	  = env["DB_PASSWORD"]
 	STEAM_API_KEY = env["STEAM_API_KEY"]
 	WEB_API_KEY   = env["WEB_API_KEY"]
