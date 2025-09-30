@@ -3,7 +3,7 @@
 
 // Made by Mince (STEAM_0:0:41588292)
 
-local VERSION = "1.0.0";
+local VERSION = "09.29.2025.1";
 ////////////////////////////////////////// SCRIPT VARS //////////////////////////////////////////
 // Server owners modify this section
 
@@ -506,7 +506,7 @@ local function Tokenize(str)
 }
 
 local ParseTokens;
-function ParseTokens(tokens, start_index=0)
+ParseTokens = function(tokens, start_index=0)
 {
 	local next_index = start_index + 1;
 

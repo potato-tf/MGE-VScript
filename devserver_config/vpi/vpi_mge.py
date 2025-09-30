@@ -2,8 +2,9 @@
 # Server
 
 # Made by Mince (STEAM_0:0:41588292)
+# Modified by Braindawg for MGE
 
-VERSION = "1.0.0"
+VERSION = "09.29.2025.1"
 
 import os
 import datetime
@@ -32,7 +33,7 @@ LOGGER = vpi_config.LOGGER
 #			}
 #		}
 # }
-calls = {}
+calls: dict = {}
 
 
 # {
@@ -40,7 +41,7 @@ calls = {}
 #		  "<token>": <response>
 #	  }
 # }
-callbacks = {}
+callbacks: dict = {}
 
 # Handle some types not handled by the json module
 class Encoder(json.JSONEncoder):
