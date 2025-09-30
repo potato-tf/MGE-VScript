@@ -481,7 +481,7 @@ class MGE_Events
 
 			if (player.IsFakeClient()) return
 
-			if ( !"arena" in scope.arena_info )
+			if ( !( "arena" in scope.arena_info ) )
 				return player.ForceChangeTeam( TEAM_SPECTATOR, true )
 
 			local arena = scope.arena_info.arena
