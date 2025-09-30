@@ -121,9 +121,9 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		GamemodeUpdate 			   = "\x07" + MGE_COLOR_BACKGROUND + "Gamemode has been updated, the map will restart in %s seconds..."
 
-		VPI_InitDB 				   = "[VPI]: Initializing database..."
-		VPI_DBInitError 		   = "[VPI]: ERROR: DATABASE CONNECTION FAILED! View vpi.py output for more information."
-		VPI_DBInitSuccess          = "[VPI]: Database initialized successfully."
+		VPI_InitDB 				   = "\n[VPI]: Initializing database...\n"
+		VPI_DBInitError 		   = "\n[VPI]: ERROR: DATABASE CONNECTION FAILED! View vpi.py output for more information.\n"
+		VPI_DBInitSuccess          = "\n[VPI]: Database initialized successfully.\n"
 		VPI_ReadSuccess            = "[VPI]: Got data for user %s.\n"
 		VPI_ReadError              = "[VPI]: Error getting data for user %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Wrote data for user %s.\n"
