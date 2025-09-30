@@ -1384,4 +1384,4 @@ SetDestroyCallback(SCRIPT_ENTITY, function() {
 });
 
 // We use printl instead of ClientPrint since mapspawn runs before client connect
-printl(format("[VPI] -- Finished loading VScript-Python Interface Client Version %s", VERSION));
+printf("\n\n-- VScript-Python Interface --\nVersion %s\n\n", VERSION);
