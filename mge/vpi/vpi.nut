@@ -982,7 +982,8 @@ local VPICallInfo = class
 		// Squirrel has no private members or way to detect instance modification
 		// so we provide closure getters instead for sensitive data that should not be tampered with
 		local script = s;
-		function GetScript    () { return script };
+		local function GetScript () { return script };
+		this.GetScript = GetScript;
 
 		func     = f;
 		urgent   = u;
