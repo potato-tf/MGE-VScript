@@ -74,7 +74,7 @@ foreach (sound in StockSounds)
 local local_time = {}
 LocalTime(local_time)
 ::SERVER_DATA <- {
-	endpoint_url = "https://potato.tf/api/serverstatus"
+	endpoint_url = "https://archive.potato.tf/api/serverstatus"
 	server_key = ""
 	address = 0
 	map = GetMapName()
@@ -92,7 +92,6 @@ LocalTime(local_time)
 	steam_ids = []
 	in_protected_match = false
 	matchmaking_disable_time = 0
-	server_key = ""
 	server_name = ""
 
 	status = "Waiting for players"
@@ -118,7 +117,10 @@ EntFire("worldspawn", "RunScriptCode", @"
 	SERVER_DATA.server_name = GetStr(`hostname`)
 	SERVER_DATA.server_key = _split.len() == 1 ? `` : _split[1].slice(0, _split[1].find(`[`))
 	SERVER_DATA.region = _split_region.len() == 1 ? `` : _split_region[1].slice(0, _split_region[1].find(`]`))
-	SERVER_DATA.domain = format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
+	SERVER_DATA.domain = SERVER_DATA.region == `USA` ? `us.potato.tf` : format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
+
+	if ( SERVER_DATA.domain == `ustx.potato.tf` )
+		SERVER_DATA.domain += `:22443`
 ", 5)
 
 
@@ -155,13 +157,14 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 //all scoring logic for koth and bball are handled here
 
 //this table is also used as a reference for all valid special arenas elsewhere in the code
-//if a new custom arena is created, you must add a function to this table (it doesn't need to do anything, see allmeat and midair)
+//if a new custom arena is created, you must add a function to this table
+// (it doesn't need to do anything, see allmeat, 4player, and midair)
 ::special_arenas <- {
 
 	function koth()
 	{
 		local player = self
-		local scope = player.GetScriptScope()
+		scope <- player.GetScriptScope()
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
 		local arena_players = arena.CurrentPlayers.keys()
@@ -197,9 +200,10 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			point = point_vector
 		}
 		//cap logic think
-		scope.ThinkTable.KothThink <- function()
+		function scope::ThinkTable::KothThink()
 		{
 			local owner_team = arena.Koth.owner_team
+			local arena_players = arena.CurrentPlayers.keys()
 
 			if (!player.IsAlive()) return
 			if ((player.GetOrigin() - point).Length() < radius)
@@ -352,14 +356,14 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	function bball()
 	{
 		local player = self
-		local scope = player.GetScriptScope()
+		scope <- player.GetScriptScope()
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
 		local arena_players = arena.CurrentPlayers.keys()
 		local team = player.GetTeam()
 		local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
 
-		scope.ThinkTable.BBallThink <- function() {
+		function scope::ThinkTable::BBallThink() {
 
 			if (scope.ball_ent && scope.ball_ent.IsValid())
 			{
@@ -374,7 +378,11 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 					team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
 					"hoops_scored" in scope.stats ? scope.stats.hoops_scored++ : scope.stats.hoops_scored <- 1
 					CalcArenaScore(arena_name)
-
+					if (arena.State == AS_AFTERFIGHT)
+					{
+						arena.BBall.last_score_team = -1
+						return
+					}
 					arena.BBall.last_score_team = team
 					BBall_SpawnBall(arena_name)
 
@@ -392,9 +400,9 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	function turris()
 	{
 		local player = self
-		local scope = player.GetScriptScope()
+		scope <- player.GetScriptScope()
 		scope.turris_cooldown <- 0.0
-		scope.ThinkTable.TurrisThink <- function() {
+		function scope::ThinkTable::TurrisThink() {
 			if (turris_cooldown < Time())
 			{
 				player.Regenerate(true)
@@ -430,8 +438,14 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		local player = self
 
 		for (local child = player.FirstMoveChild(); child; child = child.NextMovePeer())
+		{
 			if (child instanceof CEconEntity && GetPropInt(child, STRING_NETPROP_ITEMDEF) == ID_MANTREADS)
-				EntFireByHandle(child, "Kill", "", -1, null, null)
+			{
+				ENDIF_DELETE_MANTREADS ? EntFireByHandle(child, "Kill", "", -1, null, null) : RemovePlayer(player)
+				MGE_ClientPrint(player, HUD_PRINTTALK, "EndifMantreads")
+				break
+			}
+		}
 
 		EntFireByHandle(player, "RunScriptCode", format(@"
 
@@ -445,9 +459,9 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	function infammo()
 	{
 		local player = self
-		local scope = player.GetScriptScope()
+		scope <- player.GetScriptScope()
 
-		scope.ThinkTable.InfAmmoThink <- function() {
+		function scope::ThinkTable::InfAmmoThink() {
 
 			local weapon = player.GetActiveWeapon()
 			local itemid = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
@@ -465,21 +479,13 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	{
 		return
 	}
-	"4player" : function() {
+	"4player" : function() { //function names that start with a number need this special syntax
 		return
 	}
 }
 
+function ROOT::MGE_Init() {
 
-::MGE_Init <- function() {
-	local clean_map_name = {
-		"workshop/mge_training_v8_beta4b.ugc1996603816" : "Classic Training"
-		mge_training_v8_beta4b 		= "Classic Training"
-		mge_chillypunch_final4_fix2 = "Chillypunch"
-		mge_triumph_beta7_rc1 		= "Triumph"
-		mge_oihguv_sucks_b5 		= "Oihguv"
-		mge_oihguv_sucks_a12 		= "Oihguv"
-	}
 	printl("[VScript MGE] Loaded, moving all active players to spectator")
 
 	for (local i = 1; i <= MAX_CLIENTS; i++)
@@ -506,7 +512,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		printl(MGE_Localization[DEFAULT_LANGUAGE]["VPI_InitDB"])
 		VPI.AsyncCall({
 			func = "VPI_MGE_DBInit",
-			callback = function(response, error) {
+			function callback (response, error) {
 				printl(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_DBInitError" : "VPI_DBInitSuccess"])
 			}
 		})
@@ -527,12 +533,12 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 
 	//requires a custom plugin to feed m_iszMvMPopfileName to SteamWorks_SetGameDescription
 	//might be able to do this through VPI?
-	local gamedesc = format("Potato MGE (%s)", clean_map_name[GetMapName()])
+	local gamedesc = format("Potato MGE (%s)", MGE_MAPINFO[GetMapName()].nice_name)
 	SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
 }
 
-for (local hud; hud = FindByName(hud, "__mge*");)
-	EntFireByHandle(hud, "Kill", "", -1, null, null)
+for (local cleanup; cleanup = FindByName(cleanup, "__mge*");)
+	EntFireByHandle(cleanup, "Kill", "", -1, null, null)
 
 ::MGE_HUD <- CreateByClassname("game_text")
 MGE_HUD.KeyValueFromString("targetname", "__mge_hud")
@@ -584,7 +590,9 @@ MGE_CHANGELEVEL.KeyValueFromString("targetname", "__mge_changelevel")
 if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 {
 	MGE_CHANGELEVEL.ValidateScriptScope()
-	MGE_CHANGELEVEL.GetScriptScope().AutoUpdate <- function() {
+	ChangelevelScope <- MGE_CHANGELEVEL.GetScriptScope()
+
+	function ChangelevelScope::AutoUpdate() {
 		VPI.AsyncCall({
 			func = "VPI_MGE_AutoUpdate",
 			kwargs = {
@@ -592,16 +600,16 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 				branch = GAMEMODE_AUTOUPDATE_BRANCH,
 				clone_dir = GAMEMODE_AUTOUPDATE_TARGET_DIR
 			},
-			callback = function(response, error) {
+			function callback(response, error) {
 
 				//gamemode has been updated
 				if (!error && response.len()) {
 
 					local time_left = MGE_TIMER.GetScriptScope().base_timestamp - Time()
 
-					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
-					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
-					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
+					MGE_ClientPrint(null, HUD_PRINTTALK, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
+					MGE_ClientPrint(null, HUD_PRINTTALK, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
+					MGE_ClientPrint(null, HUD_PRINTTALK, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
 
 					printl("Files changed:")
 
@@ -656,20 +664,20 @@ EntFireByHandle(MGE_TIMER, "ShowInHUD", "1", -1, null, null)
 
 MGE_TIMER.ValidateScriptScope()
 
-local timer_scope = MGE_TIMER.GetScriptScope()
-timer_scope.time_left <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
-timer_scope.base_timestamp <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+TimerScope <- MGE_TIMER.GetScriptScope()
+TimerScope.time_left <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+TimerScope.base_timestamp <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
 
-timer_scope.InputSetTime <- function() {
+function TimerScope::InputSetTime() {
 
-	timer_scope.base_timestamp = GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+	base_timestamp = GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
 	return true
 
 }
-timer_scope.Inputsettime <- timer_scope.InputSetTime
-timer_scope.hinted <- false
+TimerScope.Inputsettime <- TimerScope.InputSetTime
+TimerScope.hinted <- false
 
-timer_scope.TimerThink <- function()
+function TimerScope::TimerThink()
 {
 	local time_left = base_timestamp - Time()
 
@@ -699,14 +707,16 @@ timer_scope.TimerThink <- function()
 			SERVER_DATA.server_name = GetStr("hostname")
 
 			if (UPDATE_SERVER_DATA) {
+
 				VPI.AsyncCall({
 					func = "VPI_MGE_UpdateServerData",
 					kwargs = SERVER_DATA,
-					callback = function(response, error) {
-						if (error)
-						{
+
+					function callback(response, error) {
+
+						if (error) 
 							return 3
-						}
+
 						if (SERVER_DATA.address == 0 && "address" in response)
 							SERVER_DATA.address = response.address
 
@@ -730,22 +740,7 @@ timer_scope.TimerThink <- function()
 		return -1
 	}
 
-	delete timer_scope.TimerThink
+	delete TimerScope.TimerThink
 }
 AddThinkToEnt(MGE_TIMER, "TimerThink")
-
-
-::MGE_DoChangelevel <- function() {
-
-	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)
-	{
-		SetValue("mp_chattime", 9999.0)
-		EntFire("__mge_changelevel", "Activate") //do this anyway just to bring up the scoreboard/"end the round" instead of suddenly kicking everyone out
-		EntFire("player", "RunScriptCode", "EntFire(`__mge_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
-		EntFire("worldspawn", "Kill", "", 1.03)
-		return
-	}
-	SetValue("mp_chattime", 1.0)
-	EntFire("__mge_changelevel", "Activate")
-}
 MGE_Init()

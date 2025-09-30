@@ -72,7 +72,7 @@ class MGE_Events
 				local handicap = abs(ToStrictNum(split_text[1]))
 				if (handicap == 0 || handicap > scope.player_max_health_handicap)
 				{
-					MGE_ClientPrint(player, 3, handicap > scope.player_max_health_handicap ? "InvalidHandicap" : "HandicapDisabled")
+					MGE_ClientPrint(player, HUD_PRINTTALK, handicap > scope.player_max_health_handicap ? "InvalidHandicap" : "HandicapDisabled")
 					// player.RemoveCustomAttribute("max health additive penalty")
 					if ("handicap_hp_penalty" in scope)
 						delete scope.handicap_hp_penalty
@@ -82,20 +82,20 @@ class MGE_Events
 				scope.handicap_hp_penalty <- handicap
 			}
 			"handicap_hp_penalty" in scope ?
-			MGE_ClientPrint(player, 3, "CurrentHandicap", -scope.handicap_hp_penalty) :
-			MGE_ClientPrint(player, 3, "NoCurrentHandicap")
+			MGE_ClientPrint(player, HUD_PRINTTALK, "CurrentHandicap", -scope.handicap_hp_penalty) :
+			MGE_ClientPrint(player, HUD_PRINTTALK, "NoCurrentHandicap")
 		}
 		"announcer" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 			scope.enable_announcer = !scope.enable_announcer
-			MGE_ClientPrint(player, 3, scope.enable_announcer ? "AnnouncerEnabled" : "AnnouncerDisabled")
+			MGE_ClientPrint(player, HUD_PRINTTALK, scope.enable_announcer ? "AnnouncerEnabled" : "AnnouncerDisabled")
 		}
 		"hud" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 			scope.enable_hud = !scope.enable_hud
-			MGE_ClientPrint(player, 3, scope.enable_hud ? "HUDEnabled" : "HUDDisabled")
+			MGE_ClientPrint(player, HUD_PRINTTALK, scope.enable_hud ? "HUDEnabled" : "HUDDisabled")
 		}
 		"ruleset" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
@@ -161,7 +161,7 @@ class MGE_Events
 			local player = GetPlayerFromUserID(params.userid)
 			if (lang.len() > 1 && lang[1] in MGE_Localization)
 			{
-				MGE_ClientPrint(player, 3, "LanguageSet", lang[1])
+				MGE_ClientPrint(player, HUD_PRINTTALK, "LanguageSet", lang[1])
 				player.GetScriptScope().language <- lang[1]
 			}
 		}
@@ -170,9 +170,9 @@ class MGE_Events
 			local scope = player.GetScriptScope()
 			local rank = scope.stats.elo
 			if (ELO_TRACKING_MODE)
-				MGE_ClientPrint(player, 3, "MyRank", rank.tostring(), scope.stats.wins.tostring(), scope.stats.losses.tostring())
+				MGE_ClientPrint(player, HUD_PRINTTALK, "MyRank", rank.tostring(), scope.stats.wins.tostring(), scope.stats.losses.tostring())
 			else
-				MGE_ClientPrint(player, 3, "MyRankNoRating", scope.stats.wins.tostring(), scope.stats.losses.tostring())
+				MGE_ClientPrint(player, HUD_PRINTTALK, "MyRankNoRating", scope.stats.wins.tostring(), scope.stats.losses.tostring())
 		}
 		"help" : function(params) {
 			local player = GetPlayerFromUserID(params.userid)
@@ -236,16 +236,16 @@ class MGE_Events
 		"adminscript": function(params) {
 			local player = GetPlayerFromUserID(params.userid)
 			local steam_id = GetPropString(player, "m_szNetworkIDString")
-			local script = split(params.text, " ", true)[1]
+			local script = ""
+			local splitscript = (split(params.text, " ", true).slice(1)).apply(@(s) script += s + " ")
 			if (GetStr("sv_allow_point_servercommand") != "always")
 			{
 				MGE_ClientPrint(player, HUD_PRINTTALK, "ServerCommandDisabled")
 				return
 			}
 			if (steam_id in ADMIN_LIST) {
-				MGE_ClientPrint(player, HUD_PRINTTALK, "AdminScript", script)
 				script = CharReplace(script, "'", "\"")
-				printl(script)
+				MGE_ClientPrint(player, HUD_PRINTTALK, "AdminScript", script)
 				SendToServerConsole(format("script %s", script))
 			}
 		}
@@ -269,9 +269,9 @@ class MGE_Events
 
 			GetStats(player)
 
-			MGE_ClientPrint(player, 3, "Welcome1", MGE_VERSION)
-			MGE_ClientPrint(player, 3, "Welcome2")
-			MGE_ClientPrint(player, 3, "Welcome3")
+			MGE_ClientPrint(player, HUD_PRINTTALK, "Welcome1", MGE_VERSION)
+			MGE_ClientPrint(player, HUD_PRINTTALK, "Welcome2")
+			MGE_ClientPrint(player, HUD_PRINTTALK, "Welcome3")
 		}
 
 		function OnGameEvent_player_disconnect(params)
@@ -335,6 +335,11 @@ class MGE_Events
 				player.ValidateScriptScope()
 				scope = player.GetScriptScope()
 			}
+			if (MGE_RESPAWN_OVERRIDE)
+			{
+				MGE_RESPAWN_OVERRIDE.AcceptInput("SetRespawnName", format("__mge_spawn_override_%d", player.GetTeam()), player, player)
+				MGE_RESPAWN_OVERRIDE.AcceptInput("StartTouch", "!activator", player, player)
+			}
 
 			ValidatePlayerClass(player, player.GetPlayerClass())
 
@@ -366,7 +371,7 @@ class MGE_Events
 				if (handicap_hp_penalty)
 				{
 					self.AddCustomAttribute(`max health additive penalty`, handicap_hp_penalty * - 1.0, -1.0)
-					MGE_ClientPrint(self, 3, `CurrentHandicap`, -handicap_hp_penalty)
+					MGE_ClientPrint(self, HUD_PRINTTALK, `CurrentHandicap`, -handicap_hp_penalty)
 				}
 
 			", GENERIC_DELAY, null, null)
@@ -404,8 +409,6 @@ class MGE_Events
 						}
 					}
 
-
-					// SetSpecialArena(player, arena_name)
 				EntFireByHandle(player, "RunScriptCode", format("SetSpecialArena(self, `%s`)", arena_name), GENERIC_DELAY, null, null)
 
 				//spawn player
@@ -465,7 +468,7 @@ class MGE_Events
 				if (player.IsFakeClient())
 					EntFireByHandle(player, "RunScriptCode", "self.AddBotAttribute(IGNORE_ENEMIES); self.TakeDamage(99999, DMG_GENERIC, self)", GENERIC_DELAY, null, null)
 				else if (player.GetTeam() != TEAM_UNASSIGNED)
-					MGE_ClientPrint(null, 3, "\x07FF0000[VScript MGE] WARNING: '%s' spawned outside of arena!", scope.player_name)
+					MGE_ClientPrint(null, HUD_PRINTTALK, "\x07FF0000[VScript MGE] WARNING: '%s' spawned outside of arena!", scope.player_name)
 			}
 		}
 
@@ -478,12 +481,21 @@ class MGE_Events
 
 			if (player.IsFakeClient()) return
 
+			if ( !( "arena" in scope.arena_info ) )
+				return player.ForceChangeTeam( TEAM_SPECTATOR, true )
+
 			local arena = scope.arena_info.arena
 
 			if (arena.State != AS_FIGHT || arena.IsBBall || arena.IsKoth) return
 
 			foreach(p, _ in arena.CurrentPlayers)
-				MGE_ClientPrint(p, 3, player == p ? "ClassChangePoint" : "ClassChangePointOpponent")
+				MGE_ClientPrint(p, HUD_PRINTTALK, player == p ? "ClassChangePoint" : "ClassChangePointOpponent")
+		}
+
+		function OnGameEvent_player_changename(params){
+			local player = GetPlayerFromUserID(params.userid)
+			local scope = player.GetScriptScope()
+			scope.player_name = params.newname
 		}
 
 		function OnGameEvent_player_changename(params){
@@ -555,7 +567,6 @@ class MGE_Events
 				}
 				//we've hit an airshot
 				else if (
-					params.rocket_jump &&
 					params.damagebits & DMG_BLAST &&
 					TraceLine(victim_origin, victim_origin - Vector(0, 0, trace_dist), victim) == 1
 				) {
@@ -654,18 +665,21 @@ class MGE_Events
 				local arena = "arena_info" in scope && "arena" in scope.arena_info ? scope.arena_info.arena : {State = -1}
 				// if (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT)
 				// {
-					// MGE_ClientPrint(player, 3, "SpecRemove")
-					RemovePlayer(player,  false)
+					// MGE_ClientPrint(player, HUD_PRINTTALK, "SpecRemove")
+					RemovePlayer(player, false)
 				// }
 				if (!player.IsFakeClient())
-					scope.ThinkTable.SpecThink <- function()
+				{
+					function SpecThink()
 					{
 						if (spec_cooldown_time < Time())
 						{
-							MGE_ClientPrint(player, 3, "Adv")
+							MGE_ClientPrint(player, HUD_PRINTTALK, "Adv")
 							spec_cooldown_time = Time() + SPECTATOR_MESSAGE_COOLDOWN
 						}
 					}
+					scope.ThinkTable.SpecThink <- SpecThink
+				}
 			}
 			else if (params.oldteam > TEAM_SPECTATOR && team > TEAM_SPECTATOR && !player.IsEFlagSet(EFL_ADDING_TO_ARENA))
 			{

@@ -14,11 +14,11 @@ except:
 # Environment Variables:
 # VPI_SCRIPTDATA_DIR - tf/scriptdata directory
 # If MySQL Database:
-#	VPI_HOST         - hostname
-#	VPI_USER         - user
-#	VPI_PORT         - port
-#	VPI_INTERFACE    - database name
-#	VPI_PASSWORD     - password
+#	DB_HOST         - hostname
+#	DB_USER         - user
+#	DB_PORT         - port
+#	DB_DATABASE     - database name
+#	DB_PASSWORD     - password
 
 # If you don't want to set environment variables feel free to simply set the default values below instead
 # They're mainly for when you host your source code publicly
@@ -32,9 +32,9 @@ BYPASS_SECRET = False #do not set this to true unless you know what you're doing
 if (not SECRET and not BYPASS_SECRET):
 	raise RuntimeError("Please set your secret token")
 
-def find_env_vars(var = None, default = ""):
+def find_env_vars(var = None, default = "", ignore_env = True):
 	env_vars = {}
-	if os.path.exists("env"):
+	if os.path.exists("env") and not ignore_env:
 		with open("env", "r") as f:
 			for line in f:
 				if "=" in line and (var is None or line.startswith(var)):

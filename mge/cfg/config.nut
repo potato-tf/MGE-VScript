@@ -112,6 +112,14 @@ const AMMOMOD_DEFAULT_FRAGLIMIT 			= 5
 const TURRIS_REGEN_TIME                     = 5.0
 
 const ENDIF_HEIGHT_THRESHOLD                = 250
+// if set to true, mantreads will be deleted from the player
+// if set to false, players will be removed from the arena
+const ENDIF_DELETE_MANTREADS                = true
+//this is absolutely not the value that the .sp plugin implies it uses, 2.15 is way too high
+//on the majority of mge servers, endif force mult only barely pushes you over the threshold with a single non-DH shot to the toes
+//2.15 here is pinball mode
+//if someone wants to do a deep dive with side-by-side comparisons of the original plugin velocity vs this, I would love to see it
+::ENDIF_FORCE_MULT                          <- Vector(1.1, 1.1, 1.31) //no vector constants :(
 
 const ALLMEAT_DAMAGE_THRESHOLD              = 0.85
 const ALLMEAT_DEFAULT_FRAGLIMIT             = 5
@@ -133,11 +141,6 @@ const ALLMEAT_DEFAULT_FRAGLIMIT             = 5
 	tf_weapon_grenadelauncher = 100,
 	tf_weapon_pipebomblauncher = 100
 }
-//this is absolutely not the value that the .sp plugin implies it uses, 2.15 is way too high
-//on the majority of mge servers, endif force mult only barely pushes you over the threshold with a single non-DH shot to the toes
-//2.15 here is pinball mode
-//if someone wants to do a deep dive with side-by-side comparisons of the original plugin velocity vs this, I would love to see it
-::ENDIF_FORCE_MULT                          <- Vector(1.1, 1.1, 1.31) //no vector constants :(
 
 //NOTE:
 //Editing this constant alone is not enough to add more spawns to arenas with fixed spawn rotations like BBall
