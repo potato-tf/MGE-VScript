@@ -168,6 +168,7 @@ function ROOT::ValidatePlayerClass(player, newclass, pre=false)
 }
 // tointeger() allows trailing garbage (e.g. "123abc")
 // This will only allow strictly integers (also floats with only zeroes: e.g "1.00")
+
 function ROOT::ToStrictNum(str, float = false)
 {
 //	local rex = regexp(@"-?[0-9]+(\.0+)?")  // [-](digit)[.(>0 zeroes)]
@@ -208,7 +209,6 @@ function ROOT::KVStringToVectorOrQAngle(str, angles = false, startidx = 0)
 	}
 	return angles ? QAngle(split[startidx], split[startidx + 1], split[startidx + 2]) : Vector(split[startidx], split[startidx + 1], split[startidx + 2])
 }
-
 
 function ROOT::GetUnixTimestamp(time)
 {
@@ -296,6 +296,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 				for (local prop; prop = FindByClassnameWithin(prop, "obj_teleporter", point, 128);)
 					EntFireByHandle(prop, "Kill", "", -1, null, null)
 			}
+
 			if (_arena.IsBBall)
 			{
 				local points = [
@@ -416,7 +417,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 				partial_cap_interval = "koth_partial_cap_interval" in _arena ? _arena.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL,
 
 				capture_point_radius     = "koth_capture_point_radius" in _arena ? _arena.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
-				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT,
+				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT
 			}
 			_arena.Koth.red_cap_time <- _arena.Koth.red_start_cap_time
 			_arena.Koth.blu_cap_time <- _arena.Koth.blu_start_cap_time
@@ -575,6 +576,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 			LeaderboardScope <- MGE_Leaderboard.GetScriptScope()
 
 			local think_override = LEADERBOARD_UPDATE_INTERVAL
+
 			function LeaderboardScope::UpdateLeaderboard() {
 
 				// Store the keys and current index to track progress across yields
@@ -609,70 +611,41 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 							// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
 							return
 						}
-					})
 
-					// Process one stat per yield
-					if (this._current_stat_index < stat_keys.len()) {
-						local steamid_list = MGE_LEADERBOARD_DATA[stat]
+						// Process one stat per yield
+						if (this._current_stat_index < stat_keys.len()) {
 
-						local message = format("          %s:\n", stat)
-						foreach(i, user_info in steamid_list)
-						{
-							if (!user_info)
-								user_info = ["NONE", -INT_MAX]
+							local steamid_list = MGE_LEADERBOARD_DATA[stat]
 
-							// cycle through and fetch user stats faster if the leaderboard is empty
-							think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
+							local message = format("          %s:\n", stat)
+							foreach(i, user_info in steamid_list)
+							{
+								if (!user_info)
+									user_info = ["NONE", -INT_MAX]
 
-							local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
-							message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
+								// cycle through and fetch user stats faster if the leaderboard is empty
+								think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
+
+								local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
+								message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
+							}
+							MGE_Leaderboard.KeyValueFromString("message", message)
+
+							this._current_stat_index++
+							yield
 						}
-						MGE_Leaderboard.KeyValueFromString("message", message)
-
-						this._current_stat_index++
-						yield
 					}
-
-				// Process one stat per yield
-				if (this._current_stat_index < stat_keys.len()) {
-					local steamid_list = MGE_LEADERBOARD_DATA[stat]
-
-					local message = format("          %s:\n", stat)
-					foreach(i, user_info in steamid_list)
-					{
-						if (!user_info)
-							user_info = ["NONE", -INT_MAX]
-
-						// cycle through and fetch user stats faster if the leaderboard is empty
-						think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
-
-						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
-						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
-					}
-					MGE_Leaderboard.KeyValueFromString("message", message)
-
-					this._current_stat_index++
-					yield
-				}
-				function LeaderboardThink() {
-					local gen = UpdateLeaderboard()
-					resume gen
-					return think_override
-				}
-			}
-			foreach (k, v in leaderboard_scope)
-				MGE_Leaderboard.GetScriptScope()[k] <- v
-
+				})
 				// Reset index and refresh data when done with all stats
 				this._current_stat_index = 0
 			}
 
-			local gen
+			local gen = UpdateLeaderboard()
+			resume gen
+
 			function LeaderboardScope::LeaderboardThink() {
 
-				if (!gen)
-					gen = UpdateLeaderboard()
-				else if (gen.getstatus() == "dead")
+				if (gen.getstatus() == "dead")
 					gen = UpdateLeaderboard()
 
 				resume gen
@@ -810,7 +783,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 				partial_cap_interval = "koth_partial_cap_interval" in _arena ? _arena.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL,
 
 				capture_point_radius     = "koth_capture_point_radius" in _arena ? _arena.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
-				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT,
+				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT
 			}
 
 			_arena.Koth.red_cap_time <- _arena.Koth.red_start_cap_time
@@ -894,7 +867,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 
 		local spawnpoints_len = _arena.SpawnPoints.len()
 		foreach(i, spawn in _arena.SpawnPoints)
-				spawn[2] = i < spawnpoints_len / 2 ? TF_TEAM_RED : TF_TEAM_BLUE
+			spawn[2] = i < spawnpoints_len / 2 ? TF_TEAM_RED : TF_TEAM_BLUE
 
 		//always grab the last index for KOTH cap point
 		if (_arena.IsKoth)
@@ -932,7 +905,6 @@ function ROOT::AllMeat_FindWeapon(weapon)
 
 	return null
 }
-
 
 function ROOT::BBall_SpawnBall(arena_name, origin_override = null, custom_ruleset_arena = false)
 {
@@ -1269,7 +1241,6 @@ function ROOT::CycleQueue(arena_name)
 	foreach(i, p in queue)
 		MGE_ClientPrint(p, HUD_PRINTTALK, "InLine", (i + 1))
 }
-
 
 function ROOT::CalcELO(winner, loser) {
 
@@ -1834,6 +1805,7 @@ function ROOT::SetArenaState(arena_name, state) {
 
 	arenaStates[state]()
 }
+
 function ROOT::SetSpecialArena(player, arena_name) {
 
 	local arena = Arenas[arena_name]
@@ -2134,6 +2106,7 @@ function ROOT::ShowModelToPlayer(_player, model = ["models/player/heavy.mdl", 0,
 	_player.GetScriptScope()[format("__showmodel_%d", _player.entindex(), proxy_entity.entindex())] <- proxy_entity
     return proxy_entity;
 }
+
 //taken from popext (originally made by fellen)
 function ROOT::VectorAngles(forward)
 {
@@ -2165,6 +2138,7 @@ function ROOT::SwitchWeaponSlot(player, slot, delay = -2)
 	else
 		EntFireByHandle(MGE_CLIENTCOMMAND, "Command", format("slot%d", slot), delay, player, player)
 }
+
 function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 {
 	local arena = Arenas[arena_name]
@@ -2765,6 +2739,7 @@ function ROOT::CharReplace(str, findwhat, replace) {
 	generator = null,
 	is_running = false
 }
+
 function ROOT::ArenaNavGenerator(only_this_arena = null) {
 	local player = GetListenServerHost()
 
