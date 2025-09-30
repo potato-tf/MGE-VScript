@@ -587,7 +587,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 
 					local stat_keys = MGE_LEADERBOARD_DATA.keys()
 
-					local stat_index = this._current_stat_index
+				local stat = stat_keys[stat_index in stat_keys ? stat_index : 0]
 
 				local column_name = ""
 				split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )

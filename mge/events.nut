@@ -498,12 +498,6 @@ class MGE_Events
 			scope.player_name = params.newname
 		}
 
-		function OnGameEvent_player_changename(params){
-			local player = GetPlayerFromUserID(params.userid)
-			local scope = player.GetScriptScope()
-			scope.player_name = params.newname
-		}
-
 		function OnGameEvent_player_death(params)
 		{
 			if (REMOVE_DROPPED_WEAPONS)
