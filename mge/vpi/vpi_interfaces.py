@@ -250,9 +250,6 @@ async def VPI_MGE_AutoUpdate(info, test=False):
         for file in changed_files:
             # Create directory if it doesn't exist
             os.makedirs(os.path.dirname(os.path.join(clone_dir, file)), exist_ok=True)
-            #delete the old file
-            if os.path.exists(os.path.join(clone_dir, file)):
-                os.remove(os.path.join(clone_dir, file))
             # Copy the file
             os.rename(os.path.join(temp_dir, file), os.path.join(clone_dir, file))
 
