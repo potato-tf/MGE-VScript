@@ -592,13 +592,16 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 				column_name = column_name.slice(1)
 
 				VPI.AsyncCall({
+
 					func="VPI_MGE_PopulateLeaderboard",
 					timeout = INT_MAX, // don't know why this keeps throwing errors, it's fetching data fine
 					kwargs= {
 						order_filter = column_name,
 						max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
 					},
+
 					function callback(response, error) {
+
 						if (typeof(response) != "array" || !response.len())
 						{
 							// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
