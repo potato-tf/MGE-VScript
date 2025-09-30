@@ -5,6 +5,7 @@
  * - DaanBox (Dutch)       		*
  * - Xybo (Swedish)		   		*
  * - Sgt Table (Spanish)   		*
+ * - Reshi643 (Latam)		    *
  * - Royal (Vietnamese)    		*
  * - Lyney (Thai)		   		*
  * - Toxicologist (Czech)  		*
@@ -16,7 +17,7 @@
  * - NextinHKRY (Italian)  		*
  * - Gregarious (Romanian) 		*
  * - Snowy (Romanian) 	   		*
- * - call_it_true (Chinese)		* these 3 did both Simplified and Traditional
+ * - call_it_true (Chinese)		* both Simplified and Traditional
  * - pepper_1656 (Chinese)		*
  * - bonkthequality (Chinese)	*
  ********************************/
@@ -31,16 +32,15 @@
  * - Turkish                                                     *
  * - Swedish                                                     *
  * - Norwegian                                                   *
- * - Latam (from verified Spanish translation)                   *
  * - Korean                                                      *
  * - Japanese                                                    *
  *****************************************************************/
 
 // Color codes:
 //classic MGE
-//const MGE_COLOR_MAIN 404EED - Green
-//const MGE_COLOR_SUBJECT 32CD32 - Light green
-//const MGE_COLOR_BACKGROUND 808000 - Olive
+//const MGE_COLOR_MAIN = "404EED" - Green
+//const MGE_COLOR_SUBJECT = "32CD32" - Light green
+//const MGE_COLOR_BACKGROUND = "808000" - Olive
 
 //new MGE
 const MGE_COLOR_MAIN = "FFD700"
@@ -77,6 +77,7 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		Top5Error 				   = "\x07" + MGE_COLOR_MAIN + "[VScript MGE]\x07FFFFFF Database not configured, or not enough players in the database yet."
 		bballdunk                  = "\x07"+MGE_COLOR_SUBJECT+"You DUNKED ON \x07"+MGE_COLOR_SUBJECT+"%s!"
 		UltiduoNotEnoughMedics     = "\x07"+MGE_COLOR_BACKGROUND+"Ultiduo requires at least one medic for each team!\x07"+MGE_COLOR_MAIN+"%s\x07"
+		EndifMantreads	           = "\x07"+MGE_COLOR_BACKGROUND+"Mantreads are not allowed in endif."
 		Cmd_MGECmds                = "[VScript MGE] Help: Command Information"
 		Cmd_SeeConsole             = "[VScript MGE] See console for output."
 		Cmd_MGEMod                 = "[VScript MGE] mgemod\t - Menu"
@@ -120,9 +121,9 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		GamemodeUpdate 			   = "\x07" + MGE_COLOR_BACKGROUND + "Gamemode has been updated, the map will restart in %s seconds..."
 
-		VPI_InitDB 				   = "[VPI]: Initializing database..."
-		VPI_DBInitError 		   = "[VPI]: ERROR: DATABASE CONNECTION FAILED! View vpi.py output for more information."
-		VPI_DBInitSuccess          = "[VPI]: Database initialized successfully."
+		VPI_InitDB 				   = "\n[VPI]: Initializing database...\n"
+		VPI_DBInitError 		   = "\n[VPI]: ERROR: DATABASE CONNECTION FAILED! View vpi.py output for more information.\n"
+		VPI_DBInitSuccess          = "\n[VPI]: Database initialized successfully.\n"
 		VPI_ReadSuccess            = "[VPI]: Got data for user %s.\n"
 		VPI_ReadError              = "[VPI]: Error getting data for user %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Wrote data for user %s.\n"
