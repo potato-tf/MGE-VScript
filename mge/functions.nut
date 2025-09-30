@@ -168,7 +168,6 @@ function ROOT::ValidatePlayerClass(player, newclass, pre=false)
 }
 // tointeger() allows trailing garbage (e.g. "123abc")
 // This will only allow strictly integers (also floats with only zeroes: e.g "1.00")
-
 function ROOT::ToStrictNum(str, float = false)
 {
 //	local rex = regexp(@"-?[0-9]+(\.0+)?")  // [-](digit)[.(>0 zeroes)]
@@ -576,7 +575,6 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 			LeaderboardScope <- MGE_Leaderboard.GetScriptScope()
 
 			local think_override = LEADERBOARD_UPDATE_INTERVAL
-
 			function LeaderboardScope::UpdateLeaderboard() {
 
 				// Store the keys and current index to track progress across yields
@@ -636,6 +634,29 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 						}
 					}
 				})
+
+				// Process one stat per yield
+				if (this._current_stat_index < stat_keys.len()) {
+					local steamid_list = MGE_LEADERBOARD_DATA[stat]
+
+					local message = format("          %s:\n", stat)
+					foreach(i, user_info in steamid_list)
+					{
+						if (!user_info)
+							user_info = ["NONE", -INT_MAX]
+
+						// cycle through and fetch user stats faster if the leaderboard is empty
+						think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
+
+						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
+						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
+					}
+					MGE_Leaderboard.KeyValueFromString("message", message)
+
+					this._current_stat_index++
+					yield
+				}
+
 				// Reset index and refresh data when done with all stats
 				this._current_stat_index = 0
 			}
@@ -1805,7 +1826,6 @@ function ROOT::SetArenaState(arena_name, state) {
 
 	arenaStates[state]()
 }
-
 function ROOT::SetSpecialArena(player, arena_name) {
 
 	local arena = Arenas[arena_name]
@@ -2138,7 +2158,6 @@ function ROOT::SwitchWeaponSlot(player, slot, delay = -2)
 	else
 		EntFireByHandle(MGE_CLIENTCOMMAND, "Command", format("slot%d", slot), delay, player, player)
 }
-
 function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 {
 	local arena = Arenas[arena_name]
@@ -2739,7 +2758,6 @@ function ROOT::CharReplace(str, findwhat, replace) {
 	generator = null,
 	is_running = false
 }
-
 function ROOT::ArenaNavGenerator(only_this_arena = null) {
 	local player = GetListenServerHost()
 
