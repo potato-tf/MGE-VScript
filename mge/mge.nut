@@ -92,6 +92,7 @@ LocalTime(local_time)
 	steam_ids = []
 	in_protected_match = false
 	matchmaking_disable_time = 0
+	server_key = ""
 	server_name = ""
 
 	status = "Waiting for players"
@@ -117,10 +118,7 @@ EntFire("worldspawn", "RunScriptCode", @"
 	SERVER_DATA.server_name = GetStr(`hostname`)
 	SERVER_DATA.server_key = _split.len() == 1 ? `` : _split[1].slice(0, _split[1].find(`[`))
 	SERVER_DATA.region = _split_region.len() == 1 ? `` : _split_region[1].slice(0, _split_region[1].find(`]`))
-	SERVER_DATA.domain = SERVER_DATA.region == `USA` ? `us.potato.tf` : format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
-
-	if ( SERVER_DATA.domain == `ustx.potato.tf` )
-		SERVER_DATA.domain += `:22443`
+	SERVER_DATA.domain = format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
 ", 5)
 
 
@@ -361,7 +359,7 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		local team = player.GetTeam()
 		local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
 
-		function scope::ThinkTable::BBallThink() {
+		scope.ThinkTable.BBallThink <- function() {
 
 			if (scope.ball_ent && scope.ball_ent.IsValid())
 			{
@@ -447,9 +445,9 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	function infammo()
 	{
 		local player = self
-		scope <- player.GetScriptScope()
+		local scope = player.GetScriptScope()
 
-		function scope::ThinkTable::InfAmmoThink() {
+		scope.ThinkTable.InfAmmoThink <- function() {
 
 			local weapon = player.GetActiveWeapon()
 			local itemid = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
@@ -533,8 +531,8 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
 }
 
-for (local cleanup; cleanup = FindByName(cleanup, "__mge*");)
-	EntFireByHandle(cleanup, "Kill", "", -1, null, null)
+for (local hud; hud = FindByName(hud, "__mge*");)
+	EntFireByHandle(hud, "Kill", "", -1, null, null)
 
 ::MGE_HUD <- CreateByClassname("game_text")
 MGE_HUD.KeyValueFromString("targetname", "__mge_hud")
@@ -601,9 +599,9 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 
 					local time_left = MGE_TIMER.GetScriptScope().base_timestamp - Time()
 
-					MGE_ClientPrint(null, HUD_PRINTTALK, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
-					MGE_ClientPrint(null, HUD_PRINTTALK, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
-					MGE_ClientPrint(null, HUD_PRINTTALK, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
+					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
+					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
+					MGE_ClientPrint(null, 3, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
 
 					printl("Files changed:")
 
@@ -704,10 +702,9 @@ timer_scope.TimerThink <- function()
 				VPI.AsyncCall({
 					func = "VPI_MGE_UpdateServerData",
 					kwargs = SERVER_DATA,
-
-					function callback(response, error) {
-
-						if (error) 
+					callback = function(response, error) {
+						if (error)
+						{
 							return 3
 						}
 						if (SERVER_DATA.address == 0 && "address" in response)
@@ -736,4 +733,19 @@ timer_scope.TimerThink <- function()
 	delete timer_scope.TimerThink
 }
 AddThinkToEnt(MGE_TIMER, "TimerThink")
+
+
+::MGE_DoChangelevel <- function() {
+
+	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)
+	{
+		SetValue("mp_chattime", 9999.0)
+		EntFire("__mge_changelevel", "Activate") //do this anyway just to bring up the scoreboard/"end the round" instead of suddenly kicking everyone out
+		EntFire("player", "RunScriptCode", "EntFire(`__mge_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
+		EntFire("worldspawn", "Kill", "", 1.03)
+		return
+	}
+	SetValue("mp_chattime", 1.0)
+	EntFire("__mge_changelevel", "Activate")
+}
 MGE_Init()

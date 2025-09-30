@@ -42,10 +42,10 @@
 		local classname = ent.GetClassname()
 		if (preserve)
 		{
-			// these ents don't like having classname changed
+			// this ent doesn't like having its classname changed
 			// EFL_KILLME seemingly doesn't have any major side effects here
 			// (besides blocking Kill inputs)
-			if (classname == "info_observer_point" || classname == "trigger_player_respawn_override")
+			if (classname == "info_observer_point")
 			{
 				preserve ? ent.AddEFlags(EFL_KILLME): ent.RemoveEFlags(EFL_KILLME)
 				continue
@@ -65,10 +65,10 @@
 	}
 }
 
-function ROOT::InitPlayerScope(player)
+::InitPlayerScope <- function(player)
 {
 	player.ValidateScriptScope()
-	scope <- player.GetScriptScope()
+	local scope = player.GetScriptScope()
 	local player_entindex = player.entindex()
 
 	// Clear scope
@@ -174,32 +174,7 @@ function ROOT::InitPlayerScope(player)
 }
 
 
-	// if (split.len() < 3 || split.find(null))
-	// this is allegedly faster
-	local errorstr = "KVString CONVERSION ERROR: %s"
-	if (!(2 in split))
-	{
-		error(format(errorstr, "Not enough values (need at least 3)"))
-		return angles ? QAngle() : Vector()
-	}
-	local invalid = split.find(null)
-	if (invalid != null)
-	{
-		local invalid_kvstringidx = invalid
-		if (invalid)
-		{
-			local invalid_mod = invalid % 3
-			invalid_kvstringidx = !invalid_mod ? 2 : invalid_mod - 1
-		}
-
-		local kvstringvalue = angles ? ["yaw", "pitch", "roll"] : ["x", "y", "z"]
-		error(format(errorstr, "Could not convert string to number for KVString %s (index %d)", kvstringvalue[invalid_kvstringidx], invalid))
-		return angles ? QAngle() : Vector()
-	}
-	return angles ? QAngle(split[startidx], split[startidx + 1], split[startidx + 2]) : Vector(split[startidx], split[startidx + 1], split[startidx + 2])
-}
-
-function ROOT::GetUnixTimestamp(time)
+::GetUnixTimestamp <- function(time)
 {
     local SECONDS_IN_DAY  = 86400
     local SECONDS_IN_YEAR = 31536000
@@ -252,7 +227,7 @@ function ROOT::GetUnixTimestamp(time)
  // it does NOT initialize anything, only modifies the existing data
 
  // passing an arena name and setting arena_reset to true will convert the existing arena to a standard MGE arena
-function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = false)
+::LoadSpawnPoints <-  function(custom_ruleset_arena_name = null, arena_reset = false)
 {
 	local config = SpawnConfigs[GetMapName()]
 
@@ -287,7 +262,6 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 					EntFireByHandle(prop, "Kill", "", -1, null, null)
 
 			}
-
 			if (_arena.IsBBall)
 			{
 				local points = [
@@ -409,7 +383,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 				partial_cap_interval = "koth_partial_cap_interval" in _arena ? _arena.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL,
 
 				capture_point_radius     = "koth_capture_point_radius" in _arena ? _arena.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
-				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT
+				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT,
 			}
 			_arena.Koth.red_cap_time <- _arena.Koth.red_start_cap_time
 			_arena.Koth.blu_cap_time <- _arena.Koth.blu_start_cap_time
@@ -494,7 +468,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 	if (ENABLE_LEADERBOARD)
 	{
 		//misleading name, also handles the actual leaderboard
-		function ROOT::DoLeaderboardCam()
+		::DoLeaderboardCam <- function()
 		{
 			//spawn our camera
 			::MGE_LeaderboardCam <- CreateByClassname("info_observer_point")
@@ -572,11 +546,9 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 			MGE_Leaderboard.ValidateScriptScope()
 
 			local think_override = LEADERBOARD_UPDATE_INTERVAL
-			function LeaderboardScope::UpdateLeaderboard() {
-
-				// Store the keys and current index to track progress across yields
-				if (!("_current_stat_index" in this))
-					this._current_stat_index <- 0
+			//cache these off in a separate table so the perf counter can find them
+			local leaderboard_scope = {
+				function UpdateLeaderboard() {
 
 					// Store the keys and current index to track progress across yields
 					if (!("_current_stat_index" in this))
@@ -584,91 +556,68 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 
 					local stat_keys = MGE_LEADERBOARD_DATA.keys()
 
-				local stat = stat_keys[stat_index in stat_keys ? stat_index : 0]
+					local stat_index = this._current_stat_index
 
-				local column_name = ""
-				split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
-				column_name = column_name.slice(1)
+					local stat = stat_keys[stat_index in stat_keys ? stat_index : 0]
 
-				VPI.AsyncCall({
+					local column_name = ""
+					split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
+					column_name = column_name.slice(1)
 
-					func="VPI_MGE_PopulateLeaderboard",
-					timeout = INT_MAX, // don't know why this keeps throwing errors, it's fetching data fine
-					kwargs= {
-						order_filter = column_name,
-						max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
-					},
-
-					function callback(response, error) {
-
-						if (typeof(response) != "array" || !response.len())
-						{
-							// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
-							return
-						}
-
-						// Process one stat per yield
-						if (this._current_stat_index < stat_keys.len()) {
-
-							local steamid_list = MGE_LEADERBOARD_DATA[stat]
-
-							local message = format("          %s:\n", stat)
-							foreach(i, user_info in steamid_list)
+					VPI.AsyncCall({
+						func="VPI_MGE_PopulateLeaderboard",
+						timeout = INT_MAX, // don't know why this keeps throwing errors, it's fetching data fine
+						kwargs= {
+							order_filter = column_name,
+							max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
+						},
+						callback=function(response, error) {
+							if (typeof(response) != "array" || !response.len())
 							{
-								if (!user_info)
-									user_info = ["NONE", -INT_MAX]
-
-								// cycle through and fetch user stats faster if the leaderboard is empty
-								think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
-
-								local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
-								message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
+								// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
+								return
 							}
-							MGE_Leaderboard.KeyValueFromString("message", message)
-
-							this._current_stat_index++
-							yield
+							foreach (i, r in response)
+							{
+								local data = MGE_LEADERBOARD_DATA[stat]
+								data[i] = r
+							}
 						}
+					})
+
+					// Process one stat per yield
+					if (this._current_stat_index < stat_keys.len()) {
+						local steamid_list = MGE_LEADERBOARD_DATA[stat]
+
+						local message = format("          %s:\n", stat)
+						foreach(i, user_info in steamid_list)
+						{
+							if (!user_info)
+								user_info = ["NONE", -INT_MAX]
+
+							// cycle through and fetch user stats faster if the leaderboard is empty
+							think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
+
+							local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
+							message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
+						}
+						MGE_Leaderboard.KeyValueFromString("message", message)
+
+						this._current_stat_index++
+						yield
 					}
-				})
 
-				// Process one stat per yield
-				if (this._current_stat_index < stat_keys.len()) {
-					local steamid_list = MGE_LEADERBOARD_DATA[stat]
-
-					local message = format("          %s:\n", stat)
-					foreach(i, user_info in steamid_list)
-					{
-						if (!user_info)
-							user_info = ["NONE", -INT_MAX]
-
-						// cycle through and fetch user stats faster if the leaderboard is empty
-						think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
-
-						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
-						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
-					}
-					MGE_Leaderboard.KeyValueFromString("message", message)
-
-					this._current_stat_index++
-					yield
+					// Reset index and refresh data when done with all stats
+					this._current_stat_index = 0
 				}
-
-				// Reset index and refresh data when done with all stats
-				this._current_stat_index = 0
+				function LeaderboardThink() {
+					local gen = UpdateLeaderboard()
+					resume gen
+					return think_override
+				}
 			}
-
-			local gen = UpdateLeaderboard()
-			resume gen
-
-			function LeaderboardScope::LeaderboardThink() {
-
-				if (gen.getstatus() == "dead")
-					gen = UpdateLeaderboard()
-
-				resume gen
-				return think_override
-			}
+			foreach (k, v in leaderboard_scope)
+				MGE_Leaderboard.GetScriptScope()[k] <- v
 
 			AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
 		}
@@ -801,7 +750,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 				partial_cap_interval = "koth_partial_cap_interval" in _arena ? _arena.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL,
 
 				capture_point_radius     = "koth_capture_point_radius" in _arena ? _arena.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
-				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT
+				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT,
 			}
 
 			_arena.Koth.red_cap_time <- _arena.Koth.red_start_cap_time
@@ -885,7 +834,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 
 		local spawnpoints_len = _arena.SpawnPoints.len()
 		foreach(i, spawn in _arena.SpawnPoints)
-			spawn[2] = i < spawnpoints_len / 2 ? TF_TEAM_RED : TF_TEAM_BLUE
+				spawn[2] = i < spawnpoints_len / 2 ? TF_TEAM_RED : TF_TEAM_BLUE
 
 		//always grab the last index for KOTH cap point
 		if (_arena.IsKoth)
@@ -897,7 +846,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 	}
 }
 
-function ROOT::AllMeat_FindWeapon(weapon)
+::AllMeat_FindWeapon <- function(weapon)
 {
 	local itemdef = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
 
@@ -910,7 +859,8 @@ function ROOT::AllMeat_FindWeapon(weapon)
 	return null
 }
 
-function ROOT::BBall_SpawnBall(arena_name, origin_override = null, custom_ruleset_arena = false)
+
+::BBall_SpawnBall <-  function(arena_name, origin_override = null, custom_ruleset_arena = false)
 {
 	local arena = Arenas[arena_name]
 	local bball_points = custom_ruleset_arena ? {} : arena.BBall
@@ -1136,6 +1086,7 @@ function ROOT::BBall_SpawnBall(arena_name, origin_override = null, custom_rulese
 	local scope = player.GetScriptScope()
 	local arena = Arenas[arena_name]
 
+	scope.queue <- null
 	scope.arena_info <- {
 		arena = arena,
 		name  = arena_name,
@@ -1257,7 +1208,8 @@ function ROOT::BBall_SpawnBall(arena_name, origin_override = null, custom_rulese
 		MGE_ClientPrint(p, 3, "InLine", (i + 1))
 }
 
-function ROOT::CalcELO(winner, loser) {
+
+::CalcELO <- function(winner, loser) {
 
 	// if (!ELO_TRACKING_MODE || !winner || !loser ||
 		// !winner.IsValid() || !loser.IsValid() ||
@@ -1464,7 +1416,7 @@ function ROOT::CalcELO(winner, loser) {
 			loser_scope.won_last_match = false
 			winner_scope.won_last_match = true
 
-			MGE_ClientPrint(null, HUD_PRINTTALK, "XdefeatsY",
+			MGE_ClientPrint(null, 3, "XdefeatsY",
 				winner_scope.player_name,
 				winner_scope.stats.elo.tostring(),
 				loser_scope.player_name,
@@ -1499,7 +1451,7 @@ function ROOT::CalcELO(winner, loser) {
 
 			}
 
-			MGE_ClientPrint(null, HUD_PRINTTALK, "XdefeatsY",
+			MGE_ClientPrint(null, 3, "XdefeatsY",
 				format("%s, %s", winners[0].GetScriptScope().player_name, winners[1].GetScriptScope().player_name),
 				format("%s, %s", winners[0].GetScriptScope().stats.elo.tostring(), winners[1].GetScriptScope().stats.elo.tostring()),
 				format("%s, %s", losers[0].GetScriptScope().player_name, losers[1].GetScriptScope().player_name),
@@ -1627,14 +1579,12 @@ function ROOT::CalcELO(winner, loser) {
 			arena.Score <- array(2, 0)
 			if (arena.IsBBall)
 			{
-				local ball_ent = ["bball_pickup_r", "bball_pickup_b", "ground_ball"]
-
-				foreach(ent in ball_ent)
-					if (ent in arena.BBall && arena.BBall[ent] && arena.BBall[ent].IsValid())
-						EntFireByHandle(arena.BBall[ent], "Kill", "", -1, null, null)
-
-				foreach(player in arena_players)
-					EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", -1, null, null)
+				if (arena.BBall.bball_pickup_r && arena.BBall.bball_pickup_r.IsValid())
+					EntFireByHandle(arena.BBall.bball_pickup_r, "Kill", "", -1, null, null)
+				if (arena.BBall.bball_pickup_b && arena.BBall.bball_pickup_b.IsValid())
+					EntFireByHandle(arena.BBall.bball_pickup_b, "Kill", "", -1, null, null)
+				if (arena.BBall.ground_ball && arena.BBall.ground_ball.IsValid())
+					EntFireByHandle(arena.BBall.ground_ball, "Kill", "", -1, null, null)
 			}
 		},
 		[AS_COUNTDOWN] = function() {
@@ -1643,8 +1593,8 @@ function ROOT::CalcELO(winner, loser) {
 
 			if (arena.IsBBall)
 			{
-				if ("ground_ball" in arena.BBall && arena.BBall.ground_ball && arena.BBall.ground_ball.IsValid())
-					arena.BBall.ground_ball.SetAbsOrigin(arena.BBall.neutral_home)
+				if (arena.BBall.ground_ball.IsValid())
+					arena.BBall.ground_ball.SetOrigin(arena.BBall.neutral_home)
 
 				arena.BBall.bball_pickup_r <- CreateByClassname("trigger_particle")
 				arena.BBall.bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_2")
@@ -1739,9 +1689,7 @@ function ROOT::CalcELO(winner, loser) {
 				BBall_SpawnBall(arena_name)
 
 		},
-
-		function AS_FIGHT() {
-
+		[AS_FIGHT] = function() {
 			foreach(p in arena_players)
 			{
 				local scope = p.GetScriptScope()
@@ -1757,9 +1705,7 @@ function ROOT::CalcELO(winner, loser) {
 				p.RemoveCustomAttribute("no_attack")
 			}
 		},
-
-		function AS_AFTERFIGHT() {
-
+		[AS_AFTERFIGHT] = function() {
 			foreach(p in arena_players)
 			{
 				//20-0
@@ -1785,15 +1731,19 @@ function ROOT::CalcELO(winner, loser) {
 				arena.Koth.current_cappers.clear()
 
 			if (arena.IsCustomRuleset)
+			{
 				foreach(p in arena_players)
-					RemovePlayer(p)
+				{
+					RemovePlayer(p, true)
+				}
+			}
 
 			EntFire("bignet", "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
 		},
 	}
 	arenaStates[state]()
 }
-function ROOT::SetSpecialArena(player, arena_name) {
+::SetSpecialArena <- function(player, arena_name) {
 
 	local arena = Arenas[arena_name]
 
@@ -2093,7 +2043,6 @@ function ROOT::SetSpecialArena(player, arena_name) {
 	_player.GetScriptScope()[format("__showmodel_%d", _player.entindex(), proxy_entity.entindex())] <- proxy_entity
     return proxy_entity;
 }
-
 //taken from popext (originally made by fellen)
 ::VectorAngles <- function(forward)
 {
@@ -2708,7 +2657,7 @@ function ROOT::SetSpecialArena(player, arena_name) {
 	return
 }
 
-function ROOT::CharReplace(str, findwhat, replace) {
+::CharReplace <- function(str, findwhat, replace) {
 
 	local returnstring = ""
 	local charlist 	= array(str.len(), "")
@@ -2726,7 +2675,7 @@ function ROOT::CharReplace(str, findwhat, replace) {
 	generator = null,
 	is_running = false
 }
-function ROOT::ArenaNavGenerator(only_this_arena = null) {
+::ArenaNavGenerator <- function(only_this_arena = null) {
 	local player = GetListenServerHost()
 
 	local progress = 0
@@ -2740,7 +2689,7 @@ function ROOT::ArenaNavGenerator(only_this_arena = null) {
 				generate_delay += 0.01
 				EntFireByHandle(player, "RunScriptCode", format(@"
 					local origin = Vector(%f, %f, %f)
-					self.SetAbsOrigin(origin)
+					self.SetOrigin(origin)
 					self.SnapEyeAngles(QAngle(90, 0, 0))
 						SendToConsole(`nav_mark_walkable`)
 						printl(`Marking Spawn Point: ` + origin)
@@ -2765,7 +2714,7 @@ function ROOT::ArenaNavGenerator(only_this_arena = null) {
 			generate_delay += 0.01
 			EntFireByHandle(player, "RunScriptCode", format(@"
 				local origin = Vector(%f, %f, %f)
-				self.SetAbsOrigin(origin)
+				self.SetOrigin(origin)
 				self.SnapEyeAngles(QAngle(90, 0, 0))
 					SendToConsole(`nav_mark_walkable`)
 					printl(`Marking Spawn Point: ` + origin)
@@ -2782,7 +2731,7 @@ function ROOT::ArenaNavGenerator(only_this_arena = null) {
 	}
 }
 
-function ROOT::ResumeNavGeneration() {
+::ResumeNavGeneration <- function() {
 	if (!nav_generation_state.is_running || !nav_generation_state.generator) return
 
 	if (nav_generation_state.generator.getstatus() == "dead") {
@@ -2793,8 +2742,7 @@ function ROOT::ResumeNavGeneration() {
 	resume nav_generation_state.generator
 }
 
-function ROOT::MGE_CreateNav(only_this_arena = null) {
-
+::MGE_CreateNav <- function(only_this_arena = null) {
 	local player = GetListenServerHost()
 	player.SetMoveType(MOVETYPE_NOCLIP, MOVECOLLIDE_DEFAULT)
 
@@ -2803,13 +2751,11 @@ function ROOT::MGE_CreateNav(only_this_arena = null) {
 
 	AddPlayer(player, Arenas_List[0])
 
-	scope <- player.ValidateScriptScope(), player.GetScriptScope()
-
-	function scope::NavThink() {
-
-		if (!GetInt("host_thread_mode"))
+	player.ValidateScriptScope()
+	player.GetScriptScope().NavThink <- function() {
+		if (!GetInt("host_thread_mode")) {
 			ResumeNavGeneration()
-
+		}
 		return 1
 	}
 	AddThinkToEnt(player, "NavThink")
@@ -2817,18 +2763,4 @@ function ROOT::MGE_CreateNav(only_this_arena = null) {
 	// Start generating
 	nav_generation_state.generator = ArenaNavGenerator(only_this_arena)
 	nav_generation_state.is_running = true
-}
-
-function ROOT::MGE_DoChangelevel() {
-
-	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)
-	{
-		SetValue("mp_chattime", 9999.0)
-		EntFire("__mge_changelevel", "Activate") //do this anyway just to bring up the scoreboard/"end the round" instead of suddenly kicking everyone out
-		EntFire("player", "RunScriptCode", "EntFire(`__mge_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
-		EntFire("worldspawn", "Kill", "", 1.03)
-		return
-	}
-	SetValue("mp_chattime", 1.0)
-	EntFire("__mge_changelevel", "Activate")
 }
