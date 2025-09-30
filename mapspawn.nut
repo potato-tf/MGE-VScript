@@ -24,8 +24,10 @@ else
 		CONST.PER_ARENA_LOGGING
 	) {
 		Include("vpi/vpi")
-		// create a dummy file to make the directory
-		StringToFile("_mge_mkdir_", "")
+
+		// create scriptdata directories
+		FileToString("mge_playerdata/ ")
+		FileToString("mge_arenalogs/ ")
 	}
 
 	Include("functions")

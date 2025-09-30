@@ -42,22 +42,22 @@ jobs:
         env:
             SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          # For potato.tf servers (pterodactyl user)
-          for i in "22 pterodactyl@us.potato.tf" "22 pterodactyl@ustx.potato.tf" "22 pterodactyl@br.potato.tf" "22 pterodactyl@usw2.potato.tf" "27035 pterodactyl@eu.potato.tf" "22 pterodactyl@eu1.potato.tf" "22 pterodactyl@sgp.potato.tf"; do a=( $i ); 
+          mapfile -t servers < <(curl -s https://raw.githubusercontent.com/potato-tf/deploy/refs/heads/main/serverlist.json | jq -r '.servers[]')
+          for i in "${servers[@]}"; do a=( $i );
           {
             chmod +x ./devserver_config/vpi/*.py
 
-            rsync -a \
+            rsync --mkpath -a \
             --exclude='mge/vpi' \
             --exclude='mge/cfg/config.nut' \
             --exclude='requirements.txt' \
             --exclude='mge_windows_setup.bat' \
-            -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mge ${a[1]}:/var/tf2server_noplugins/tf/scripts/vscripts
+            -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mge ${a[1]}:${a[2]}/tf2server_noplugins/tf/scripts/vscripts
 
             # Sync config files
-            rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./devserver_config/vpi ${a[1]}:/var/tf2server_noplugins/tf/scripts/vscripts/mge
-            rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./devserver_config/config.nut ${a[1]}:/var/tf2server_noplugins/tf/scripts/vscripts/mge/cfg/config.nut
-            rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mapspawn.nut ${a[1]}:/var/tf2server_noplugins/tf/scripts/vscripts/mge_init.nut
+            rsync --mkpath -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./devserver_config/vpi ${a[1]}:${a[2]}/tf2server_noplugins/tf/scripts/vscripts/mge
+            rsync --mkpath -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./devserver_config/config.nut ${a[1]}:${a[2]}/tf2server_noplugins/tf/scripts/vscripts/mge/cfg/config.nut
+            rsync --mkpath -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./mapspawn.nut ${a[1]}:${a[2]}/tf2server_noplugins/tf/scripts/vscripts/mge_init.nut
           } &
           done
           wait

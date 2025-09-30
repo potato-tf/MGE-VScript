@@ -32,9 +32,9 @@ BYPASS_SECRET = False #do not set this to true unless you know what you're doing
 if (not SECRET and not BYPASS_SECRET):
 	raise RuntimeError("Please set your secret token")
 
-def find_env_vars(var = None, default = ""):
+def find_env_vars(var = None, default = "", ignore_env = True):
 	env_vars = {}
-	if os.path.exists("env"):
+	if os.path.exists("env") and not ignore_env:
 		with open("env", "r") as f:
 			for line in f:
 				if "=" in line and (var is None or line.startswith(var)):
