@@ -45,6 +45,7 @@ local SOURCE_WHITELIST = {
 }
 
 local SCRIPTDATA_DIR = "mge_playerdata"
+
 // How often we normally write to file (in ticks)
 local WRITE_INTERVAL = 198; // 3 s
 
@@ -99,6 +100,7 @@ local function PrintMessage(player, msg, level=MSG_MISC, notify=NOTIFY_CONSOLE)
 	else if (level == MSG_DEBUG)   msg = "[VPI] -- DEBUG -- " + msg
 	else                           msg = "[VPI] -- " + msg
 
+	printl(msg)
 	if (notify & NOTIFY_CONSOLE) ClientPrint(player, 2, msg)
 	if (notify & NOTIFY_CENTER)  ClientPrint(player, 4, msg)
 	if (notify & NOTIFY_CHAT)
@@ -269,8 +271,8 @@ local function GetSanitizedHostname()
 		}
 		return str
 	}
-	catch (e)
-	{
+	catch (e) {
+
 		error( "COULDN'T GET HOSTNAME! " + e )
 		error( "COULDN'T GET HOSTNAME! " + e )
 		error( "COULDN'T GET HOSTNAME! " + e )
@@ -529,13 +531,13 @@ ParseTokens = function(tokens, start_index=0)
 	else if (token.find(".") != null || token.find("e") != null)
 	{
 		try { obj = token.tofloat() }
-		catch (e) { printl(e) }
+		catch (e) {}
 	}
 	// Integer
 	else
 	{
 		try { obj = token.tointeger() }
-		catch (e) { printl(e) }
+		catch (e) {}
 	}
 
 	// Array / Object
@@ -896,15 +898,17 @@ local function SetDestroyCallback(entity, callback)
 {
 	entity.ValidateScriptScope()
 	local scope = entity.GetScriptScope()
+
 	scope.setdelegate({}.setdelegate({
-			parent   = scope.getdelegate(),
-			id       = entity.GetScriptId(),
-			index    = entity.entindex(),
-			callback = callback,
+
+			parent   = scope.getdelegate()
+			id       = entity.GetScriptId()
+			index    = entity.entindex()
+			callback = callback
 			function _get(k)
 			{
 				return parent[k]
-			},
+			}
 			function _delslot(k)
 			{
 				if (k == id)
@@ -915,7 +919,7 @@ local function SetDestroyCallback(entity, callback)
 					callback.pcall(scope)
 				}
 				delete parent[k]
-			},
+			}
 		})
 	)
 }
@@ -1163,7 +1167,7 @@ local function HandleCallbacks()
 	}
 	catch (e)
 		if (e != null)
-			PrintMessage(null, format("Invalid input from file: '%s'", INPUT_FILE), MSG_WARNING)
+			PrintMessage(null, format("Invalid input: %s (%s)", e, INPUT_FILE), MSG_WARNING)
 
 	// Wipe the file to let the server know we've handled its contents
 	// and it can send anything else it's waiting to write
@@ -1176,21 +1180,18 @@ local function HandleCallbacks()
 // Get VPICallInfo instance from an arg which can either be a table or instance
 local function GetCallFromArg(src, arg)
 {
-	try
+	if (arg instanceof VPICallInfo) 
+		return arg
+	else if (typeof(arg) == "table")
 	{
-		if (arg instanceof VPICallInfo) return arg
-		else if (typeof(arg) == "table")
-		{
-			local func     = arg.func
-			local kwargs   = ("kwargs"   in arg) ? arg.kwargs   : null
-			local callback = ("callback" in arg) ? arg.callback : null
-			local timeout  = ("timeout"  in arg) ? arg.timeout  : CALLBACK_TIMEOUT
-			local urgent   = ("urgent"   in arg) ? arg.urgent   : null
+		local func     = arg.func
+		local kwargs   = ("kwargs"   in arg) ? arg.kwargs   : null
+		local callback = ("callback" in arg) ? arg.callback : null
+		local timeout  = ("timeout"  in arg) ? arg.timeout  : CALLBACK_TIMEOUT
+		local urgent   = ("urgent"   in arg) ? arg.urgent   : null
 
-			return VPICallInfo(GetSecret(), src, func, kwargs, callback, urgent, timeout)
-		}
+		return VPICallInfo(GetSecret(), src, func, kwargs, callback, urgent, timeout)
 	}
-	catch (e) {}
 }
 
 // Public interface for user scripts
@@ -1295,8 +1296,9 @@ VPI_SCRIPT_SCOPE <- SCRIPT_ENTITY.GetScriptScope()
 VPI_SCRIPT_SCOPE.readwritetick <- 0
 VPI_SCRIPT_SCOPE.ticks <- 0
 function VPI_SCRIPT_SCOPE::VPI_Think() {
+
 	// Check for tampering
-	try { ValidateIntegrity(); }
+	try { ValidateIntegrity() }
 	// Terminate
 	catch (e)
 	{
@@ -1333,7 +1335,7 @@ function VPI_SCRIPT_SCOPE::VPI_Think() {
 		}
 		// Normal read interval
 		else
-			if (readwritetick % WATCH_INTERVAL == 0 && callbacks.len())
+			if ( !(readwritetick % WATCH_INTERVAL) && callbacks.len())
 				HandleCallbacks()
 	}
 
@@ -1368,9 +1370,9 @@ function VPI_SCRIPT_SCOPE::VPI_Think() {
 	}
 
 	// Don't increment if we failed to write because we already wrote this tick
-	if (result != -1) ++readwritetick
+	if (result != -1) readwritetick++
 
-	++ticks
+	ticks++
 
 	return -1
 }
