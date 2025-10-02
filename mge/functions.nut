@@ -30,10 +30,10 @@ function MGE::InitEntities() {
 	local template = CreateByClassname("point_script_template")
 	template.ValidateScriptScope()
 	local template_scope = template.GetScriptScope()
-	template_scope.Entities <- []
+	template_scope.ents <- []
 	template_scope.__EntityMakerResult <- {
 
-		entities = template_scope.Entities
+		entities = template_scope.ents
 
 	}.setdelegate({
 		function _newslot(_, value) {
@@ -41,7 +41,7 @@ function MGE::InitEntities() {
 		}
 	})
 
-	function PostSpawn(ents) { ents.apply( @(ent) MGE[ ent.GetName().slice(2).toupper() ] <- ent ) }
+	function PostSpawn() { ents.apply( @(ent) MGE[ ent.GetName().slice(2).toupper() ] <- ent ) }
 	template_scope.PostSpawn <- PostSpawn
 
 	template.AddTemplate("point_intermission",  { targetname = "__mge_changelevel"   vscripts = " " })
