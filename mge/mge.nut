@@ -67,8 +67,7 @@ local StockSounds = [
 foreach (sound in StockSounds)
 	PrecacheSound(sound)
 
-local local_time = {}
-LocalTime(local_time)
+LocalTime(MGE.LOCALTIME)
 
 MGE.SERVER_DATA <- {
 	endpoint_url			  = "https://archive.potato.tf/api/serverstatus"
@@ -96,12 +95,12 @@ MGE.SERVER_DATA <- {
 
 	update_time 			  = {
 
-		year	= local_time.year
-		month	= local_time.month
-		day		= local_time.day
-		hour	= local_time.hour
-		minute	= local_time.minute
-		second	= local_time.second
+		year	= MGE.LOCALTIME.year
+		month	= MGE.LOCALTIME.month
+		day		= MGE.LOCALTIME.day
+		hour	= MGE.LOCALTIME.hour
+		minute	= MGE.LOCALTIME.minute
+		second	= MGE.LOCALTIME.second
 	}
 }
 

@@ -3,6 +3,7 @@ MGE_CREATE_SCOPE("__mge_main", "MGE", null, "MGEThink" )
 MGE.ARENAS      <- {}
 MGE.ARENAS_LIST <- [] // Need ordered arenas for selection with client commands like !add
 MGE.ALL_PLAYERS <- {}
+MGE.LOCALTIME   <- {}
 
 function MGE::_OnDestroy() {
 
@@ -147,8 +148,8 @@ function MGE::InitEntities() {
 			{
 				if (UPDATE_SERVER_DATA) {
 
-					LocalTime(local_time)
-					MGE.SERVER_DATA.update_time = local_time
+					LocalTime(MGE.LOCALTIME)
+					MGE.SERVER_DATA.update_time = NGE.LOCALTIME
 					MGE.SERVER_DATA.max_wave = time_left
 					MGE.SERVER_DATA.wave = time_left
 					local players = array(2, 0)
@@ -816,13 +817,8 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 				if (!("_current_stat_index" in this))
 					this._current_stat_index <- 0
 
-					// Store the keys and current index to track progress across yields
-					if (!("_current_stat_index" in this))
-						this._current_stat_index <- 0
-
-					local stat_keys = MGE_LEADERBOARD_DATA.keys()
-
-				local stat = stat_keys[stat_index in stat_keys ? stat_index : 0]
+				local stat_keys = MGE_LEADERBOARD_DATA.keys()
+				local stat = stat_keys[_current_stat_index in stat_keys ? _current_stat_index : 0]
 
 				local column_name = ""
 				split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
