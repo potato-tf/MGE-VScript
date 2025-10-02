@@ -259,7 +259,7 @@ local function GetSanitizedHostname()
 		local str = ""
 		foreach (code in hostname)
 		{
-			if (code < 33 && !endswith(hostname, "_"))
+			if (code < 33 && hostname[hostname.len() - 1] != '_')
 			{
 				str += "_"
 				continue
@@ -557,14 +557,14 @@ ParseTokens = function(tokens, start_index=0)
 				{
 					assert(state != 2)
 					closed = true
-					++next_index
+					next_index++
 					break
 				}
 				else if (peek == ",")
 				{
 					assert(state == 1)
 					state = 2
-					++next_index
+					next_index++
 				}
 				else
 				{
@@ -600,21 +600,21 @@ ParseTokens = function(tokens, start_index=0)
 				{
 					assert(state == 0 || state == 3)
 					closed = true
-					++next_index
+					next_index++
 					break
 				}
 				else if (peek == ":")
 				{
 					assert(state == 1)
 					state = 2
-					++next_index
+					next_index++
 				}
 				else if (peek == ",")
 				{
 					assert(state == 3)
 					state = 4
 					key = null
-					++next_index
+					next_index++
 				}
 				else
 				{
