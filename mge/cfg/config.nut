@@ -147,7 +147,7 @@ const ENDIF_HEIGHT_THRESHOLD                = 250
 const ENDIF_DELETE_MANTREADS                = true
 
 // this is absolutely not the value that the .sp plugin implies it uses, 2.15 is way too high
-// on the majority of mge servers, endif force mult only barely 
+// on the majority of mge servers, endif force mult only barely
 // pushes you over the threshold with a single non-DH shot to the toes
 // if someone wants to do a deep dive with side-by-side comparisons of the original plugin velocity vs this, I would love to see it
 ::ENDIF_FORCE_MULT                          <- Vector(1.1, 1.1, 1.31) //no vector constants :(

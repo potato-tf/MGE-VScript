@@ -133,7 +133,7 @@ function MGE_CREATE_SCOPE( name = "__mge_scope"+UniqueString(), namespace = null
                     _OnCreate.call( ent_scope )
 
                 // fix anonymous function declarations in perf counter
-                else if ( v.getinfos().name == null ) 
+                else if ( v.getinfos().name == null )
                     compilestring( format( @" local _%s = %s; function %s() { _%s() }", k, k, k, k ) ).call( ent_scope )
             }
 

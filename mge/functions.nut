@@ -149,7 +149,7 @@ function MGE::InitEntities() {
 				if (UPDATE_SERVER_DATA) {
 
 					LocalTime(MGE.LOCALTIME)
-					MGE.SERVER_DATA.update_time = NGE.LOCALTIME
+					MGE.SERVER_DATA.update_time = MGE.LOCALTIME
 					MGE.SERVER_DATA.max_wave = time_left
 					MGE.SERVER_DATA.wave = time_left
 					local players = array(2, 0)
@@ -306,7 +306,7 @@ function MGE::HandleRoundStart()
 
 function MGE::InitPlayerScope(player)
 {
-	
+
 	scope <- player.GetScriptScope() || (player.ValidateScriptScope(), player.GetScriptScope())
 	local player_entindex = player.entindex()
 
@@ -345,7 +345,7 @@ function MGE::InitPlayerScope(player)
 		hoops_scored 	   = -INT_MAX
 		koth_points_capped = -INT_MAX
 	}
-	
+
 	// fake custom cvars in vscript
 	// read some useless cvar like cl_class in a think and watch for changes
 	// cl_class vscript_cvar_here 5 then split the string in GetClientConvarValue to get `vscript_cvar_here 5`
@@ -461,7 +461,7 @@ function MGE::GetUnixTimestamp(time)
         second = 0,
     }
 
-    local timestamp = 0;
+    local timestamp = 0
 
     local time_year = time.year, epoch_year = EPOCH.year
     // Years
@@ -1193,7 +1193,7 @@ function MGE::BBall_SpawnBall(arena_name, origin_override = null, custom_ruleset
 function MGE::BBall_Pickup(player = null)
 {
 
-	if (!player && "self" in this) 
+	if (!player && "self" in this)
 		player = self
 
 	if (!player.IsAlive()) return
@@ -1251,7 +1251,7 @@ function MGE::BBall_Pickup(player = null)
 
 function MGE::AddBot(arena_name)
 {
-	if (!(arena_name in ARENAS)) 
+	if (!(arena_name in ARENAS))
 		return
 
 	// Ideally find a bot that isn't currently in an arena, but we aren't picky at the end of the day
@@ -1666,10 +1666,10 @@ function MGE::CalcArenaScore(arena_name)
 
 	foreach(p in arena_players)
 		if (p && p.IsValid())
-			hudstr = format("%s%s: %d (%d)\n", 
-				hudstr, 
-				p.GetScriptScope().player_name, 
-				arena.Score[p.GetTeam() - 2], 
+			hudstr = format("%s%s: %d (%d)\n",
+				hudstr,
+				p.GetScriptScope().player_name,
+				arena.Score[p.GetTeam() - 2],
 				p.GetScriptScope().stats.elo.tointeger()
 			)
 
@@ -1751,7 +1751,7 @@ function MGE::TryGetClearSpawnPoint(player, arena_name)
 {
 	local arena   = ARENAS[arena_name]
 	local spawns  = arena.SpawnPoints
-	local mindist = ("mindist" in arena) ? arena.mindist.tofloat() : 0.0;
+	local mindist = ("mindist" in arena) ? arena.mindist.tofloat() : 0.0
 	local idx = arena.SpawnIdx
 	for (local i = 0; i < MAX_CLEAR_SPAWN_RETRIES; ++i)
 	{
@@ -2361,7 +2361,7 @@ function MGE::ShowModelToPlayer(_player, model = ["models/player/heavy.mdl", 0, 
     SetPropEntity(proxy_entity, "m_hBuilder", _player)
     EntFireByHandle(proxy_entity, "Kill", "", duration, _player, _player)
 	_player.GetScriptScope()[format("__showmodel_%d", _player.entindex(), proxy_entity.entindex())] <- proxy_entity
-    return proxy_entity;
+    return proxy_entity
 }
 
 //taken from popext (originally made by fellen)
@@ -2986,7 +2986,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				if (child instanceof CEconEntity)
 					SetPropInt(child, "m_nRenderMode", kRenderTransColor),
 					SetPropInt(child, "m_clrRender", 0)
-				
+
 			p.AddCustomAttribute("no_attack", 1, -1)
 			p.AddCustomAttribute("disable weapon switch", 1, -1)
 		}

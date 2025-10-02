@@ -277,7 +277,7 @@ MGE.Events <- {
 	}
 
 	valid_chars = {
-	
+
 		['!']  = 33,
 		['.']  = 46,
 		['/']  = 47,
@@ -407,7 +407,7 @@ MGE.Events <- {
 
 
 			//set arena state to countdown
-			if (arena.State == AS_IDLE && arena_players.len() == arena.MaxPlayers) 
+			if (arena.State == AS_IDLE && arena_players.len() == arena.MaxPlayers)
 			{
 				if (!arena.IsUltiduo && !((arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && arena.IsCustomRuleset))
 					ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
