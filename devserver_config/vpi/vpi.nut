@@ -27,7 +27,7 @@ function ROOT::GenerateSecret(n=128) {
 // Also used to prove our identity to server
 // Avoid putting this token into a variable as error locals traces can give away its value
 local function GetSecret() {
-	return @"9320fkslkdajkf#(FP#0"
+	return @"9320fksXlk4d5a4fFP0"
 }
 
 // Note: This only works to ensure security if vpi.nut is executed within mapspawn.nut
