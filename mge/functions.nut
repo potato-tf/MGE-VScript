@@ -898,7 +898,7 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 				this._current_stat_index = 0
 			}
 
-			local gen = UpdateLeaderboard()
+			local gen = LeaderboardScope.UpdateLeaderboard()
 			resume gen
 
 			function LeaderboardScope::LeaderboardThink() {
