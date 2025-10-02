@@ -203,7 +203,7 @@ function MGE::InitEntities() {
 
 		delete TimerScope.TimerThink
 	}
-	MGE.ScriptEntFireSafe(MGE_TIMER, "AddThinkToEnt(self, `TimerThink`)")
+	MGE.ScriptEntFireSafe(timer, "AddThinkToEnt(self, `TimerThink`)")
 }
 
 function MGE::ScriptEntFireSafe( target, code, delay = -1, activator = null, caller = null, allow_dead = true ) {
