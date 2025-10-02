@@ -473,6 +473,9 @@ MGE.Events <- {
 
 					hudstr += format("%s: %d (%d)\n", scope.player_name, arena.Score[team - 2], scope.stats.elo.tointeger())
 				}
+
+				if (!("MGE_HUD" in MGE || !MGE_HUD.IsValid()))
+					MGE.InitEntities()
 				
 				MGE_HUD.KeyValueFromString("message", hudstr)
 				MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
