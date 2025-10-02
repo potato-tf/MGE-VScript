@@ -41,7 +41,7 @@ function MGE::InitEntities() {
 		}
 	})
 
-	function PostSpawn() { ents.apply( @(ent) MGE[ ent.GetName().slice(2).toupper() ] <- ent ) }
+	function PostSpawn() { ents.apply( @(ent) MGE[ ent.GetName().toupper().slice(2) ] <- ent ) }
 	template_scope.PostSpawn <- PostSpawn
 
 	template.AddTemplate("point_intermission",  { targetname = "__mge_changelevel"   vscripts = " " })
@@ -118,6 +118,92 @@ function MGE::InitEntities() {
 
 	template.AcceptInput("ForceSpawn", null, null, null)
 	template.Kill()
+
+	local timer = FindByName(null, "__mge_timer")
+
+	EntFire("__mge_timer", "Resume")
+	EntFire("__mge_timer", "ShowInHUD", "1")
+
+	TimerScope <- timer.GetScriptScope()
+	TimerScope.time_left <- GetPropFloat(timer, "m_flTimeRemaining")
+	TimerScope.base_timestamp <- GetPropFloat(timer, "m_flTimeRemaining")
+
+	function TimerScope::InputSetTime() {
+
+		base_timestamp = GetPropFloat(self, "m_flTimeRemaining")
+		return true
+
+	}
+	TimerScope.Inputsettime <- TimerScope.InputSetTime
+	TimerScope.hinted <- false
+
+	function TimerScope::TimerThink()
+	{
+		local time_left = base_timestamp - Time()
+
+		if (time_left > 0)
+		{
+			if (!(time_left % VPI_SERVERINFO_UPDATE_INTERVAL))
+			{
+				if (UPDATE_SERVER_DATA) {
+
+					LocalTime(local_time)
+					MGE.SERVER_DATA.update_time = local_time
+					MGE.SERVER_DATA.max_wave = time_left
+					MGE.SERVER_DATA.wave = time_left
+					local players = array(2, 0)
+					local spectators = 0
+					foreach (player, userid in MGE.ALL_PLAYERS)
+
+					{
+						if (!player || !player.IsValid() || player.IsFakeClient()) continue
+
+						if (player.GetTeam() == TEAM_SPECTATOR)
+							spectators++
+						else
+							players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
+					}
+					MGE.SERVER_DATA.players_red = players[0]
+					MGE.SERVER_DATA.players_blu = players[1]
+					MGE.SERVER_DATA.players_connecting = spectators
+					MGE.SERVER_DATA.server_name = GetStr("hostname")
+
+					VPI.AsyncCall({
+
+						func   = "VPI_MGE_UpdateServerData"
+						kwargs = MGE.SERVER_DATA
+
+						function callback(response, error) {
+
+							if (error)
+								return 3
+
+							if (MGE.SERVER_DATA.address == 0 && "address" in response)
+								MGE.SERVER_DATA.address = response.address
+
+						}
+					})
+				}
+			}
+
+			// Show countdown message in last minute
+			if (time_left < 60 && !(time_left.tointeger() % 10))
+			{
+				if (!hinted)
+				{
+					SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", time_left.tointeger())})
+					hinted = true
+					MGE.ScriptEntFireSafe(self, "hinted = false", 1.1)
+				}
+			}
+
+
+			return -1
+		}
+
+		delete TimerScope.TimerThink
+	}
+	MGE.ScriptEntFireSafe(MGE_TIMER, "AddThinkToEnt(self, `TimerThink`)")
 }
 
 function MGE::ScriptEntFireSafe( target, code, delay = -1, activator = null, caller = null, allow_dead = true ) {
