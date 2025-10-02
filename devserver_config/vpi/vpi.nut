@@ -1164,7 +1164,7 @@ local function HandleCallbacks()
 			TryExecCallback(token, calldata, error)
 		}
 
-	}
+	// }
 	// catch (e)
 	// 	if (e != null)
 	// 		PrintMessage(null, format("Invalid input: %s (%s)", e, INPUT_FILE), MSG_WARNING)
