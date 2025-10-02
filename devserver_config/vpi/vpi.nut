@@ -100,6 +100,7 @@ local function PrintMessage(player, msg, level=MSG_MISC, notify=NOTIFY_CONSOLE)
 	else if (level == MSG_DEBUG)   msg = "[VPI] -- DEBUG -- " + msg
 	else                           msg = "[VPI] -- " + msg
 
+	printl(msg)
 	if (notify & NOTIFY_CONSOLE) ClientPrint(player, 2, msg)
 	if (notify & NOTIFY_CENTER)  ClientPrint(player, 4, msg)
 	if (notify & NOTIFY_CHAT)
@@ -113,7 +114,6 @@ local function PrintMessage(player, msg, level=MSG_MISC, notify=NOTIFY_CONSOLE)
 			chatmsg = "\x07D9F4FC" + msg
 
 		ClientPrint(player, 3, chatmsg)
-		printl(chatmsg)
 	}
 
 	if (level == MSG_ERROR)
@@ -531,13 +531,13 @@ ParseTokens = function(tokens, start_index=0)
 	else if (token.find(".") != null || token.find("e") != null)
 	{
 		try { obj = token.tofloat() }
-		catch (e) { printl(e) }
+		catch (e) {}
 	}
 	// Integer
 	else
 	{
 		try { obj = token.tointeger() }
-		catch (e) { printl(e) }
+		catch (e) {}
 	}
 
 	// Array / Object
@@ -1167,7 +1167,7 @@ local function HandleCallbacks()
 	}
 	catch (e)
 		if (e != null)
-			PrintMessage(null, format("Invalid input from file: '%s'", INPUT_FILE), MSG_WARNING)
+			PrintMessage(null, format("Invalid input: %s (%s)", e, INPUT_FILE), MSG_WARNING)
 
 	// Wipe the file to let the server know we've handled its contents
 	// and it can send anything else it's waiting to write
@@ -1180,21 +1180,18 @@ local function HandleCallbacks()
 // Get VPICallInfo instance from an arg which can either be a table or instance
 local function GetCallFromArg(src, arg)
 {
-	try
+	if (arg instanceof VPICallInfo) 
+		return arg
+	else if (typeof(arg) == "table")
 	{
-		if (arg instanceof VPICallInfo) return arg
-		else if (typeof(arg) == "table")
-		{
-			local func     = arg.func
-			local kwargs   = ("kwargs"   in arg) ? arg.kwargs   : null
-			local callback = ("callback" in arg) ? arg.callback : null
-			local timeout  = ("timeout"  in arg) ? arg.timeout  : CALLBACK_TIMEOUT
-			local urgent   = ("urgent"   in arg) ? arg.urgent   : null
+		local func     = arg.func
+		local kwargs   = ("kwargs"   in arg) ? arg.kwargs   : null
+		local callback = ("callback" in arg) ? arg.callback : null
+		local timeout  = ("timeout"  in arg) ? arg.timeout  : CALLBACK_TIMEOUT
+		local urgent   = ("urgent"   in arg) ? arg.urgent   : null
 
-			return VPICallInfo(GetSecret(), src, func, kwargs, callback, urgent, timeout)
-		}
+		return VPICallInfo(GetSecret(), src, func, kwargs, callback, urgent, timeout)
 	}
-	catch (e) { printl(e) }
 }
 
 // Public interface for user scripts
