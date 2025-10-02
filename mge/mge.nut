@@ -492,13 +492,13 @@ MGE.InitEntities()
 EntFire("__mge_timer", "Resume")
 EntFire("__mge_timer", "ShowInHUD", "1")
 
-TimerScope <- MGE_TIMER.GetScriptScope()
-TimerScope.time_left <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
-TimerScope.base_timestamp <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+TimerScope <- MGE.MGE_TIMER.GetScriptScope()
+TimerScope.time_left <- GetPropFloat(MGE.MGE_TIMER, "m_flTimeRemaining")
+TimerScope.base_timestamp <- GetPropFloat(MGE.MGE_TIMER, "m_flTimeRemaining")
 
 function TimerScope::InputSetTime() {
 
-	base_timestamp = GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+	base_timestamp = GetPropFloat(MGE.MGE_TIMER, "m_flTimeRemaining")
 	return true
 
 }
