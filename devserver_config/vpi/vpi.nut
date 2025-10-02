@@ -27,7 +27,7 @@ function ROOT::GenerateSecret(n=128) {
 // Also used to prove our identity to server
 // Avoid putting this token into a variable as error locals traces can give away its value
 local function GetSecret() {
-	return @"";
+	return @"9320fkslkdajkf#(FP#0";
 }
 
 // Note: This only works to ensure security if vpi.nut is executed within mapspawn.nut
@@ -45,6 +45,7 @@ local SOURCE_WHITELIST = {
 };
 
 local SCRIPTDATA_DIR = "mge_playerdata";
+
 // How often we normally write to file (in ticks)
 local WRITE_INTERVAL = 198; // 3 s
 
@@ -1207,9 +1208,9 @@ local function GetCallFromArg(src, arg)
 			return;
 		}
 
-		if (kwargs && typeof(kwargs) != "table")
+		if (kwargs && typeof(kwargs) != "table") 
 			kwargs = null;
-		if (callback && typeof(callback) != "function")
+		if (callback && typeof(callback) != "function") 
 			callback = null;
 		if (typeof(timeout) != "integer" || typeof(timeout) != "float") 
 			timeout = CALLBACK_TIMEOUT;

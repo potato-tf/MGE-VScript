@@ -30,9 +30,11 @@ if (MAPNAME_CONFIG_OVERRIDE in MGE_MAPINFO) {
 }
 
 ::MGE_ADMINLIST <- {
-	"[U:1:28266263]" : "Braindawg"
+	"[U:1:28266263]" : "Braindawg",
+	"[U:1:5202410]"  : "Hell-met"
 }
 
+//CONFIG CONSTANTS
 const DEFAULT_LANGUAGE                        = "english"
 
 /********************************************************************************************************************
@@ -47,7 +49,7 @@ const MAP_RESTART_TIMER                       = 7200
  *              setting this to true will send a retry command to every player and kill worldspawn             *
  *   this obviously assumes you use a watchdog script/systemd/etc to restart the server automatically on crash *
  *         we should find a better way to kill the server that doesn't trigger an accelerator crash dump       *
- *    this will not work if your server launch times are longer than 25 seconds (default retry attempt time)   *
+ *    this will not work if your server startup time is longer than 25 seconds (default retry attempt time)    *
  ***************************************************************************************************************/
 const SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL    = false
 
@@ -65,12 +67,14 @@ const GAMEMODE_AUTOUPDATE_RESTART_TIME       = 300.0 //the time to wait before r
  //GitHub will rate limit you if you try to abuse this
 const GAMEMODE_AUTOUPDATE_INTERVAL           = 120
 
-//fires VPI_MGE_UpdateServerData every VPI_SERVERINFO_UPDATE_INTERVAL seconds
-//potato.tf uses this function to send periodic put requests to their webserver so it shows up on the website
-//this function is empty for the release version, feel free to use it for your own purposes
-//VPI_MGE_UpdateServerDataDB does work but is unused
-const UPDATE_SERVER_DATA                     = false
-const VPI_SERVERINFO_UPDATE_INTERVAL         = 3
+/******************************************************************************************************************
+ * fires VPI_MGE_UpdateServerData every VPI_SERVERINFO_UPDATE_INTERVAL seconds                                 	  *
+ * potato.tf uses this function to send periodic PUT requests to their webserver so it shows up on the website 	  *
+ * you will need to add your steam API key and webserver API key to your env vars (see vpi_config.py)			  *
+ * VPI_MGE_UpdateServerDataDB does work but is unused                                                          	  *
+ ******************************************************************************************************************/
+const UPDATE_SERVER_DATA                     = true
+const VPI_SERVERINFO_UPDATE_INTERVAL         = 5
 
 //general
 const DEFAULT_FRAGLIMIT                      = 20
@@ -83,8 +87,8 @@ const DEFAULT_ELO                            = 1600
  * 3 = database NO fallback - Database connection only, don't write player data to files                                    *
  * if VPI is not running 2, and 3 will just do nothing and accumulate junk in your scriptdata folder xd                     *
  ****************************************************************************************************************************/
-const ELO_TRACKING_MODE                      = 1
-const ENABLE_LEADERBOARD                     = false //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
+const ELO_TRACKING_MODE                      = 2
+const ENABLE_LEADERBOARD                     = true //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
 
 const REMOVE_DROPPED_WEAPONS                 = true
 const IDLE_RESPAWN_TIME                      = 3.0 //respawn time while waiting for arena to start
@@ -142,15 +146,6 @@ const AMMOMOD_DEFAULT_FRAGLIMIT 			= 5
 const TURRIS_REGEN_TIME                     = 5.0
 
 const ENDIF_HEIGHT_THRESHOLD                = 250
-// if set to true, mantreads will be deleted from the player
-// if set to false, players will be removed from the arena
-const ENDIF_DELETE_MANTREADS                = true
-
-// this is absolutely not the value that the .sp plugin implies it uses, 2.15 is way too high
-// on the majority of mge servers, endif force mult only barely 
-// pushes you over the threshold with a single non-DH shot to the toes
-// if someone wants to do a deep dive with side-by-side comparisons of the original plugin velocity vs this, I would love to see it
-::ENDIF_FORCE_MULT                          <- Vector(1.1, 1.1, 1.31) //no vector constants :(
 
 const ALLMEAT_DAMAGE_THRESHOLD              = 0.85
 const ALLMEAT_DEFAULT_FRAGLIMIT             = 5
@@ -158,19 +153,25 @@ const ALLMEAT_DEFAULT_FRAGLIMIT             = 5
 //damage values here do not account for rampup/falloff
 //this effectively means we are only counting shots that hit every single pellet
 ::ALLMEAT_MAX_DAMAGE <- {
-
-	tf_weapon_scattergun 			= BASE_SHOTGUN_DAMAGE,
+	tf_weapon_scattergun = BASE_SHOTGUN_DAMAGE,
 	tf_weapon_handgun_scout_primary = BASE_SHOTGUN_DAMAGE * 0.8,
-	[ID_FORCE_A_NATURE] 			= BASE_SHOTGUN_DAMAGE * 1.08,
-	[ID_FESTIVE_FORCE_A_NATURE] 	= BASE_SHOTGUN_DAMAGE * 1.08,
-	tf_weapon_shotgun_primary 		= BASE_SHOTGUN_DAMAGE,
-	tf_weapon_shotgun_pyro 	  		= BASE_SHOTGUN_DAMAGE,
-	tf_weapon_shotgun_soldier 	  	= BASE_SHOTGUN_DAMAGE,
-	tf_weapon_shotgun_hwg 	  		= BASE_SHOTGUN_DAMAGE,
-	[ID_PANIC_ATTACK_SHOTGUN] 		= BASE_SHOTGUN_DAMAGE * 1.2,
-	tf_weapon_grenadelauncher 		= 100,
-	tf_weapon_pipebomblauncher 		= 100
+	[ID_FORCE_A_NATURE] = BASE_SHOTGUN_DAMAGE * 1.08,
+	[ID_FESTIVE_FORCE_A_NATURE] = BASE_SHOTGUN_DAMAGE * 1.08,
+
+	tf_weapon_shotgun_primary = BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_pyro = BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_soldier = BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_hwg = BASE_SHOTGUN_DAMAGE,
+	[ID_PANIC_ATTACK_SHOTGUN] = BASE_SHOTGUN_DAMAGE * 1.2,
+
+	tf_weapon_grenadelauncher = 100,
+	tf_weapon_pipebomblauncher = 100
 }
+//this is absolutely not the value that the .sp plugin implies it uses, 2.15 is way too high
+//on the majority of mge servers, endif force mult only barely pushes you over the threshold with a single non-DH shot to the toes
+//2.15 here is pinball mode
+//if someone wants to do a deep dive with side-by-side comparisons of the original plugin velocity vs this, I would love to see it
+::ENDIF_FORCE_MULT                          <- Vector(1.1, 1.1, 1.31) //no vector constants :(
 
 //NOTE:
 //Editing this constant alone is not enough to add more spawns to arenas with fixed spawn rotations like BBall

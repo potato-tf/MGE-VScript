@@ -46,12 +46,169 @@
  * 	   - These scripts handle interfacing from vscript to python for various things like database integration and github auto-updates 								 *
  *********************************************************************************************************************************************************************/
 
+const MGE_VERSION = "0.5.0"
+
+::ROOT  <- getroottable()
+::CONST <- getconsttable()
+
+// get clean map name from workshop map name
+local mapname = GetMapName()
+::MAPNAME_CONFIG_OVERRIDE <- 8 in mapname && mapname[8] == '/' ? mapname.slice(9, mapname.find(".") ) : mapname
+
+local Include = @(file) IncludeScript("mge/"+file)
+
+Include("cfg/mgemod_spawns")
+
+// spawns not configured, bail and don't load anything
+if (!(MAPNAME_CONFIG_OVERRIDE in SpawnConfigs)) {
+
+	local failed_msg = "Map not configured for MGE, goodbye..."
+	error(format("\n%s\n%s\n%s\n\n", failed_msg, failed_msg, failed_msg))
+	ClientPrint(null, 3, "\x07FFD700[MGE VScript] \x07edf781"+failed_msg)
+	ClientPrint(null, 4, "[MGE VScript] "+failed_msg)
+
+	delete CONST.MGE_VERSION
+	delete MAPNAME_CONFIG_OVERRIDE
+	delete SpawnConfigs
+
+	collectgarbage()
+
+	return
+}
+
+Include("constants")
+
+/*********************************************************************************************
+ * Namespacing wrapper for creating self-contained extension/module scopes.			         *
+ * All code is scoped to an entity to allow for easier cleanup.  Code is killed with the ent *
+ * - name: Targetname of the entity.  "__mge" in the name is recommended for consistency	 *
+ * - namespace: Root table reference to the scope.                                           *
+ * - entity_ref: Root table reference to the entity.                                         *
+ * - think_func: Create a think function for this entity/scope, depending on argument type.  *
+ * 	  - String: Create a new think function that iterates over a 'ThinkTable' table.		 *
+ * 	  - Function: Does NOT create 'ThinkTable', sets the think function directly.			 *
+ * - classname: overrides the spawned entity classname to something else                     *
+ *********************************************************************************************/
+
+if ( !( "__mge_active_scopes" in ROOT ) )
+	::__mge_active_scopes <- {}
+
+function MGE_CREATE_SCOPE( name = "__mge_scope"+UniqueString(), namespace = null, entity_ref = null, think_func = null, classname = null, table_auto_delegate = true ) {
+
+	local ent = FindByName( null, name )
+
+	if ( !ent || !ent.IsValid() ) {
+
+		ent = SpawnEntityFromTable( classname || "logic_autosave", { vscripts = " " } )
+		SetPropString( ent, "m_iName", name )
+	}
+
+	SetPropBool( ent, "m_bForcePurgeFixedupStrings", true )
+	__mge_active_scopes[ ent ] <- namespace
+
+	// make preserved between round resets
+	// don't spawn an actual move_rope to save an edict
+	if ( !classname )
+		SetPropString( ent, "m_iClassname", "move_rope" )
+
+	local ent_scope = ent.GetScriptScope()
+
+	local namespace    =  namespace  || format( "%s_Scope", name )
+	local entity_ref   =  entity_ref || format( "%s_Entity", name )
+	ROOT[ namespace ]  <- ent_scope
+	ROOT[ entity_ref ] <- ent
+
+	ent_scope.setdelegate({
+
+		function _newslot( k, v ) {
+
+			if ( k == "_OnDestroy" && _OnDestroy == null )
+				_OnDestroy = v.bindenv( ent_scope )
+
+			this.rawset( k, v )
+
+            if ( typeof v == "function" ) {
+
+                if ( k == "_OnCreate" )
+                    _OnCreate.call( ent_scope )
+
+                // fix anonymous function declarations in perf counter
+                else if ( v.getinfos().name == null ) 
+                    compilestring( format( @" local _%s = %s; function %s() { _%s() }", k, k, k, k ) ).call( ent_scope )
+            }
+
+            // delegate variables to ent_scope for less verbose writing
+            // e.g. Scope.MyTable.MyFunc() can be written instead as Scope.MyFunc() in more places
+            else if ( typeof v == "table" && table_auto_delegate )
+                v.setdelegate( ent_scope )
+		}
+
+	}.setdelegate( {
+
+			parent     = ent_scope.getdelegate()
+			id         = ent.GetScriptId()
+			index      = ent.entindex()
+			_OnDestroy = null
+
+			function _get( k ) { return parent[k] }
+
+			function _delslot( k ) {
+
+				if ( k == id ) {
+
+					if ( _OnDestroy )
+						_OnDestroy()
+
+                    // delete root references to ourself
+					if ( namespace in ROOT )
+						delete ROOT[ namespace ]
+
+					if ( entity_ref in ROOT )
+						delete ROOT[ entity_ref ]
+
+					__mge_active_scopes = __mge_active_scopes.filter( @(ent, _) ent && ent.IsValid() )
+				}
+
+				delete parent[k]
+			}
+		} )
+	)
+
+	if ( think_func ) {
+
+		// function passed, Add the think function directly to the entity
+		if ( endswith( typeof think_func, "function" ) ) {
+
+			local think_name = think_func.getinfos().name || format( "%s_Think", name )
+
+			ent_scope[ think_name ] <- think_func
+			AddThinkToEnt( ent, think_name )
+			return
+		}
+
+        // String passed, set up think table and assume we're defining the actual function later
+		ent_scope.ThinkTable <- {}
+
+        ent_scope[ think_func ] <- function() {
+
+            foreach( func in ThinkTable )
+                func()
+
+            return -1
+        }
+
+		AddThinkToEnt( ent, think_func )
+	}
+
+	return { Entity = ent, Scope = ent_scope }
+}
 
 // many mge maps only have a single respawn point
-// this spams console with "no valid spawns for class" errors for every player spawn
+// this spams console with "no valid spawns for class x on team x" errors for every player spawn
 // this will stop the spam after the first player spawn
 // some maps (chillypunch) also use cap logic to override the global respawn times
-function MGE_RespawnFix()
+// we force "infinite" respawn times to avoid problems
+function ROOT::MGE_RESPAWN_FIX()
 {
 	// delay until ents are spawned
 	EntFire("worldspawn", "RunScriptCode", @"
@@ -61,120 +218,61 @@ function MGE_RespawnFix()
 		// will be null for > 1 spawn point
 		if (!base_spawn) return
 
-		local red_spawn = SpawnEntityFromTable(`info_player_teamspawn`, {
-			targetname = `__mge_spawn_override_2`
-			TeamNum = 2
-			origin = base_spawn.GetOrigin() + Vector(0, 0, 10)
-			spawnflags = 511
-		})
+		local function make_spawn( team, offset ) {
 
-		local blu_spawn = SpawnEntityFromTable(`info_player_teamspawn`, {
-			targetname = `__mge_spawn_override_3`
-			TeamNum = 3
-			origin = base_spawn.GetOrigin() + Vector(0, 0, 20)
-			spawnflags = 511
-		})
+			SpawnEntityFromTable(`info_player_teamspawn`, {
 
-		::MGE_RESPAWN_OVERRIDE <- SpawnEntityFromTable(`trigger_player_respawn_override`, {
-			targetname = `__mge_player_respawn_override`
-			RespawnTime = 99999
-			spawnflags = 1
+				targetname 	= `__mge_spawn_override_`+team
+				TeamNum 	= team
+				origin 		= base_spawn.GetOrigin() + offset
+				spawnflags 	= 511
+			})
+		}
+
+		local blu_spawn = make_spawn(2, Vector(0, 0, 10))
+		local red_spawn = make_spawn(3, Vector(0, 0, 20))
+
+		MGE.MGE_RESPAWN_OVERRIDE <- SpawnEntityFromTable(`trigger_player_respawn_override`, {
+
+			targetname  = `__mge_respawn_override`
+			RespawnTime = IDLE_RESPAWN_TIME
+			spawnflags  = 1
 		})
-		MGE_RESPAWN_OVERRIDE.SetSolid(2)
-		MGE_RESPAWN_OVERRIDE.SetSize(Vector(), Vector(1, 1, 1))
+		MGE.MGE_RESPAWN_OVERRIDE.SetSolid(2)
+		MGE.MGE_RESPAWN_OVERRIDE.SetSize(Vector(), Vector(1, 1, 1))
 
 	", 1)
 }
 
-::MAPNAME_CONFIG_OVERRIDE <- GetMapName()
+Include("itemdef_constants")
+Include("cfg/config")
+Include("cfg/localization")
 
-::MGE_MAPINFO <- {
+// the VPI system for passing vscript data to python
+// If you are just hosting a single server and just want basic MGE functionality
+// with local, file-based ELO tracking, you can ignore all of this.
 
-	"workshop/mge_training_v8_beta4b.ugc1996603816" : {
-		nice_name = "Classic Training"
-		function init_func () {
-			MAPNAME_CONFIG_OVERRIDE = "mge_training_v8_beta4b"
-			MGE_RespawnFix()
-		}
-	},
-	"workshop/mge_chillypunch_final4_fix2.ugc3490315512" : {
-		nice_name = "Chillypunch"
-		function init_func () {
-			MAPNAME_CONFIG_OVERRIDE = "mge_chillypunch_final4_fix2"
-			MGE_RespawnFix()
-		}
-	},
-	mge_training_v8_beta4b 		= {
-		nice_name = "Classic Training"
-		init_func = MGE_RespawnFix
-	},
+// VPI is used for:
+// - external mysql/sqlite database connection
+// - pulling leaderboard stats from the database
+// - gamemode auto-updates via github
+// - per-arena JSON logging
+if (
+	CONST.ELO_TRACKING_MODE > 1 	||
+	CONST.ENABLE_LEADERBOARD 		||
+	CONST.UPDATE_SERVER_DATA 		||
+	CONST.GAMEMODE_AUTOUPDATE_REPO 	||
+	CONST.PER_ARENA_LOGGING
+) {
+	Include("vpi/vpi")
 
-	mge_chillypunch_final4_fix2 = {
-		nice_name = "Chillypunch"
-		init_func = MGE_RespawnFix
-	},
-
-	mge_triumph_beta7_rc1 		= {
-		nice_name = "Triumph"
-	},
-	
-	mge_oihguv_sucks_b5 		= {
-		nice_name = "Oihguv"
-	},
-	
-	mge_oihguv_sucks_a12 		= {
-		nice_name = "Oihguv"
-	},
-}
-if (!(MAPNAME_CONFIG_OVERRIDE in MGE_MAPINFO))
-	return
-
-if ("init_func" in MGE_MAPINFO[MAPNAME_CONFIG_OVERRIDE])
-	MGE_MAPINFO[MAPNAME_CONFIG_OVERRIDE].init_func()
-
-local function Include(file)
-{
-	local path = format("mge/%s", file)
-	IncludeScript(path)
+	// create scriptdata directories
+	FileToString("mge_playerdata/ ")
+	FileToString("mge_arenalogs/ ")
 }
 
-Include("cfg/mgemod_spawns")
+Include("functions")
+Include("events")
+Include("mge")
 
-if (!(MAPNAME_CONFIG_OVERRIDE in SpawnConfigs))
-	delete SpawnConfigs
-else
-{
-	// these 4 must be included first
-	Include("constants") 
-	Include("itemdef_constants")
-	Include("cfg/config")
-	Include("cfg/localization")
-	
-	// the VPI system for passing vscript data to python
-	// If you are just hosting a single server and just want basic MGE functionality 
-	// with local, file-based ELO tracking, you can ignore all of this.
-
-	// VPI is used for: 
-	// - external mysql/sqlite database connection
-	// - pulling leaderboard stats from the database
-	// - gamemode auto-updates via github
-	// - per-arena JSON logging
-	if (
-		CONST.ELO_TRACKING_MODE > 1 	||
-		CONST.ENABLE_LEADERBOARD 		||
-		CONST.UPDATE_SERVER_DATA 		||
-		CONST.GAMEMODE_AUTOUPDATE_REPO 	||
-		CONST.PER_ARENA_LOGGING
-	) {
-		Include("vpi/vpi")
-
-		// create scriptdata directories
-		FileToString("mge_playerdata/ ")
-		FileToString("mge_arenalogs/ ")
-	}
-
-	Include("functions")
-	Include("events")
-	Include("mge")
-
-}
+EntFire("__mge_main", "CallScriptFunction", "collectgarbage")

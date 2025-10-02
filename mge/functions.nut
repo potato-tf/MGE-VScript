@@ -1,7 +1,190 @@
-function ROOT::HandleRoundStart()
+MGE_CREATE_SCOPE("__mge_main", "MGE", null, "MGEThink" )
+
+MGE.ARENAS      <- {}
+MGE.ARENAS_LIST <- [] // Need ordered arenas for selection with client commands like !add
+MGE.ALL_PLAYERS <- {}
+
+function MGE::_OnDestroy() {
+
+	foreach (k in ["MGE_CREATE_SCOPE", "MGE_RESPAWN_FIX", "MGE_GAMESTRINGS", "MAPNAME_CONFIG_OVERRIDE"])
+		if (k in ROOT)
+			delete ROOT[k]
+}
+
+// function MGE::ThinkTable::WatchEntities() {
+
+// 	if ( "MGE_HUD" in this && !MGE_HUD.IsValid() )
+// 		InitEntities()
+
+// 	return 1
+// }
+
+function MGE::InitEntities() {
+
+	printl("\n[MGE VScript] Respawning entities...\n")
+
+	// for (local cleanup; cleanup = FindByName(cleanup, "__mge*");)
+	// 	if ( cleanup.GetClassname() != "move_rope" )
+	// 		EntFireByHandle(cleanup, "Kill", "", -1, null, null)
+
+	local template = CreateByClassname("point_script_template")
+	template.ValidateScriptScope()
+	local template_scope = template.GetScriptScope()
+	template_scope.Entities <- []
+	template_scope.__EntityMakerResult <- {
+
+		entities = template_scope.Entities
+
+	}.setdelegate({
+		function _newslot(_, value) {
+			entities.append(value)
+		}
+	})
+
+	function PostSpawn(ents) { ents.apply( @(ent) MGE[ ent.GetName().slice(2).toupper() ] <- ent ) }
+	template_scope.PostSpawn <- PostSpawn
+
+	template.AddTemplate("point_intermission",  { targetname = "__mge_changelevel"   vscripts = " " })
+	template.AddTemplate("point_clientcommand", { targetname = "__mge_clientcommand" vscripts = " " })
+
+	template.AddTemplate("game_text", {
+
+		targetname 	= "__mge_hud"
+		vscripts	= " "
+		effect 		= 2
+		color 		= "255 254 255"
+		color2 		= "255 254 255"
+		fxtime 		= 1.0
+		holdtime 	= INT_MAX
+		fadeout 	= 0.01
+		fadein 		= 0.01
+		channel 	= 4
+		x 			= MGE_HUD_POS_X
+		y 			= MGE_HUD_POS_Y
+	})
+
+	template.AddTemplate("game_text", {
+
+		targetname	= "__mge_hud_koth_red"
+		vscripts	= " "
+		effect		= 2
+		color		= KOTH_RED_HUD_COLOR
+		color2		= "255 254 255"
+		fxtime		= 0.02
+		holdtime	= 1.0
+		fadeout		= 0.01
+		fadein		= 0.01
+		channel		= 5
+		x			= KOTH_HUD_RED_POS_X
+		y			= KOTH_HUD_RED_POS_Y
+	})
+
+	template.AddTemplate("game_text", {
+
+		targetname	= "__mge_hud_koth_blu"
+		vscripts	= " "
+		effect		= 2
+		color		= KOTH_BLU_HUD_COLOR
+		color2		= "255 254 255"
+		fxtime		= 0.02
+		holdtime	= 1.0
+		fadeout		= 0.01
+		fadein		= 0.01
+		channel		= 6
+		x			= KOTH_HUD_BLU_POS_X
+		y			= KOTH_HUD_BLU_POS_Y
+	})
+
+	template.AddTemplate("trigger_player_respawn_override", {
+
+		targetname  = "__mge_respawn_override"
+		RespawnTime = IDLE_RESPAWN_TIME
+		spawnflags  = 1
+	})
+
+	template.AddTemplate("team_round_timer", {
+
+		targetname 			= "__mge_timer"
+		vscripts			= " "
+		max_length 			= MAP_RESTART_TIMER
+		timer_length 		= MAP_RESTART_TIMER
+		start_paused 		= false
+		show_in_hud 		= true
+		auto_countdown 		= true
+		show_time_remaining = true
+		"OnFinished#1"		: "__mge_main,CallScriptFunction,DoChangeLevel,1,-1"
+
+	})
+
+	template.AcceptInput("ForceSpawn", null, null, null)
+	template.Kill()
+}
+
+function MGE::ScriptEntFireSafe( target, code, delay = -1, activator = null, caller = null, allow_dead = true ) {
+
+	local entfirefunc = typeof target == "string" ? DoEntFire : EntFireByHandle
+
+	entfirefunc( target, "RunScriptCode", format( @"
+
+		if ( self && self.IsValid() ) {
+
+			SetPropBool( self, STRING_NETPROP_PURGESTRINGS, true )
+
+			if ( self.IsPlayer() && !self.IsAlive() && !%d ) {
+
+				// PZI_Ext.Error.DebugLog( `Ignoring dead player in ScriptEntFireSafe: ` + self )
+				return
+			}
+
+			// code passed to ScriptEntFireSafe
+			%s
+
+			return
+		}
+
+		// PZI_Ext.Error.DebugLog( `Invalid target passed to ScriptEntFireSafe: ` + self )
+
+	", allow_dead.tointeger(), code ), delay, activator, caller )
+
+	MGE_GAMESTRINGS[code] <- null
+}
+
+function MGE::PreserveEnts(preserve = true)
+{
+	for (local ent; ent = FindByName(ent, "__mge*");)
+	{
+		local scope = ent.GetScriptScope() || (ent.ValidateScriptScope(), ent.GetScriptScope())
+		local classname = ent.GetClassname()
+		if (preserve)
+		{
+			if (classname == "move_rope")
+				continue
+			// these ents don't like having classname changed
+			// EFL_KILLME seemingly doesn't have any major side effects here
+			// (besides blocking Kill inputs)
+			if (classname == "info_observer_point" || classname == "trigger_player_respawn_override")
+			{
+				preserve ? ent.AddEFlags(EFL_KILLME) : ent.RemoveEFlags(EFL_KILLME)
+				continue
+			}
+
+			if (!("original_classname" in scope))
+				scope.original_classname <- ""
+
+			scope.original_classname = classname
+
+			// set this to a random preserved entity classname
+			ent.KeyValueFromString("classname", "move_rope")
+		}
+		else if ("original_classname" in scope)
+			ent.KeyValueFromString("classname", scope.original_classname)
+	}
+}
+
+function MGE::HandleRoundStart()
 {
 	PreserveEnts()
-	EntFire("bignet", "RunScriptCode", "PreserveEnts(false)", GENERIC_DELAY)
+	ScriptEntFireSafe("__mge_main", "PreserveEnts(false)", GENERIC_DELAY)
 	local tf_gamerules = FindByClassname(null, "tf_gamerules")
 	if (tf_gamerules)
 	{
@@ -17,8 +200,9 @@ function ROOT::HandleRoundStart()
 		player_manager.ValidateScriptScope()
 		local prop_array_size = GetPropArraySize(player_manager, "m_flNextRespawnTime")
 		PlayerManagerScope <- player_manager.GetScriptScope()
+		PlayerManagerScope.ALL_PLAYERS <- MGE.ALL_PLAYERS
 
-		function PlayerManagerScope::HideRespawnText() 
+		function PlayerManagerScope::HideRespawnText()
 		{
 			foreach (player, userid in ALL_PLAYERS)
 			{
@@ -33,101 +217,65 @@ function ROOT::HandleRoundStart()
 	}
 }
 
-function ROOT::PreserveEnts(preserve = true)
+function MGE::InitPlayerScope(player)
 {
-	for (local ent; ent = FindByName(ent, "__mge*");)
-	{
-		local scope = ent.GetScriptScope()
-		if (!scope)
-		{
-			ent.ValidateScriptScope()
-			scope = ent.GetScriptScope()
-		}
-		local classname = ent.GetClassname()
-		if (preserve)
-		{
-			// these ents don't like having classname changed
-			// EFL_KILLME seemingly doesn't have any major side effects here
-			// (besides blocking Kill inputs)
-			if (classname == "info_observer_point" || classname == "trigger_player_respawn_override")
-			{
-				preserve ? ent.AddEFlags(EFL_KILLME) : ent.RemoveEFlags(EFL_KILLME)
-				continue
-			}
-
-			if (!("original_classname" in scope))
-				scope.original_classname <- ""
-
-			if (classname != "move_rope")
-				scope.original_classname = classname
-
-			// set this to a random preserved entity classname
-			ent.KeyValueFromString("classname", "move_rope")
-
-		} else if ("original_classname" in scope)
-			ent.KeyValueFromString("classname", scope.original_classname)
-	}
-}
-
-function ROOT::InitPlayerScope(player)
-{
-	player.ValidateScriptScope()
-	scope <- player.GetScriptScope()
+	
+	scope <- player.GetScriptScope() || (player.ValidateScriptScope(), player.GetScriptScope())
 	local player_entindex = player.entindex()
 
 	// Clear scope
-	foreach (k, v in scope)
-		if (!(k in default_scope))
-			delete scope[k]
+	if ("default_scope" in this)
+		foreach (k, v in scope)
+			if (!(k in default_scope))
+				delete scope[k]
+	else
+		player.TerminateScriptScope(), scope = (player.ValidateScriptScope(), player.GetScriptScope())
 
-	local toscope = {
-		ThinkTable = {
-			// fake custom cvars in vscript
-			// read some useless cvar like cl_class in a think and watch for changes
-			// cl_class vscript_cvar_here 5 then split the string in GetClientConvarValue to get `vscript_cvar_here 5`
-			function ConCommandHijack()
-			{
-				if (player.IsFakeClient()) return
+	scope.ThinkTable 	   <- {}
+	scope.cvarhijack	   <- GetClientConvarValue("cl_class", player_entindex)
+	scope.player_name	   <- GetClientConvarValue("name", player_entindex)
+	scope.language   	   <- GetClientConvarValue("cl_language", player_entindex)
+	scope.arena_info 	   <- null
+	scope.queue      	   <- null
+	scope.enable_announcer <- true
+	scope.enable_hud	   <- true
+	scope.enable_countdown <- true
+	scope.won_last_match   <- false
+	scope.ball_ent		   <- null
 
-				local command = strip(GetClientConvarValue("cl_class", player_entindex))
-				if (strip(command) == "" || command == cvarhijack) return
+	scope.stats			   <- {
 
-				local command_only = strip(split(command, " ", true)[0])
-
-				if (command_only in MGE_Events.chat_commands)
-					MGE_Events.chat_commands[command_only]({userid = ALL_PLAYERS[player], text = command})
-
-				cvarhijack = command
-			}
-		}
-		cvarhijack  	 = GetClientConvarValue("cl_class", player_entindex)
-		player_name 	 = GetClientConvarValue("name", player_entindex)
-		language   		 = GetClientConvarValue("cl_language", player_entindex)
-		arena_info 		 = null
-		queue      		 = null
-		enable_announcer = true
-		enable_hud 		 = true
-		enable_countdown = true
-		won_last_match 	 = false
-		ball_ent 		 = null
-		stats = {
-			name 			   = GetClientConvarValue("name", player_entindex)
-			elo 			   = -INT_MAX
-			wins 			   = -INT_MAX
-			losses 			   = -INT_MAX
-			kills			   = -INT_MAX
-			deaths 			   = -INT_MAX
-			damage_taken 	   = -INT_MAX
-			damage_dealt	   = -INT_MAX
-			airshots	       = -INT_MAX
-			market_gardens 	   = -INT_MAX
-			hoops_scored 	   = -INT_MAX
-			koth_points_capped = -INT_MAX
-		},
+		name 			   = GetClientConvarValue("name", player_entindex)
+		elo 			   = -INT_MAX
+		wins 			   = -INT_MAX
+		losses 			   = -INT_MAX
+		kills			   = -INT_MAX
+		deaths 			   = -INT_MAX
+		damage_taken 	   = -INT_MAX
+		damage_dealt	   = -INT_MAX
+		airshots	       = -INT_MAX
+		market_gardens 	   = -INT_MAX
+		hoops_scored 	   = -INT_MAX
+		koth_points_capped = -INT_MAX
 	}
+	
+	// fake custom cvars in vscript
+	// read some useless cvar like cl_class in a think and watch for changes
+	// cl_class vscript_cvar_here 5 then split the string in GetClientConvarValue to get `vscript_cvar_here 5`
+	function scope::ThinkTable::ConCommandHijack()
+	{
+		if (player.IsFakeClient()) return
 
-	foreach (k, v in toscope)
-		scope[k] <- v
+		local command = strip(GetClientConvarValue("cl_class", player_entindex))
+		if (strip(command) == "" || command == cvarhijack) return
+
+		local command_only = strip(split(command, " ", true)[0])
+
+		if (command_only in MGE.Events.chat_commands)
+			MGE.Events.chat_commands[command_only]({userid = MGE.ALL_PLAYERS[player], text = command})
+
+		cvarhijack = command
+	}
 
 	function scope::PlayerThink() {
 
@@ -140,13 +288,13 @@ function ROOT::InitPlayerScope(player)
 	AddThinkToEnt(player, "PlayerThink")
 }
 
-function ROOT::ForceChangeClass(player, classIndex)
+function MGE::ForceChangeClass(player, classIndex)
 {
 	player.SetPlayerClass(classIndex)
 	SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", classIndex)
 }
 
-function ROOT::ValidatePlayerClass(player, newclass, pre=false)
+function MGE::ValidatePlayerClass(player, newclass, pre=false)
 {
 	local scope = player.GetScriptScope()
 	if (!("arena_info" in scope) || !scope.arena_info) return
@@ -168,7 +316,7 @@ function ROOT::ValidatePlayerClass(player, newclass, pre=false)
 }
 // tointeger() allows trailing garbage (e.g. "123abc")
 // This will only allow strictly integers (also floats with only zeroes: e.g "1.00")
-function ROOT::ToStrictNum(str, float = false)
+function MGE::ToStrictNum(str, float = false)
 {
 //	local rex = regexp(@"-?[0-9]+(\.0+)?")  // [-](digit)[.(>0 zeroes)]
 	local rex = regexp(@"-?[0-9]+(\.[0-9]+)?")
@@ -180,9 +328,9 @@ function ROOT::ToStrictNum(str, float = false)
 		return
 }
 
-function ROOT::KVStringToVectorOrQAngle(str, angles = false, startidx = 0)
+function MGE::KVStringToVectorOrQAngle(str, angles = false, startidx = 0)
 {
-	local split = (str.find(",") ? split(str, ",", true) : split(str, " ", true)).apply(@(str) ToStrictNum(str, true))
+	local split = (str.find(",") ? split(str, ",", true) : split(str, " ", true)).apply(@(str) MGE.ToStrictNum(str, true))
 
 	// if (split.len() < 3 || split.find(null))
 	// this is allegedly faster
@@ -209,7 +357,7 @@ function ROOT::KVStringToVectorOrQAngle(str, angles = false, startidx = 0)
 	return angles ? QAngle(split[startidx], split[startidx + 1], split[startidx + 2]) : Vector(split[startidx], split[startidx + 1], split[startidx + 2])
 }
 
-function ROOT::GetUnixTimestamp(time)
+function MGE::GetUnixTimestamp(time)
 {
     local SECONDS_IN_DAY  = 86400
     local SECONDS_IN_YEAR = 31536000
@@ -262,7 +410,7 @@ function ROOT::GetUnixTimestamp(time)
  // it does NOT initialize anything, only modifies the existing data
 
  // passing an arena name and setting arena_reset to true will convert the existing arena to a standard MGE arena
-function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = false)
+function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = false)
 {
 	local config = SpawnConfigs[MAPNAME_CONFIG_OVERRIDE]
 
@@ -311,14 +459,15 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 					for (local prop; prop = FindByClassnameWithin(prop, "obj_teleporter", point, 128);)
 						EntFireByHandle(prop, "Kill", "", -1, null, null)
 			}
-			_arena.IsAmmomod 	   <- false
-			_arena.IsBBall 		   <- false
-			_arena.IsKoth		   <- false
-			_arena.IsTurris 	   <- false
-			_arena.IsEndif 		   <- false
-			_arena.IsMidair 	   <- false
-			_arena.IsAllMeat 	   <- false
-			_arena.IsUltiduo 	   <- false
+
+			_arena.IsKoth	 <- false
+			_arena.IsBBall 	 <- false
+			_arena.IsEndif 	 <- false
+			_arena.IsMidair	 <- false
+			_arena.IsTurris	 <- false
+			_arena.IsAllMeat <- false
+			_arena.IsAmmomod <- false
+			_arena.IsUltiduo <- false
 		}
 
 		_arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
@@ -335,9 +484,9 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 		_arena.IsAllMeat      <- "allmeat" in _arena && _arena.allmeat == "1"
 
 		//new keyvalues
-		_arena.countdown_sound 		  	<- "countdown_sound" in _arena ? _arena.countdown_sound : COUNTDOWN_SOUND
-		_arena.countdown_sound_volume 	<- "countdown_sound_volume" in _arena ? _arena.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
-		_arena.round_start_sound 		<- "round_start_sound" in _arena ? _arena.round_start_sound : ROUND_START_SOUND
+		_arena.countdown_sound 		  	<- "countdown_sound" in _arena 			? _arena.countdown_sound : COUNTDOWN_SOUND
+		_arena.countdown_sound_volume 	<- "countdown_sound_volume" in _arena 	? _arena.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
+		_arena.round_start_sound 		<- "round_start_sound" in _arena 		? _arena.round_start_sound : ROUND_START_SOUND
 		_arena.round_start_sound_volume <- "round_start_sound_volume" in _arena ? _arena.round_start_sound_volume : ROUND_START_SOUND_VOLUME
 		_arena.airshot_height_threshold <- "airshot_height_threshold" in _arena ? _arena.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 
@@ -353,20 +502,20 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 			//if you intend on adding > 8 spawns, you will need to replace your current "9" - "13" entries with these
 			local bball_points = {
 
-				neutral_home    		= "bball_home" in _arena ? _arena.bball_home : _arena["9"],
-				red_score_home  		= "bball_home_red" in _arena ? _arena.bball_home_red : _arena["10"],
-				blue_score_home 		= "bball_home_blue" in _arena ? _arena.bball_home_blue : _arena["11"],
-				red_hoop 				= "bball_hoop_red" in _arena ? _arena.bball_hoop_red : _arena["12"],
-				blue_hoop 				= "bball_hoop_blue" in _arena ? _arena.bball_hoop_blue : _arena["13"],
-				hoop_size				= "bball_hoop_size" in _arena ? _arena.bball_hoop_size : BBALL_HOOP_SIZE,
-				pickup_model 			= "bball_pickup_model" in _arena ? _arena.bball_pickup_model : BBALL_BALL_MODEL,
-				particle_pickup_red 	= "bball_particle_pickup_red" in _arena ? _arena.bball_particle_pickup_red : BBALL_PARTICLE_PICKUP_RED,
-				particle_pickup_blue 	= "bball_particle_pickup_blue" in _arena ? _arena.bball_particle_pickup_blue : BBALL_PARTICLE_PICKUP_BLUE,
-				particle_pickup_generic = "bball_particle_pickup_generic" in _arena ? _arena.bball_particle_pickup_generic : BBALL_PARTICLE_PICKUP_GENERIC,
-				particle_trail_red 		= "bball_particle_trail_red" in _arena ? _arena.bball_particle_trail_red : BBALL_PARTICLE_TRAIL_RED,
-				particle_trail_blue		= "bball_particle_trail_blue" in _arena ? _arena.bball_particle_trail_blue : BBALL_PARTICLE_TRAIL_BLUE,
-				freeze_ball 			= "freeze_ball" in _arena ? _arena.freeze_ball : false,
 				last_score_team 		= -1
+				neutral_home    		= "bball_home" in _arena 					? _arena.bball_home : _arena["9"]
+				red_score_home  		= "bball_home_red" in _arena 				? _arena.bball_home_red : _arena["10"]
+				blue_score_home 		= "bball_home_blue" in _arena 				? _arena.bball_home_blue : _arena["11"]
+				red_hoop 				= "bball_hoop_red" in _arena 				? _arena.bball_hoop_red : _arena["12"]
+				blue_hoop 				= "bball_hoop_blue" in _arena 				? _arena.bball_hoop_blue : _arena["13"]
+				hoop_size				= "bball_hoop_size" in _arena 				? _arena.bball_hoop_size : BBALL_HOOP_SIZE
+				pickup_model 			= "bball_pickup_model" in _arena 			? _arena.bball_pickup_model : BBALL_BALL_MODEL
+				particle_pickup_red 	= "bball_particle_pickup_red" in _arena 	? _arena.bball_particle_pickup_red : BBALL_PARTICLE_PICKUP_RED
+				particle_pickup_blue 	= "bball_particle_pickup_blue" in _arena 	? _arena.bball_particle_pickup_blue : BBALL_PARTICLE_PICKUP_BLUE
+				particle_pickup_generic = "bball_particle_pickup_generic" in _arena ? _arena.bball_particle_pickup_generic : BBALL_PARTICLE_PICKUP_GENERIC
+				particle_trail_red 		= "bball_particle_trail_red" in _arena 		? _arena.bball_particle_trail_red : BBALL_PARTICLE_TRAIL_RED
+				particle_trail_blue		= "bball_particle_trail_blue" in _arena 	? _arena.bball_particle_trail_blue : BBALL_PARTICLE_TRAIL_BLUE
+				freeze_ball 			= "freeze_ball" in _arena 					? _arena.freeze_ball : false
 			}
 
 			foreach (k, v in bball_points)
@@ -404,18 +553,16 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 
 				// is_overtime = false
 
-				red_start_cap_time = "start_time_red" in _arena ? _arena.start_time_red : KOTH_START_TIME_RED
-				blu_start_cap_time = "start_time_blu" in _arena ? _arena.start_time_blu : KOTH_START_TIME_BLUE
-
-				decay_rate 		     = "koth_decay_rate" in _arena ? _arena.koth_decay_rate : KOTH_DECAY_RATE,
-				decay_interval	     = "koth_decay_interval" in _arena ? _arena.koth_decay_interval : KOTH_DECAY_INTERVAL,
-				additive_decay       = "koth_additive_decay" in _arena ? _arena.koth_additive_decay : KOTH_ADDITIVE_DECAY,
-				countdown_rate     	 = "koth_countdown_rate" in _arena ? _arena.koth_countdown_rate : KOTH_COUNTDOWN_RATE,
-				countdown_interval 	 = "koth_countdown_interval" in _arena ? _arena.koth_countdown_interval : KOTH_COUNTDOWN_INTERVAL,
-				partial_cap_rate   	 = "koth_partial_cap_rate" in _arena ? _arena.koth_partial_cap_rate : KOTH_PARTIAL_CAP_RATE,
-				partial_cap_interval = "koth_partial_cap_interval" in _arena ? _arena.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL,
-
-				capture_point_radius     = "koth_capture_point_radius" in _arena ? _arena.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
+				red_start_cap_time 	 	 = "start_time_red" in _arena  	   	   		 ? _arena.start_time_red : KOTH_START_TIME_RED
+				blu_start_cap_time 	 	 = "start_time_blu" in _arena  	   	   		 ? _arena.start_time_blu : KOTH_START_TIME_BLUE
+				decay_rate 		     	 = "koth_decay_rate" in _arena 	   	   		 ? _arena.koth_decay_rate : KOTH_DECAY_RATE
+				decay_interval	     	 = "koth_decay_interval" in _arena 	   		 ? _arena.koth_decay_interval : KOTH_DECAY_INTERVAL
+				additive_decay       	 = "koth_additive_decay" in _arena 	   		 ? _arena.koth_additive_decay : KOTH_ADDITIVE_DECAY
+				countdown_rate     	 	 = "koth_countdown_rate" in _arena 	   		 ? _arena.koth_countdown_rate : KOTH_COUNTDOWN_RATE
+				countdown_interval 	 	 = "koth_countdown_interval" in _arena 		 ? _arena.koth_countdown_interval : KOTH_COUNTDOWN_INTERVAL
+				partial_cap_rate   	 	 = "koth_partial_cap_rate" in _arena 		 ? _arena.koth_partial_cap_rate : KOTH_PARTIAL_CAP_RATE
+				partial_cap_interval 	 = "koth_partial_cap_interval" in _arena 	 ? _arena.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL
+				capture_point_radius     = "koth_capture_point_radius" in _arena 	 ? _arena.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT
 				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT
 			}
 			_arena.Koth.red_cap_time <- _arena.Koth.red_start_cap_time
@@ -449,9 +596,9 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 				try
 				{
 					if (
-						(_arena.IsBBall && spawn_idx > BBALL_MAX_SPAWNS) ||
-						(_arena.IsKoth && spawn_idx > KOTH_MAX_SPAWNS) 	||
-						(_arena.IsUltiduo && spawn_idx > ULTIDUO_MAX_SPAWNS)
+						(_arena.IsBBall   	 && spawn_idx > BBALL_MAX_SPAWNS)
+						|| (_arena.IsKoth    && spawn_idx > KOTH_MAX_SPAWNS)
+						|| (_arena.IsUltiduo && spawn_idx > ULTIDUO_MAX_SPAWNS)
 					) continue
 
 					local split_spawns = split(v, " ", true).apply( @(str) str.tofloat() )
@@ -483,7 +630,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 			_arena.Koth.cap_point = KVStringToVectorOrQAngle(_arena["koth_cap" in _arena ? "koth_cap" : idx])
 
 		//rulset updated, re-add everyone to the arena
-		Arenas[custom_ruleset_arena_name] <- _arena
+		ARENAS[custom_ruleset_arena_name] <- _arena
 		foreach(p, _ in _arena.CurrentPlayers)
 		{
 			RemovePlayer(p, custom_ruleset_arena_name)
@@ -496,11 +643,11 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 	if (ENABLE_LEADERBOARD)
 	{
 		//misleading name, also handles the actual leaderboard
-		function ROOT::DoLeaderboardCam()
+		function MGE::DoLeaderboardCam()
 		{
 			//spawn our camera
-			::MGE_LeaderboardCam <- CreateByClassname("info_observer_point")
-			SetPropBool(MGE_LeaderboardCam, "m_bForcePurgeFixedUpStrings", true)
+			MGE.MGE_LeaderboardCam <- CreateByClassname("info_observer_point")
+			SetPropBool(MGE_LeaderboardCam, STRING_NETPROP_PURGESTRINGS, true)
 			MGE_LeaderboardCam.KeyValueFromString("targetname", "__mge_leaderboard_cam")
 			MGE_LeaderboardCam.KeyValueFromInt("fov",  120)
 			DispatchSpawn(MGE_LeaderboardCam)
@@ -561,7 +708,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 
 			local leaderboard_pos = (random_cam.GetOrigin() + (random_cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET)) + Vector(0, 0, LEADERBOARD_VERTICAL_OFFSET)
 
-			::MGE_Leaderboard <- CreateByClassname("point_worldtext")
+			MGE_Leaderboard <- CreateByClassname("point_worldtext")
 
 			MGE_Leaderboard.KeyValueFromString("targetname", "__mge_leaderboard_text")
 			MGE_Leaderboard.KeyValueFromString("message", "      Placeholder:\n       #9999 | aaaa\n")
@@ -569,10 +716,12 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 			MGE_Leaderboard.KeyValueFromString("color", "255 255 255")
 			MGE_Leaderboard.KeyValueFromInt("orientation", 1)
 			MGE_Leaderboard.SetAbsOrigin(leaderboard_pos)
-			SetPropBool(MGE_Leaderboard, "m_bForcePurgeFixedUpStrings", true)
+			SetPropBool(MGE_Leaderboard, STRING_NETPROP_PURGESTRINGS, true)
 			DispatchSpawn(MGE_Leaderboard)
+			MGE.MGE_Leaderboard <- MGE_Leaderboard
 			MGE_Leaderboard.ValidateScriptScope()
 			LeaderboardScope <- MGE_Leaderboard.GetScriptScope()
+			LeaderboardScope.MGE_LEADERBOARD_DATA <- MGE_LEADERBOARD_DATA
 
 			local think_override = LEADERBOARD_UPDATE_INTERVAL
 			function LeaderboardScope::UpdateLeaderboard() {
@@ -595,12 +744,13 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 
 				VPI.AsyncCall({
 
-					func="VPI_MGE_PopulateLeaderboard",
-					timeout = INT_MAX, // don't know why this keeps throwing errors, it's fetching data fine
-					kwargs= {
-						order_filter = column_name,
-						max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES,
-					},
+					func	= "VPI_MGE_PopulateLeaderboard"
+					timeout = INT_MAX
+					kwargs	= {
+
+						order_filter 			= column_name
+						max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES
+					}
 
 					function callback(response, error) {
 
@@ -627,7 +777,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 								local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
 								message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 							}
-							MGE_Leaderboard.KeyValueFromString("message", message)
+							self.KeyValueFromString("message", message)
 
 							this._current_stat_index++
 							yield
@@ -637,6 +787,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 
 				// Process one stat per yield
 				if (this._current_stat_index < stat_keys.len()) {
+
 					local steamid_list = MGE_LEADERBOARD_DATA[stat]
 
 					local message = format("          %s:\n", stat)
@@ -651,7 +802,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
 						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 					}
-					MGE_Leaderboard.KeyValueFromString("message", message)
+					self.KeyValueFromString("message", message)
 
 					this._current_stat_index++
 					yield
@@ -676,17 +827,17 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 			AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
 		}
 		//delay this until ents are spawned
-		EntFire("worldspawn", "CallScriptFunction", "DoLeaderboardCam", GENERIC_DELAY)
+		EntFire("__mge_main", "CallScriptFunction", "DoLeaderboardCam", GENERIC_DELAY)
 	}
 
 	if (!arena_reset)
-		Arenas_List <- array(config.len(), null)
+		MGE.ARENAS_LIST <- array(config.len(), null)
 
 	local idx_failed = false
 	foreach(arena_name, _arena in config)
 	{
 
-		Arenas[arena_name] <- _arena
+		ARENAS[arena_name] <- _arena
 
 		_arena.CurrentPlayers <- {}
 		_arena.Queue          <- []
@@ -703,23 +854,23 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 		_arena.SpawnIdx       <- 0
 
 		//do this instead of checking both of these everywhere
-		_arena.IsMGE          <- "mge" in _arena && _arena.mge == "1"
+		_arena.IsMGE          <- "mge" in _arena 	 && _arena.mge == "1"
 		_arena.IsInfammo	  <- "infammo" in _arena && _arena.infammo == "1"
 		_arena.IsUltiduo      <- "ultiduo" in _arena && _arena.ultiduo == "1"
-		_arena.IsKoth         <- "koth" in _arena && _arena.koth == "1"
-		_arena.IsBBall        <- "bball" in _arena && _arena.bball == "1"
+		_arena.IsKoth         <- "koth" in _arena 	 && _arena.koth == "1"
+		_arena.IsBBall        <- "bball" in _arena 	 && _arena.bball == "1"
 		_arena.IsAmmomod      <- "ammomod" in _arena && _arena.ammomod == "1"
-		_arena.IsTurris       <- "turris" in _arena && _arena.turris == "1"
-		_arena.IsEndif        <- "endif" in _arena && _arena.endif == "1"
-		_arena.IsMidair       <- "midair" in _arena && _arena.midair == "1"
+		_arena.IsTurris       <- "turris" in _arena  && _arena.turris == "1"
+		_arena.IsEndif        <- "endif" in _arena 	 && _arena.endif == "1"
+		_arena.IsMidair       <- "midair" in _arena  && _arena.midair == "1"
 		_arena.IsAllMeat      <- "allmeat" in _arena && _arena.allmeat == "1"
 
 		_arena.IsCustomRuleset <- false
 
 		//new keyvalues
-		_arena.countdown_sound 		  	<- "countdown_sound" in _arena ? _arena.countdown_sound : COUNTDOWN_SOUND
-		_arena.countdown_sound_volume 	<- "countdown_sound_volume" in _arena ? _arena.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
-		_arena.round_start_sound 	  	<- "round_start_sound" in _arena ? _arena.round_start_sound : ROUND_START_SOUND
+		_arena.countdown_sound 		  	<- "countdown_sound" in _arena 			? _arena.countdown_sound : COUNTDOWN_SOUND
+		_arena.round_start_sound 	  	<- "round_start_sound" in _arena 		? _arena.round_start_sound : ROUND_START_SOUND
+		_arena.countdown_sound_volume 	<- "countdown_sound_volume" in _arena 	? _arena.countdown_sound_volume : COUNTDOWN_SOUND_VOLUME
 		_arena.round_start_sound_volume <- "round_start_sound_volume" in _arena ? _arena.round_start_sound_volume : ROUND_START_SOUND_VOLUME
 		_arena.airshot_height_threshold <- "airshot_height_threshold" in _arena ? _arena.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 
@@ -741,26 +892,27 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 			//alternative keyvalues for bball logic
 			//if you intend on adding > 8 spawns, you will need to replace your current "9" - "13" entries with these
 			local bball_points = {
-				neutral_home = "bball_home" in _arena ? _arena.bball_home : _arena["9"],
-				red_score_home = "bball_home_red" in _arena ? _arena.bball_home_red : _arena["10"],
-				blue_score_home = "bball_home_blue" in _arena ? _arena.bball_home_blue : _arena["11"],
-				red_hoop = "bball_hoop_red" in _arena ? _arena.bball_hoop_red : _arena["12"],
-				blue_hoop = "bball_hoop_blue" in _arena ? _arena.bball_hoop_blue : _arena["13"],
-				hoop_size = "bball_hoop_size" in _arena ? _arena.bball_hoop_size : BBALL_HOOP_SIZE,
-				pickup_model = "bball_pickup_model" in _arena ? _arena.bball_pickup_model : BBALL_BALL_MODEL,
-				particle_pickup_red = "bball_particle_pickup_red" in _arena ? _arena.bball_particle_pickup_red : BBALL_PARTICLE_PICKUP_RED,
-				particle_pickup_blue = "bball_particle_pickup_blue" in _arena ? _arena.bball_particle_pickup_blue : BBALL_PARTICLE_PICKUP_BLUE,
-				particle_pickup_generic = "bball_particle_pickup_generic" in _arena ? _arena.bball_particle_pickup_generic : BBALL_PARTICLE_PICKUP_GENERIC,
-				particle_trail_red = "bball_particle_trail_red" in _arena ? _arena.bball_particle_trail_red : BBALL_PARTICLE_TRAIL_RED,
-				particle_trail_blue = "bball_particle_trail_blue" in _arena ? _arena.bball_particle_trail_blue : BBALL_PARTICLE_TRAIL_BLUE,
-				last_score_team = -1
+
+				last_score_team 		= -1
+				neutral_home 			= "bball_home" in _arena 					? _arena.bball_home : _arena["9"]
+				red_score_home 			= "bball_home_red" in _arena 				? _arena.bball_home_red : _arena["10"]
+				blue_score_home 		= "bball_home_blue" in _arena 				? _arena.bball_home_blue : _arena["11"]
+				red_hoop 				= "bball_hoop_red" in _arena 				? _arena.bball_hoop_red : _arena["12"]
+				blue_hoop 				= "bball_hoop_blue" in _arena 				? _arena.bball_hoop_blue : _arena["13"]
+				hoop_size 				= "bball_hoop_size" in _arena 				? _arena.bball_hoop_size : BBALL_HOOP_SIZE
+				pickup_model 			= "bball_pickup_model" in _arena 			? _arena.bball_pickup_model : BBALL_BALL_MODEL
+				particle_trail_red 		= "bball_particle_trail_red" in _arena 		? _arena.bball_particle_trail_red : BBALL_PARTICLE_TRAIL_RED
+				particle_trail_blue 	= "bball_particle_trail_blue" in _arena 	? _arena.bball_particle_trail_blue : BBALL_PARTICLE_TRAIL_BLUE
+				particle_pickup_red 	= "bball_particle_pickup_red" in _arena 	? _arena.bball_particle_pickup_red : BBALL_PARTICLE_PICKUP_RED
+				particle_pickup_blue 	= "bball_particle_pickup_blue" in _arena 	? _arena.bball_particle_pickup_blue : BBALL_PARTICLE_PICKUP_BLUE
+				particle_pickup_generic = "bball_particle_pickup_generic" in _arena ? _arena.bball_particle_pickup_generic : BBALL_PARTICLE_PICKUP_GENERIC
 			}
 
 			foreach (k, v in bball_points)
 			{
 				if (typeof v != "string") continue
 				local split_spawns = split(v, " ")
-				split_spawns.apply( @(str) ToStrictNum(str, true) )
+				split_spawns.apply( @(str) MGE.ToStrictNum(str, true) )
 				local spawn_lens = {
 					[3] = true,
 					[4] = true,
@@ -791,19 +943,16 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 
 				// is_overtime = false
 
-				red_start_cap_time = "start_time_red" in _arena ? _arena.start_time_red : KOTH_START_TIME_RED
-				blu_start_cap_time = "start_time_blu" in _arena ? _arena.start_time_blu : KOTH_START_TIME_BLUE
-
-
-				decay_rate 		     = "koth_decay_rate" in _arena ? _arena.koth_decay_rate : KOTH_DECAY_RATE,
-				decay_interval	     = "koth_decay_interval" in _arena ? _arena.koth_decay_interval : KOTH_DECAY_INTERVAL,
-				additive_decay       = "koth_additive_decay" in _arena ? _arena.koth_additive_decay : KOTH_ADDITIVE_DECAY,
-				countdown_rate     	 = "koth_countdown_rate" in _arena ? _arena.koth_countdown_rate : KOTH_COUNTDOWN_RATE,
-				countdown_interval 	 = "koth_countdown_interval" in _arena ? _arena.koth_countdown_interval : KOTH_COUNTDOWN_INTERVAL,
-				partial_cap_rate   	 = "koth_partial_cap_rate" in _arena ? _arena.koth_partial_cap_rate : KOTH_PARTIAL_CAP_RATE,
-				partial_cap_interval = "koth_partial_cap_interval" in _arena ? _arena.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL,
-
-				capture_point_radius     = "koth_capture_point_radius" in _arena ? _arena.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT,
+				red_start_cap_time 	 	 = "start_time_red" in _arena 		 	 	 ? _arena.start_time_red : KOTH_START_TIME_RED
+				blu_start_cap_time 	 	 = "start_time_blu" in _arena 		 	 	 ? _arena.start_time_blu : KOTH_START_TIME_BLUE
+				decay_rate 		     	 = "koth_decay_rate" in _arena 		 	 	 ? _arena.koth_decay_rate : KOTH_DECAY_RATE
+				decay_interval	     	 = "koth_decay_interval" in _arena 		 	 ? _arena.koth_decay_interval : KOTH_DECAY_INTERVAL
+				additive_decay       	 = "koth_additive_decay" in _arena 		 	 ? _arena.koth_additive_decay : KOTH_ADDITIVE_DECAY
+				countdown_rate     	 	 = "koth_countdown_rate" in _arena 		 	 ? _arena.koth_countdown_rate : KOTH_COUNTDOWN_RATE
+				countdown_interval 	 	 = "koth_countdown_interval" in _arena 	 	 ? _arena.koth_countdown_interval : KOTH_COUNTDOWN_INTERVAL
+				partial_cap_rate   	 	 = "koth_partial_cap_rate" in _arena 	 	 ? _arena.koth_partial_cap_rate : KOTH_PARTIAL_CAP_RATE
+				partial_cap_interval 	 = "koth_partial_cap_interval" in _arena 	 ? _arena.koth_partial_cap_interval : KOTH_PARTIAL_CAP_INTERVAL
+				capture_point_radius     = "koth_capture_point_radius" in _arena 	 ? _arena.koth_capture_point_radius : KOTH_CAPTURE_POINT_MAX_HEIGHT
 				capture_point_max_height = "koth_capture_point_max_height" in _arena ? _arena.koth_capture_point_max_height : KOTH_CAPTURE_POINT_MAX_HEIGHT
 			}
 
@@ -832,18 +981,13 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 		if (idx == null && !idx_failed)
 		{
 			idx_failed = true
-
-			local new_list = []
-			foreach (arena in Arenas_List)
-				if (arena != null)
-					new_list.append(arena)
-			Arenas_List = new_list
+			ARENAS_LIST = ARENAS_LIST.filter( @(arena) arena )
 		}
 
 		if (idx_failed)
-			Arenas_List.append(arena_name)
+			ARENAS_LIST.append(arena_name)
 		else
-			Arenas_List[idx] = arena_name
+			ARENAS_LIST[idx] = arena_name
 
 		// Grab spawn points
 		foreach(k, v in _arena)
@@ -895,8 +1039,9 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 		{
 			if ("cap_trigger" in _arena || "cap" in _arena)
 			{
-				EntFire("worldspawn", "RunScriptCode", format(@"
-					local _arena = Arenas[`%s`]
+				ScriptEntFireSafe("__mge_main", format(@"
+
+					local _arena = ARENAS[`%s`]
 					local point = `cap_trigger` in _arena && !(`cap` in _arena) ? _arena.cap_trigger : _arena.cap
 					_arena.Koth.cap_point <- FindByName(null, point).GetCenter()
 
@@ -914,7 +1059,7 @@ function ROOT::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = f
 	}
 }
 
-function ROOT::AllMeat_FindWeapon(weapon)
+function MGE::AllMeat_FindWeapon(weapon)
 {
 	local itemdef = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
 
@@ -927,9 +1072,9 @@ function ROOT::AllMeat_FindWeapon(weapon)
 	return null
 }
 
-function ROOT::BBall_SpawnBall(arena_name, origin_override = null, custom_ruleset_arena = false)
+function MGE::BBall_SpawnBall(arena_name, origin_override = null, custom_ruleset_arena = false)
 {
-	local arena = Arenas[arena_name]
+	local arena = ARENAS[arena_name]
 	local bball_points = custom_ruleset_arena ? {} : arena.BBall
 	local last_score_team = custom_ruleset_arena ? -1 : arena.BBall.last_score_team
 
@@ -944,7 +1089,7 @@ function ROOT::BBall_SpawnBall(arena_name, origin_override = null, custom_rulese
 	//I did this specifically to annoy mince
 	ground_ball.SetAbsOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
 
-	AddOutput(ground_ball, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self);", 0.0, 1)
+	AddOutput(ground_ball, "OnPlayerTouch", "!activator", "CallScriptFunction", "BBall_Pickup", 0.0, 1)
 	AddOutput(ground_ball, "OnPlayerTouch", "!self", "Kill", "", SINGLE_TICK, 1)
 
 	if (!custom_ruleset_arena)
@@ -960,11 +1105,15 @@ function ROOT::BBall_SpawnBall(arena_name, origin_override = null, custom_rulese
 		arena.RulesetVote.ground_ball <- ground_ball
 	}
 
-	EntFireByHandle(ground_ball, "RunScriptCode", "DispatchSpawn(self)", 0.2, null, null)
+	ScriptEntFireSafe(ground_ball, "DispatchSpawn(self)", 0.2, null, null)
 }
 
-function ROOT::BBall_Pickup(player)
+function MGE::BBall_Pickup(player = null)
 {
+
+	if (!player && "self" in this) 
+		player = self
+
 	if (!player.IsAlive()) return
 
 	local scope = player.GetScriptScope()
@@ -987,20 +1136,24 @@ function ROOT::BBall_Pickup(player)
 	foreach (p, _ in arena.CurrentPlayers)
 	{
 		// visbit = 1 << p.entindex() | visbit
+
 		// SendGlobalGameEvent("show_annotation", {
-		// 	visibilityBitfield = visbit
-		// 	text = format("%s has the flag!", player.GetScriptScope().player_name)
-		// 	lifetime = 3.0
-		// 	play_sound = BBALL_PICKUP_SOUND
-		// 	follow_entindex = player.entindex()
-		// 	show_distance = true
-		// 	show_effect = true
+
+		// 	text 				= format("%s has the flag!", player.GetScriptScope().player_name)
+		// 	lifetime 			= 3.0
+		// 	play_sound 			= BBALL_PICKUP_SOUND
+		// 	show_effect 		= true
+		// 	show_distance 		= true
+		// 	follow_entindex 	= player.entindex()
+		// 	visibilityBitfield 	= visbit
 		// })
+
 		EmitSoundEx({
-			sound_name = BBALL_PICKUP_SOUND,
-			entity = p,
-			volume = BBALL_PICKUP_SOUND_VOLUME,
-			channel = CHAN_STREAM,
+
+			sound_name 	= BBALL_PICKUP_SOUND
+			entity 		= p
+			volume 		= BBALL_PICKUP_SOUND_VOLUME
+			channel 	= CHAN_STREAM
 			sound_level = 65
 		})
 		ClientPrint(p, 3, p == player ? "You have the ball!" : format("%s has the ball!", player.GetScriptScope().player_name))
@@ -1008,59 +1161,41 @@ function ROOT::BBall_Pickup(player)
 
 	EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
 	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
-	EntFireByHandle(ball_ent, "RunScriptCode", "DispatchSpawn(self)", GENERIC_DELAY, null, null)
+	ScriptEntFireSafe(ball_ent, "DispatchSpawn(self)", GENERIC_DELAY)
 
 	DispatchParticleEffect(player.GetTeam() == TF_TEAM_RED ? BBALL_PARTICLE_PICKUP_RED : BBALL_PARTICLE_PICKUP_BLUE, player.GetOrigin(), Vector(0, 90, 0))
 	EntFire(format("__mge_bball_trail_%d", player.GetTeam()), "StartTouch", "!activator", -1, player)
 }
 
-function ROOT::AddBot(arena_name)
+function MGE::AddBot(arena_name)
 {
-	if (typeof(arena_name) == "string" && !(arena_name in Arenas)) return
-	if (typeof(arena_name) == "integer")
-	{
-		--arena_name
-		if (arena_name > Arenas_List.len() - 1 || arena_name < 0) return
-		arena_name = Arenas_List[arena_name]
-	}
+	if (!(arena_name in ARENAS)) 
+		return
 
 	// Ideally find a bot that isn't currently in an arena, but we aren't picky at the end of the day
-	local abot = null
-	local bot  = null
+	local bot
 	foreach (player, userid in ALL_PLAYERS)
 	{
 		if (!player || !player.IsValid() || !player.IsFakeClient()) continue
 
-		player.ValidateScriptScope()
-		local scope = player.GetScriptScope()
+		local scope = player.GetScriptScope() || (player.ValidateScriptScope(), player.GetScriptScope())
 
-		if(!("stats" in scope))
-			GetStats(player)
-
-		if (!bot && !scope.arena_info)
+		if (!bot && (!("arena_info" in scope) || !scope.arena_info))
 		{
 			bot = player
 			break
 		}
-		if (!abot && scope.arena_info)
-			abot = player
 	}
-	if (!bot && !abot) return
 
-	AddPlayer((bot) ? bot : abot, arena_name)
+	AddPlayer(bot, arena_name)
 }
 
-function ROOT::RemoveBot(arena_name, all=false)
+function MGE::RemoveBot(arena_name, all=false)
 {
-	if (typeof(arena_name) == "string" && !(arena_name in Arenas)) return
-	if (typeof(arena_name) == "integer")
-	{
-		--arena_name
-		if (arena_name > Arenas_List.len() - 1 || arena_name < 0) return
-		arena_name = Arenas_List[arena_name]
-	}
+	if ( !(arena_name in ARENAS) )
+		return
 
-	local arena = Arenas[arena_name]
+	local arena = ARENAS[arena_name]
 
 	// Remove active bot(s)
 	foreach (player, _ in arena.CurrentPlayers)
@@ -1093,15 +1228,15 @@ function ROOT::RemoveBot(arena_name, all=false)
 	}
 }
 
-function ROOT::RemoveAllBots()
+function MGE::RemoveAllBots()
 {
-	foreach (arena_name, _ in Arenas)
+	foreach (arena_name, _ in ARENAS)
 		RemoveBot(arena_name, true)
 }
 
-function ROOT::AddPlayer(player, arena_name)
+function MGE::AddPlayer(player, arena_name)
 {
-	local arena = Arenas[arena_name]
+	local arena = ARENAS[arena_name]
 
 	if (player in arena.CurrentPlayers || arena.Queue.find(player) != null)
 	{
@@ -1142,15 +1277,15 @@ function ROOT::AddPlayer(player, arena_name)
 		arena.Queue.append(player)
 
 		local idx = arena.Queue.len() - 1
-		local str = (idx == 0) ? format(GetLocalizedString("NextInLine", player), arena.Queue.len().tostring()) : format(GetLocalizedString("InLine", player), arena.Queue.len().tostring())
+		local str = format(GetLocalizedString(!idx ? "NextInLine" : "InLine", player), arena.Queue.len().tostring())
 		MGE_ClientPrint(player, HUD_PRINTTALK, str)
 	}
 }
 
-function ROOT::AddToArena(player, arena_name)
+function MGE::AddToArena(player, arena_name)
 {
 	local scope = player.GetScriptScope()
-	local arena = Arenas[arena_name]
+	local arena = ARENAS[arena_name]
 
 	scope.arena_info <- {
 		arena = arena,
@@ -1192,7 +1327,7 @@ function ROOT::AddToArena(player, arena_name)
 		player.RemoveBotAttribute(IGNORE_ENEMIES)
 }
 
-function ROOT::RemovePlayer(player, changeteam=true)
+function MGE::RemovePlayer(player, changeteam=true)
 {
 	local scope = player.GetScriptScope()
 
@@ -1229,9 +1364,9 @@ function ROOT::RemovePlayer(player, changeteam=true)
 	}
 }
 
-function ROOT::CycleQueue(arena_name)
+function MGE::CycleQueue(arena_name)
 {
-	local arena = Arenas[arena_name]
+	local arena = ARENAS[arena_name]
 
 	local queue = arena.Queue
 	local arena_players = arena.CurrentPlayers.keys()
@@ -1263,7 +1398,7 @@ function ROOT::CycleQueue(arena_name)
 		MGE_ClientPrint(p, HUD_PRINTTALK, "InLine", (i + 1))
 }
 
-function ROOT::CalcELO(winner, loser) {
+function MGE::CalcELO(winner, loser) {
 
 	// if (!ELO_TRACKING_MODE || !winner || !loser ||
 		// !winner.IsValid() || !loser.IsValid() ||
@@ -1330,7 +1465,12 @@ function ROOT::CalcELO(winner, loser) {
 		local winner_id = GetPropString(winner, "m_szNetworkIDString")
 		local loser_id = GetPropString(loser, "m_szNetworkIDString")
 
-		local filename = format("mge_arenalogs/%s_%s_%s_%d.json", winner_id.slice(5, winner_id.find("]")), loser_id, arena_name, GetUnixTimestamp(time))
+		if (5 in winner_id)
+			winner_id = winner_id.slice(5, winner_id.find("]"))
+		if (5 in loser_id)
+			loser_id = loser_id.slice(5, loser_id.find("]"))
+
+		local filename = format("mge_arenalogs/%s_%s_%s_%d.json", winner_id, loser_id, arena_name, GetUnixTimestamp(time))
 
 		StringToFile(filename, JSON_UNSAFE.Encode(log_data))
 		//TODO: Test this more, maybe we were doing it wrong when it was crashing
@@ -1340,7 +1480,7 @@ function ROOT::CalcELO(winner, loser) {
 }
 
 //TODO, refactor CalcELO into something that can accept any arbitrary number of players instead
-function ROOT::CalcELO2(winner, winner2, loser, loser2) {
+function MGE::CalcELO2(winner, winner2, loser, loser2) {
 
 	if (winner.IsFakeClient() || loser.IsFakeClient() || !ELO_TRACKING_MODE || loser2.IsFakeClient() || winner2.IsFakeClient())
 		return
@@ -1350,41 +1490,44 @@ function ROOT::CalcELO2(winner, winner2, loser, loser2) {
 	if (arena.IsCustomRuleset)
 		return
 
-	local loser_scope = loser.GetScriptScope()
-	local loser2_scope = loser2.GetScriptScope()
-	local winner_scope = winner.GetScriptScope()
+	local loser_scope 	= loser.GetScriptScope()
+	local loser2_scope 	= loser2.GetScriptScope()
+	local winner_scope 	= winner.GetScriptScope()
 	local winner2_scope = winner2.GetScriptScope()
 
-	loser_scope.stats.elo = loser_scope.stats.elo.tointeger()
-	loser2_scope.stats.elo = loser2_scope.stats.elo.tointeger()
-	winner_scope.stats.elo = winner_scope.stats.elo.tointeger()
+	loser_scope.stats.elo   = loser_scope.stats.elo.tointeger()
+	loser2_scope.stats.elo  = loser2_scope.stats.elo.tointeger()
+	winner_scope.stats.elo  = winner_scope.stats.elo.tointeger()
 	winner2_scope.stats.elo = winner2_scope.stats.elo.tointeger()
 
 	local Losers_ELO = (loser_scope.stats.elo + loser2_scope.stats.elo).tofloat() / 2
 	local Winners_ELO = (winner_scope.stats.elo + winner2_scope.stats.elo).tofloat() / 2
 
 	// ELO formula
-	local El = 1 / (pow(10.0, (Winners_ELO - Losers_ELO) / 400) + 1)
-	local k = (Winners_ELO >= 2400) ? 10 : 15
-	local winnerscore = floor(k * El + 0.5)
-	winner_scope.stats.elo += winnerscore
+	local El		  		= 1 / (pow(10.0, (Winners_ELO - Losers_ELO) / 400) + 1)
+	local k 		  		= (Winners_ELO >= 2400) ? 10 : 15
+	local winnerscore 		= floor(k * El + 0.5)
+
+	winner_scope.stats.elo  += winnerscore
 	winner2_scope.stats.elo += winnerscore
+
 	k = (Losers_ELO >= 2400) ? 10 : 15
-	local loserscore = floor(k * El + 0.5)
-	loser_scope.stats.elo -= loserscore
+	local loserscore  = floor(k * El + 0.5)
+
+	loser_scope.stats.elo  -= loserscore
 	loser2_scope.stats.elo -= loserscore
 
 	// Print results to players
-	MGE_ClientPrint(winner, HUD_PRINTTALK, "GainedPoints", winnerscore.tostring())
+	MGE_ClientPrint(winner,  HUD_PRINTTALK, "GainedPoints", winnerscore.tostring())
 	MGE_ClientPrint(winner2, HUD_PRINTTALK, "GainedPoints", winnerscore.tostring())
-	MGE_ClientPrint(loser, HUD_PRINTTALK, "LostPoints", loserscore.tostring())
-	MGE_ClientPrint(loser2, HUD_PRINTTALK, "LostPoints", loserscore.tostring())
+	MGE_ClientPrint(loser,   HUD_PRINTTALK, "LostPoints",   loserscore.tostring())
+	MGE_ClientPrint(loser2,  HUD_PRINTTALK, "LostPoints",   loserscore.tostring())
 
 	// Update stats in database/file
-	UpdateStats(winner, winner_stats, false)
+	UpdateStats(winner,  winner_stats, false)
 	UpdateStats(winner2, winner_stats, false)
-	UpdateStats(loser, loser_stats, false)
-	UpdateStats(loser2, loser_stats, false)
+	UpdateStats(loser,   loser_stats, false)
+	UpdateStats(loser2,  loser_stats, false)
 
 	if (PER_ARENA_LOGGING)
 	{
@@ -1404,42 +1547,36 @@ function ROOT::CalcELO2(winner, winner2, loser, loser2) {
 		local time = {}
 		LocalTime(time)
 
-		local winner_id = GetPropString(winner, "m_szNetworkIDString")
-		local loser_id = GetPropString(loser, "m_szNetworkIDString")
+		local winner_id  = GetPropString(winner, "m_szNetworkIDString")
+		local loser_id   = GetPropString(loser, "m_szNetworkIDString")
 
 		local winner2_id = GetPropString(winner2, "m_szNetworkIDString")
-		local loser2_id = GetPropString(loser2, "m_szNetworkIDString")
+		local loser2_id  = GetPropString(loser2, "m_szNetworkIDString")
+
+		foreach (id in [winner_id, loser_id, winner2_id, loser2_id])
+			if (5 in id)
+				id = id.slice(5, id.find("]"))
 
 
-		local filename = format("mge_arenalogs/%s|%s_%s|%s_%s_%d.json", winner_id.slice(5, winner_id.find("]")), winner2_id.slice(5, winner2_id.find("]")), loser_id.slice(5, loser_id.find("]")), loser2_id.slice(5, loser2_id.find("]")), arena_name, GetUnixTimestamp(time))
+		local filename = format("mge_arenalogs/%s|%s_%s|%s_%s_%d.json",
+			winner_id,
+			winner2_id,
+			loser_id,
+			loser2_id,
+			arena_name,
+			GetUnixTimestamp(time)
+		)
 
 		StringToFile(filename, JSON_UNSAFE.Encode(log_data))
 		//TODO: Test this more, maybe we were doing it wrong when it was crashing
 		// ::StringToFile_Threaded <- @() StringToFile(filename, JSON_UNSAFE.Encode(log_data))
 		// newthread(StringToFile_Threaded).call()
 	}
-	// local winner_team_slot = (g_iPlayerSlot[winner] > 2) ? (g_iPlayerSlot[winner] - 2) : g_iPlayerSlot[winner]
-	// local loser_team_slot = (g_iPlayerSlot[loser] > 2) ? (g_iPlayerSlot[loser] - 2) : g_iPlayerSlot[loser]
-
-	// local arena_index = winner.arena
-	// local time = Time()
-
-	// if (winner && winner.IsValid() && !g_bNoDisplayRating)
-	//     ClientPrint(winner, 3, format("You gained %d points!", winnerscore))
-
-	// if (winner2 && winner2.IsValid() && !g_bNoDisplayRating)
-	//     ClientPrint(winner2, 3, format("You gained %d points!", winnerscore))
-
-	// if (loser && loser.IsValid() && !g_bNoDisplayRating)
-	//     ClientPrint(loser, 3, format("You lost %d points!", loserscore))
-
-	// if (loser2 && loser2.IsValid() && !g_bNoDisplayRating)
-	//     ClientPrint(loser2, 3, format("You lost %d points!", loserscore))
 }
 
-function ROOT::CalcArenaScore(arena_name)
+function MGE::CalcArenaScore(arena_name)
 {
-	local arena = Arenas[arena_name]
+	local arena = ARENAS[arena_name]
 
 	local arena_players = arena.CurrentPlayers.keys()
 
@@ -1447,7 +1584,12 @@ function ROOT::CalcArenaScore(arena_name)
 
 	foreach(p in arena_players)
 		if (p && p.IsValid())
-			hudstr = format("%s%s: %d (%d)\n", hudstr, p.GetScriptScope().player_name, arena.Score[p.GetTeam() - 2], p.GetScriptScope().stats.elo.tointeger())
+			hudstr = format("%s%s: %d (%d)\n", 
+				hudstr, 
+				p.GetScriptScope().player_name, 
+				arena.Score[p.GetTeam() - 2], 
+				p.GetScriptScope().stats.elo.tointeger()
+			)
 
 	MGE_HUD.KeyValueFromString("message", hudstr)
 
@@ -1523,9 +1665,9 @@ function ROOT::CalcArenaScore(arena_name)
 	}
 }
 
-function ROOT::TryGetClearSpawnPoint(player, arena_name)
+function MGE::TryGetClearSpawnPoint(player, arena_name)
 {
-	local arena   = Arenas[arena_name]
+	local arena   = ARENAS[arena_name]
 	local spawns  = arena.SpawnPoints
 	local mindist = ("mindist" in arena) ? arena.mindist.tofloat() : 0.0;
 	local idx = arena.SpawnIdx
@@ -1551,9 +1693,9 @@ function ROOT::TryGetClearSpawnPoint(player, arena_name)
 	return idx
 }
 
-function ROOT::GetNextSpawnPoint(player, arena_name)
+function MGE::GetNextSpawnPoint(player, arena_name)
 {
-	local arena = Arenas[arena_name]
+	local arena = ARENAS[arena_name]
 
 	if (!arena.IsMGE && !arena.IsEndif)
     {
@@ -1635,13 +1777,14 @@ function ROOT::GetNextSpawnPoint(player, arena_name)
 	shuffleModes[3] <- shuffleModes.truerandom.bindenv(shuffleModes)
 
 	shuffleModes[SPAWN_SHUFFLE_MODE in shuffleModes ? SPAWN_SHUFFLE_MODE : 0]()
-	
+
 
 	return arena.SpawnIdx
 }
 
-function ROOT::SetArenaState(arena_name, state) {
-	local arena = Arenas[arena_name]
+function MGE::SetArenaState(arena_name, state) {
+
+	local arena = ARENAS[arena_name]
 	arena.State = state
 
 	local arena_players = arena.CurrentPlayers.keys()
@@ -1662,7 +1805,7 @@ function ROOT::SetArenaState(arena_name, state) {
 				foreach(player in arena_players)
 					EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", -1, null, null)
 			}
-		},
+		}
 
 		function AS_COUNTDOWN() {
 
@@ -1680,7 +1823,7 @@ function ROOT::SetArenaState(arena_name, state) {
 				arena.BBall.bball_pickup_r.KeyValueFromInt("attachment_type", 4)
 				arena.BBall.bball_pickup_r.KeyValueFromInt("spawnflags", 1)
 				DispatchSpawn(arena.BBall.bball_pickup_r)
-				SetPropBool(arena.BBall.bball_pickup_r, "m_bForcePurgeFixedUpStrings", true)
+				SetPropBool(arena.BBall.bball_pickup_r, STRING_NETPROP_PURGESTRINGS, true)
 
 				arena.BBall.bball_pickup_b <- CreateByClassname("trigger_particle")
 				arena.BBall.bball_pickup_b.KeyValueFromString("targetname", "__mge_bball_trail_3")
@@ -1689,7 +1832,7 @@ function ROOT::SetArenaState(arena_name, state) {
 				arena.BBall.bball_pickup_b.KeyValueFromInt("attachment_type", 4)
 				arena.BBall.bball_pickup_b.KeyValueFromInt("spawnflags", 1)
 				DispatchSpawn(arena.BBall.bball_pickup_b)
-				SetPropBool(arena.BBall.bball_pickup_b, "m_bForcePurgeFixedUpStrings", true)
+				SetPropBool(arena.BBall.bball_pickup_b, STRING_NETPROP_PURGESTRINGS, true)
 			}
 			if (arena.IsKoth)
 			{
@@ -1723,27 +1866,27 @@ function ROOT::SetArenaState(arena_name, state) {
 				{
 					for (local i = 0; i < countdown_time; ++i)
 					{
-						EntFireByHandle(p, "RunScriptCode", format(@"
+						ScriptEntFireSafe("__mge_main", format(@"
 
-							local arena = Arenas[`%s`]
+							local arena = ARENAS[`%s`]
 							//left before countdown ended
 							if (arena.CurrentPlayers.len() != arena.MaxPlayers) return
 
 							EmitSoundEx({
-								sound_name = `%s`
-								volume = %.2f
-								channel = CHAN_STREAM
+								sound_name 	= `%s`
+								volume 		= %.2f
+								channel 	= CHAN_STREAM
+								entity 		= activator
 								filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
-								entity = self
 							})
-						", arena_name, arena.countdown_sound, arena.countdown_sound_volume), i, null, null)
+						", arena_name, arena.countdown_sound, arena.countdown_sound_volume), i, p)
 					}
 				}
 				_players[p.GetTeam() - 2] = p
-				EntFireByHandle(p, "RunScriptCode", format(@"
+				ScriptEntFireSafe("__mge_main", format(@"
 
 					local arena_name = `%s`
-					local arena = Arenas[arena_name]
+					local arena = ARENAS[arena_name]
 
 					//left before countdown ended
 					if (arena.CurrentPlayers.len() != arena.MaxPlayers)
@@ -1753,19 +1896,19 @@ function ROOT::SetArenaState(arena_name, state) {
 					}
 					SetArenaState(arena_name, AS_FIGHT)
 					EmitSoundEx({
-						sound_name = `%s`,
-						volume = %.2f,
-						channel = CHAN_STREAM,
-						filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
-						entity = self
+						sound_name 	= `%s`
+						volume 		= %.2f
+						channel 	= CHAN_STREAM
+						entity 		= activator
+						filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
 					})
-				", arena_name, arena.round_start_sound, arena.round_start_sound_volume), countdown_time, null, null)
+				", arena_name, arena.round_start_sound, arena.round_start_sound_volume), countdown_time, p)
 			}
 
 			if (arena.IsBBall)
 				BBall_SpawnBall(arena_name)
 
-		},
+		}
 
 		function AS_FIGHT() {
 
@@ -1783,7 +1926,7 @@ function ROOT::SetArenaState(arena_name, state) {
 
 				p.RemoveCustomAttribute("no_attack")
 			}
-		},
+		}
 
 		function AS_AFTERFIGHT() {
 
@@ -1815,9 +1958,10 @@ function ROOT::SetArenaState(arena_name, state) {
 				foreach(p in arena_players)
 					RemovePlayer(p)
 
-			EntFire("bignet", "RunScriptCode", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
-		},
-	}
+			ScriptEntFireSafe("__mge_main", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
+		}
+
+	}.setdelegate(MGE)
 
 	arenaStates[AS_IDLE]       <- arenaStates.AS_IDLE.bindenv(arenaStates)
 	arenaStates[AS_COUNTDOWN]  <- arenaStates.AS_COUNTDOWN.bindenv(arenaStates)
@@ -1826,9 +1970,9 @@ function ROOT::SetArenaState(arena_name, state) {
 
 	arenaStates[state]()
 }
-function ROOT::SetSpecialArena(player, arena_name) {
+function MGE::SetSpecialArena(player, arena_name) {
 
-	local arena = Arenas[arena_name]
+	local arena = ARENAS[arena_name]
 
 	if ("mge" in arena && arena.mge == "1") return
 
@@ -1843,20 +1987,20 @@ function ROOT::SetSpecialArena(player, arena_name) {
 	}
 }
 
-function ROOT::PlayAnnouncer(player, sound_name) {
+function MGE::PlayAnnouncer(player, sound_name) {
 
 	if (!ENABLE_ANNOUNCER || !player.GetScriptScope().enable_announcer) return
 
 	EmitSoundEx({
-			sound_name = sound_name,
-			volume =  ANNOUNCER_VOLUME,
-			channel = CHAN_STREAM,
-			filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
-			entity = player
+			sound_name 	= sound_name
+			volume 		=  ANNOUNCER_VOLUME
+			channel 	= CHAN_STREAM
+			entity 		= player
+			filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
 	})
 }
 
-function ROOT::GetLocalizedString(string, player = null) {
+function MGE::GetLocalizedString(string, player = null) {
 
 	local str = false
 
@@ -1877,10 +2021,13 @@ function ROOT::GetLocalizedString(string, player = null) {
 	}
 	if (!str) str = MGE_Localization[DEFAULT_LANGUAGE][string]
 
+	if (player && str[0] != '\x01')
+		str = "\x01" + str
+
 	return str
 }
 
-function ROOT::MGE_ClientPrint(...) {
+function MGE::MGE_ClientPrint(...) {
 
 	local args = vargv
 	local player = args[0]
@@ -1926,8 +2073,8 @@ function ROOT::MGE_ClientPrint(...) {
 		if (args.len() > 3)
 			str = format.acall([this, str].extend(format_args))
 
-		if (player && !endswith(str, "\x01"))
-			str = format("%s\x01", str)
+		if (player && str[0] != '\x01')
+			str = "\x01" + str
 
 		if (!player || p == player)
 			ClientPrint(p, target, str)
@@ -1935,7 +2082,7 @@ function ROOT::MGE_ClientPrint(...) {
 	}
 }
 
-function ROOT::GetStats(player) {
+function MGE::GetStats(player) {
 
 	if (!ELO_TRACKING_MODE || player.IsFakeClient()) return
 
@@ -1947,9 +2094,10 @@ function ROOT::GetStats(player) {
 	local steam_id_slice = steam_id.slice(5, steam_id.find("]"))
 	local filename = format("mge_playerdata/%s.nut", steam_id_slice)
 
-	if (ELO_TRACKING_MODE == 1)
+	if (ELO_TRACKING_MODE != 3)
 	{
 		//load stats from file
+		printl("Getting player data from file...")
 		if (FileToString(filename))
 		{
 			compilestring(FileToString(filename))()
@@ -1976,18 +2124,19 @@ function ROOT::GetStats(player) {
 			StringToFile(filename, str)
 		}
 	}
-	else if (ELO_TRACKING_MODE > 1 && "VPI" in ROOT)
+	if (ELO_TRACKING_MODE > 1)
 	{
 		printl("Getting player data...")
 		VPI.AsyncCall({
-			func="VPI_MGE_ReadWritePlayerStats",
-			// timeout = 15.0,
-			kwargs= {
-				query_mode="read",
-				network_id=steam_id_slice,
-				default_elo=DEFAULT_ELO,
-				name = scope.player_name
-			},
+
+			func="VPI_MGE_ReadWritePlayerStats"
+			kwargs = {
+
+				name	 	= scope.player_name
+				query_mode	= "read"
+				network_id	= steam_id_slice
+				default_elo	= DEFAULT_ELO
+			}
 			function callback(response, error) {
 
 				if (typeof(response) != "array" || !response.len())
@@ -1999,18 +2148,18 @@ function ROOT::GetStats(player) {
 
 				local r = response[0]
 				scope.stats <- {
-					name = r[1],
-					elo = r[2],
-					wins = r[3],
-					losses = r[4],
-					kills = r[5],
-					deaths = r[6],
-					damage_taken = r[7],
-					damage_dealt = r[8],
-					airshots = r[9],
-					market_gardens = r[10],
-					hoops_scored = r[11],
-					koth_points_capped = r[12],
+					name 				= r[1]
+					elo 				= r[2]
+					wins 				= r[3]
+					losses 				= r[4]
+					kills 				= r[5]
+					deaths 				= r[6]
+					damage_taken 		= r[7]
+					damage_dealt 		= r[8]
+					airshots 			= r[9]
+					market_gardens 		= r[10]
+					hoops_scored 		= r[11]
+					koth_points_capped 	= r[12]
 				}
 				printf(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadSuccess"], GetPropString(player, "m_szNetworkIDString"))
 			}
@@ -2018,11 +2167,12 @@ function ROOT::GetStats(player) {
 	}
 }
 
-function ROOT::UpdateStats(player, _stats = {}, additive = false) {
-	local scope = player.GetScriptScope()
-	local steam_id = GetPropString(player, "m_szNetworkIDString")
+function MGE::UpdateStats(player, _stats = {}, additive = false) {
+
+	local scope 		 = player.GetScriptScope()
+	local steam_id 		 = GetPropString(player, "m_szNetworkIDString")
 	local steam_id_slice = steam_id == "BOT" ? "BOT" : steam_id.slice(5, steam_id.find("]"))
-	local filename = format("mge_playerdata/%s.nut", steam_id_slice)
+	local filename 		 = format("mge_playerdata/%s.nut", steam_id_slice)
 
 	if (!("stats" in scope))
 	{
@@ -2054,14 +2204,17 @@ function ROOT::UpdateStats(player, _stats = {}, additive = false) {
 			StringToFile(filename, file_data)
 
 			VPI.AsyncCall({
-				func="VPI_MGE_ReadWritePlayerStats",
-				kwargs= {
-					query_mode="write",
-					network_id=steam_id_slice,
-					name = scope.player_name,
-					stats=_stats,
-					additive=additive
-				},
+
+				func="VPI_MGE_ReadWritePlayerStats"
+
+				kwargs = {
+
+					query_mode	= "write"
+					network_id	= steam_id_slice
+					name	 	= scope.player_name
+					stats		= _stats
+					additive	= additive
+				}
 				function callback(response, error) {
 					printf(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_WriteError" : "VPI_WriteSuccess"], GetPropString(player, "m_szNetworkIDString"))
 				}
@@ -2069,14 +2222,16 @@ function ROOT::UpdateStats(player, _stats = {}, additive = false) {
 		break
 		case 3:
 			VPI.AsyncCall({
-				func="VPI_MGE_ReadWritePlayerStats",
-				kwargs= {
-					query_mode="write",
-					network_id=steam_id_slice,
-					name = scope.player_name,
-					stats=_stats,
-					additive=additive
-				},
+				func="VPI_MGE_ReadWritePlayerStats"
+
+				kwargs = {
+
+					query_mode	= "write"
+					network_id	= steam_id_slice
+					name		= scope.player_name
+					stats		= _stats
+					additive	= additive
+				}
 				function callback(response, error) {
 					printf(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_WriteError" : "VPI_WriteSuccess"], GetPropString(player, "m_szNetworkIDString"))
 				}
@@ -2085,7 +2240,7 @@ function ROOT::UpdateStats(player, _stats = {}, additive = false) {
 	}
 }
 
-function ROOT::SendUsermessage(usermessage, input, player = null)
+function MGE::SendUsermessage(usermessage, input, player = null)
 {
 	local dummy = CreateByClassname("prop_dynamic")
 
@@ -2103,7 +2258,7 @@ function ROOT::SendUsermessage(usermessage, input, player = null)
 	dummy.AcceptInput("Break", "", player, player)
 }
 
-function ROOT::ShowModelToPlayer(_player, model = ["models/player/heavy.mdl", 0, 0], pos = Vector(), ang = QAngle(), duration = 9999.0)
+function MGE::ShowModelToPlayer(_player, model = ["models/player/heavy.mdl", 0, 0], pos = Vector(), ang = QAngle(), duration = 9999.0)
 {
     PrecacheModel(model[0])
     local proxy_entity = CreateByClassname("obj_teleporter") // not using SpawnEntityFromTable as that creates spawning noises
@@ -2128,7 +2283,7 @@ function ROOT::ShowModelToPlayer(_player, model = ["models/player/heavy.mdl", 0,
 }
 
 //taken from popext (originally made by fellen)
-function ROOT::VectorAngles(forward)
+function MGE::VectorAngles(forward)
 {
 	local yaw, pitch
 	if ( forward.y == 0.0 && forward.x == 0.0 ) {
@@ -2150,7 +2305,7 @@ function ROOT::VectorAngles(forward)
 	return QAngle(pitch, yaw, 0.0)
 }
 
-function ROOT::SwitchWeaponSlot(player, slot, delay = -2)
+function MGE::SwitchWeaponSlot(player, slot, delay = -2)
 {
 
 	if (delay == -2)
@@ -2158,9 +2313,9 @@ function ROOT::SwitchWeaponSlot(player, slot, delay = -2)
 	else
 		EntFireByHandle(MGE_CLIENTCOMMAND, "Command", format("slot%d", slot), delay, player, player)
 }
-function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
+function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 {
-	local arena = Arenas[arena_name]
+	local arena = ARENAS[arena_name]
 	local arena_players = arena.CurrentPlayers.keys()
 	if (!arena.IsMGE || !(ruleset in special_arenas))
 	{
@@ -2192,6 +2347,7 @@ function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 	local ruleset_inits = {
 
 		function bball() {
+
 			//set some temporary bball variables
 			if (!("validatedhoops" in arena.RulesetVote))
 			{
@@ -2203,7 +2359,7 @@ function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			local scope = self.GetScriptScope()
 
 			//spawn ball in the void
-			BBall_SpawnBall(arena_name, Vector(), true)
+			MGE.BBall_SpawnBall(arena_name, Vector(), true)
 
 			//spawn hoop prop
 			if ("hoop" in scope)
@@ -2226,19 +2382,23 @@ function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			scope.hoop_validated <- false
 			scope.hoop_cooldown <- 0.0
 
-			EntFireByHandle(self, "RunScriptCode", @"
+			ScriptEntFireSafe(self, @"
+
 				local visbit = 1 << self.entindex()
+
 				SendGlobalGameEvent(`show_annotation`, {
-					visibilityBitfield = visbit,
-					id = self.entindex() + BBALL_HOOP_SIZE,
-					text = format(`MOUSE1: Place Hoop`),
-					lifetime = 5.0,
-					play_sound = BBALL_PICKUP_SOUND,
-					follow_entindex = self.GetScriptScope().hoop.entindex(),
-					show_distance = true,
-					show_effect = true
+
+					id 					= self.entindex() + BBALL_HOOP_SIZE
+					text 				= `MOUSE1: Place Hoop`
+					lifetime 			= 5.0
+					play_sound 			= BBALL_PICKUP_SOUND
+					show_effect 		= true
+					show_distance 		= true
+					follow_entindex 	= hoop.entindex()
+					visibilityBitfield 	= visbit
 				})
-			", GENERIC_DELAY, null, null)
+
+			", GENERIC_DELAY)
 		}
 		function koth() {
 
@@ -2265,18 +2425,21 @@ function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				_scope.temp_point <- ShowModelToPlayer(p, [KOTH_POINT_MODEL, 0, 0], cap_point.GetOrigin(), QAngle(), 9999.0)
 				SetPropInt(_scope.temp_point, "m_nRenderFX", kRenderFxDistort)
 
-				EntFireByHandle(p, "RunScriptCode", format(@"
+				ScriptEntFireSafe(p, format(@"
+
 					SendGlobalGameEvent(`show_annotation`, {
-						visibilityBitfield = 1 << self.entindex(),
-						id = self.entindex() + BBALL_HOOP_SIZE,
-						text = `MOUSE1: Set point`,
-						lifetime = 5.0,
-						play_sound = BBALL_PICKUP_SOUND,
-						follow_entindex = %d,
-						show_distance = true,
-						show_effect = true
+
+						id 					= self.entindex() + BBALL_HOOP_SIZE
+						text 				= `MOUSE1: Set point`
+						lifetime 			= 5.0
+						play_sound 			= BBALL_PICKUP_SOUND
+						show_effect 		= true
+						show_distance 		= true
+						follow_entindex 	= %d
+						visibilityBitfield 	= 1 << self.entindex()
 					})
-				", _scope.temp_point.entindex()), GENERIC_DELAY, null, null)
+
+				", _scope.temp_point.entindex()), GENERIC_DELAY)
 			}
 		}
 		function ultiduo() {
@@ -2368,18 +2531,21 @@ function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 						_scope.temp_ball <- ShowModelToPlayer(p, [BBALL_BALL_MODEL, 0, 0], hoop_trace.endpos, QAngle(), 9999.0)
 						SetPropInt(_scope.temp_ball, "m_nRenderFX", kRenderFxDistort)
 
-						EntFireByHandle(p, "RunScriptCode", format(@"
+						ScriptEntFireSafe(p, format(@"
+
 							SendGlobalGameEvent(`show_annotation`, {
-								visibilityBitfield = 1 << self.entindex(),
-								id = self.entindex() + BBALL_HOOP_SIZE,
-								text = `MOUSE1: Set ball respawn point`,
-								lifetime = 5.0,
-								play_sound = BBALL_PICKUP_SOUND,
-								follow_entindex = %d,
-								show_distance = true,
-								show_effect = true
+
+								id 					= self.entindex() + BBALL_HOOP_SIZE
+								text 				= `MOUSE1: Set ball respawn point`
+								lifetime 			= 5.0
+								play_sound 			= BBALL_PICKUP_SOUND
+								show_effect 		= true
+								show_distance 		= true
+								follow_entindex 	= %d
+								visibilityBitfield 	= 1 << self.entindex()
 							})
-						", _scope.temp_ball.entindex()), GENERIC_DELAY, null, null)
+
+						", _scope.temp_ball.entindex()), GENERIC_DELAY)
 					}
 				}
 				return
@@ -2463,14 +2629,15 @@ function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 					foreach (p in arena_players)
 					{
 						SendGlobalGameEvent("show_annotation", {
-							visibilityBitfield = 1 << p.entindex(),
-							id = self.entindex() + BBALL_HOOP_SIZE,
-							text = format("%s wants to spawn the ball here", scope.player_name),
-							lifetime = 3.0,
-							play_sound = BBALL_PICKUP_SOUND,
-							follow_entindex = scope.temp_ball.entindex(),
-							show_distance = true,
-							show_effect = true
+
+							id 					= self.entindex() + BBALL_HOOP_SIZE
+							text 				= format("%s wants to spawn the ball here", scope.player_name)
+							lifetime 			= 3.0
+							play_sound 			= BBALL_PICKUP_SOUND
+							show_effect 		= tru
+							show_distance 		= true
+							follow_entindex 	= scope.temp_ball.entindex()
+							visibilityBitfield = 1 << p.entindex()
 						})
 					}
 					hoop_cooldown = Time() + BBALL_HOOP_PLACEMENT_COOLDOWN
@@ -2527,14 +2694,15 @@ function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 					hoops.append(_scope.hoop)
 
 					SendGlobalGameEvent("show_annotation", {
-						visibilityBitfield = 1 << p.entindex(),
-						id = p.entindex() + BBALL_HOOP_SIZE, //add some constant to this value to singify it's a bball annotation
-						text = format("Hoop placed by %s", scope.player_name),
-						lifetime = 5.0,
-						play_sound = COUNTDOWN_SOUND,
-						follow_entindex = scope.hoop.entindex(),
-						show_distance = true,
-						show_effect = true
+
+						id 					= p.entindex() + BBALL_HOOP_SIZE
+						text 				= "Hoop placed by %s" + scope.player_name
+						lifetime 			= 5.0
+						show_effect 		= true
+						play_sound 			= COUNTDOWN_SOUND
+						show_distance 		= true
+						follow_entindex 	= scope.hoop.entindex()
+						visibilityBitfield	= 1 << p.entindex()
 					})
 
 					if (p.entindex() in arena.RulesetVote && arena.RulesetVote[p.entindex()])
@@ -2566,31 +2734,36 @@ function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				{
 					foreach(p in arena_players)
 					{
-						EntFireByHandle(p, "RunScriptCode", format(@"
-							SwitchWeaponSlot(self, 3);
-							SwitchWeaponSlot(self, 1)
-							for (local child = self.FirstMoveChild(); child != null; child = child.NextMovePeer())
+						ScriptEntFireSafe("__mge_main", @"
+
+							SwitchWeaponSlot(activator, 3)
+							SwitchWeaponSlot(activator, 1)
+
+							for (local child = activator.FirstMoveChild(); child; child = child.NextMovePeer())
 							{
 								SetPropInt(child, `m_clrRender`, INT_COLOR_WHITE)
 								SetPropInt(child, `m_nRenderMode`, kRenderFxNone)
 							}
-							self.RemoveCustomAttribute(`disable weapon switch`)
-							self.RemoveCustomAttribute(`no_attack`)
-						", hoop.entindex()), GENERIC_DELAY, null, null)
+							activator.RemoveCustomAttribute(`disable weapon switch`)
+							activator.RemoveCustomAttribute(`no_attack`)
 
-						EntFireByHandle(p, "RunScriptCode", format(@"
+						", GENERIC_DELAY, p)
+
+						ScriptEntFireSafe(p, format(@"
 
 							SendGlobalGameEvent(`show_annotation`, {
-								id = self.entindex() + BBALL_HOOP_SIZE, //add some constant to this value to singify it's a bball annotation
-								visibilityBitfield = 1 << self.entindex(),
-								text = `Hoops placed! jump to your hoop`,
-								lifetime = -1,
-								play_sound = ROUND_START_SOUND,
-								follow_entindex = %d,
-								show_distance = true,
-								show_effect = true
+
+								id 					= self.entindex() + BBALL_HOOP_SIZE, //add some constant to this value to singify it's a bball annotation
+								text 				= `Hoops placed! jump to your hoop`
+								lifetime 			= -1
+								play_sound 			= ROUND_START_SOUND
+								show_effect 		= true
+								show_distance 		= true
+								follow_entindex 	= %d
+								visibilityBitfield 	= 1 << self.entindex(
 							})
-						", hoop.entindex()), GENERIC_DELAY + 0.1, null, null)
+
+						", hoop.entindex()), GENERIC_DELAY + 0.1)
 					}
 				}
 			}
@@ -2686,14 +2859,15 @@ function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				foreach (p in arena_players)
 				{
 					SendGlobalGameEvent("show_annotation", {
-						visibilityBitfield = 1 << p.entindex(),
-						id = self.entindex() + KOTH_MAX_SPAWNS,
-						text = format("%s wants to spawn the point here", scope.player_name),
-						lifetime = 3.0,
-						play_sound = COUNTDOWN_SOUND,
-						follow_entindex = scope.temp_point.entindex(),
-						show_distance = true,
-						show_effect = true
+
+						id 					= self.entindex() + KOTH_MAX_SPAWNS
+						text 				= scope.player_name + " wants to spawn the point here"
+						lifetime 			= 3.0
+						play_sound 			= COUNTDOWN_SOUND
+						show_effect 		= true
+						show_distance 		= true
+						follow_entindex 	= scope.temp_point.entindex()
+						visibilityBitfield 	= 1 << p.entindex()
 					})
 				}
 				point_cooldown = Time() + KOTH_POINT_PLACEMENT_COOLDOWN
@@ -2726,12 +2900,11 @@ function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 		if (ruleset == "bball" || ruleset == "koth")
 		{
-			for(local child = p.FirstMoveChild(); child != null; child = child.NextMovePeer())
-				if (startswith(child.GetClassname(), "tf_weapon"))
-				{
-					SetPropInt(child, "m_nRenderMode", kRenderTransColor)
+			for(local child = p.FirstMoveChild(); child; child = child.NextMovePeer())
+				if (child instanceof CEconEntity)
+					SetPropInt(child, "m_nRenderMode", kRenderTransColor),
 					SetPropInt(child, "m_clrRender", 0)
-				}
+				
 			p.AddCustomAttribute("no_attack", 1, -1)
 			p.AddCustomAttribute("disable weapon switch", 1, -1)
 		}
@@ -2740,7 +2913,7 @@ function ROOT::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 	return
 }
 
-function ROOT::CharReplace(str, findwhat, replace) {
+function MGE::CharReplace(str, findwhat, replace) {
 
 	local returnstring = ""
 	local charlist 	= array(str.len(), "")
@@ -2755,66 +2928,74 @@ function ROOT::CharReplace(str, findwhat, replace) {
 }
 
 ::nav_generation_state <- {
-	generator = null,
+	generator  = null
 	is_running = false
 }
-function ROOT::ArenaNavGenerator(only_this_arena = null) {
+function MGE::ArenaNavGenerator(only_this_arena = null) {
 	local player = GetListenServerHost()
 
 	local progress = 0
 	if (!only_this_arena) {
-		local arenas_len = Arenas.len()
-		foreach(arena_name, arena in Arenas) {
+		local arenas_len = ARENAS.len()
+		foreach(arena_name, arena in ARENAS) {
 			local generate_delay = 0.0
 			progress++
 			// Process spawn points for current arena
 			foreach(spawn_point in arena.SpawnPoints) {
 				generate_delay += 0.01
-				EntFireByHandle(player, "RunScriptCode", format(@"
+				ScriptEntFireSafe(player, format(@"
+
 					local origin = Vector(%f, %f, %f)
 					self.SetAbsOrigin(origin)
 					self.SnapEyeAngles(QAngle(90, 0, 0))
-						SendToConsole(`nav_mark_walkable`)
-						printl(`Marking Spawn Point: ` + origin)
-				", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), generate_delay, null, null)
+					SendToConsole(`nav_mark_walkable`)
+					printl(`Marking Spawn Point: ` + origin)
+
+				", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), generate_delay)
 			}
 
 			// Schedule nav generation for current arena
-			EntFire("bignet", "RunScriptCode", format(@"
+			ScriptEntFireSafe("__mge_main", format(@"
+
 				ClientPrint(null, 3, `Areas marked!`)
 				ClientPrint(null, 3, `Generating nav...`)
 				SendToConsole(`host_thread_mode -1`)
 				SendToConsole(`nav_generate_incremental`)
 				ClientPrint(null, 3, `Progress: ` + %d +`/`+ %d)
+
 			", progress,arenas_len), generate_delay + GENERIC_DELAY)
 
 			yield
 		}
 	} else {
-		local arena = Arenas[only_this_arena]
+		local arena = ARENAS[only_this_arena]
 		local generate_delay = 0.0
 		foreach(spawn_point in arena.SpawnPoints) {
 			generate_delay += 0.01
-			EntFireByHandle(player, "RunScriptCode", format(@"
+			ScriptEntFireSafe(player, format(@"
+
 				local origin = Vector(%f, %f, %f)
 				self.SetAbsOrigin(origin)
 				self.SnapEyeAngles(QAngle(90, 0, 0))
-					SendToConsole(`nav_mark_walkable`)
-					printl(`Marking Spawn Point: ` + origin)
-			", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), generate_delay, null, null)
+				SendToConsole(`nav_mark_walkable`)
+				printl(`Marking Spawn Point: ` + origin)
+
+			", spawn_point[0].x, spawn_point[0].y, spawn_point[0].z), generate_delay)
 		}
 
 		// Schedule nav generation for current arena
-		EntFire("bignet", "RunScriptCode", @"
+		ScriptEntFireSafe("__mge_main", @"
+
 			ClientPrint(null, 3, `Areas marked!`)
 			ClientPrint(null, 3, `Generating nav...`)
 			SendToConsole(`host_thread_mode -1`)
 			SendToConsole(`nav_generate_incremental`)
+
 		", generate_delay + GENERIC_DELAY)
 	}
 }
 
-function ROOT::ResumeNavGeneration() {
+function MGE::ResumeNavGeneration() {
 	if (!nav_generation_state.is_running || !nav_generation_state.generator) return
 
 	if (nav_generation_state.generator.getstatus() == "dead") {
@@ -2825,15 +3006,15 @@ function ROOT::ResumeNavGeneration() {
 	resume nav_generation_state.generator
 }
 
-function ROOT::MGE_CreateNav(only_this_arena = null) {
+function MGE::MGE_CreateNav(only_this_arena = null) {
 
 	local player = GetListenServerHost()
 	player.SetMoveType(MOVETYPE_NOCLIP, MOVECOLLIDE_DEFAULT)
 
-	if (!Arenas.len())
+	if (!ARENAS.len())
 		LoadSpawnPoints()
 
-	AddPlayer(player, Arenas_List[0])
+	AddPlayer(player, ARENAS_LIST[0])
 
 	scope <- player.ValidateScriptScope(), player.GetScriptScope()
 
@@ -2851,13 +3032,13 @@ function ROOT::MGE_CreateNav(only_this_arena = null) {
 	nav_generation_state.is_running = true
 }
 
-function ROOT::MGE_DoChangelevel() {
+function MGE::DoChangelevel() {
 
 	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)
 	{
 		SetValue("mp_chattime", 9999.0)
 		EntFire("__mge_changelevel", "Activate") //do this anyway just to bring up the scoreboard/"end the round" instead of suddenly kicking everyone out
-		EntFire("player", "RunScriptCode", "EntFire(`__mge_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
+		ScriptEntFireSafe("player", "EntFire(`__mge_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
 		EntFire("worldspawn", "Kill", "", 1.03)
 		return
 	}

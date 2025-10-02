@@ -1,4 +1,4 @@
-::StockSounds <- [
+local StockSounds = [
 	"vo/announcer_control_point_warning.wav",
 	"vo/announcer_control_point_warning2.wav",
 	"vo/announcer_control_point_warning3.wav",
@@ -67,76 +67,76 @@
 foreach (sound in StockSounds)
 	PrecacheSound(sound)
 
-::Arenas      <- {}
-::Arenas_List <- [] // Need ordered arenas for selection with client commands like !add
-::ALL_PLAYERS <- {}
-
 local local_time = {}
 LocalTime(local_time)
-::SERVER_DATA <- {
-	endpoint_url = "https://archive.potato.tf/api/serverstatus"
-	server_key = ""
-	address = 0
-	map = GetMapName()
-	max_wave = -1
-	// mission = GetMapName()
-	mission = ""
-	players_blu = 0
-	players_connecting = 0
-	players_max = MaxClients().tointeger()
-	players_red = 0
-	region = ""
-	server_name = ""
-	classes = ""
-	is_fake_ip = false
-	steam_ids = []
-	in_protected_match = false
-	matchmaking_disable_time = 0
-	server_name = ""
 
-	status = "Waiting for players"
-	update_time = {
-		year = local_time.year
-		month = local_time.month
-		day = local_time.day
-		hour = local_time.hour
-		minute = local_time.minute
-		second = local_time.second
+MGE.SERVER_DATA <- {
+	endpoint_url			  = "https://archive.potato.tf/api/serverstatus"
+	server_key				  = ""
+	address					  = 0
+	wave 					  = 0
+	max_wave				  = -1
+	players_blu				  = 0
+	players_connecting		  = 0
+	players_max				  = MaxClients().tointeger()
+	players_red				  = 0
+	matchmaking_disable_time  = 0
+	map					      = GetMapName()
+	mission					  = ""
+	region					  = ""
+	server_name				  = ""
+	classes					  = ""
+	domain 					  = "potato.tf"
+	password 				  = ""
+	campaign_name 			  = "MGE"
+	status 					  = "Waiting for players"
+	in_protected_match		  = false
+	is_fake_ip				  = false
+	steam_ids				  = []
+
+	update_time 			  = {
+
+		year	= local_time.year
+		month	= local_time.month
+		day		= local_time.day
+		hour	= local_time.hour
+		minute	= local_time.minute
+		second	= local_time.second
 	}
-	domain = "potato.tf"
-	password = ""
-	wave = 0
-	campaign_name = "MGE"
 }
 
-EntFire("worldspawn", "RunScriptCode", @"
+MGE.ScriptEntFireSafe("__mge_main", @"
 
-	local hostname = GetStr(`hostname`)
-	local _split = split(hostname, `#`)
-	local _split_region = _split.len() == 1 ? [``, `]`] : split(_split[1], `[`)
-	SERVER_DATA.server_name = GetStr(`hostname`)
-	SERVER_DATA.server_key = _split.len() == 1 ? `` : _split[1].slice(0, _split[1].find(`[`))
-	SERVER_DATA.region = _split_region.len() == 1 ? `` : _split_region[1].slice(0, _split_region[1].find(`]`))
-	SERVER_DATA.domain = SERVER_DATA.region == `USA` ? `us.potato.tf` : format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
+	local server_name  = GetStr(`hostname`)
+	local split_server = split(server_name, `#`)
+	local split_region = split_server.len() == 1 ? [``, `]`] : split(split_server[1], `[`)
+
+	SERVER_DATA.server_name <- server_name
+	SERVER_DATA.server_key	= split_server.len() == 1 ? `` : split_server[1].slice(0, split_server[1].find(`[`))
+	SERVER_DATA.region		= split_region.len() == 1 ? `` : split_region[1].slice(0, split_region[1].find(`]`))
+	SERVER_DATA.domain		= SERVER_DATA.region == `USA` ? `us.potato.tf` : format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
 
 	if ( SERVER_DATA.domain == `ustx.potato.tf` )
 		SERVER_DATA.domain += `:22443`
+
 ", 5)
 
 
 if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
-	::MGE_LEADERBOARD_DATA <- {
-		"ELO"				 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Airshots"			 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Koth Points Capped" : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Hoops Scored" 		 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Market Gardens" 	 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Wins"				 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Losses"			 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Kills"				 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Deaths"			 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Damage Dealt"		 : array(MAX_LEADERBOARD_ENTRIES, null),
-		"Damage Taken"		 : array(MAX_LEADERBOARD_ENTRIES, null),
+
+	MGE.MGE_LEADERBOARD_DATA <- {
+
+		"ELO"				 : array(MAX_LEADERBOARD_ENTRIES, null)
+		"Airshots"			 : array(MAX_LEADERBOARD_ENTRIES, null)
+		"Koth Points Capped" : array(MAX_LEADERBOARD_ENTRIES, null)
+		"Hoops Scored" 		 : array(MAX_LEADERBOARD_ENTRIES, null)
+		"Market Gardens" 	 : array(MAX_LEADERBOARD_ENTRIES, null)
+		"Wins"				 : array(MAX_LEADERBOARD_ENTRIES, null)
+		"Losses"			 : array(MAX_LEADERBOARD_ENTRIES, null)
+		"Kills"				 : array(MAX_LEADERBOARD_ENTRIES, null)
+		"Deaths"			 : array(MAX_LEADERBOARD_ENTRIES, null)
+		"Damage Dealt"		 : array(MAX_LEADERBOARD_ENTRIES, null)
+		"Damage Taken"		 : array(MAX_LEADERBOARD_ENTRIES, null)
 		// "Ammomod Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
 		// "Endif Wins"		 	 : array(MAX_LEADERBOARD_ENTRIES, null),
 		// "Scout Kills"		 : array(MAX_LEADERBOARD_ENTRIES, null),
@@ -145,12 +145,12 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 		// "Arenas Played"		 : array(MAX_LEADERBOARD_ENTRIES, null),
 	}
 
-::ArenaClasses <- ["", "scout", "sniper", "soldier", "demoman", "medic", "heavy", "pyro", "spy", "engineer", "civilian"]
+MGE.ArenaClasses <- ["", "scout", "sniper", "soldier", "demoman", "medic", "heavy", "pyro", "spy", "engineer", "civilian"]
 
-::default_scope <- {
-	"self"    : null,
-	"__vname" : null,
-	"__vrefs" : null,
+MGE.default_scope <- {
+	"self"    : null
+	"__vname" : null
+	"__vrefs" : null
 }
 
 //player think functions applied to special arenas
@@ -159,14 +159,14 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 //this table is also used as a reference for all valid special arenas elsewhere in the code
 //if a new custom arena is created, you must add a function to this table
 // (it doesn't need to do anything, see allmeat, 4player, and midair)
-::special_arenas <- {
+MGE.special_arenas <- {
 
 	function koth()
 	{
-		local player = self
-		scope <- player.GetScriptScope()
-		local arena = scope.arena_info.arena
-		local arena_name = scope.arena_info.name
+		local player 		= self
+		scope 				<- player.GetScriptScope()
+		local arena			= scope.arena_info.arena
+		local arena_name 	= scope.arena_info.name
 		local arena_players = arena.CurrentPlayers.keys()
 
 		if (arena.State == AS_IDLE)
@@ -177,24 +177,23 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			return
 		}
 
+		local cap_decay_interval 	   = 0.0
+		local cap_countdown_interval   = 0.0
 		local partial_cap_cooldowntime = 0.0
-		local cap_countdown_interval = 0.0
-		local cap_decay_interval = 0.0
-
-		local radius = arena.Koth.cap_radius
-		local point = arena.Koth.cap_point
-		local team = player.GetTeam()
-		local partial_cap_amount = team == TF_TEAM_RED ? "red_partial_cap_amount" : "blu_partial_cap_amount"
+		local cap_contested 		   = false
+		local team 					   = player.GetTeam()
+		local radius 				   = arena.Koth.cap_radius
+		local point 				   = arena.Koth.cap_point
+		local additive_decay 		   = arena.Koth.additive_decay
+		local current_cappers 		   = arena.Koth.current_cappers
+		local cap_amount 			   = team == TF_TEAM_RED ? "red_cap_time" : "blu_cap_time"
+		local enemy_cap_amount 		   = team == TF_TEAM_RED ? "blu_cap_time" : "red_cap_time"
+		local partial_cap_amount 	   = team == TF_TEAM_RED ? "red_partial_cap_amount" : "blu_partial_cap_amount"
 		local enemy_partial_cap_amount = team == TF_TEAM_RED ? "blu_partial_cap_amount" : "red_partial_cap_amount"
-		local cap_amount = team == TF_TEAM_RED ? "red_cap_time" : "blu_cap_time"
-		local enemy_cap_amount = team == TF_TEAM_RED ? "blu_cap_time" : "red_cap_time"
-		local additive_decay = arena.Koth.additive_decay
-		local current_cappers = arena.Koth.current_cappers
-		local cap_contested = false
 
 		if (typeof point == "string")
 		{
-			local point_vector = split(point, " ").apply(@(v) ToStrictNum(v, true))
+			local point_vector = split(point, " ").apply(@(v) MGE.ToStrictNum(v, true))
 			point_vector = Vector(point_vector[0], point_vector[1], point_vector[2])
 
 			point = point_vector
@@ -205,7 +204,9 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			local owner_team = arena.Koth.owner_team
 			local arena_players = arena.CurrentPlayers.keys()
 
-			if (!player.IsAlive()) return
+			if (!player.IsAlive())
+				return
+
 			if ((player.GetOrigin() - point).Length() < radius)
 			{
 				if (!(player in current_cappers) || !current_cappers[player])
@@ -253,9 +254,11 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 					//hud stuff
 					local _team = player.GetTeam()
 					local str = ["", ""]
-					if (arena.Koth[partial_cap_amount] != 0.0)
+
+					if (arena.Koth[partial_cap_amount])
 						str[_team == TF_TEAM_RED ? 0 : 1] = format("Partial Cap: %.2f", arena.Koth[partial_cap_amount])
-					if (arena.Koth[enemy_partial_cap_amount] != 0.0)
+
+					if (arena.Koth[enemy_partial_cap_amount])
 						str[_team == TF_TEAM_RED ? 1 : 0] = format("Partial Cap: %.2f", arena.Koth[enemy_partial_cap_amount])
 
 					foreach(p in arena_players)
@@ -299,8 +302,8 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 				{
 					arena.Score[team == TF_TEAM_RED ? 0 : 1]++
 					"koth_points_capped" in scope.stats ? scope.stats.koth_points_capped++ : scope.stats.koth_points_capped <- 1
-					CalcArenaScore(arena_name)
-					SetArenaState(arena_name, AS_COUNTDOWN)
+					MGE.CalcArenaScore(arena_name)
+					MGE.SetArenaState(arena_name, AS_COUNTDOWN)
 					return
 				}
 
@@ -310,31 +313,31 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 
 				//play countdown sound
 				local _announcer_sound =  {
-					[300] = "5min",
+					[10]  = "10sec",
+					[20]  = "20sec",
+					[30]  = "30sec",
+					[60]  = "60sec",
 					[120] = "2min",
-					[60] = "60sec",
-					[30] = "30sec",
-					[20] = "20sec",
-					[10] = "10sec"
+					[300] = "5min"
 				}
 				if (_cap_amount in _announcer_sound)
 					foreach(p in arena_players)
 						EmitSoundEx({
-							sound_name = format("vo/announcer_ends_%s.mp3", _announcer_sound[_cap_amount]),
-							entity = p,
-							volume = 1.0,
-							channel = CHAN_STREAM,
-							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
+							sound_name 	= format("vo/announcer_ends_%s.mp3", _announcer_sound[_cap_amount])
+							entity 		= p
+							volume 		= 1.0
+							channel 	= CHAN_STREAM
+							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
 						})
 
 				else if (_cap_amount < 6)
 					foreach(p in arena_players)
 						EmitSoundEx({
-							sound_name = format("vo/announcer_ends_%dsec.mp3", _cap_amount),
-							entity = p,
-							volume = 1.0,
-							channel = CHAN_STREAM,
-							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER,
+							sound_name  = format("vo/announcer_ends_%dsec.mp3", _cap_amount)
+							entity 		= p
+							volume 		= 1.0
+							channel 	= CHAN_STREAM
+							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
 						})
 
 				//hud stuff
@@ -343,8 +346,9 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 					if (!p.GetScriptScope().enable_hud) continue
 
 					KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
-					KOTH_HUD_RED.AcceptInput("Display", "", p, p)
 					KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
+
+					KOTH_HUD_RED.AcceptInput("Display", "", p, p)
 					KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
 				}
 
@@ -377,14 +381,14 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 					}
 					team == TF_TEAM_RED ? ++arena.Score[0] : ++arena.Score[1]
 					"hoops_scored" in scope.stats ? scope.stats.hoops_scored++ : scope.stats.hoops_scored <- 1
-					CalcArenaScore(arena_name)
+					MGE.CalcArenaScore(arena_name)
 					if (arena.State == AS_AFTERFIGHT)
 					{
 						arena.BBall.last_score_team = -1
 						return
 					}
 					arena.BBall.last_score_team = team
-					BBall_SpawnBall(arena_name)
+					MGE.BBall_SpawnBall(arena_name)
 
 					foreach(p in arena_players)
 						p.ForceRespawn()
@@ -393,16 +397,13 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			}
 		}
 	}
-	function midair()
-	{
-		return
-	}
 	function turris()
 	{
 		local player = self
 		scope <- player.GetScriptScope()
 		scope.turris_cooldown <- 0.0
 		function scope::ThinkTable::TurrisThink() {
+
 			if (turris_cooldown < Time())
 			{
 				player.Regenerate(true)
@@ -414,24 +415,24 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 	{
 		local player = self
 		local scope = player.GetScriptScope()
-		local arena = scope.arena_info.arena
-		local arena_name = scope.arena_info.name
 
-		EntFireByHandle(player, "RunScriptCode", format(@"
+		MGE.ScriptEntFireSafe("__mge_main", @"
 
-			if (self.GetCustomAttribute(`max health additive bonus`, 0)) return
-			local hp_ratio = Arenas[`%s`].hpratio.tofloat()
-			self.AddCustomAttribute(`max health additive bonus`,(self.GetMaxHealth() * hp_ratio) - self.GetMaxHealth(), -1)
-			self.AddCustomAttribute(`mod see enemy health`, 1, -1)
+			if (activator.GetCustomAttribute(`max health additive bonus`, 0))
+				return
+
+			local hp_ratio = ARENAS[activator.GetScriptScope().arena_info.name].hpratio.tofloat()
+			activator.AddCustomAttribute(`max health additive bonus`,(activator.GetMaxHealth() * hp_ratio) - activator.GetMaxHealth(), -1)
+			activator.AddCustomAttribute(`mod see enemy health`, 1, -1)
 
 			//this is for reducing falldmg
-			self.AddCustomAttribute(`dmg taken increased`, 1 / hp_ratio, -1)
-			self.AddCustomAttribute(`dmg from ranged reduced`, hp_ratio, -1)
-			self.AddCustomAttribute(`dmg from melee increased`, hp_ratio, -1)
+			activator.AddCustomAttribute(`dmg taken increased`, 1 / hp_ratio, -1)
+			activator.AddCustomAttribute(`dmg from ranged reduced`, hp_ratio, -1)
+			activator.AddCustomAttribute(`dmg from melee increased`, hp_ratio, -1)
 
-			self.Regenerate(true)
+			activator.Regenerate(true)
 
-		", arena_name), GENERIC_DELAY, null, null)
+		", GENERIC_DELAY, player)
 	}
 	function endif()
 	{
@@ -447,14 +448,14 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			}
 		}
 
-		EntFireByHandle(player, "RunScriptCode", format(@"
+		MGE.ScriptEntFireSafe(player, format(@"
 
 			self.AddCustomAttribute(`cancel falling damage`, 1, -1)
 			self.AddCustomAttribute(`hidden maxhealth non buffed`, %d - self.GetMaxHealth(), -1)
 			self.AddCustomAttribute(`health regen`, %d, -1)
 			self.Regenerate(true)
 
-		", 9999, 9999), -1, null, null)
+		", 9999, 9999))
 	}
 	function infammo()
 	{
@@ -475,137 +476,131 @@ if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
 			SetPropIntArray(self, "m_iAmmo", 9999, 2)
 		}
 	}
-	function allmeat()
-	{
-		return
-	}
-	"4player" : function() { //function names that start with a number need this special syntax
-		return
-	}
+	function allmeat() { return }
+	function midair() { return }
+	"4player" : function() { return }
+
+}.setdelegate(MGE)
+
+MGE.InitEntities()
+
+//this crashes windows servers
+//mysteriously isolating this entire team_round_timer spawn sequence to another file doesn't crash
+//maybe EFL_KILLME being added briefly in teamplay_round_start?
+// MGE_TIMER.AcceptInput("ShowInHUD", "1", null, null)
+
+EntFire("__mge_timer", "Resume")
+EntFire("__mge_timer", "ShowInHUD", "1")
+
+TimerScope <- MGE_TIMER.GetScriptScope()
+TimerScope.time_left <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+TimerScope.base_timestamp <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+
+function TimerScope::InputSetTime() {
+
+	base_timestamp = GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
+	return true
+
 }
+TimerScope.Inputsettime <- TimerScope.InputSetTime
+TimerScope.hinted <- false
 
-function ROOT::MGE_Init() {
+function TimerScope::TimerThink()
+{
+	local time_left = base_timestamp - Time()
 
-	printl("[VScript MGE] Loaded, moving all active players to spectator")
-
-	for (local i = 1; i <= MAX_CLIENTS; i++)
+	if (time_left > 0)
 	{
-		local player = PlayerInstanceFromIndex(i)
-		if (!player || !player.IsValid()) continue
+		if (!(time_left % VPI_SERVERINFO_UPDATE_INTERVAL))
+		{
+			if (UPDATE_SERVER_DATA) {
 
-		player.ValidateScriptScope()
-		InitPlayerScope(player)
+				LocalTime(local_time)
+				MGE.SERVER_DATA.update_time = local_time
+				MGE.SERVER_DATA.max_wave = time_left
+				MGE.SERVER_DATA.wave = time_left
+				local players = array(2, 0)
+				local spectators = 0
+				foreach (player, userid in MGE.ALL_PLAYERS)
 
-		ALL_PLAYERS[player] <- GetPropIntArray(FindByClassname(null, "tf_player_manager"), "m_iUserID", player.entindex())
+				{
+					if (!player || !player.IsValid() || player.IsFakeClient()) continue
 
-		local scope = player.GetScriptScope()
-		player.ForceChangeTeam(TEAM_SPECTATOR, true)
-		GetStats(player)
-		// todo bots dont like to stay dead with this, need to come up with something else
-		/*
-			SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", 0)
-		*/
-	}
+					if (player.GetTeam() == TEAM_SPECTATOR)
+						spectators++
+					else
+						players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
+				}
+				MGE.SERVER_DATA.players_red = players[0]
+				MGE.SERVER_DATA.players_blu = players[1]
+				MGE.SERVER_DATA.players_connecting = spectators
+				MGE.SERVER_DATA.server_name = GetStr("hostname")
 
-	if (ELO_TRACKING_MODE > 1)
-	{
-		printl(MGE_Localization[DEFAULT_LANGUAGE]["VPI_InitDB"])
-		VPI.AsyncCall({
-			func = "VPI_MGE_DBInit",
-			function callback (response, error) {
-				printl(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_DBInitError" : "VPI_DBInitSuccess"])
+				VPI.AsyncCall({
+
+					func   = "VPI_MGE_UpdateServerData"
+					kwargs = MGE.SERVER_DATA
+
+					function callback(response, error) {
+
+						if (error)
+							return 3
+
+						if (MGE.SERVER_DATA.address == 0 && "address" in response)
+							MGE.SERVER_DATA.address = response.address
+
+					}
+				})
 			}
-		})
+		}
+
+		// Show countdown message in last minute
+		if (time_left < 60 && !(time_left.tointeger() % 10))
+		{
+			if (!hinted)
+			{
+				SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", time_left.tointeger())})
+				hinted = true
+				MGE.ScriptEntFireSafe(self, "hinted = false", 1.1)
+			}
+		}
+
+
+		return -1
 	}
 
-	HandleRoundStart()
-	LoadSpawnPoints()
-
-	SetValue("mp_humans_must_join_team", "spectator")
-	SetValue("mp_autoteambalance", 0)
-	SetValue("mp_teams_unbalance_limit", 0)
-	SetValue("mp_scrambleteams_auto", 0)
-	SetValue("mp_tournament", 0)
-	SetValue("mp_chattime", 1.0)
-
-	SetValue("tf_weapon_criticals", 0)
-	SetValue("tf_fall_damage_disablespread", 1)
-
-	//requires a custom plugin to feed m_iszMvMPopfileName to SteamWorks_SetGameDescription
-	//might be able to do this through VPI?
-	local gamedesc = format("Potato MGE (%s)", MGE_MAPINFO[GetMapName()].nice_name)
-	SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
+	delete TimerScope.TimerThink
 }
+MGE.ScriptEntFireSafe(MGE_TIMER, "AddThinkToEnt(self, `TimerThink`)")
 
-for (local cleanup; cleanup = FindByName(cleanup, "__mge*");)
-	EntFireByHandle(cleanup, "Kill", "", -1, null, null)
 
-::MGE_HUD <- CreateByClassname("game_text")
-MGE_HUD.KeyValueFromString("targetname", "__mge_hud")
-MGE_HUD.KeyValueFromInt("effect", 2)
-MGE_HUD.KeyValueFromString("color", "255 254 255")
-MGE_HUD.KeyValueFromString("color2", "255 254 255")
-MGE_HUD.KeyValueFromFloat("fxtime", 1.0)
-MGE_HUD.KeyValueFromFloat("holdtime", INT_MAX)
-MGE_HUD.KeyValueFromFloat("fadeout", 0.01)
-MGE_HUD.KeyValueFromFloat("fadein", 0.01)
-MGE_HUD.KeyValueFromInt("channel", 4)
-MGE_HUD.KeyValueFromFloat("x", MGE_HUD_POS_X)
-MGE_HUD.KeyValueFromFloat("y", MGE_HUD_POS_Y)
-SetPropBool(MGE_HUD, "m_bForcePurgeFixedupStrings", true)
+foreach ( ent in ["MGE_HUD", "KOTH_HUD_RED", "KOTH_HUD_BLU", "MGE_TIMER", "MGE_CHANGELEVEL", "MGE_CLIENTCOMMAND"] ) {
 
-::KOTH_HUD_RED <- CreateByClassname("game_text")
-KOTH_HUD_RED.KeyValueFromString("targetname", "__mge_hud_koth_red")
-KOTH_HUD_RED.KeyValueFromInt("effect", 2)
-KOTH_HUD_RED.KeyValueFromString("color", KOTH_RED_HUD_COLOR)
-KOTH_HUD_RED.KeyValueFromString("color2", "255 254 255")
-KOTH_HUD_RED.KeyValueFromFloat("fxtime", 0.02)
-KOTH_HUD_RED.KeyValueFromFloat("holdtime", 1.0)
-KOTH_HUD_RED.KeyValueFromFloat("fadeout", 0.01)
-KOTH_HUD_RED.KeyValueFromFloat("fadein", 0.01)
-KOTH_HUD_RED.KeyValueFromInt("channel", 5)
-KOTH_HUD_RED.KeyValueFromFloat("x", KOTH_HUD_RED_POS_X)
-KOTH_HUD_RED.KeyValueFromFloat("y", KOTH_HUD_RED_POS_Y)
-SetPropBool(KOTH_HUD_RED, "m_bForcePurgeFixedupStrings", true)
-
-::KOTH_HUD_BLU <- CreateByClassname("game_text")
-KOTH_HUD_BLU.KeyValueFromString("targetname", "__mge_hud_koth_blu")
-KOTH_HUD_BLU.KeyValueFromInt("effect", 2)
-KOTH_HUD_BLU.KeyValueFromString("color", KOTH_BLU_HUD_COLOR)
-KOTH_HUD_BLU.KeyValueFromString("color2", "255 254 255")
-KOTH_HUD_BLU.KeyValueFromFloat("fxtime", 0.02)
-KOTH_HUD_BLU.KeyValueFromFloat("holdtime", 1.0)
-KOTH_HUD_BLU.KeyValueFromFloat("fadeout", 0.01)
-KOTH_HUD_BLU.KeyValueFromFloat("fadein", 0.01)
-KOTH_HUD_BLU.KeyValueFromInt("channel", 6)
-KOTH_HUD_BLU.KeyValueFromFloat("x", KOTH_HUD_BLU_POS_X)
-KOTH_HUD_BLU.KeyValueFromFloat("y", KOTH_HUD_BLU_POS_Y)
-SetPropBool(KOTH_HUD_BLU, "m_bForcePurgeFixedupStrings", true)
-
-EntFire("bignet", "RunScriptCode", "DispatchSpawn(MGE_HUD); DispatchSpawn(KOTH_HUD_RED); DispatchSpawn(KOTH_HUD_BLU)", GENERIC_DELAY)
-
-::MGE_CHANGELEVEL <- CreateByClassname("point_intermission")
-MGE_CHANGELEVEL.KeyValueFromString("targetname", "__mge_changelevel")
+	SetPropBool(ent, STRING_NETPROP_PURGESTRINGS, true)
+	MGE[ent] <- this[ent]
+}
 
 if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 {
-	MGE_CHANGELEVEL.ValidateScriptScope()
-	ChangelevelScope <- MGE_CHANGELEVEL.GetScriptScope()
+	ChangelevelScope <- MGE_CHANGELEVEL.GetScriptScope() || (MGE_CHANGELEVEL.ValidateScriptScope(), MGE_CHANGELEVEL.GetScriptScope())
 
 	function ChangelevelScope::AutoUpdate() {
+
 		VPI.AsyncCall({
-			func = "VPI_MGE_AutoUpdate",
-			kwargs = {
-				repo = GAMEMODE_AUTOUPDATE_REPO,
-				branch = GAMEMODE_AUTOUPDATE_BRANCH,
+
+			func 	= "VPI_MGE_AutoUpdate"
+			kwargs 	= {
+				repo 	  = GAMEMODE_AUTOUPDATE_REPO
+				branch 	  = GAMEMODE_AUTOUPDATE_BRANCH
 				clone_dir = GAMEMODE_AUTOUPDATE_TARGET_DIR
-			},
+			}
+
 			function callback(response, error) {
 
 				//gamemode has been updated
 				if (!error && response.len()) {
 
-					local time_left = MGE_TIMER.GetScriptScope().base_timestamp - Time()
+					local time_left = MGE.MGE_TIMER.GetScriptScope().base_timestamp - Time()
 
 					MGE_ClientPrint(null, HUD_PRINTTALK, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
 					MGE_ClientPrint(null, HUD_PRINTTALK, "GamemodeUpdate", time_left > GAMEMODE_AUTOUPDATE_RESTART_TIME ? GAMEMODE_AUTOUPDATE_RESTART_TIME : time_left)
@@ -631,116 +626,56 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 		})
 		return GAMEMODE_AUTOUPDATE_INTERVAL
 	}
-	AddThinkToEnt(MGE_CHANGELEVEL, "AutoUpdate")
+	AddThinkToEnt(MGE.MGE_CHANGELEVEL, "AutoUpdate")
 }
 
-::MGE_CLIENTCOMMAND <- CreateByClassname("point_clientcommand")
-MGE_CLIENTCOMMAND.KeyValueFromString("targetname", "__mge_clientcommand")
-DispatchSpawn(MGE_CLIENTCOMMAND)
+printl("[VScript MGE] Loaded, moving all active players to spectator")
 
-::MGE_TIMER <- CreateByClassname("team_round_timer")
-MGE_TIMER.KeyValueFromString("targetname", "__mge_timer")
-
-SetPropInt(MGE_TIMER, "m_nTimerMaxLength", MAP_RESTART_TIMER)
-SetPropInt(MGE_TIMER, "m_nTimerInitialLength", MAP_RESTART_TIMER)
-SetPropInt(MGE_TIMER, "m_nTimerLength", MAP_RESTART_TIMER)
-SetPropBool(MGE_TIMER, "m_bShowInHUD", true)
-SetPropBool(MGE_TIMER, "m_bShowTimeRemaining", true)
-SetPropBool(MGE_TIMER, "m_bAutoCountdown", true)
-SetPropBool(MGE_TIMER, "m_bStartPaused", false)
-
-//doesn't fire with with EFL_KILLME
-AddOutput(MGE_TIMER, "OnFinished", "!self", "CallScriptFunction", "MGE_DoChangelevel", 1.0, -1)
-
-DispatchSpawn(MGE_TIMER)
-MGE_TIMER.AcceptInput("Resume", "", null, null)
-
-//this crashes windows servers
-//mysteriously isolating this entire team_round_timer spawn sequence to another file doesn't crash
-//maybe EFL_KILLME being added briefly in teamplay_round_start?
-// MGE_TIMER.AcceptInput("ShowInHUD", "1", null, null)
-
-EntFireByHandle(MGE_TIMER, "ShowInHUD", "1", -1, null, null)
-
-MGE_TIMER.ValidateScriptScope()
-
-TimerScope <- MGE_TIMER.GetScriptScope()
-TimerScope.time_left <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
-TimerScope.base_timestamp <- GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
-
-function TimerScope::InputSetTime() {
-
-	base_timestamp = GetPropFloat(MGE_TIMER, "m_flTimeRemaining")
-	return true
-
-}
-TimerScope.Inputsettime <- TimerScope.InputSetTime
-TimerScope.hinted <- false
-
-function TimerScope::TimerThink()
+for (local i = 1; i <= MAX_CLIENTS; i++)
 {
-	local time_left = base_timestamp - Time()
+	local player = PlayerInstanceFromIndex(i)
+	if (!player || !player.IsValid()) continue
 
-	if (time_left > 0)
-	{
-		if (!(time_left % VPI_SERVERINFO_UPDATE_INTERVAL))
-		{
-			LocalTime(local_time)
-			SERVER_DATA.update_time = local_time
-			SERVER_DATA.max_wave = time_left
-			SERVER_DATA.wave = time_left
-			local players = array(2, 0)
-			local spectators = 0
-			foreach (player, userid in ALL_PLAYERS)
+	MGE.InitPlayerScope(player)
 
-			{
-				if (!player || !player.IsValid() || player.IsFakeClient()) continue
+	MGE.ALL_PLAYERS[player] <- GetPropIntArray(FindByClassname(null, "tf_player_manager"), "m_iUserID", player.entindex())
 
-				if (player.GetTeam() == TEAM_SPECTATOR)
-					spectators++
-				else
-					players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
-			}
-			SERVER_DATA.players_red = players[0]
-			SERVER_DATA.players_blu = players[1]
-			SERVER_DATA.players_connecting = spectators
-			SERVER_DATA.server_name = GetStr("hostname")
-
-			if (UPDATE_SERVER_DATA) {
-
-				VPI.AsyncCall({
-					func = "VPI_MGE_UpdateServerData",
-					kwargs = SERVER_DATA,
-
-					function callback(response, error) {
-
-						if (error) 
-							return 3
-
-						if (SERVER_DATA.address == 0 && "address" in response)
-							SERVER_DATA.address = response.address
-
-					}
-				})
-			}
-		}
-
-		// Show countdown message in last minute
-		if (time_left < 60 && !(time_left.tointeger() % 10))
-		{
-			if (!hinted)
-			{
-				SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", time_left.tointeger())})
-				hinted = true
-				EntFireByHandle(self, "RunScriptCode", "self.GetScriptScope().hinted = false", 1.1, null, null)
-			}
-		}
-
-
-		return -1
-	}
-
-	delete TimerScope.TimerThink
+	local scope = player.GetScriptScope() || (player.ValidateScriptScope(), player.GetScriptScope())
+	player.ForceChangeTeam(TEAM_SPECTATOR, true)
+	MGE.GetStats(player)
+	// todo bots dont like to stay dead with this, need to come up with something else
+	/*
+		SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", 0)
+	*/
 }
-AddThinkToEnt(MGE_TIMER, "TimerThink")
-MGE_Init()
+
+if (ELO_TRACKING_MODE > 1)
+{
+	printl(MGE_Localization[DEFAULT_LANGUAGE]["VPI_InitDB"])
+
+	VPI.AsyncCall({
+
+		func = "VPI_MGE_DBInit",
+		function callback (response, error) {
+			printl(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_DBInitError" : "VPI_DBInitSuccess"])
+		}
+	})
+}
+
+MGE.HandleRoundStart()
+MGE.LoadSpawnPoints()
+
+SetValue("mp_humans_must_join_team", "spectator")
+SetValue("mp_autoteambalance", 0)
+SetValue("mp_teams_unbalance_limit", 0)
+SetValue("mp_scrambleteams_auto", 0)
+SetValue("mp_tournament", 0)
+SetValue("mp_chattime", 1.0)
+
+SetValue("tf_weapon_criticals", 0)
+SetValue("tf_fall_damage_disablespread", 1)
+
+//requires a custom plugin to feed m_iszMvMPopfileName to SteamWorks_SetGameDescription
+//might be able to do this through VPI?
+local gamedesc = format("Potato MGE (%s)", MGE_MAPINFO[MAPNAME_CONFIG_OVERRIDE].nice_name)
+SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)

@@ -2,8 +2,9 @@
 # Server
 
 # Made by Mince (STEAM_0:0:41588292)
+# Modified by Braindawg for MGE
 
-VERSION = "1.0.0"
+VERSION = "09.29.2025.1"
 
 import os
 import datetime
@@ -277,26 +278,30 @@ async def main():
 		if (vpi_config.DB is not None):
 			LOGGER.info("Connected to %s database using %s", vpi_config.DB_TYPE, str(vpi_config.DB))
 	except Exception as e:
-		if "Unknown database" in str(e):
-			LOGGER.critical("Database not found! Creating a new one...")
-			if (vpi_config.DB_TYPE == "mysql"):
-				vpi_config.DB = await vpi_config.aiomysql.create_pool(host=vpi_config.DB_HOST, user=vpi_config.DB_USER, password=vpi_config.DB_PASSWORD, port=vpi_config.DB_PORT, autocommit=False)
-				tempconn = await vpi_config.DB.acquire()
-				cursor = await tempconn.cursor()
-				await cursor.execute("CREATE DATABASE IF NOT EXISTS " + vpi_config.DB_DATABASE)
-				await cursor.close()
-				vpi_config.DB = await vpi_config.aiomysql.create_pool(host=vpi_config.DB_HOST, user=vpi_config.DB_USER, password=vpi_config.DB_PASSWORD, port=vpi_config.DB_PORT, db=vpi_config.DB_DATABASE, autocommit=False)
-			elif (vpi_config.DB_TYPE == "sqlite"):
-				vpi_config.DB = await vpi_config.aiosqlite.connect(vpi_config.DB_LITE)
-				cursor = await vpi_config.DB.acquire().cursor
-				await cursor.execute("CREATE DATABASE IF NOT EXISTS " + vpi_config.DB_DATABASE)
-				await vpi_config.DB.commit()
-				await cursor.close()
-				vpi_config.DB = await vpi_config.aiosqlite.connect(vpi_config.DB_LITE)
-
-		else:
-			LOGGER.critical(e)
-			return
+		if ("Unknown database" in str(e) or "doesn't exist" in str(e)):
+			LOGGER.info("No mge database found, creating...")
+			temp_conn = await vpi_config.aiomysql.create_pool(host=vpi_config.DB_HOST, user=vpi_config.DB_USER, password=vpi_config.DB_PASSWORD, port=vpi_config.DB_PORT, autocommit=False)
+			temp_cursor = temp_conn.cursor()
+			await temp_cursor.execute(f"CREATE DATABASE IF NOT EXISTS {vpi_config.DB_DATABASE}")
+			await temp_cursor.execute(f"USE {vpi_config.DB_DATABASE}")
+			await temp_cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
+				steam_id INTEGER PRIMARY KEY, 
+				name VARCHAR(255),
+				elo BIGINT, 
+				wins BIGINT, 
+				losses BIGINT, 
+				kills BIGINT, 
+				deaths BIGINT, 
+				damage_taken BIGINT, 
+				damage_dealt BIGINT, 
+				airshots BIGINT, 
+				market_gardens BIGINT, 
+				hoops_scored BIGINT, 
+				koth_points_capped BIGINT)"""
+			)
+			temp_conn.close()
+		LOGGER.critical(e)
+		return
 
 	global calls
 	global callbacks

@@ -1,7 +1,3 @@
-const MGE_VERSION = "0.5.0"
-::ROOT <- getroottable()
-::CONST <- getconsttable()
-
 //"reminder that constants are resolved at preprocessor level and not runtime"
 //"if you add them dynamically to the table they wont show up until you execute a new script as the preprocessor isnt aware yet"
 
@@ -9,6 +5,7 @@ const MGE_VERSION = "0.5.0"
 
 CONST.setdelegate({ _newslot = @(k, v) compilestring("const " + k + "=" + (typeof(v) == "string" ? ("\"" + v + "\"") : v))() })
 CONST.MAX_CLIENTS <- MaxClients().tointeger()
+
 if (!("ConstantNamingConvention" in ROOT))
 {
 	foreach(a, b in Constants)
@@ -16,7 +13,7 @@ if (!("ConstantNamingConvention" in ROOT))
 		foreach(k, v in b)
 		{
 			CONST[k] <- v != null ? v : 0
-			ROOT[k] <- v != null ? v : 0
+			ROOT[k]  <- v != null ? v : 0
 		}
 	}
 }
@@ -31,7 +28,8 @@ foreach(i in [NetProps, Entities, EntityOutputs, NavMesh, Convars])
 //look into "infinite" maps with propper arenas
 const PLAYER_THINK_INTERVAL = -1
 
-const GENERIC_DELAY = 0.1 //many things are delayed by this amount on player spawn and other important EntFires
+ // many things are delayed by this amount on player spawn and other important EntFires
+const GENERIC_DELAY = 0.1
 
 // Maximum number of spawn points allowed in an arena
 // this can safely be expanded to whatever, but I don't think any arenas will need more than 32
@@ -49,6 +47,7 @@ const AS_AFTERFIGHT   = 3
 const AS_REPORTED     = 4
 
 const STRING_NETPROP_ITEMDEF = "m_AttributeManager.m_Item.m_iItemDefinitionIndex"
+const STRING_NETPROP_PURGESTRINGS = "m_bForcePurgeFixedupStrings"
 const SINGLE_TICK = 0.015
 
 const INT_COLOR_WHITE = 16777215
@@ -148,3 +147,57 @@ const INT_MIN   = -2147483648
 const INT_MAX   = 2147483647
 
 const BASE_SHOTGUN_DAMAGE = 60
+
+
+// mitigate CUtlRBTree overflows
+local function PurgeGameString( str ) {
+
+	if (!str || str == "") return
+
+    local dummy = CreateByClassname( "logic_autosave" )
+    SetPropString( dummy, "m_iName", str )
+    SetPropBool( dummy, STRING_NETPROP_PURGESTRINGS, true )
+    EntFireByHandle( dummy, "Kill", null, -1, null, null )
+}
+
+if ( !("MGE_GAMESTRINGS" in ROOT) )
+    ::MGE_GAMESTRINGS <- {}
+
+
+EntFire( "*", "RunScriptCode", "SetPropBool(self, STRING_NETPROP_PURGESTRINGS, true); MGE_GAMESTRINGS[self.GetScriptId()] <- null" )
+MGE_GAMESTRINGS["SetPropBool(self, STRING_NETPROP_PURGESTRINGS, true); MGE_GAMESTRINGS[self.GetScriptId()] <- null"] <- null
+
+local function GameStringGenerator() {
+
+	local gamestrings_snapshot = clone MGE_GAMESTRINGS
+
+    // printl( gamestrings_snapshot.len() )
+
+	foreach( str1, str2 in gamestrings_snapshot ) {
+
+		PurgeGameString(str1)
+		PurgeGameString(str2)
+
+		delete MGE_GAMESTRINGS[str1]
+
+		yield str1
+	}
+}
+
+local gen = null
+
+local function HandleGameStrings() {
+
+	if ( !MGE_GAMESTRINGS.len() )
+		return 1
+
+	if ( !gen || gen.getstatus() == "dead" )
+		gen = GameStringGenerator()
+
+	resume gen
+	return 0.05
+}
+
+local string_thinker = SpawnEntityFromTable("logic_autosave", { vscripts = " " classname = "move_rope"})
+string_thinker.GetScriptScope().HandleGameStrings <- HandleGameStrings
+// AddThinkToEnt(string_thinker, "HandleGameStrings")
