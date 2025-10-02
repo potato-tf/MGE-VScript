@@ -42,8 +42,15 @@ function MGE::InitEntities() {
 		}
 	})
 
-	function PostSpawn() { ents.apply( @(ent) MGE[ ent.GetName().toupper().slice(2) ] <- ent ) }
-	template_scope.PostSpawn <- PostSpawn
+	function TemplatePostSpawn() { 
+
+		foreach(ent in template_scope.ents) {
+
+			printl(ent.GetName().toupper().slice(2))
+			MGE[ ent.GetName().toupper().slice(2) ] <- ent
+		}
+	}
+	template_scope.PostSpawn <- TemplatePostSpawn
 
 	template.AddTemplate("point_intermission",  { targetname = "__mge_changelevel"   vscripts = " " })
 	template.AddTemplate("point_clientcommand", { targetname = "__mge_clientcommand" vscripts = " " })
