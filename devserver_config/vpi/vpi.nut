@@ -503,6 +503,8 @@ local function Tokenize(str)
 		}
 	}
 
+	assert(!in_string)
+
 	if (start_index != null)
 		tokens.append(str.slice(start_index))
 
@@ -1130,8 +1132,8 @@ local function HandleCallbacks()
 	local contents = FileToString(INPUT_FILE)
 	if (!contents || contents == "") return
 
-	// try
-	// {
+	try
+	{
 		local table = JSON.Decode(contents)
 
 		local id = table.Identity
@@ -1162,10 +1164,10 @@ local function HandleCallbacks()
 			TryExecCallback(token, calldata, error)
 		}
 
-	// }
-	// catch (e)
-	// 	if (e != null)
-	// 		PrintMessage(null, format("Invalid input: %s (%s)", e, INPUT_FILE), MSG_WARNING)
+	}
+	catch (e)
+		if (e != null)
+			PrintMessage(null, format("Invalid input: %s (%s)", e, INPUT_FILE), MSG_WARNING)
 
 	// Wipe the file to let the server know we've handled its contents
 	// and it can send anything else it's waiting to write

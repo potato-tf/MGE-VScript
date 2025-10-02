@@ -27,7 +27,7 @@ except:
 
 # This should be the same token returned in the GetSecret function in vpi.nut
 # It's used to identify files created by VPI
-SECRET = r"9320fkslkdajkf#(FP#0"
+SECRET = r"9320fks#lkdajkf#(FP0"
 BYPASS_SECRET = False #do not set this to true unless you know what you're doing
 if (not SECRET and not BYPASS_SECRET):
 	raise RuntimeError("Please set your secret token")
