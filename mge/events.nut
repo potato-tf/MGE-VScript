@@ -353,11 +353,11 @@ MGE.Events <- {
 
 		local scope = player.GetScriptScope() || (player.ValidateScriptScope(), player.GetScriptScope())
 
-		if ("MGE_RESPAWN_OVERRIDE" in MGE && MGE_RESPAWN_OVERRIDE)
-		{
-			MGE_RESPAWN_OVERRIDE.AcceptInput("SetRespawnName", "__mge_spawn_override_" + player.GetTeam(), player, player)
-			MGE_RESPAWN_OVERRIDE.AcceptInput("StartTouch", "!activator", player, player)
-		}
+		// if (player.GetTeam() > TEAM_SPECTATOR) {
+
+			// EntFire("__mge_respawn_override", "SetRespawnName", "__mge_spawn_override_" + player.GetTeam())
+			// EntFire("__mge_respawn_override", "StartTouch", "!activator", -1, player)
+		// }
 
 		ValidatePlayerClass(player, player.GetPlayerClass())
 
@@ -474,13 +474,17 @@ MGE.Events <- {
 					hudstr += format("%s: %d (%d)\n", scope.player_name, arena.Score[team - 2], scope.stats.elo.tointeger())
 				}
 
-				if (!("MGE_HUD" in MGE || !MGE_HUD.IsValid()))
+				local hud = FindByName( null, "__mge_hud")
+
+				if (!hud || !hud.IsValid())
 					MGE.InitEntities()
+
+				hud = FindByName( null, "__mge_hud")
 				
-				MGE_HUD.KeyValueFromString("message", hudstr)
-				MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+				hud.KeyValueFromString("message", hudstr)
+				hud.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
 				// MGE_HUD.AcceptInput("Display", "", player, player)
-				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, player, player)
+				EntFireByHandle(hud, "Display", "", GENERIC_DELAY, player, player)
 
 			}
 
