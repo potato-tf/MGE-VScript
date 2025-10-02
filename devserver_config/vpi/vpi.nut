@@ -503,8 +503,6 @@ local function Tokenize(str)
 		}
 	}
 
-	assert(!in_string)
-
 	if (start_index != null)
 		tokens.append(str.slice(start_index))
 
