@@ -270,7 +270,12 @@ local function GetSanitizedHostname()
 		return str
 	}
 	catch (e)
+	{
+		error( "COULDN'T GET HOSTNAME! " + e )
+		error( "COULDN'T GET HOSTNAME! " + e )
+		error( "COULDN'T GET HOSTNAME! " + e )
 		return "team_fortress"
+	}
 }
 
 local INPUT_FILE
@@ -524,13 +529,13 @@ ParseTokens = function(tokens, start_index=0)
 	else if (token.find(".") != null || token.find("e") != null)
 	{
 		try { obj = token.tofloat() }
-		catch (e) {}
+		catch (e) { printl(e) }
 	}
 	// Integer
 	else
 	{
 		try { obj = token.tointeger() }
-		catch (e) {}
+		catch (e) { printl(e) }
 	}
 
 	// Array / Object

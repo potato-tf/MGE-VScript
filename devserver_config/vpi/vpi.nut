@@ -113,6 +113,7 @@ local function PrintMessage(player, msg, level=MSG_MISC, notify=NOTIFY_CONSOLE)
 			chatmsg = "\x07D9F4FC" + msg
 
 		ClientPrint(player, 3, chatmsg)
+		printl(chatmsg)
 	}
 
 	if (level == MSG_ERROR)
@@ -270,8 +271,13 @@ local function GetSanitizedHostname()
 		}
 		return str
 	}
-	catch (e)
+	catch (e) {
+
+		error( "COULDN'T GET HOSTNAME! " + e )
+		error( "COULDN'T GET HOSTNAME! " + e )
+		error( "COULDN'T GET HOSTNAME! " + e )
 		return "team_fortress"
+	}
 }
 
 local INPUT_FILE
@@ -525,13 +531,13 @@ ParseTokens = function(tokens, start_index=0)
 	else if (token.find(".") != null || token.find("e") != null)
 	{
 		try { obj = token.tofloat() }
-		catch (e) {}
+		catch (e) { printl(e) }
 	}
 	// Integer
 	else
 	{
 		try { obj = token.tointeger() }
-		catch (e) {}
+		catch (e) { printl(e) }
 	}
 
 	// Array / Object
@@ -1188,7 +1194,7 @@ local function GetCallFromArg(src, arg)
 			return VPICallInfo(GetSecret(), src, func, kwargs, callback, urgent, timeout)
 		}
 	}
-	catch (e) {}
+	catch (e) { printl(e) }
 }
 
 // Public interface for user scripts
@@ -1293,8 +1299,9 @@ VPI_SCRIPT_SCOPE <- SCRIPT_ENTITY.GetScriptScope()
 VPI_SCRIPT_SCOPE.readwritetick <- 0
 VPI_SCRIPT_SCOPE.ticks <- 0
 function VPI_SCRIPT_SCOPE::VPI_Think() {
+
 	// Check for tampering
-	try { ValidateIntegrity(); }
+	try { ValidateIntegrity() }
 	// Terminate
 	catch (e)
 	{
@@ -1331,7 +1338,7 @@ function VPI_SCRIPT_SCOPE::VPI_Think() {
 		}
 		// Normal read interval
 		else
-			if (readwritetick % WATCH_INTERVAL == 0 && callbacks.len())
+			if ( !(readwritetick % WATCH_INTERVAL) && callbacks.len())
 				HandleCallbacks()
 	}
 
@@ -1366,9 +1373,9 @@ function VPI_SCRIPT_SCOPE::VPI_Think() {
 	}
 
 	// Don't increment if we failed to write because we already wrote this tick
-	if (result != -1) ++readwritetick
+	if (result != -1) readwritetick++
 
-	++ticks
+	ticks++
 
 	return -1
 }
