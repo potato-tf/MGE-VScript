@@ -111,7 +111,7 @@ function MGE::InitEntities() {
 		show_in_hud 		= true
 		auto_countdown 		= true
 		show_time_remaining = true
-		"OnFinished#1"		: "__mge_main,CallScriptFunction,DoChangeLevel,1,-1"
+		"OnFinished#1"		: "__mge_main,CallScriptFunction,DoChangelevel,1,-1"
 
 	})
 
