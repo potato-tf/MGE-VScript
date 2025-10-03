@@ -81,13 +81,13 @@ MGE.SERVER_DATA <- {
 	players_red				  = 0
 	matchmaking_disable_time  = 0
 	map					      = GetMapName()
-	mission					  = ""
+	mission					  = "MGE"
 	region					  = ""
 	server_name				  = ""
 	classes					  = ""
 	domain 					  = "potato.tf"
 	password 				  = ""
-	campaign_name 			  = "MGE"
+	campaign_name 			  = "Other Gamemodes"
 	status 					  = "Waiting for players"
 	in_protected_match		  = false
 	is_fake_ip				  = false
