@@ -240,6 +240,7 @@ banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup
 
 @WrapInterface
 async def VPI_MGE_AutoUpdate(info):
+	global repo
 
 	"""
 	Git clones a repository and returns a list of changed files
@@ -317,7 +318,7 @@ async def VPI_MGE_AutoUpdate(info):
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info):
-		
+	global requests_get, requests_put
 	kwargs = info["kwargs"]
 	server_tags = kwargs["server_tags"] if "server_tags" in kwargs else r'gametype\mvm'
 
@@ -362,6 +363,7 @@ async def VPI_MGE_UpdateServerData(info):
 
 @WrapDB
 async def VPI_MGE_UpdateServerDataDB(info, cursor):
+	global requests_get, date_time
 	kwargs = info["kwargs"]
 
 	# Convert time dictionary to datetime object
