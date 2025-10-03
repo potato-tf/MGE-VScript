@@ -497,7 +497,7 @@ function MGE::SetupLeaderboard()
 
 	local leaderboard_cam_pos = Vector()
 	local leaderboard_cam_angles = QAngle()
-
+	local config = SpawnConfigs[MAPNAME_CONFIG_OVERRIDE]
 	// this config has a leaderboard cam position set
 	if ("leaderboard_cam" in config)
 	{
