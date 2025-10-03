@@ -3111,6 +3111,7 @@ function MGE::MGE_CreateNav(only_this_arena = null) {
 
 function MGE::DoChangelevel() {
 
+	InitEntities()
 	if (SERVER_FORCE_SHUTDOWN_ON_CHANGELEVEL)
 	{
 		SetValue("mp_chattime", 9999.0)
