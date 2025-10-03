@@ -383,32 +383,32 @@ local function UnEscape(str)
 
     while (i < str.len())
 	{
-        local ch1 = str[i].tochar()
+        local ch1 = str[i]
 
-        if (ch1 == "\\" && i + 1 < str.len())
+        if (ch1 == '\\' && i + 1 < str.len())
 		{
             ++i; // Skip the backslash
 
-            ch1 = str[i].tochar()
+            ch1 = str[i]
 
             // Handle escape sequences
-            if (ch1 == "\"")
+            if (ch1 == '"')
                 res += "\""
-            else if (ch1 == "\\")
+            else if (ch1 == '\\')
                 res += "\\"
-            else if (ch1 == "/")
+            else if (ch1 == '/')
                 res += "/"
-            else if (ch1 == "b")
+            else if (ch1 == 'b')
                 res += "\b"
-            else if (ch1 == "f")
+            else if (ch1 == 'f')
                 res += "\f"
-            else if (ch1 == "n")
+            else if (ch1 == 'n')
                 res += "\n"
-            else if (ch1 == "r")
+            else if (ch1 == 'r')
                 res += "\r"
-            else if (ch1 == "t")
+            else if (ch1 == 't')
                 res += "\t"
-            else if (ch1 == "u")
+            else if (ch1 == 'u')
 			{
                 // Handle Unicode escape sequences \uXXXX
                 if (i + 5 < str.len())
@@ -421,13 +421,13 @@ local function UnEscape(str)
             }
 			else
 			{
-                res += "\\" + ch1
+                res += "\\" + ch1.tochar()
             }
         }
 		else
 		{
             // Add non-escaped character to result
-            res += ch1
+            res += ch1.tochar()
         }
 
         ++i
@@ -547,9 +547,9 @@ ParseTokens = function(tokens, start_index=0)
 		local closed = false
 		local state  = 0
 
-		switch (token)
+		switch (token[0])
 		{
-		case "[":
+		case '[':
 			// State
 			// 0 - Expecting element or ]
 			// 1 - Expecting , or ]
@@ -558,15 +558,15 @@ ParseTokens = function(tokens, start_index=0)
 			obj = []
 			while (next_index < tokens.len())
 			{
-				local peek = tokens[next_index]
-				if (peek == "]")
+				local peek = tokens[next_index][0]
+				if (peek == ']')
 				{
 					assert(state != 2)
 					closed = true
 					next_index++
 					break
 				}
-				else if (peek == ",")
+				else if (peek == ',')
 				{
 					assert(state == 1)
 					state = 2
@@ -588,7 +588,7 @@ ParseTokens = function(tokens, start_index=0)
 			assert(closed)
 			break
 
-		case "{":
+		case '{':
 			// State
 			// 0 - Expecting key or }
 			// 1 - Expecting :
@@ -600,22 +600,22 @@ ParseTokens = function(tokens, start_index=0)
 			local key = null
 			while (next_index < tokens.len())
 			{
-				local peek = tokens[next_index]
+				local peek = tokens[next_index][0]
 
-				if (peek == "}")
+				if (peek == '}')
 				{
 					assert(!(state) || state == 3)
 					closed = true
 					next_index++
 					break
 				}
-				else if (peek == ":")
+				else if (peek == ':')
 				{
 					assert(state == 1)
 					state = 2
 					next_index++
 				}
-				else if (peek == ",")
+				else if (peek == ',')
 				{
 					assert(state == 3)
 					state = 4
