@@ -43,6 +43,7 @@ jobs:
             SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
           mapfile -t servers < <(curl -s https://raw.githubusercontent.com/potato-tf/deploy/refs/heads/main/serverlist.json | jq -r '.servers[]')
+          servers+=("22 pterodactyl@fr.potato.tf /var")
           for i in "${servers[@]}"; do a=( $i );
           {
             chmod +x ./devserver_config/vpi/*.py
