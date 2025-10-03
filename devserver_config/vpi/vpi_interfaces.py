@@ -120,18 +120,18 @@ async def VPI_MGE_DBInit(info, cursor):
         LOGGER.info("No mge_playerdata table found, creating...")
         try:
             await cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
-                steam_id INTEGER PRIMARY KEY, 
+                steam_id INTEGER PRIMARY KEY,
                 name VARCHAR(255),
-                elo BIGINT, 
-                wins BIGINT, 
-                losses BIGINT, 
-                kills BIGINT, 
-                deaths BIGINT, 
-                damage_taken BIGINT, 
-                damage_dealt BIGINT, 
-                airshots BIGINT, 
-                market_gardens BIGINT, 
-                hoops_scored BIGINT, 
+                elo BIGINT,
+                wins BIGINT,
+                losses BIGINT,
+                kills BIGINT,
+                deaths BIGINT,
+                damage_taken BIGINT,
+                damage_dealt BIGINT,
+                airshots BIGINT,
+                market_gardens BIGINT,
+                hoops_scored BIGINT,
                 koth_points_capped BIGINT)"""
             )
         except Exception as e:
@@ -147,18 +147,18 @@ async def VPI_MGE_DBInit(info, cursor):
                 await temp_cursor.execute(f"CREATE DATABASE IF NOT EXISTS {vpi_config.DB_DATABASE}")
                 await temp_cursor.execute(f"USE {vpi_config.DB_DATABASE}")
                 await temp_cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
-                    steam_id INTEGER PRIMARY KEY, 
+                    steam_id INTEGER PRIMARY KEY,
                     name VARCHAR(255),
-                    elo BIGINT, 
-                    wins BIGINT, 
-                    losses BIGINT, 
-                    kills BIGINT, 
-                    deaths BIGINT, 
-                    damage_taken BIGINT, 
-                    damage_dealt BIGINT, 
-                    airshots BIGINT, 
-                    market_gardens BIGINT, 
-                    hoops_scored BIGINT, 
+                    elo BIGINT,
+                    wins BIGINT,
+                    losses BIGINT,
+                    kills BIGINT,
+                    deaths BIGINT,
+                    damage_taken BIGINT,
+                    damage_dealt BIGINT,
+                    airshots BIGINT,
+                    market_gardens BIGINT,
+                    hoops_scored BIGINT,
                     koth_points_capped BIGINT)"""
                 )
                 temp_conn.close()
@@ -180,7 +180,7 @@ default_zeroes = ", ".join(["0"] * (len(player_data_columns.split(",")) - 3))
 @WrapDB
 async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     kwargs = info["kwargs"]
-    query_mode = kwargs["query_mode"] 
+    query_mode = kwargs["query_mode"]
     network_id = kwargs["network_id"]
     name = kwargs["name"]  # This should be properly escaped
 
@@ -189,10 +189,10 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
     default_elo = kwargs.get("default_elo", 1000)
 
     if (query_mode == "read" or query_mode == 0):
-        
+
         # print(COLOR['CYAN'], f"Fetching player data for steam ID {network_id}", COLOR['ENDC'])
         LOGGER.info(f"Fetching player data for steam ID {network_id}")
-        await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
+        await cursor.execute("SELECT * FROM mge_playerdata WHERE steam_id = %s", (network_id,))
         result = await cursor.fetchall()
 
         if not result:
@@ -201,7 +201,7 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
                 f"INSERT INTO mge_playerdata ({player_data_columns}) VALUES (%s, %s, %s, {default_zeroes})",
                 (network_id, name, default_elo)
             )
-            await cursor.execute(f"SELECT * FROM mge_playerdata WHERE steam_id = {network_id}")
+            await cursor.execute("SELECT * FROM mge_playerdata WHERE steam_id = %s", (network_id,))
             result = await cursor.fetchall()
 
         return result
@@ -219,7 +219,7 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
 
         await cursor.execute(query, params)
         return await cursor.fetchall()
-    
+
 banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup.bat", "config.nut"]
 @WrapInterface
 async def VPI_MGE_AutoUpdate(info, test=False):
@@ -272,7 +272,7 @@ async def VPI_MGE_AutoUpdate(info, test=False):
                     with open(temp_path, 'rb') as f1, open(current_path, 'rb') as f2:
                         if f1.read() != f2.read():
                             changed_files.append(relative_path)
-	
+
         LOGGER.info(f"Changed files: {changed_files}")
 
         #move changed files to the clone directory
@@ -320,7 +320,7 @@ async def VPI_MGE_UpdateServerData(info):
 
     if server and "addr" in server:
         kwargs['address'] = server['addr']
-    
+
     if (kwargs["map"].startswith("workshop/")):
         kwargs["map"] = server['map']
 
@@ -333,7 +333,7 @@ async def VPI_MGE_UpdateServerData(info):
             camelcase_kwargs[camel_key] = value
         else:
             camelcase_kwargs[key] = value
-    
+
     kwargs = camelcase_kwargs
     requests.put(kwargs["endpointUrl"], headers={"auth-token": vpi_config.WEB_API_KEY}, json=kwargs)
     return info
@@ -395,7 +395,7 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
     )
     await cursor.execute("""
         INSERT INTO mge_serverdata (
-            server_key, address, classes, map, max_wave, mission, 
+            server_key, address, classes, map, max_wave, mission,
             players_blu, players_connecting, players_max, players_red,
             region, server_name, status, update_time, wave, campaign_name,
             domain, in_protected_match, matchmaking_disable_time, password, is_fake_ip
@@ -421,13 +421,13 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
             campaign_name = VALUES(campaign_name)
     """, (
         kwargs["server_key"],
-        kwargs["address"], 
+        kwargs["address"],
         kwargs["map"],
         kwargs["max_wave"],
         kwargs["mission"],
         kwargs["players_blu"],
         kwargs["players_connecting"],
-        kwargs["players_max"], 
+        kwargs["players_max"],
         kwargs["players_red"],
         kwargs["region"],
         kwargs["server_name"],
