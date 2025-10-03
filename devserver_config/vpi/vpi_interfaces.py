@@ -233,6 +233,7 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
 
 banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup.bat", "config.nut"]
 
+git = None, os = None, tempfile = None, shutil = None
 @WrapInterface
 async def VPI_MGE_AutoUpdate(info):
 
@@ -247,8 +248,7 @@ async def VPI_MGE_AutoUpdate(info):
 	Returns:
 		list: List of changed files, or empty list if no changes/error
 	"""
-
-	if not 'git' in sys.modules:
+	if not git and not 'git' in sys.modules:
 		import os, tempfile, shutil, git
 	try:
 		# Get repo URL and branch from kwargs
@@ -265,7 +265,7 @@ async def VPI_MGE_AutoUpdate(info):
 
 		LOGGER.info(f"Cloning repository {repo_url} into {temp_dir}")
 		# Clone the repository using GitPython
-		repo = git.Repo.clone_from(repo_url, temp_dir, branch=branch)
+		git.Repo.clone_from(repo_url, temp_dir, branch=branch)
 
 		# Get list of changed files by comparing with current directory
 		changed_files = []
@@ -310,10 +310,11 @@ async def VPI_MGE_AutoUpdate(info):
 			except Exception as e:
 				LOGGER.warning(f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}")
 
+datetime = None, requests = None
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info):
 
-	if not 'requests' in sys.modules:
+	if not requests and not 'requests' in sys.modules:
 		import requests
 		
 	kwargs = info["kwargs"]
@@ -359,13 +360,11 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
 	# Convert time dictionary to datetime object
 	time_data = kwargs["update_time"]
 	tags = "gametype\\" + kwargs["server_tags"].replace(",", "\gametype\\") if "server_tags" in kwargs else r'gametype\mvm'
-	datetime_module = None
-	if not 'requests' in sys.modules:
-		import requests
-		from vpi_imports import datetime as datetime_module
+	if not requests and not 'requests' in sys.modules:
+		import requests, datetime
 
-	timestamp = datetime_module.datetime(
-		year=time_data.get("year", datetime_module.datetime.now().year),
+	timestamp = datetime.datetime(
+		year=time_data.get("year", datetime.datetime.now().year),
 		month=time_data.get("month", 1),
 		day=time_data.get("day", 1),
 		hour=time_data.get("hour", 0),
