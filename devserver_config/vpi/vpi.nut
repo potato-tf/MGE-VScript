@@ -1375,7 +1375,10 @@ function VPI_SCRIPT_SCOPE::VPI_Think() {
 
 	ticks++
 
-	return -1
+	// slow down there cowboy, this doesn't need every game tick
+	// we need to wait for the VPI server to write the data back to us anyway
+	// return -1
+	return 0.3
 }
 AddThinkToEnt(SCRIPT_ENTITY, "VPI_Think")
 
