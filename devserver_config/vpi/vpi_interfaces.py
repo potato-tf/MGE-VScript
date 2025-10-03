@@ -314,22 +314,10 @@ async def VPI_MGE_AutoUpdate(info):
 async def VPI_MGE_UpdateServerData(info):
 
 	if not 'requests' in sys.modules:
-		import requests, datetime
+		import requests
 		
 	kwargs = info["kwargs"]
-
-	# Convert time dictionary to datetime object
-	time_data   = kwargs["update_time"]
 	server_tags = kwargs["server_tags"] if "server_tags" in kwargs else r'gametype\mvm'
-
-	timestamp = datetime.datetime(
-		year	= time_data.get("year", datetime.datetime.now().year),
-		month	= time_data.get("month", 1),
-		day		= time_data.get("day", 1),
-		hour	= time_data.get("hour", 0),
-		minute	= time_data.get("minute", 0),
-		second	= time_data.get("second", 0)
-		).strftime('%Y-%m-%d %H:%M:%S')
 
 	name = kwargs["server_name"]
 
@@ -371,11 +359,13 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
 	# Convert time dictionary to datetime object
 	time_data = kwargs["update_time"]
 	tags = "gametype\\" + kwargs["server_tags"].replace(",", "\gametype\\") if "server_tags" in kwargs else r'gametype\mvm'
+	datetime_module = None
 	if not 'requests' in sys.modules:
-		import requests, datetime
+		import requests
+		from vpi_imports import datetime as datetime_module
 
-	timestamp = datetime.datetime(
-		year=time_data.get("year", datetime.datetime.now().year),
+	timestamp = datetime_module.datetime(
+		year=time_data.get("year", datetime_module.datetime.now().year),
 		month=time_data.get("month", 1),
 		day=time_data.get("day", 1),
 		hour=time_data.get("hour", 0),
