@@ -40,8 +40,8 @@ local PROTECTED_FILE_FUNCTIONS = true
 // { "source.nut" : [ "VPI_InterfaceFunctionName", @"/VPI_DB_User.*/" ] }
 local SOURCE_WHITELIST = {
 	"vpi.nut": null, // Null or empty list denotes uninhibited access
-	"functions.nut": ["VPI_MGE_ReadWritePlayerStats", "VPI_MGE_PopulateLeaderboard"],
-	"mge.nut": ["VPI_MGE_DBInit", "VPI_MGE_AutoUpdate", "VPI_MGE_UpdateServerData"],
+	"functions.nut": ["VPI_MGE_ReadWritePlayerStats", "VPI_MGE_UpdateServerData", "VPI_MGE_PopulateLeaderboard"],
+	"mge.nut": ["VPI_MGE_DBInit", "VPI_MGE_AutoUpdate"],
 }
 
 local SCRIPTDATA_DIR = "mge_playerdata"
@@ -574,7 +574,7 @@ ParseTokens = function(tokens, start_index=0)
 				}
 				else
 				{
-					assert(state == 0 || state == 2)
+					assert(!(state) || state == 2)
 					state = 1
 
 					local o = ParseTokens(tokens, next_index)
@@ -604,7 +604,7 @@ ParseTokens = function(tokens, start_index=0)
 
 				if (peek == "}")
 				{
-					assert(state == 0 || state == 3)
+					assert(!(state) || state == 3)
 					closed = true
 					next_index++
 					break
@@ -810,7 +810,7 @@ local function Timestamp(time=null, epoch=null, timezone={dir=1,hour=5,minute=0}
 	if (!epoch) epoch = EPOCH
 
 	function isLeapYear(year) {
-		return (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0)
+		return !(year % 4) && (year % 100 || !(year % 400))
 	}
 
 	local days = 0
@@ -936,7 +936,8 @@ local function ValidateCaller(src, func)
 	if (func && SOURCE_WHITELIST.len())
 	{
 		// Do not allow untrustworthy source files
-		if (!(src in SOURCE_WHITELIST)) return false
+		if (!(src in SOURCE_WHITELIST))
+			return printf("[VPI] %s is not whitelisted for '%s' ignoring...\n", src, func)
 
 		local interfaces = SOURCE_WHITELIST[src]
 
@@ -1180,7 +1181,7 @@ local function HandleCallbacks()
 // Get VPICallInfo instance from an arg which can either be a table or instance
 local function GetCallFromArg(src, arg)
 {
-	if (arg instanceof VPICallInfo) 
+	if (arg instanceof VPICallInfo)
 		return arg
 	else if (typeof(arg) == "table")
 	{
@@ -1327,7 +1328,7 @@ function VPI_SCRIPT_SCOPE::VPI_Think() {
 		// Read more frequently
 		if (expecting_iters != null && expecting_iters < MAX_EXPECTING_ITERS)
 		{
-			if (readwritetick % EXPECTING_INTERVAL == 0)
+			if (!(readwritetick % EXPECTING_INTERVAL))
 			{
 				++expecting_iters
 				HandleCallbacks()
@@ -1350,14 +1351,14 @@ function VPI_SCRIPT_SCOPE::VPI_Think() {
 		if (result) ++urgent_write_count; // Only increment if we actually wrote to file
 	}
 	// Write everything we've accumulated
-	else if (readwritetick % WRITE_INTERVAL == 0)
+	else if (!(readwritetick % WRITE_INTERVAL))
 	{
 		urgent_write_count = 0
 		result = WriteCallList(CombineCallLists(), true)
 	}
 
 	// Check for callback timeout
-	if (ticks % CALLBACK_TIMEOUT_CHECK_INTERVAL == 0)
+	if (!(ticks % CALLBACK_TIMEOUT_CHECK_INTERVAL))
 	{
 		local time = Time()
 		foreach (token, cbt in callbacks)

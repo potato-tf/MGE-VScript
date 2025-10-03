@@ -40,10 +40,9 @@ local PROTECTED_FILE_FUNCTIONS = true
 // { "source.nut" : [ "VPI_InterfaceFunctionName", @"/VPI_DB_User.*/" ] }
 local SOURCE_WHITELIST = {
 	"vpi.nut": null, // Null or empty list denotes uninhibited access
-	"functions.nut": ["VPI_MGE_ReadWritePlayerStats", "VPI_MGE_PopulateLeaderboard"],
-	"mge.nut": ["VPI_MGE_DBInit", "VPI_MGE_AutoUpdate", "VPI_MGE_UpdateServerData"],
+	"functions.nut": ["VPI_MGE_ReadWritePlayerStats", "VPI_MGE_UpdateServerData", "VPI_MGE_PopulateLeaderboard"],
+	"mge.nut": ["VPI_MGE_DBInit", "VPI_MGE_AutoUpdate"],
 }
-
 local SCRIPTDATA_DIR = "mge_playerdata"
 
 // How often we normally write to file (in ticks)
@@ -1180,7 +1179,7 @@ local function HandleCallbacks()
 // Get VPICallInfo instance from an arg which can either be a table or instance
 local function GetCallFromArg(src, arg)
 {
-	if (arg instanceof VPICallInfo) 
+	if (arg instanceof VPICallInfo)
 		return arg
 	else if (typeof(arg) == "table")
 	{
