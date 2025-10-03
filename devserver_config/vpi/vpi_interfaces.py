@@ -1,8 +1,13 @@
-from vpi_imports import vpi_config, sys
-import functools
+from vpi_imports import vpi_config, sys, os
+import functools, shutil, tempfile
 from re import sub
 
 LOGGER = vpi_config.LOGGER
+
+repo 		 = None
+date_time 	 = None
+requests_get = None
+requests_put = None
 
 # Note:
 # All interface functions should be decorated with either WrapDB or WrapInterface
@@ -233,7 +238,6 @@ async def VPI_MGE_ReadWritePlayerStats(info, cursor):
 
 banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup.bat", "config.nut"]
 
-git = None, os = None, tempfile = None, shutil = None
 @WrapInterface
 async def VPI_MGE_AutoUpdate(info):
 
@@ -248,8 +252,6 @@ async def VPI_MGE_AutoUpdate(info):
 	Returns:
 		list: List of changed files, or empty list if no changes/error
 	"""
-	if not git and not 'git' in sys.modules:
-		import os, tempfile, shutil, git
 	try:
 		# Get repo URL and branch from kwargs
 		kwargs = info["kwargs"]
@@ -263,9 +265,12 @@ async def VPI_MGE_AutoUpdate(info):
 		# Create temp directory for clone
 		temp_dir = tempfile.mkdtemp()
 
+		if not repo or not 'git' in sys.modules:
+			from git import Repo as repo
+
 		LOGGER.info(f"Cloning repository {repo_url} into {temp_dir}")
 		# Clone the repository using GitPython
-		git.Repo.clone_from(repo_url, temp_dir, branch=branch)
+		repo.clone_from(repo_url, temp_dir, branch=branch)
 
 		# Get list of changed files by comparing with current directory
 		changed_files = []
@@ -310,12 +315,8 @@ async def VPI_MGE_AutoUpdate(info):
 			except Exception as e:
 				LOGGER.warning(f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}")
 
-datetime = None, requests = None
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info):
-
-	if not requests and not 'requests' in sys.modules:
-		import requests
 		
 	kwargs = info["kwargs"]
 	server_tags = kwargs["server_tags"] if "server_tags" in kwargs else r'gametype\mvm'
@@ -326,7 +327,13 @@ async def VPI_MGE_UpdateServerData(info):
 
 	del kwargs["server_tags"]
 	endpoint = f'https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={vpi_config.STEAM_API_KEY}&limit=50000&filter=\\gamedir\\tf\\{tags}'
-	response = requests.get(endpoint)
+
+	if not requests_get or not 'requests' in sys.modules:
+
+		from requests import get as requests_get
+		from requests import put as requests_put
+
+	response = requests_get(endpoint)
 
 	if not 'servers' in response.json()['response']:
 		LOGGER.error(endpoint)
@@ -350,7 +357,7 @@ async def VPI_MGE_UpdateServerData(info):
 			camelcase_kwargs[key] = value
 
 	kwargs = camelcase_kwargs
-	requests.put(kwargs["endpointUrl"], headers={"auth-token": vpi_config.WEB_API_KEY}, json=kwargs)
+	requests_put(kwargs["endpointUrl"], headers={"auth-token": vpi_config.WEB_API_KEY}, json=kwargs)
 	return info
 
 @WrapDB
@@ -360,11 +367,12 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
 	# Convert time dictionary to datetime object
 	time_data = kwargs["update_time"]
 	tags = "gametype\\" + kwargs["server_tags"].replace(",", "\gametype\\") if "server_tags" in kwargs else r'gametype\mvm'
-	if not requests and not 'requests' in sys.modules:
-		import requests, datetime
 
-	timestamp = datetime.datetime(
-		year=time_data.get("year", datetime.datetime.now().year),
+	if not date_time or not 'datetime' in sys.modules:
+		from datetime import datetime as date_time
+
+	timestamp = date_time(
+		year=time_data.get("year", date_time.now().year),
 		month=time_data.get("month", 1),
 		day=time_data.get("day", 1),
 		hour=time_data.get("hour", 0),
@@ -374,7 +382,10 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
 
 	name = kwargs["server_name"]
 
-	response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={vpi_config.STEAM_API_KEY}&limit=50000&filter=\\gamedir\\tf\\{tags}")
+	if not requests_get or not 'requests' in sys.modules:
+		from requests import get as requests_get
+
+	response = requests_get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={vpi_config.STEAM_API_KEY}&limit=50000&filter=\\gamedir\\tf\\{tags}")
 
 	server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
 
