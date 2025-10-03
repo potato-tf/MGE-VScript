@@ -333,7 +333,7 @@ async def VPI_MGE_UpdateServerData(info):
 
 	name = kwargs["server_name"]
 
-	tags = "gametype\\" + server_tags.replace(",", "\gametype\\")
+	tags = "gametype\\" + server_tags.replace(",", "\\gametype\\")
 
 	del kwargs["server_tags"]
 	endpoint = f'https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={vpi_config.STEAM_API_KEY}&limit=50000&filter=\\gamedir\\tf\\{tags}'
