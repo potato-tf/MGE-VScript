@@ -70,8 +70,10 @@ foreach (sound in StockSounds)
 LocalTime(MGE.LOCALTIME)
 
 MGE.SERVER_DATA <- {
+
 	endpoint_url			  = "https://archive.potato.tf/api/serverstatus"
 	server_key				  = ""
+    server_tags               = GetStr("sv_tags")
 	address					  = 0
 	wave 					  = 0
 	max_wave				  = -1
@@ -110,7 +112,8 @@ MGE.ScriptEntFireSafe("__mge_main", @"
 	local split_server = split(server_name, `#`)
 	local split_region = split_server.len() == 1 ? [``, `]`] : split(split_server[1], `[`)
 
-	SERVER_DATA.server_name <- server_name
+	SERVER_DATA.server_name = server_name
+	SERVER_DATA.server_tags = GetStr(`sv_tags`)
 	SERVER_DATA.server_key	= split_server.len() == 1 ? `` : split_server[1].slice(0, split_server[1].find(`[`))
 	SERVER_DATA.region		= split_region.len() == 1 ? `` : split_region[1].slice(0, split_region[1].find(`]`))
 	SERVER_DATA.domain		= SERVER_DATA.region == `USA` ? `us.potato.tf` : format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
@@ -578,7 +581,9 @@ SetValue("mp_chattime", 1.0)
 SetValue("tf_weapon_criticals", 0)
 SetValue("tf_fall_damage_disablespread", 1)
 
-//requires a custom plugin to feed m_iszMvMPopfileName to SteamWorks_SetGameDescription
-//might be able to do this through VPI?
+// requires a custom plugin to feed m_iszMvMPopfileName to SteamWorks_SetGameDescription
+// this can be done with SteamworksPy instead for 100% vanilla compatibility
 local gamedesc = format("Potato MGE (%s)", MGE_MAPINFO[MAPNAME_CONFIG_OVERRIDE].nice_name)
 SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
+
+printl("[VScript MGE] READY!")

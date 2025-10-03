@@ -43,6 +43,7 @@ local SOURCE_WHITELIST = {
 	"functions.nut": ["VPI_MGE_ReadWritePlayerStats", "VPI_MGE_UpdateServerData", "VPI_MGE_PopulateLeaderboard"],
 	"mge.nut": ["VPI_MGE_DBInit", "VPI_MGE_AutoUpdate"],
 }
+
 local SCRIPTDATA_DIR = "mge_playerdata"
 
 // How often we normally write to file (in ticks)
@@ -382,32 +383,32 @@ local function UnEscape(str)
 
     while (i < str.len())
 	{
-        local ch1 = str[i].tochar()
+        local ch1 = str[i]
 
-        if (ch1 == "\\" && i + 1 < str.len())
+        if (ch1 == '\\' && i + 1 < str.len())
 		{
             ++i; // Skip the backslash
 
-            ch1 = str[i].tochar()
+            ch1 = str[i]
 
             // Handle escape sequences
-            if (ch1 == "\"")
+            if (ch1 == '"')
                 res += "\""
-            else if (ch1 == "\\")
+            else if (ch1 == '\\')
                 res += "\\"
-            else if (ch1 == "/")
+            else if (ch1 == '/')
                 res += "/"
-            else if (ch1 == "b")
+            else if (ch1 == 'b')
                 res += "\b"
-            else if (ch1 == "f")
+            else if (ch1 == 'f')
                 res += "\f"
-            else if (ch1 == "n")
+            else if (ch1 == 'n')
                 res += "\n"
-            else if (ch1 == "r")
+            else if (ch1 == 'r')
                 res += "\r"
-            else if (ch1 == "t")
+            else if (ch1 == 't')
                 res += "\t"
-            else if (ch1 == "u")
+            else if (ch1 == 'u')
 			{
                 // Handle Unicode escape sequences \uXXXX
                 if (i + 5 < str.len())
@@ -420,13 +421,13 @@ local function UnEscape(str)
             }
 			else
 			{
-                res += "\\" + ch1
+                res += "\\" + ch1.tochar()
             }
         }
 		else
 		{
             // Add non-escaped character to result
-            res += ch1
+            res += ch1.tochar()
         }
 
         ++i
@@ -546,9 +547,9 @@ ParseTokens = function(tokens, start_index=0)
 		local closed = false
 		local state  = 0
 
-		switch (token)
+		switch (token[0])
 		{
-		case "[":
+		case '[':
 			// State
 			// 0 - Expecting element or ]
 			// 1 - Expecting , or ]
@@ -557,15 +558,15 @@ ParseTokens = function(tokens, start_index=0)
 			obj = []
 			while (next_index < tokens.len())
 			{
-				local peek = tokens[next_index]
-				if (peek == "]")
+				local peek = tokens[next_index][0]
+				if (peek == ']')
 				{
 					assert(state != 2)
 					closed = true
 					next_index++
 					break
 				}
-				else if (peek == ",")
+				else if (peek == ',')
 				{
 					assert(state == 1)
 					state = 2
@@ -573,7 +574,7 @@ ParseTokens = function(tokens, start_index=0)
 				}
 				else
 				{
-					assert(state == 0 || state == 2)
+					assert(!(state) || state == 2)
 					state = 1
 
 					local o = ParseTokens(tokens, next_index)
@@ -587,7 +588,7 @@ ParseTokens = function(tokens, start_index=0)
 			assert(closed)
 			break
 
-		case "{":
+		case '{':
 			// State
 			// 0 - Expecting key or }
 			// 1 - Expecting :
@@ -599,22 +600,22 @@ ParseTokens = function(tokens, start_index=0)
 			local key = null
 			while (next_index < tokens.len())
 			{
-				local peek = tokens[next_index]
+				local peek = tokens[next_index][0]
 
-				if (peek == "}")
+				if (peek == '}')
 				{
-					assert(state == 0 || state == 3)
+					assert(!(state) || state == 3)
 					closed = true
 					next_index++
 					break
 				}
-				else if (peek == ":")
+				else if (peek == ':')
 				{
 					assert(state == 1)
 					state = 2
 					next_index++
 				}
-				else if (peek == ",")
+				else if (peek == ',')
 				{
 					assert(state == 3)
 					state = 4
@@ -809,7 +810,7 @@ local function Timestamp(time=null, epoch=null, timezone={dir=1,hour=5,minute=0}
 	if (!epoch) epoch = EPOCH
 
 	function isLeapYear(year) {
-		return (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0)
+		return !(year % 4) && (year % 100 || !(year % 400))
 	}
 
 	local days = 0
@@ -935,7 +936,8 @@ local function ValidateCaller(src, func)
 	if (func && SOURCE_WHITELIST.len())
 	{
 		// Do not allow untrustworthy source files
-		if (!(src in SOURCE_WHITELIST)) return false
+		if (!(src in SOURCE_WHITELIST))
+			return printf("[VPI] %s is not whitelisted for '%s' ignoring...\n", src, func)
 
 		local interfaces = SOURCE_WHITELIST[src]
 
@@ -1326,7 +1328,7 @@ function VPI_SCRIPT_SCOPE::VPI_Think() {
 		// Read more frequently
 		if (expecting_iters != null && expecting_iters < MAX_EXPECTING_ITERS)
 		{
-			if (readwritetick % EXPECTING_INTERVAL == 0)
+			if (!(readwritetick % EXPECTING_INTERVAL))
 			{
 				++expecting_iters
 				HandleCallbacks()
@@ -1349,14 +1351,14 @@ function VPI_SCRIPT_SCOPE::VPI_Think() {
 		if (result) ++urgent_write_count; // Only increment if we actually wrote to file
 	}
 	// Write everything we've accumulated
-	else if (readwritetick % WRITE_INTERVAL == 0)
+	else if (!(readwritetick % WRITE_INTERVAL))
 	{
 		urgent_write_count = 0
 		result = WriteCallList(CombineCallLists(), true)
 	}
 
 	// Check for callback timeout
-	if (ticks % CALLBACK_TIMEOUT_CHECK_INTERVAL == 0)
+	if (!(ticks % CALLBACK_TIMEOUT_CHECK_INTERVAL))
 	{
 		local time = Time()
 		foreach (token, cbt in callbacks)
@@ -1373,7 +1375,9 @@ function VPI_SCRIPT_SCOPE::VPI_Think() {
 
 	ticks++
 
-	return -1
+	// we need to wait for the VPI server to write the data back to us anyway
+	// return -1
+	return 0.3
 }
 AddThinkToEnt(SCRIPT_ENTITY, "VPI_Think")
 

@@ -31,20 +31,11 @@ function MGE::InitEntities() {
 	local template = CreateByClassname("point_script_template")
 	template.ValidateScriptScope()
 	local template_scope = template.GetScriptScope()
-	template_scope.ents <- []
-	template_scope.__EntityMakerResult <- {
-
-		entities = template_scope.ents
-
-	}.setdelegate({
-		function _newslot(_, value) {
-			entities.append(value)
-		}
-	})
+	template_scope.__EntityMakerResult <- { ents = [] }.setdelegate({ function _newslot(_, value) { ents.append(value) } })
 
 	function TemplatePostSpawn() { 
 
-		foreach(ent in template_scope.ents) {
+		foreach(ent in template_scope.__EntityMakerResult.ents) {
 
 			printl(ent.GetName().toupper().slice(2))
 			MGE[ ent.GetName().toupper().slice(2) ] <- ent
@@ -188,7 +179,6 @@ function MGE::InitEntities() {
 
 							if (MGE.SERVER_DATA.address == 0 && "address" in response)
 								MGE.SERVER_DATA.address = response.address
-
 						}
 					})
 				}
@@ -209,9 +199,12 @@ function MGE::InitEntities() {
 			return -1
 		}
 
-		delete TimerScope.TimerThink
+		SetPropString(self, "m_iszScriptThinkFunction", "")
 	}
 	MGE.ScriptEntFireSafe(timer, "AddThinkToEnt(self, `TimerThink`)")
+
+	if (ENABLE_LEADERBOARD)
+		SetupLeaderboard()
 }
 
 function MGE::ScriptEntFireSafe( target, code, delay = -1, activator = null, caller = null, allow_dead = true ) {
@@ -277,8 +270,7 @@ function MGE::PreserveEnts(preserve = true)
 
 function MGE::HandleRoundStart()
 {
-	PreserveEnts()
-	ScriptEntFireSafe("__mge_main", "PreserveEnts(false)", GENERIC_DELAY)
+	InitEntities()
 	local tf_gamerules = FindByClassname(null, "tf_gamerules")
 	if (tf_gamerules)
 	{
@@ -492,6 +484,186 @@ function MGE::GetUnixTimestamp(time)
     timestamp += (time.hour * 3600) + (time.minute * 60) + time.second
 
     return timestamp
+}
+
+function MGE::SetupLeaderboard()
+{
+	//spawn our camera
+	MGE.MGE_LeaderboardCam <- CreateByClassname("info_observer_point")
+	SetPropBool(MGE_LeaderboardCam, STRING_NETPROP_PURGESTRINGS, true)
+	MGE_LeaderboardCam.KeyValueFromString("targetname", "__mge_leaderboard_cam")
+	MGE_LeaderboardCam.KeyValueFromInt("fov",  120)
+	DispatchSpawn(MGE_LeaderboardCam)
+
+	local leaderboard_cam_pos = Vector()
+	local leaderboard_cam_angles = QAngle()
+
+	// this config has a leaderboard cam position set
+	if ("leaderboard_cam" in config)
+	{
+		local origin = split(config.leaderboard_cam, " ").apply( @(str) str.tofloat() )
+		local origin_len = origin.len()
+		leaderboard_cam_pos = Vector(origin[0], origin[1], origin[2])
+
+		if (origin_len == 4)
+			leaderboard_cam_angles = QAngle(origin[3], 0.0, 0.0)
+		else if (origin_len == 6)
+			leaderboard_cam_angles = QAngle(origin[3], origin[4], origin[5])
+
+		MGE_LeaderboardCam.SetAbsOrigin(leaderboard_cam_pos)
+		MGE_LeaderboardCam.SetAbsAngles(leaderboard_cam_angles)
+		return
+	}
+
+	//no config pos found, find a cam with a wall behind it
+	local cams = []
+	local welcome_cams = []
+	for (local cam; cam = FindByClassname(cam, "info_observer_point");)
+	{
+		//check the welcome cam first
+		GetPropBool(cam, "m_bDefaultWelcome") ? welcome_cams.append(cam) : cams.append(cam)
+	}
+
+	if (welcome_cams.len())
+		cams = welcome_cams.extend(cams)
+
+	local valid_cams = []
+	foreach (_cam in cams)
+	{
+		//this shouldn't happen but whatever
+		if (_cam.GetName() == "__mge_leaderboard_cam")
+			continue
+
+		local cam_angle_inverse = (_cam.GetAbsAngles() - QAngle(0, 180, 0))
+		local endpos = _cam.GetOrigin() + cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET
+		local trace = TraceLine(_cam.GetOrigin(), endpos, _cam)
+
+		// DebugDrawLine(_cam.GetOrigin(), endpos, 255, 100, 255, true, 10)
+
+		if (trace && trace == 1)
+			valid_cams.append(_cam)
+	}
+	local random_cam = valid_cams.len() == 1 ? valid_cams[0] : valid_cams[RandomInt(0, valid_cams.len() - 1)]
+	local random_cam_angle_inverse = (random_cam.GetAbsAngles() - QAngle(0, 180, 0))
+
+	MGE_LeaderboardCam.SetAbsOrigin(random_cam.GetOrigin())
+	MGE_LeaderboardCam.SetAbsAngles(random_cam_angle_inverse)
+
+	local leaderboard_pos = (random_cam.GetOrigin() + (random_cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET)) + Vector(0, 0, LEADERBOARD_VERTICAL_OFFSET)
+
+	MGE_Leaderboard <- CreateByClassname("point_worldtext")
+
+	MGE_Leaderboard.KeyValueFromString("targetname", "__mge_leaderboard_text")
+	MGE_Leaderboard.KeyValueFromString("message", "      Placeholder:\n       #9999 | aaaa\n")
+	MGE_Leaderboard.KeyValueFromInt("textsize", LEADERBOARD_TEXT_SIZE)
+	MGE_Leaderboard.KeyValueFromString("color", "255 255 255")
+	MGE_Leaderboard.KeyValueFromInt("orientation", 1)
+	MGE_Leaderboard.SetAbsOrigin(leaderboard_pos)
+	SetPropBool(MGE_Leaderboard, STRING_NETPROP_PURGESTRINGS, true)
+	DispatchSpawn(MGE_Leaderboard)
+	MGE.MGE_Leaderboard <- MGE_Leaderboard
+	MGE_Leaderboard.ValidateScriptScope()
+	LeaderboardScope <- MGE_Leaderboard.GetScriptScope()
+	LeaderboardScope.MGE_LEADERBOARD_DATA <- MGE_LEADERBOARD_DATA
+
+	local think_override = LEADERBOARD_UPDATE_INTERVAL
+
+	function LeaderboardScope::UpdateLeaderboard() {
+
+		// Store the keys and current index to track progress across yields
+		if (!("_current_stat_index" in this))
+			this._current_stat_index <- 0
+
+		local stat_keys = MGE_LEADERBOARD_DATA.keys()
+		local stat = stat_keys[_current_stat_index in stat_keys ? _current_stat_index : 0]
+
+		local column_name = ""
+		split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
+		column_name = column_name.slice(1)
+
+		VPI.AsyncCall({
+
+			func	= "VPI_MGE_PopulateLeaderboard"
+			timeout = INT_MAX
+			kwargs	= {
+
+				order_filter 			= column_name
+				max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES
+			}
+
+			function callback(response, error) {
+
+				if (typeof(response) != "array" || !response.len())
+				{
+					// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
+					return
+				}
+
+				// Process one stat per yield
+				if (this._current_stat_index < stat_keys.len()) {
+
+					local steamid_list = MGE_LEADERBOARD_DATA[stat]
+
+					local message = format("          %s:\n", stat)
+					foreach(i, user_info in steamid_list)
+					{
+						if (!user_info)
+							user_info = ["NONE", -INT_MAX]
+
+						// cycle through and fetch user stats faster if the leaderboard is empty
+						think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
+
+						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
+						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
+					}
+					self.KeyValueFromString("message", message)
+
+					this._current_stat_index++
+					yield
+				}
+			}
+		})
+
+		// Process one stat per yield
+		if (this._current_stat_index < stat_keys.len()) {
+
+			local steamid_list = MGE_LEADERBOARD_DATA[stat]
+
+			local message = format("          %s:\n", stat)
+			foreach(i, user_info in steamid_list)
+			{
+				if (!user_info)
+					user_info = ["NONE", -INT_MAX]
+
+				// cycle through and fetch user stats faster if the leaderboard is empty
+				think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
+
+				local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
+				message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
+			}
+			self.KeyValueFromString("message", message)
+
+			this._current_stat_index++
+			yield
+		}
+
+		// Reset index and refresh data when done with all stats
+		this._current_stat_index = 0
+	}
+
+	local gen = LeaderboardScope.UpdateLeaderboard()
+	resume gen
+
+	function LeaderboardScope::LeaderboardThink() {
+
+		if (gen.getstatus() == "dead")
+			gen = UpdateLeaderboard()
+
+		resume gen
+		return think_override
+	}
+
+	AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
 }
 
  // calling this function with no/null arena argument will:
@@ -733,191 +905,8 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 		return
 	}
 
-	// if (ELO_TRACKING_MODE == 2 && ENABLE_LEADERBOARD)
-	if (ENABLE_LEADERBOARD)
-	{
-		//misleading name, also handles the actual leaderboard
-		function MGE::DoLeaderboardCam()
-		{
-			//spawn our camera
-			MGE.MGE_LeaderboardCam <- CreateByClassname("info_observer_point")
-			SetPropBool(MGE_LeaderboardCam, STRING_NETPROP_PURGESTRINGS, true)
-			MGE_LeaderboardCam.KeyValueFromString("targetname", "__mge_leaderboard_cam")
-			MGE_LeaderboardCam.KeyValueFromInt("fov",  120)
-			DispatchSpawn(MGE_LeaderboardCam)
-
-			local leaderboard_cam_pos = Vector()
-			local leaderboard_cam_angles = QAngle()
-
-			// this config has a leaderboard cam position set
-			if ("leaderboard_cam" in config)
-			{
-				local origin = split(config.leaderboard_cam, " ").apply( @(str) str.tofloat() )
-				local origin_len = origin.len()
-				leaderboard_cam_pos = Vector(origin[0], origin[1], origin[2])
-
-				if (origin_len == 4)
-					leaderboard_cam_angles = QAngle(origin[3], 0.0, 0.0)
-				else if (origin_len == 6)
-					leaderboard_cam_angles = QAngle(origin[3], origin[4], origin[5])
-
-				MGE_LeaderboardCam.SetAbsOrigin(leaderboard_cam_pos)
-				MGE_LeaderboardCam.SetAbsAngles(leaderboard_cam_angles)
-				return
-			}
-
-			//no config pos found, find a cam with a wall behind it
-			local cams = []
-			local welcome_cams = []
-			for (local cam; cam = FindByClassname(cam, "info_observer_point");)
-			{
-				//check the welcome cam first
-				GetPropBool(cam, "m_bDefaultWelcome") ? welcome_cams.append(cam) : cams.append(cam)
-			}
-
-			if (welcome_cams.len())
-				cams = welcome_cams.extend(cams)
-
-			local valid_cams = []
-			foreach (_cam in cams)
-			{
-				//this shouldn't happen but whatever
-				if (_cam.GetName() == "__mge_leaderboard_cam")
-					continue
-
-				local cam_angle_inverse = (_cam.GetAbsAngles() - QAngle(0, 180, 0))
-				local endpos = _cam.GetOrigin() + cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET
-				local trace = TraceLine(_cam.GetOrigin(), endpos, _cam)
-
-				// DebugDrawLine(_cam.GetOrigin(), endpos, 255, 100, 255, true, 10)
-
-				if (trace && trace == 1)
-					valid_cams.append(_cam)
-			}
-			local random_cam = valid_cams.len() == 1 ? valid_cams[0] : valid_cams[RandomInt(0, valid_cams.len() - 1)]
-			local random_cam_angle_inverse = (random_cam.GetAbsAngles() - QAngle(0, 180, 0))
-
-			MGE_LeaderboardCam.SetAbsOrigin(random_cam.GetOrigin())
-			MGE_LeaderboardCam.SetAbsAngles(random_cam_angle_inverse)
-
-			local leaderboard_pos = (random_cam.GetOrigin() + (random_cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET)) + Vector(0, 0, LEADERBOARD_VERTICAL_OFFSET)
-
-			MGE_Leaderboard <- CreateByClassname("point_worldtext")
-
-			MGE_Leaderboard.KeyValueFromString("targetname", "__mge_leaderboard_text")
-			MGE_Leaderboard.KeyValueFromString("message", "      Placeholder:\n       #9999 | aaaa\n")
-			MGE_Leaderboard.KeyValueFromInt("textsize", LEADERBOARD_TEXT_SIZE)
-			MGE_Leaderboard.KeyValueFromString("color", "255 255 255")
-			MGE_Leaderboard.KeyValueFromInt("orientation", 1)
-			MGE_Leaderboard.SetAbsOrigin(leaderboard_pos)
-			SetPropBool(MGE_Leaderboard, STRING_NETPROP_PURGESTRINGS, true)
-			DispatchSpawn(MGE_Leaderboard)
-			MGE.MGE_Leaderboard <- MGE_Leaderboard
-			MGE_Leaderboard.ValidateScriptScope()
-			LeaderboardScope <- MGE_Leaderboard.GetScriptScope()
-			LeaderboardScope.MGE_LEADERBOARD_DATA <- MGE_LEADERBOARD_DATA
-
-			local think_override = LEADERBOARD_UPDATE_INTERVAL
-			function LeaderboardScope::UpdateLeaderboard() {
-
-				// Store the keys and current index to track progress across yields
-				if (!("_current_stat_index" in this))
-					this._current_stat_index <- 0
-
-				local stat_keys = MGE_LEADERBOARD_DATA.keys()
-				local stat = stat_keys[_current_stat_index in stat_keys ? _current_stat_index : 0]
-
-				local column_name = ""
-				split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
-				column_name = column_name.slice(1)
-
-				VPI.AsyncCall({
-
-					func	= "VPI_MGE_PopulateLeaderboard"
-					timeout = INT_MAX
-					kwargs	= {
-
-						order_filter 			= column_name
-						max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES
-					}
-
-					function callback(response, error) {
-
-						if (typeof(response) != "array" || !response.len())
-						{
-							// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
-							return
-						}
-
-						// Process one stat per yield
-						if (this._current_stat_index < stat_keys.len()) {
-
-							local steamid_list = MGE_LEADERBOARD_DATA[stat]
-
-							local message = format("          %s:\n", stat)
-							foreach(i, user_info in steamid_list)
-							{
-								if (!user_info)
-									user_info = ["NONE", -INT_MAX]
-
-								// cycle through and fetch user stats faster if the leaderboard is empty
-								think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
-
-								local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
-								message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
-							}
-							self.KeyValueFromString("message", message)
-
-							this._current_stat_index++
-							yield
-						}
-					}
-				})
-
-				// Process one stat per yield
-				if (this._current_stat_index < stat_keys.len()) {
-
-					local steamid_list = MGE_LEADERBOARD_DATA[stat]
-
-					local message = format("          %s:\n", stat)
-					foreach(i, user_info in steamid_list)
-					{
-						if (!user_info)
-							user_info = ["NONE", -INT_MAX]
-
-						// cycle through and fetch user stats faster if the leaderboard is empty
-						think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
-
-						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
-						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
-					}
-					self.KeyValueFromString("message", message)
-
-					this._current_stat_index++
-					yield
-				}
-
-				// Reset index and refresh data when done with all stats
-				this._current_stat_index = 0
-			}
-
-			local gen = LeaderboardScope.UpdateLeaderboard()
-			resume gen
-
-			function LeaderboardScope::LeaderboardThink() {
-
-				if (gen.getstatus() == "dead")
-					gen = UpdateLeaderboard()
-
-				resume gen
-				return think_override
-			}
-
-			AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
-		}
-		//delay this until ents are spawned
-		EntFire("__mge_main", "CallScriptFunction", "DoLeaderboardCam", GENERIC_DELAY)
-	}
+	if (ENABLE_LEADERBOARD) 
+		EntFire("__mge_main", "CallScriptFunction", "SetupLeaderboard", GENERIC_DELAY)
 
 	if (!arena_reset)
 		MGE.ARENAS_LIST <- array(config.len(), null)
@@ -925,8 +914,7 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 	local idx_failed = false
 	foreach(arena_name, _arena in config)
 	{
-
-		ARENAS[arena_name] <- _arena
+		ARENAS[arena_name]    <- _arena
 
 		_arena.CurrentPlayers <- {}
 		_arena.Queue          <- []

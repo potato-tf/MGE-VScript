@@ -1,11 +1,10 @@
-import os
-import sys
+from vpi_imports import os, sys
 import logging
-from   logging.handlers import TimedRotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 
 genv = os.environ.get
-
 USE_COLOR = True
+# mypy: disable-error-code="import-untyped"
 try:
 	from colorama import Fore, Back, Style
 except:
@@ -14,11 +13,11 @@ except:
 # Environment Variables:
 # VPI_SCRIPTDATA_DIR - tf/scriptdata directory
 # If MySQL Database:
-#	VPI_HOST         - hostname
-#	VPI_USER         - user
-#	VPI_PORT         - port
-#	VPI_INTERFACE    - database name
-#	VPI_PASSWORD     - password
+		#	VPI_HOST         - hostname
+		#	VPI_USER         - user
+		#	VPI_PORT         - port
+	#	VPI_INTERFACE    - database name
+	#	VPI_PASSWORD     - password
 
 # If you don't want to set environment variables feel free to simply set the default values below instead
 # They're mainly for when you host your source code publicly
@@ -53,15 +52,16 @@ WEB_API_KEY   =  genv("WEB_API_KEY", 	"000000")
 aiomysql = None
 aiosqlite = None
 
-if DB_TYPE == "mysql" or DB_TYPE == "":
-    if DB_TYPE == "":
-        DB_TYPE = "mysql"
-    import aiomysql as _aiomysql
-    aiomysql = _aiomysql
+if DB_TYPE == "" or not DB_TYPE:
+	DB_TYPE = "mysql"
+
+if DB_TYPE == "mysql":
+	import aiomysql as _aiomysql
+	aiomysql = _aiomysql
 
 elif DB_TYPE == "sqlite":
-    import aiosqlite as _aiosqlite
-    aiosqlite = _aiosqlite
+	import aiosqlite as _aiosqlite
+	aiosqlite = _aiosqlite
 
 # Get a connection to the current database
 async def _GetDBConnection():
@@ -70,7 +70,7 @@ async def _GetDBConnection():
 	elif (DB_TYPE == "sqlite"):
 		return DB # Connection
 	else:
-		return
+		return None
 
 DB = None
 # Ping the database to see if we're connected
@@ -105,7 +105,7 @@ if (DB_SUPPORT):
 
 	elif (DB_TYPE == "sqlite"):
 
-        # Put the path to your .db file here
+		# Put the path to your .db file here
 		DB_LITE = "test.db"
 
 	else:
@@ -150,7 +150,7 @@ if (USE_COLOR):
 			fmt += self.fmt + Style.RESET_ALL
 			return logging.Formatter(fmt, style=self.style).format(record)
 
-	CONSOLE_FORMATTER = ColoredConsoleFormatter("{asctime} - {levelname} - {message}", style="{")
+	CONSOLE_FORMATTER: logging.Formatter | ColoredConsoleFormatter = ColoredConsoleFormatter("{asctime} - {levelname} - {message}", style="{")
 else:
 	CONSOLE_FORMATTER = FILE_FORMATTER
 

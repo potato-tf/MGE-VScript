@@ -2,20 +2,14 @@
 # Server
 
 # Made by Mince (STEAM_0:0:41588292)
+# Modified by Braindawg for MGE
 
-VERSION = "1.0.0"
-
-import os
-import datetime
-import time
-import math
-import json
-import asyncio
-import importlib
-from   random import randint
-
-import vpi_config
+from vpi_imports import os, datetime, vpi_config
+import json, time, math, asyncio, importlib
+from random import randint
 import vpi_interfaces
+
+VERSION = "10.03.2025.1"
 
 LOGGER = vpi_config.LOGGER
 
@@ -58,7 +52,7 @@ class Encoder(json.JSONEncoder):
 
 # Emulate behavior of modulus in C / Squirrel
 def mod(a, b):
-    return (a % b + b) % b
+	return (a % b + b) % b
 
 # Simple encryption algorithm based on timestamp, time, and a key
 def Encrypt(string):
@@ -266,6 +260,7 @@ def ExtractCallsFromFile(path):
 
 
 async def main():
+
 	LOGGER.info("VScript-Python Interface Server version %s startup", VERSION)
 
 	try:
@@ -277,26 +272,7 @@ async def main():
 		if (vpi_config.DB is not None):
 			LOGGER.info("Connected to %s database using %s", vpi_config.DB_TYPE, str(vpi_config.DB))
 	except Exception as e:
-		if "Unknown database" in str(e):
-			LOGGER.critical("Database not found! Creating a new one...")
-			if (vpi_config.DB_TYPE == "mysql"):
-				vpi_config.DB = await vpi_config.aiomysql.create_pool(host=vpi_config.DB_HOST, user=vpi_config.DB_USER, password=vpi_config.DB_PASSWORD, port=vpi_config.DB_PORT, autocommit=False)
-				tempconn = await vpi_config.DB.acquire()
-				cursor = await tempconn.cursor()
-				await cursor.execute("CREATE DATABASE IF NOT EXISTS " + vpi_config.DB_DATABASE)
-				await cursor.close()
-				vpi_config.DB = await vpi_config.aiomysql.create_pool(host=vpi_config.DB_HOST, user=vpi_config.DB_USER, password=vpi_config.DB_PASSWORD, port=vpi_config.DB_PORT, db=vpi_config.DB_DATABASE, autocommit=False)
-			elif (vpi_config.DB_TYPE == "sqlite"):
-				vpi_config.DB = await vpi_config.aiosqlite.connect(vpi_config.DB_LITE)
-				cursor = await vpi_config.DB.acquire().cursor
-				await cursor.execute("CREATE DATABASE IF NOT EXISTS " + vpi_config.DB_DATABASE)
-				await vpi_config.DB.commit()
-				await cursor.close()
-				vpi_config.DB = await vpi_config.aiosqlite.connect(vpi_config.DB_LITE)
-
-		else:
-			LOGGER.critical(e)
-			return
+		LOGGER.critical(e)
 
 	global calls
 	global callbacks

@@ -4,19 +4,12 @@
 # Made by Mince (STEAM_0:0:41588292)
 # Modified by Braindawg for MGE
 
-VERSION = "09.29.2025.1"
-
-import os
-import datetime
-import time
-import math
-import json
-import asyncio
-import importlib
-from   random import randint
-
-import vpi_config
+from vpi_imports import os, datetime, vpi_config
+import json, time, math, asyncio, importlib
+from random import randint
 import vpi_interfaces
+
+VERSION = "10.03.2025.1"
 
 LOGGER = vpi_config.LOGGER
 
@@ -59,7 +52,7 @@ class Encoder(json.JSONEncoder):
 
 # Emulate behavior of modulus in C / Squirrel
 def mod(a, b):
-    return (a % b + b) % b
+	return (a % b + b) % b
 
 # Simple encryption algorithm based on timestamp, time, and a key
 def Encrypt(string):
@@ -267,6 +260,7 @@ def ExtractCallsFromFile(path):
 
 
 async def main():
+
 	LOGGER.info("VScript-Python Interface Server version %s startup", VERSION)
 
 	try:
@@ -278,30 +272,7 @@ async def main():
 		if (vpi_config.DB is not None):
 			LOGGER.info("Connected to %s database using %s", vpi_config.DB_TYPE, str(vpi_config.DB))
 	except Exception as e:
-		if ("Unknown database" in str(e) or "doesn't exist" in str(e)):
-			LOGGER.info("No mge database found, creating...")
-			temp_conn = await vpi_config.aiomysql.create_pool(host=vpi_config.DB_HOST, user=vpi_config.DB_USER, password=vpi_config.DB_PASSWORD, port=vpi_config.DB_PORT, autocommit=False)
-			temp_cursor = temp_conn.cursor()
-			await temp_cursor.execute(f"CREATE DATABASE IF NOT EXISTS {vpi_config.DB_DATABASE}")
-			await temp_cursor.execute(f"USE {vpi_config.DB_DATABASE}")
-			await temp_cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
-				steam_id INTEGER PRIMARY KEY, 
-				name VARCHAR(255),
-				elo BIGINT, 
-				wins BIGINT, 
-				losses BIGINT, 
-				kills BIGINT, 
-				deaths BIGINT, 
-				damage_taken BIGINT, 
-				damage_dealt BIGINT, 
-				airshots BIGINT, 
-				market_gardens BIGINT, 
-				hoops_scored BIGINT, 
-				koth_points_capped BIGINT)"""
-			)
-			temp_conn.close()
 		LOGGER.critical(e)
-		return
 
 	global calls
 	global callbacks

@@ -1,11 +1,10 @@
-import os
-import sys
+from vpi_imports import os, sys
 import logging
-from   logging.handlers import TimedRotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 
 genv = os.environ.get
-
 USE_COLOR = True
+# mypy: disable-error-code="import-untyped"
 try:
 	from colorama import Fore, Back, Style
 except:
@@ -14,11 +13,11 @@ except:
 # Environment Variables:
 # VPI_SCRIPTDATA_DIR - tf/scriptdata directory
 # If MySQL Database:
-#	DB_HOST         - hostname
-#	DB_USER         - user
-#	DB_PORT         - port
-#	DB_DATABASE     - database name
-#	DB_PASSWORD     - password
+		#	VPI_HOST         - hostname
+		#	VPI_USER         - user
+		#	VPI_PORT         - port
+	#	VPI_INTERFACE    - database name
+	#	VPI_PASSWORD     - password
 
 # If you don't want to set environment variables feel free to simply set the default values below instead
 # They're mainly for when you host your source code publicly
@@ -32,60 +31,37 @@ BYPASS_SECRET = False #do not set this to true unless you know what you're doing
 if (not SECRET and not BYPASS_SECRET):
 	raise RuntimeError("Please set your secret token")
 
-def find_env_vars(var = None, default = "", ignore_env = True):
-	env_vars = {}
-	if os.path.exists("env") and not ignore_env:
-		with open("env", "r") as f:
-			for line in f:
-				if "=" in line and (var is None or line.startswith(var)):
-					key, value = line.split("=")
-					env_vars[r""+key.strip()] = r""+value.strip().removesuffix('"')
-					if var is not None: break
-
-	elif var is not None:
-		env_vars[r""+var] = r""+genv(var, default)
-	return env_vars
-
-env = find_env_vars()
-_dir = os.path.abspath(__file__)
-SCRIPTDATA_DIR = os.path.normpath(os.path.join(_dir, env["SCRIPTDATA_DIR"]))
-print(SCRIPTDATA_DIR)
-if (not os.path.exists(SCRIPTDATA_DIR)): raise RuntimeError(f"{SCRIPTDATA_DIR} does not exist")
+# Change this to your scriptdata directory
+SCRIPTDATA_DIR = genv("SCRIPTDATA_DIR", r"C:\Program Files (x86)\Steam\steamapps\common\Team Fortress 2\tf\scriptdata")
+if (not os.path.exists(SCRIPTDATA_DIR)): raise RuntimeError("SCRIPTDATA_DIR does not exist")
 
 # Are you going to be interacting with a database?
 DB_SUPPORT = True
 
-# Default values if no env vars or env file is found
-DB_TYPE = "mysql"
-DB_HOST = "localhost"
-DB_USER = "root"
-DB_PORT = 3306
-DB_DATABASE = "mge"
-DB_PASSWORD = ""
-DB_LITE = "sqlite_filename.db"
-STEAM_API_KEY = "000000"
-WEB_API_KEY = "000000"
+# What type?
+DB_TYPE		  =  genv("DB_TYPE",        "mysql") # mysql or sqlite
+DB_HOST       =  genv("DB_HOST",        "localhost")
+DB_USER       =  genv("DB_USER",        "root")
+DB_PORT	      =  int(genv("DB_PORT",    3306))
+DB_DATABASE	  =  genv("DB_INTERFACE",   "mge")
+DB_PASSWORD	  =  genv("DB_PASSWORD",    "")
+DB_LITE       =  genv("DB_LITE",        "sqlite_filename.db")
+STEAM_API_KEY =  genv("STEAM_API_KEY",  "000000")
+WEB_API_KEY   =  genv("WEB_API_KEY", 	"000000")
 
 aiomysql = None
 aiosqlite = None
 
-if DB_SUPPORT:
-	DB_TYPE		  = env["DB_TYPE"]
-	DB_HOST       = env["DB_HOST"]
-	DB_USER       = env["DB_USER"]
-	DB_PORT	      = int(env["DB_PORT"])
-	DB_DATABASE	  = env["DB_INTERFACE"]
-	DB_PASSWORD	  = env["DB_PASSWORD"]
-	STEAM_API_KEY = env["STEAM_API_KEY"]
-	WEB_API_KEY   = env["WEB_API_KEY"]
+if DB_TYPE == "" or not DB_TYPE:
+	DB_TYPE = "mysql"
 
-	if DB_TYPE != "sqlite":
-		import aiomysql as _aiomysql
-		aiomysql = _aiomysql
-	else:
-		DB_LITE = env["DB_LITE"]
-		import aiosqlite as _aiosqlite
-		aiosqlite = _aiosqlite
+if DB_TYPE == "mysql":
+	import aiomysql as _aiomysql
+	aiomysql = _aiomysql
+
+elif DB_TYPE == "sqlite":
+	import aiosqlite as _aiosqlite
+	aiosqlite = _aiosqlite
 
 # Get a connection to the current database
 async def _GetDBConnection():
@@ -94,7 +70,7 @@ async def _GetDBConnection():
 	elif (DB_TYPE == "sqlite"):
 		return DB # Connection
 	else:
-		return
+		return None
 
 DB = None
 # Ping the database to see if we're connected
@@ -120,8 +96,8 @@ if (DB_SUPPORT):
 	if (DB_TYPE == "mysql"):
 
 		# Validation
-		for db_env in [DB_HOST, DB_USER, DB_PORT, DB_DATABASE, SCRIPTDATA_DIR]:
-			assert db_env is not None
+		for env in [DB_HOST, DB_USER, DB_PORT, DB_DATABASE, SCRIPTDATA_DIR]:
+			assert env is not None
 
 		if (DB_PASSWORD is None):
 			DB_PASSWORD = input(f"Enter password for {DB_USER}@{DB_HOST}:{DB_PORT} >>> ")
@@ -129,7 +105,7 @@ if (DB_SUPPORT):
 
 	elif (DB_TYPE == "sqlite"):
 
-        # Put the path to your .db file here
+		# Put the path to your .db file here
 		DB_LITE = "test.db"
 
 	else:
@@ -174,7 +150,7 @@ if (USE_COLOR):
 			fmt += self.fmt + Style.RESET_ALL
 			return logging.Formatter(fmt, style=self.style).format(record)
 
-	CONSOLE_FORMATTER = ColoredConsoleFormatter("{asctime} - {levelname} - {message}", style="{")
+	CONSOLE_FORMATTER: logging.Formatter | ColoredConsoleFormatter = ColoredConsoleFormatter("{asctime} - {levelname} - {message}", style="{")
 else:
 	CONSOLE_FORMATTER = FILE_FORMATTER
 
@@ -183,6 +159,13 @@ CONSOLE_HANDLER.setLevel(LOG_MIN_CONSOLE_LEVEL)
 CONSOLE_HANDLER.setFormatter(CONSOLE_FORMATTER)
 CONSOLE_HANDLER.addFilter(lambda _: LOG_USE_CONSOLE)
 LOGGER.addHandler(CONSOLE_HANDLER)
+
+CONSOLE_ERROR_HANDLER = logging.StreamHandler(stream=sys.stderr)
+CONSOLE_ERROR_HANDLER.setLevel(logging.ERROR)
+CONSOLE_ERROR_HANDLER.setFormatter(CONSOLE_FORMATTER)
+CONSOLE_ERROR_HANDLER.addFilter(lambda _: LOG_USE_CONSOLE)
+LOGGER.addHandler(CONSOLE_ERROR_HANDLER)
+
 
 FILE_HANDLER = TimedRotatingFileHandler("vpi.log", when="W0", encoding="utf-8", backupCount=5, delay=True)
 FILE_HANDLER.setLevel(LOG_MIN_FILE_LEVEL)
