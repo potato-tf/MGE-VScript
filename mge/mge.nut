@@ -72,6 +72,7 @@ LocalTime(MGE.LOCALTIME)
 MGE.SERVER_DATA <- {
 
 	endpoint_url			  = "https://archive.potato.tf/api/serverstatus"
+	server_name				  = ""
 	server_key				  = ""
     server_tags               = GetStr("sv_tags")
 	address					  = 0
@@ -85,7 +86,6 @@ MGE.SERVER_DATA <- {
 	map					      = GetMapName()
 	mission					  = "MGE"
 	region					  = ""
-	server_name				  = ""
 	classes					  = ""
 	domain 					  = "potato.tf"
 	password 				  = ""
