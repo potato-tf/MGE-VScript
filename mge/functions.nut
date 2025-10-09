@@ -42,7 +42,7 @@ function MGE::InitEntities() {
 
 	template_scope.ents <- []
 	template_scope.__EntityMakerResult <- {
-		entities = scope.ents
+		entities = template_scope.ents
 	}.setdelegate({
 		function _newslot ( _, value ) {
 			entities.append( value )
