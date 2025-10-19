@@ -9,6 +9,9 @@ date_time 	 = None
 requests_get = None
 requests_put = None
 
+STEAMAPI_LAST_REQUEST_TIME = 0.0
+STEAMAPI_REQUEST_RATE_LIMIT = 10
+
 # Note:
 # All interface functions should be decorated with either WrapDB or WrapInterface
 # Otherwise any errors that occur will not be handled gracefully and brick the entire program
@@ -318,7 +321,16 @@ async def VPI_MGE_AutoUpdate(info):
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info):
-	global requests_get, requests_put
+	global requests_get, requests_put, STEAMAPI_LAST_REQUEST_TIME
+
+	if not date_time or not 'datetime' in sys.modules:
+		from datetime import datetime as date_time
+
+	if date_time.now().timestamp() < STEAMAPI_LAST_REQUEST_TIME + STEAMAPI_REQUEST_RATE_LIMIT:
+		err = f"[VPI] Error: Steam API rate limit exceeded! Please wait {date_time.now().timestamp() - STEAMAPI_LAST_REQUEST_TIME} seconds before making another request."
+		LOGGER.error(err)
+		return err
+
 	kwargs = info["kwargs"]
 	server_tags = kwargs["server_tags"] if "server_tags" in kwargs else r'gametype\mvm'
 
@@ -335,11 +347,19 @@ async def VPI_MGE_UpdateServerData(info):
 		from requests import put as requests_put
 
 	response = requests_get(endpoint)
+	STEAMAPI_LAST_REQUEST_TIME = date_time.now().timestamp()
 
 	if not 'servers' in response.json()['response']:
 		LOGGER.error(endpoint)
 
-	server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
+	server = [server for server in response.json()['response']['servers'] if server['name'] == name]
+
+	if not len(server):
+		err = "No servers found in steam API response!"
+		LOGGER.error(err)
+		return err
+
+	server = server[0]
 
 	if server and "addr" in server:
 		kwargs['address'] = server['addr']
