@@ -10,7 +10,7 @@ requests_get = None
 requests_put = None
 
 STEAMAPI_LAST_REQUEST_TIME = 0
-STEAMAPI_REQUEST_RATE_LIMIT = 10
+STEAMAPI_REQUEST_RATE_LIMIT = 5
 
 # Note:
 # All interface functions should be decorated with either WrapDB or WrapInterface
@@ -327,7 +327,7 @@ async def VPI_MGE_UpdateServerData(info):
 		from datetime import datetime as date_time
 
 	if int(date_time.now().timestamp()) < STEAMAPI_LAST_REQUEST_TIME + STEAMAPI_REQUEST_RATE_LIMIT:
-		err = f"[VPI] Error: Steam API rate limit exceeded! Please wait {date_time.now().timestamp() - STEAMAPI_LAST_REQUEST_TIME} seconds before making another request."
+		err = f"[VPI] Error: Steam API rate limit exceeded! Please wait {STEAMAPI_LAST_REQUEST_TIME + STEAMAPI_REQUEST_RATE_LIMIT - int(date_time.now().timestamp())} seconds before making another request."
 		LOGGER.error(err)
 		return err
 
