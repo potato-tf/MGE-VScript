@@ -480,7 +480,7 @@ MGE.Events <- {
 					MGE.InitEntities()
 
 				hud = FindByName( null, "__mge_hud")
-				
+
 				hud.KeyValueFromString("message", hudstr)
 				hud.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
 				// MGE_HUD.AcceptInput("Display", "", player, player)

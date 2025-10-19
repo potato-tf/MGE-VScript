@@ -28,21 +28,37 @@ function MGE::InitEntities() {
 	// 	if ( cleanup.GetClassname() != "move_rope" )
 	// 		EntFireByHandle(cleanup, "Kill", "", -1, null, null)
 
-	local template = CreateByClassname("point_script_template")
+	local template = FindByName(null, "__mge_script_template" ) || CreateByClassname( "point_script_template" )
+
+	if ( template.GetName() == "__mge_script_template" ) {
+
+		template.AcceptInput( "ForceSpawn", null, null, null )
+		return
+	}
+
+	DispatchSpawn( template )
 	template.ValidateScriptScope()
-	local template_scope = template.GetScriptScope()
-	template_scope.__EntityMakerResult <- { ents = [] }.setdelegate({ function _newslot(_, value) { ents.append(value) } })
+	template_scope <- template.GetScriptScope()
 
-	function TemplatePostSpawn() { 
+	template_scope.ents <- []
+	template_scope.__EntityMakerResult <- {
+		entities = template_scope.ents
+	}.setdelegate({
+		function _newslot ( _, value ) {
+			entities.append( value )
+		}
+	})
 
-		foreach(ent in template_scope.__EntityMakerResult.ents) {
+	function template_scope::PostSpawn() {
+
+		foreach(ent in ents) {
 
 			printl(ent.GetName().toupper().slice(2))
 			MGE[ ent.GetName().toupper().slice(2) ] <- ent
 		}
 	}
-	template_scope.PostSpawn <- TemplatePostSpawn
 
+	// blank "vscripts" kv automatically does ValidateScriptScope() internally.
 	template.AddTemplate("point_intermission",  { targetname = "__mge_changelevel"   vscripts = " " })
 	template.AddTemplate("point_clientcommand", { targetname = "__mge_clientcommand" vscripts = " " })
 
@@ -116,7 +132,6 @@ function MGE::InitEntities() {
 	})
 
 	template.AcceptInput("ForceSpawn", null, null, null)
-	template.Kill()
 
 	local timer = FindByName(null, "__mge_timer")
 
@@ -229,7 +244,7 @@ function MGE::ScriptEntFireSafe( target, code, delay = -1, activator = null, cal
 			return
 		}
 
-		// PZI_Ext.Error.DebugLog( `Invalid target passed to ScriptEntFireSafe: ` + self )
+		// Assert( false, `Invalid target passed to ScriptEntFireSafe: ` + self )
 
 	", allow_dead.tointeger(), code ), delay, activator, caller )
 
@@ -905,7 +920,7 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 		return
 	}
 
-	if (ENABLE_LEADERBOARD) 
+	if (ENABLE_LEADERBOARD)
 		EntFire("__mge_main", "CallScriptFunction", "SetupLeaderboard", GENERIC_DELAY)
 
 	if (!arena_reset)
