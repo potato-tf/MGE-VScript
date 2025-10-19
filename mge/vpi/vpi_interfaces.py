@@ -333,7 +333,7 @@ async def VPI_MGE_UpdateServerData(info):
 
 	name = kwargs["server_name"]
 
-	tags = "gametype\\" + server_tags.replace(",", "\gametype\\")
+	tags = "gametype\\" + server_tags.replace(",", "\\gametype\\")
 
 	del kwargs["server_tags"]
 	endpoint = f'https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={vpi_config.STEAM_API_KEY}&limit=50000&filter=\\gamedir\\tf\\{tags}'
@@ -370,7 +370,7 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
 
 	# Convert time dictionary to datetime object
 	time_data = kwargs["update_time"]
-	tags = "gametype\\" + kwargs["server_tags"].replace(",", "\gametype\\") if "server_tags" in kwargs else r'gametype\mvm'
+	tags = "gametype\\" + kwargs["server_tags"].replace(",", "\\gametype\\") if "server_tags" in kwargs else "gametype\\mvm"
 	if not 'requests' in sys.modules:
 		import requests, datetime
 

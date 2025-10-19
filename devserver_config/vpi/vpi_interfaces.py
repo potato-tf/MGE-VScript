@@ -332,7 +332,7 @@ async def VPI_MGE_UpdateServerData(info):
 		return err
 
 	kwargs = info["kwargs"]
-	server_tags = kwargs["server_tags"] if "server_tags" in kwargs else r'gametype\mvm'
+	server_tags = kwargs["server_tags"] if "server_tags" in kwargs else "gametype\\mvm"
 
 	name = kwargs["server_name"]
 
@@ -388,7 +388,7 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
 
 	# Convert time dictionary to datetime object
 	time_data = kwargs["update_time"]
-	tags = "gametype\\" + kwargs["server_tags"].replace(",", "\gametype\\") if "server_tags" in kwargs else r'gametype\mvm'
+	tags = "gametype\\" + kwargs["server_tags"].replace(",", "\\gametype\\") if "server_tags" in kwargs else "gametype\\mvm"
 
 	if not date_time or not 'datetime' in sys.modules:
 		from datetime import datetime as date_time
