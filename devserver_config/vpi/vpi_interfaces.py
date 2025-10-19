@@ -321,7 +321,7 @@ async def VPI_MGE_AutoUpdate(info):
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info):
-	global requests_get, requests_put, STEAMAPI_LAST_REQUEST_TIME
+	global date_time, requests_get, requests_put, STEAMAPI_LAST_REQUEST_TIME
 
 	if not date_time or not 'datetime' in sys.modules:
 		from datetime import datetime as date_time
@@ -383,7 +383,7 @@ async def VPI_MGE_UpdateServerData(info):
 
 @WrapDB
 async def VPI_MGE_UpdateServerDataDB(info, cursor):
-	global requests_get, date_time
+	global date_time, requests_get
 	kwargs = info["kwargs"]
 
 	# Convert time dictionary to datetime object
