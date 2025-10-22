@@ -157,7 +157,7 @@ function MGE::InitEntities() {
 
 		if (time_left > 0)
 		{
-			if (!(time_left % VPI_SERVERINFO_UPDATE_INTERVAL))
+			if ( !(time_left % VPI_SERVERINFO_UPDATE_INTERVAL) )
 			{
 				if (UPDATE_SERVER_DATA) {
 
@@ -168,7 +168,6 @@ function MGE::InitEntities() {
 					local players = array(2, 0)
 					local spectators = 0
 					foreach (player, userid in MGE.ALL_PLAYERS)
-
 					{
 						if (!player || !player.IsValid() || player.IsFakeClient()) continue
 
@@ -187,16 +186,17 @@ function MGE::InitEntities() {
 						func   = "VPI_MGE_UpdateServerData"
 						kwargs = MGE.SERVER_DATA
 
-						function callback(response, error) {
+						function callback(response, err) {
 
-							if (error)
-								return 3
+							if (err)
+								error( err + "\n" )
 
 							if (MGE.SERVER_DATA.address == 0 && "address" in response)
 								MGE.SERVER_DATA.address = response.address
 						}
 					})
 				}
+				return 3
 			}
 
 			// Show countdown message in last minute
