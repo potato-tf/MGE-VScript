@@ -200,9 +200,9 @@ function MGE::InitEntities() {
 			}
 
 			// Show countdown message in last minute
-			if (time_left < 60 && !(time_left.tointeger() % 10))
+			if ( time_left < 60 && !(time_left.tointeger() % 10) )
 			{
-				if (!hinted)
+				if ( !hinted )
 				{
 					SendGlobalGameEvent("player_hintmessage", {hintmessage = format("MAP RESTART IN %d SECONDS", time_left.tointeger())})
 					hinted = true
@@ -251,37 +251,37 @@ function MGE::ScriptEntFireSafe( target, code, delay = -1, activator = null, cal
 	MGE_GAMESTRINGS[code] <- null
 }
 
-function MGE::PreserveEnts(preserve = true)
-{
-	for (local ent; ent = FindByName(ent, "__mge*");)
-	{
-		local scope = ent.GetScriptScope() || (ent.ValidateScriptScope(), ent.GetScriptScope())
-		local classname = ent.GetClassname()
-		if (preserve)
-		{
-			if (classname == "move_rope")
-				continue
-			// these ents don't like having classname changed
-			// EFL_KILLME seemingly doesn't have any major side effects here
-			// (besides blocking Kill inputs)
-			if (classname == "info_observer_point" || classname == "trigger_player_respawn_override")
-			{
-				preserve ? ent.AddEFlags(EFL_KILLME) : ent.RemoveEFlags(EFL_KILLME)
-				continue
-			}
+// function MGE::PreserveEnts(preserve = true)
+// {
+// 	for (local ent; ent = FindByName(ent, "__mge*");)
+// 	{
+// 		local scope = ent.GetScriptScope() || (ent.ValidateScriptScope(), ent.GetScriptScope())
+// 		local classname = ent.GetClassname()
+// 		if (preserve)
+// 		{
+// 			if (classname == "move_rope")
+// 				continue
+// 			// these ents don't like having classname changed
+// 			// EFL_KILLME seemingly doesn't have any major side effects here
+// 			// (besides blocking Kill inputs)
+// 			if (classname == "info_observer_point" || classname == "trigger_player_respawn_override")
+// 			{
+// 				preserve ? ent.AddEFlags(EFL_KILLME) : ent.RemoveEFlags(EFL_KILLME)
+// 				continue
+// 			}
 
-			if (!("original_classname" in scope))
-				scope.original_classname <- ""
+// 			if (!("original_classname" in scope))
+// 				scope.original_classname <- ""
 
-			scope.original_classname = classname
+// 			scope.original_classname = classname
 
-			// set this to a random preserved entity classname
-			ent.KeyValueFromString("classname", "move_rope")
-		}
-		else if ("original_classname" in scope)
-			ent.KeyValueFromString("classname", scope.original_classname)
-	}
-}
+// 			// set this to a random preserved entity classname
+// 			ent.KeyValueFromString("classname", "move_rope")
+// 		}
+// 		else if ("original_classname" in scope)
+// 			ent.KeyValueFromString("classname", scope.original_classname)
+// 	}
+// }
 
 function MGE::HandleRoundStart()
 {
