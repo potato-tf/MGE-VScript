@@ -327,7 +327,7 @@ async def VPI_MGE_UpdateServerData(info):
 		from datetime import datetime as date_time
 
 	now = int(date_time.now().timestamp())
-	if now < STEAMAPI_LAST_REQUEST_TIME + STEAMAPI_REQUEST_RATE_LIMIT:
+	if now < STEAMAPI_LAST_REQUEST_TIME + STEAMAPI_REQUEST_RATE_LIMIT and not now == STEAMAPI_LAST_REQUEST_TIME:
 		err = f"""
 		[VPI ERROR] Steam API rate limit exceeded!
 		Last request time: {STEAMAPI_LAST_REQUEST_TIME}
