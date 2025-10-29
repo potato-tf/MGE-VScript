@@ -326,17 +326,17 @@ async def VPI_MGE_UpdateServerData(info):
 	if not date_time or not 'datetime' in sys.modules:
 		from datetime import datetime as date_time
 
-	now = int(date_time.now().timestamp())
-	if now < STEAMAPI_LAST_REQUEST_TIME + STEAMAPI_REQUEST_RATE_LIMIT and STEAMAPI_LAST_REQUEST_TIME:
-		err = f"""
-		[VPI ERROR] Steam API rate limit exceeded!
-		Last request time: {STEAMAPI_LAST_REQUEST_TIME}
-		Current time: {now}
-		Difference: {now - STEAMAPI_LAST_REQUEST_TIME}
-		Time until next request: {STEAMAPI_REQUEST_RATE_LIMIT - (now - STEAMAPI_LAST_REQUEST_TIME)}
-		"""
-		LOGGER.error(err)
-		return err
+	# now = int(date_time.now().timestamp())
+	# if now < STEAMAPI_LAST_REQUEST_TIME + STEAMAPI_REQUEST_RATE_LIMIT and STEAMAPI_LAST_REQUEST_TIME:
+	# 	err = f"""
+	# 	[VPI ERROR] Steam API rate limit exceeded!
+	# 	Last request time: {STEAMAPI_LAST_REQUEST_TIME}
+	# 	Current time: {now}
+	# 	Difference: {now - STEAMAPI_LAST_REQUEST_TIME}
+	# 	Time until next request: {STEAMAPI_REQUEST_RATE_LIMIT - (now - STEAMAPI_LAST_REQUEST_TIME)}
+	# 	"""
+	# 	LOGGER.error(err)
+	# 	return err
 
 	kwargs = info["kwargs"]
 	server_tags = kwargs["server_tags"] if "server_tags" in kwargs else "gametype\\mvm"
