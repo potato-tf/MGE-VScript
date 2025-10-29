@@ -353,7 +353,7 @@ async def VPI_MGE_UpdateServerData(info):
 		from requests import get as requests_get
 		from requests import put as requests_put
 
-	STEAMAPI_LAST_REQUEST_TIME = now
+	# STEAMAPI_LAST_REQUEST_TIME = now
 	response = requests_get(endpoint)
 
 	if not 'servers' in response.json()['response']:
