@@ -9,6 +9,11 @@ from aiomysql import connect as aiomysql_connect
 from shutil import move, rmtree
 from tempfile import mkdtemp
 
+date_time = None
+STEAMAPI_LAST_REQUEST_TIME = 0.0
+STEAMAPI_REQUEST_RATE_LIMIT = 5.0
+requests_get = None
+requests_put = None
 
 # Note:
 # All interface functions should be decorated with either WrapDB or WrapInterface
