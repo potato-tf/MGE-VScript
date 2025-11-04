@@ -82,6 +82,9 @@ async def _GetDBConnection():
 		elif (DB_TYPE == "sqlite"):
 			DB = await aiosqlite.connect(DB_LITE)
 
+	if not DB:
+		raise RuntimeError("Could not establish connection to database!")
+
 	if (DB_TYPE == "mysql"):
 		return await DB.acquire() # Pool
 	elif (DB_TYPE == "sqlite"):
