@@ -11,7 +11,7 @@ import json, time, math, asyncio, importlib, datetime
 from itertools import islice
 from random import randint
 import vpi_interfaces
-from vpi_config import aiosqlite, aiomysql, PingDB, SECRET, DB, _GetDBConnection, DB_TYPE, DB_LITE, DB_HOST, DB_USER, DB_PORT, DB_DATABASE, DB_PASSWORD, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
+from vpi_config import aiosqlite, aiomysql, PingDB, SECRET, DB, DB_TYPE, DB_LITE, DB_HOST, DB_USER, DB_PORT, DB_DATABASE, DB_PASSWORD, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
 
 ###################################################################################################
 
@@ -271,6 +271,19 @@ async def main():
 
 	# Watchdog loop
 	while True:
+
+		if DB_SUPPORT and not DB:
+			try:
+				if (DB_TYPE == "mysql"):
+					DB = await aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
+				elif (DB_TYPE == "sqlite"):
+					DB = await aiosqlite.connect(DB_LITE)
+
+				if (DB is not None):
+					LOGGER.warning("!RECONNECTING! to %s database using %s", DB_TYPE, str(DB))
+			except Exception as e:
+				LOGGER.critical(e)
+
 		time.sleep(0.2)
 		current_time = time.time()
 
