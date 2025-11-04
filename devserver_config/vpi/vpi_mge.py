@@ -11,7 +11,7 @@ import json, time, math, asyncio, importlib, datetime
 from itertools import islice
 from random import randint
 import vpi_interfaces
-from vpi_config import _GetDBConnection, PingDB, SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
+from vpi_config import PingDB, SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
 
 ###################################################################################################
 
@@ -252,7 +252,7 @@ async def main():
 
 	LOGGER.info("VScript-Python Interface Server version %s startup", VERSION)
 
-	await _GetDBConnection()
+	await PingDB()
 
 	global calls
 	global callbacks
