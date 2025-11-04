@@ -82,7 +82,12 @@ async def _GetDBConnection():
 		elif (DB_TYPE == "sqlite"):
 			DB = await aiosqlite.connect(DB_LITE)
 
-	return DB.acquire() if DB_TYPE == "mysql" else DB
+	if (DB_TYPE == "mysql"):
+		return await DB.acquire() # Pool
+	elif (DB_TYPE == "sqlite"):
+		return DB # Connection
+	else:
+		return None
 
 # Ping the database to see if we're connected
 async def PingDB():
@@ -99,7 +104,7 @@ async def PingDB():
 		return False
 	finally:
 		if (DB_TYPE == "mysql"):
-			await DB.release(conn)
+			DB.release(conn)
 
 if (DB_SUPPORT):
 	DB = None
