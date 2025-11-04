@@ -73,18 +73,6 @@ elif DB_TYPE == "sqlite":
 # Get a connection to the current database
 async def _GetDBConnection():
 
-	global DB
-
-	if not DB:
-		
-		if (DB_TYPE == "mysql"):
-			DB = await aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
-		elif (DB_TYPE == "sqlite"):
-			DB = await aiosqlite.connect(DB_LITE)
-
-	if not DB:
-		raise RuntimeError("Could not establish connection to database!")
-
 	if (DB_TYPE == "mysql"):
 		return await DB.acquire() # Pool
 	elif (DB_TYPE == "sqlite"):

@@ -251,19 +251,18 @@ def ExtractCallsFromFile(path):
 async def main():
 
 	LOGGER.info("VScript-Python Interface Server version %s startup", VERSION)
-	# global DB
+	global DB
 
-	await _GetDBConnection()
-	# try:
-	# 	if (DB_TYPE == "mysql"):
-	# 		DB = await aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
-	# 	elif (DB_TYPE == "sqlite"):
-	# 		DB = await aiosqlite.connect(DB_LITE)
+	try:
+		if (DB_TYPE == "mysql"):
+			DB = await aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
+		elif (DB_TYPE == "sqlite"):
+			DB = await aiosqlite.connect(DB_LITE)
 
-	# 	if (DB is not None):
-	# 		LOGGER.info("Connected to %s database using %s", DB_TYPE, str(DB))
-	# except Exception as e:
-	# 	LOGGER.critical(e)
+		if (DB is not None):
+			LOGGER.info("Connected to %s database using %s", DB_TYPE, str(DB))
+	except Exception as e:
+		LOGGER.critical(e)
 
 	global calls
 	global callbacks
