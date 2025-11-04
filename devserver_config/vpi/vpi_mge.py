@@ -11,7 +11,7 @@ import json, time, math, asyncio, importlib, datetime
 from itertools import islice
 from random import randint
 import vpi_interfaces
-from vpi_config import aiosqlite, aiomysql, PingDB, SECRET, DB_TYPE, DB_LITE, DB_HOST, DB_USER, DB_PORT, DB_DATABASE, DB_PASSWORD, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
+from vpi_config import aiosqlite, aiomysql, PingDB, SECRET, DB, DB_TYPE, DB_LITE, DB_HOST, DB_USER, DB_PORT, DB_DATABASE, DB_PASSWORD, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
 
 ###################################################################################################
 
@@ -251,6 +251,7 @@ def ExtractCallsFromFile(path):
 async def main():
 
 	LOGGER.info("VScript-Python Interface Server version %s startup", VERSION)
+	global DB
 
 	try:
 		if (DB_TYPE == "mysql"):
