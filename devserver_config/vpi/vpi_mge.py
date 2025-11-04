@@ -1,40 +1,42 @@
 # VScript-Python Interface
+# Version 1.0.0
 # Server
 
 # Made by Mince (STEAM_0:0:41588292)
-# Modified by Braindawg for MGE
+# And modified by Braindawg (STEAM_0:0:14133131)
 
-from vpi_imports import os, datetime, vpi_config
-import json, time, math, asyncio, importlib
+print("VScript-Python Interface (MGE) \n")
+import os
+import json, time, math, asyncio, importlib, datetime
+from itertools import islice
 from random import randint
 import vpi_interfaces
-
-VERSION = "10.03.2025.1"
-
-LOGGER = vpi_config.LOGGER
+from vpi_config import aiosqlite, aiomysql, PingDB, SECRET, DB_TYPE, DB_LITE, DB_HOST, DB_USER, DB_PORT, DB_DATABASE, DB_PASSWORD, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
 
 ###################################################################################################
 
-# {
-#		"<host>": {
-#			"restart_modtime": <num>,
-#			"paths": {
-#				"<filepath>": {
-#					"modtime": <num>,
-#					"async": [ {...}, {...} ],
-#				}
-#			}
-#		}
-# }
-calls: dict = {}
+POOL = None
 
+loop = asyncio.new_event_loop()
+
+# {
+#	  "<host>": {
+#		  "async": [ {...}, {...} ],
+#		  "chain": [
+#			  [ {...}, {...} ],
+#			  []
+#		  ]
+#	  }
+# }
+calls = {}
 
 # {
 #	  "<host>": {
 #		  "<token>": <response>
 #	  }
 # }
-callbacks: dict = {}
+callbacks = {}
+
 
 # Handle some types not handled by the json module
 class Encoder(json.JSONEncoder):
@@ -71,8 +73,8 @@ def Encrypt(string):
 
 	enc = ""
 	for i, ch in enumerate(string):
-		key_index = mod(i, len(vpi_config.SECRET)) # Corresponding index in our key, loop if necessary
-		key_char  = vpi_config.SECRET[key_index]
+		key_index = mod(i, len(SECRET)) # Corresponding index in our key, loop if necessary
+		key_char  = SECRET[key_index]
 
 		# Encode the character; shifted using hash and key_char; limited to 32 - 127 ASCII
 		enc += chr(32 + mod(ord(ch) + h + ord(iv[i]) + ord(key_char), 95))
@@ -92,8 +94,8 @@ def Decrypt(enc, iv, timestamp, ticks):
 
 	dec = ""
 	for i, ch in enumerate(enc):
-		key_index = mod(i, len(vpi_config.SECRET))
-		key_char  = vpi_config.SECRET[key_index]
+		key_index = mod(i, len(SECRET))
+		key_char  = SECRET[key_index]
 
 		dec_char = mod(ord(ch) - 32 - h - ord(iv[i]) - ord(key_char), 95)
 		if (dec_char < 32):
@@ -111,13 +113,12 @@ def GetHostname(path):
 	return host[:sep]
 
 # Write responses from interface functions to file
-MAX_FILE_SIZE = 16000
 def WriteCallbacksToFile():
 	# Hosts to delete
 	delete = []
 
 	for host, info in callbacks.items():
-		path = os.path.join(vpi_config.SCRIPTDATA_DIR, f"{host}_vpi_input.interface")
+		path = os.path.join(SCRIPTDATA_DIR, f"{host}_vpi_input.interface")
 		with open(path, "a+") as f:
 			# "a+" file mode seeks to the end of the file, need to go back to the beginning
 			f.seek(0)
@@ -131,37 +132,32 @@ def WriteCallbacksToFile():
 			# Wipe the file
 			f.truncate(0)
 
-			table = {"Calls": info}
-			table["Identity"] = Encrypt(vpi_config.SECRET)
-
-			string   = json.dumps(table, cls=Encoder)
+			table	 = {"Calls": info}
 			overflow = {}
 
-			if (len(string) >= MAX_FILE_SIZE):
-				# Sort responses by size
-				cbs = [[token, response] for token, response in info.items()]
-				for l in cbs: l.append(len(json.dumps(l)))
-				cbs.sort(key=lambda l: l[2])
-
-				# Loop through and get as many as can fit
-				totalsize = 0
-				fits = {}
-				for l in cbs:
-					token, response, size = l
-
-					# Client expects error responses to start with [VPI ERROR]
-					if (size >= MAX_FILE_SIZE):
-						response = "[VPI ERROR] (token) :: Response size exceeds maximum"
-						size = len(json.dumps(response, cls=Encoder))
-
-					if (totalsize + size < MAX_FILE_SIZE):
-						totalsize   += size
-						fits[token] =  response
-					else:
-						overflow[token] = response
-
-				table["Calls"] = fits
+			# Find the number of responses we can write fitting into the max VScript readable file size of 16kb
+			string = None
+			while (True):
 				string = json.dumps(table, cls=Encoder)
+				strlen = len(string)
+
+				# Half what we have if it's too much
+				i = table["Calls"]
+				if (strlen >= 16000):
+					it = iter(i.items())
+
+					halflen = len(i) // 2
+
+					# This means we have a single chungus response larger than our max write size
+					if (halflen == 0): raise RuntimeError
+
+					half_1 = dict(islice(it, halflen))
+					half_2 = dict(it)
+
+					table["Calls"] = half_1
+					overflow.update(**half_2)
+				else:
+					break
 
 			# Store what we can't fit from our buffer back into callbacks
 			if (len(overflow)):
@@ -177,54 +173,53 @@ def WriteCallbacksToFile():
 	for host in delete:
 		del callbacks[host]
 
-# Gather and execute interface functions from calls dict
-async def ExecCalls():
-	tasks	 = [] # Tasks to gather
-	contexts = [] # Needed context for parsing task results
 
+async def ExecCalls():
+	tasks	 = []
+	contexts = []
+	
 	db_connected = False
-	if (vpi_config.DB_SUPPORT):
-		db_connected = await vpi_config.PingDB()
+	if (DB_SUPPORT):
+		db_connected = await PingDB()
 		if (not db_connected):
 			LOGGER.warning("Could not establish connection to database! DB functions will be postponed")
 
-	# Prepare calls
-	for host, t1 in calls.items():
-		restart_modtime = t1["restart_modtime"]
-		for path, t2 in t1["paths"].copy().items():
-			modtime = t2["modtime"]
-
-			for call in t2["async"].copy():
-				func = call["func"]
-
-				if (func.startswith("VPI_")):
-					func = getattr(vpi_interfaces, func)
-
-					# We don't have a connection to the DB so don't bother
-					if (not db_connected and hasattr(func, "__WrapDB__")):
-						if (not vpi_config.DB_SUPPORT):
-							LOGGER.error("Database call received from client but server does not support DB operations! Discarding call to %s", func)
-							t2["async"].remove(call)
-						continue
-
-					tasks.append(func(call))
-					contexts.append({"host":host, "call":call} if (modtime >= restart_modtime) else None)
-
-				t2["async"].remove(call)
-
-			# No more calls to handle
-			if (not len(t2["async"])):
-				del t1["paths"][path]
+	async def ExecCallChain(call_chain):
+		result = None
+		for call in call_chain:
+			func = call["func"]
+			if (not func.startswith("VPI_")): continue
+			try:
+				func = getattr(vpi_interfaces, func)
+				result = await func(call, POOL)
+			except:
 				continue
+
+		return result
+
+	# Prepare calls
+	for host, table in calls.items():
+		for call in table["async"]:
+			func = call["func"]
+			if (not func.startswith("VPI_")): continue
+			try:
+				func = getattr(vpi_interfaces, func)
+				tasks.append(func(call, POOL))
+				contexts.append({"host":host, "call":call})
+			except Exception as e:
+				LOGGER.error(e)
+
+		for call_chain in table["chain"]:
+			if (not len(call_chain)): continue
+			last = call_chain[-1]
+			tasks.append(ExecCallChain(call_chain))
+			contexts.append({"host":host, "call":last})
 
 	# Go
 	results = await asyncio.gather(*tasks)
 
-	# Set callbacks (to return results to client later)
+	# Set callbacks
 	for result, context in zip(results, contexts):
-		# We don't send a response to client for calls from stale files
-		if (context is None): continue
-
 		host  = context["host"]
 		call  = context["call"]
 		token = call["token"]
@@ -234,43 +229,37 @@ async def ExecCalls():
 				callbacks[host] = {}
 			callbacks[host][token] = result
 
-# Parse JSON from client output file
 def ExtractCallsFromFile(path):
 	try:
 		with open(path, "r+") as f:
 			contents = f.read()
-
-			# StringToFile in VScript ends files with a null byte, which python's json parser doesn't like
 			if (contents.endswith("\x00")):
 				contents = contents[:-1]
 
 			data = json.loads(contents)
 
-			ident = Decrypt(**data["Identity"])
-			if (ident != vpi_config.SECRET and not vpi_config.BYPASS_SECRET):
-				LOGGER.warning("Invalid identification in file: %s; ignoring", path)
-				return
-
 			host = GetHostname(path)
+			if (host not in calls):
+				calls[host] = {"async":[], "chain":[]}
 
-			calls[host]["paths"][path]["async"].extend(data["Calls"]["async"])
+			calls[host]["async"].extend(data["Calls"]["async"])
+			calls[host]["chain"].extend(data["Calls"]["chain"])
 
 	except Exception as e:
-		LOGGER.warning("Invalid structure in file: %s; ignoring", path)
-
+		LOGGER.error(f"Invalid input received from client in: \"{path}\"")
 
 async def main():
 
 	LOGGER.info("VScript-Python Interface Server version %s startup", VERSION)
 
 	try:
-		if (vpi_config.DB_TYPE == "mysql"):
-			vpi_config.DB = await vpi_config.aiomysql.create_pool(host=vpi_config.DB_HOST, user=vpi_config.DB_USER, password=vpi_config.DB_PASSWORD, port=vpi_config.DB_PORT, db=vpi_config.DB_DATABASE, autocommit=False)
-		elif (vpi_config.DB_TYPE == "sqlite"):
-			vpi_config.DB = await vpi_config.aiosqlite.connect(vpi_config.DB_LITE)
+		if (DB_TYPE == "mysql"):
+			DB = await aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
+		elif (DB_TYPE == "sqlite"):
+			DB = await aiosqlite.connect(DB_LITE)
 
-		if (vpi_config.DB is not None):
-			LOGGER.info("Connected to %s database using %s", vpi_config.DB_TYPE, str(vpi_config.DB))
+		if (DB is not None):
+			LOGGER.info("Connected to %s database using %s", DB_TYPE, str(DB))
 	except Exception as e:
 		LOGGER.critical(e)
 
@@ -282,9 +271,9 @@ async def main():
 	# Watchdog loop
 	while True:
 		time.sleep(0.2)
+		current_time = time.time()
 
-		# Watch for changes to vpi_interfaces.py and reload the module if necessary
-		# This allows server owners to hotload new interface functions without restarting vpi.py
+		# Watch for changes to vpi_interfaces and reload the module if necessary
 		last_modtime = os.path.getmtime("vpi_interfaces.py")
 		if (last_modtime != last_interface_modtime):
 			last_interface_modtime = last_modtime
@@ -295,40 +284,29 @@ async def main():
 				LOGGER.error("Failed to hot-load changes to vpi_interfaces.py due to error:", exc_info=True)
 
 
-		files = os.listdir(vpi_config.SCRIPTDATA_DIR)
+
+		files = os.listdir(SCRIPTDATA_DIR)
 
 		for file in files:
-			path = os.path.join(vpi_config.SCRIPTDATA_DIR, file)
+			path = os.path.join(SCRIPTDATA_DIR, file)
 			host = GetHostname(path)
 			if (not host): continue
 
-			if (host not in calls):
-				calls[host] = { "restart_modtime": 0, "paths": {} }
-
-			path_mtime = os.path.getmtime(path)
-
 			# Client tells us our callbacks list is outdated (e.g. map change)
 			if (file.endswith("_restart.interface")):
-				mtime = calls[host]["restart_modtime"]
-
-				if (path_mtime >= mtime):
-					calls[host]["restart_modtime"] = path_mtime
-
 				if (host in callbacks): del callbacks[host]
 				os.remove(path)
-
 			# Grab info from clients
 			elif (file.endswith("_output.interface")):
-				if (path not in calls[host]["paths"]):
-					calls[host]["paths"][path] = { "modtime": path_mtime, "async": [] }
-
 				ExtractCallsFromFile(path)
 				os.remove(path)
 
-		# Execute interface functions if appropriate and populate callbacks with results
 		await ExecCalls()
 
-		# Send results to clients
+		# Send to clients
 		WriteCallbacksToFile()
 
-asyncio.run(main())
+		calls = {}
+
+
+loop.run_until_complete(main())

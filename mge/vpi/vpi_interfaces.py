@@ -1,8 +1,60 @@
-from vpi_imports import vpi_config, sys
+import asyncio
 import functools
 from re import sub
+import logging
+import sys
+import os
+from aiomysql import connect as aiomysql_connect
+from shutil import move, rmtree
+from tempfile import mkdtemp
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.DEBUG)
 
-LOGGER = vpi_config.LOGGER
+# Should we send messages to console?
+LOG_USE_CONSOLE = True
+# Should we send messages to log files?
+LOG_USE_FILE    = True
+CONSOLE_FORMATTER = logging.Formatter("{asctime} - {levelname} - {message}", style="{")
+# Levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+# What min level of messages should reach the console?
+LOG_MIN_CONSOLE_LEVEL = logging.INFO
+
+CONSOLE_HANDLER = logging.StreamHandler(stream=sys.stdout)
+CONSOLE_HANDLER.setLevel(LOG_MIN_CONSOLE_LEVEL)
+CONSOLE_HANDLER.setFormatter(CONSOLE_FORMATTER)
+CONSOLE_HANDLER.addFilter(lambda _: LOG_USE_CONSOLE)
+LOGGER.addHandler(CONSOLE_HANDLER)
+
+CONSOLE_WARNING_HANDLER = logging.StreamHandler(stream=sys.stdout)
+CONSOLE_WARNING_HANDLER.setLevel(logging.WARNING)
+CONSOLE_WARNING_HANDLER.setFormatter(CONSOLE_FORMATTER)
+CONSOLE_WARNING_HANDLER.addFilter(lambda _: LOG_USE_CONSOLE)
+LOGGER.addHandler(CONSOLE_WARNING_HANDLER)
+
+CONSOLE_ERROR_HANDLER = logging.StreamHandler(stream=sys.stdout)
+CONSOLE_ERROR_HANDLER.setLevel(logging.ERROR)
+CONSOLE_ERROR_HANDLER.setFormatter(CONSOLE_FORMATTER)
+CONSOLE_ERROR_HANDLER.addFilter(lambda _: LOG_USE_CONSOLE)
+LOGGER.addHandler(CONSOLE_ERROR_HANDLER)
+
+LOGGER.info("vpi_interfaces.py")
+
+RETRY_COUNT_MAX = 5
+RETRY_DELAY = 2
+
+genv = os.environ.get
+DB_TYPE		  =  genv("DB_TYPE",        "mysql") # mysql or sqlite
+DB_HOST       =  genv("DB_HOST",        "localhost")
+DB_USER       =  genv("DB_USER",        "root")
+DB_PORT	      =  int(genv("DB_PORT",    3306))
+DB_DATABASE	  =  genv("DB_INTERFACE",   "mge")
+DB_PASSWORD	  =  genv("DB_PASSWORD",    "")
+DB_LITE       =  genv("DB_LITE",        "sqlite_filename.db")
+STEAM_API_KEY =  genv("STEAM_API_KEY",  "000000")
+WEB_API_KEY   =  genv("WEB_API_KEY", 	"000000")
+
+STEAM_API_KEY  = os.environ.get("STEAM_API_KEY", "0000")
+WEB_API_KEY    = os.environ.get("WEB_API_KEY", "0000")
 
 # Note:
 # All interface functions should be decorated with either WrapDB or WrapInterface
@@ -52,46 +104,79 @@ def ValidateUserTable(info, table):
 	return table
 
 # Wrapper for DB interface functions
+
 def WrapDB(func):
 	@functools.wraps(func)
-	async def inner(info):
-		try:
-			conn   = await vpi_config._GetDBConnection()
-			cursor = await conn.cursor() if conn else None
-		except Exception as e:
-			LOGGER.error("Failed to establish connection to database in WrapDB due to error:", exc_info=True)
-			error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
-			return error
+	async def inner(info, pool):
+		retry_count = 0
+		while (retry_count < RETRY_COUNT_MAX):
+			conn = None
+			cursor = None
+			try:
+				conn = await pool.acquire()
+				cursor = await conn.cursor()
+				result = None
+				error = None
 
-		result = None
-		error  = None
+				try:
+					result = await func(info=info, cursor=cursor)
+					break
 
-		try:
-			result = await func(info, cursor)
-			LOGGER.debug("Executing interface function with info: %s", info)
-		except Exception as e:
-			LOGGER.error("Failed to execute interface function due to error:", exc_info=True)
-			error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
-		finally:
-			await cursor.close()
-			if (error is None):
-				await conn.commit()
+				except Exception as e:
+					if (hasattr(e, 'errno') and e.errno == 2013) or (hasattr(e, "args") and len(e.args) > 0 and e.args[0] == 2013):
+						LOGGER.warning("Lost connection to MySQL server during query, retrying...")
 
-			if (vpi_config.DB_TYPE == "mysql"):
-				vpi_config.DB.release(conn)
+						# Clean up the broken connection without trying to commit
+						if cursor:
+							try:
+								await cursor.close()
+							except:
+								pass
+						if conn:
+							pool.release(conn)
 
-			if (error is None): return result
-			else:				return error
+						retry_count += 1
+						if retry_count >= RETRY_COUNT_MAX:
+							LOGGER.error(f"Failed to reconnect to MySQL server after {RETRY_COUNT_MAX} retries, returning error to client")
+							error = f"[VPI ERROR] ({func.__name__}) :: Failed to reconnect to MySQL server after {RETRY_COUNT_MAX} retries"
+							break
 
-	# So we can check elsewhere if a specified function was a result of this wrapper
-	inner.__WrapDB__ = True
+						await asyncio.sleep(RETRY_DELAY)
+						continue
+					else:
+						error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
+						LOGGER.error(f"[VPI ERROR] ({func.__name__}) :: {e}")
+
+						if "try restarting transaction" in str(e):
+							quit() # restart if we get this error
+						break
+
+				finally:
+					if cursor:
+						await cursor.close()
+					if conn:
+						if error is None:
+							try:
+								await conn.commit()
+							except Exception as commit_error:
+								LOGGER.error(f"Failed to commit transaction: {commit_error}")
+								error = f"[VPI ERROR] ({func.__name__}) :: Failed to commit transaction"
+						pool.release(conn)
+
+			except Exception as e:
+				LOGGER.error(f"Error in WrapDB: {e}")
+				error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
+				LOGGER.error(f"[VPI ERROR] ({func.__name__}) :: {e}")
+				break
+
+		return error if error is not None else result
 
 	return inner
 
 # Wrapper for generic interface functions
 def WrapInterface(func):
 	@functools.wraps(func)
-	async def inner(info):
+	async def inner(info, pool = None):
 		result = None
 		error  = None
 
@@ -106,6 +191,55 @@ def WrapInterface(func):
 			else:				return error
 
 	return inner
+
+def SanitizeString(string):
+	semi = string.find(";")
+	if (semi >= 0): string = string[:semi]
+	sanitized = sub("[\0\x1a'\"]", "", string)
+
+	return sanitized
+
+def ParseColumnDefinitions(columns):
+	allowed_datatypes = [
+		"VARCHAR",
+		"TINYINT", "SMALLINT", "MEDIUMINT", "INT", "BIGINT",
+		"FLOAT", "DOUBLE",
+		"DATE", "TIME", "DATETIME", "TIMESTAMP"
+	]
+	s = "pk BIGINT PRIMARY KEY NOT NULL AUTO_INCREMENT, "
+	for column in columns:
+		attrs = []
+		attrs.append(column["name"].strip().replace(" ", "_"))
+
+		data_type = column["type"].upper()
+		if (data_type not in allowed_datatypes): raise ValueError
+
+		length = ""
+		# Length for VARCHAR is required
+		if (data_type == "VARCHAR"):
+			length = column["length"]
+		else:
+			length = column["length"] if "length" in column else ""
+		if (type(length) is int and length > 512): raise ValueError
+
+		attrs.append(f"{data_type}({length})" if length != "" else data_type)
+		attrs.append("UNIQUE" if "unique" in column and column["unique"] else "")
+		attrs.append("NOT NULL" if "canbenull" in column and column["canbenull"] else "")
+		attrs.append("AUTO_INCREMENT" if "autoincr" in column and column["autoincr"] else "")
+
+		default = column["def"].strip() if "def" in column else ""
+		# Expressions not allowed
+		if (len(default) and default[0] == "(" and default[-1] == ")"): raise ValueError
+		if (default != ""): default = f"DEFAULT '{default}'"
+
+		attrs.append(default)
+
+		attrs = [x for x in attrs if x != ""]
+		s += ' '.join(attrs)
+		if (column != columns[-1]): s += ", "
+
+	return f"({s})" #todo change adding parenth to createtable
+
 
 player_data_columns = "steam_id, name, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped"
 
@@ -141,16 +275,16 @@ async def VPI_MGE_DBInit(_, cursor):
 
 				LOGGER.info("No mge database found, creating...")
 
-				temp_conn = vpi_config.aiomysql.connect(
-					host	 = vpi_config.DB_HOST,
-					user	 = vpi_config.DB_USER,
-					password = vpi_config.DB_PASSWORD,
-					port	 = vpi_config.DB_PORT
+				temp_conn = aiomysql_connect(
+					host	 = DB_HOST,
+					user	 = DB_USER,
+					password = DB_PASSWORD,
+					port	 = DB_PORT
 				) if not cursor else None
 
 				temp_cursor = cursor if cursor else temp_conn.cursor()
-				await temp_cursor.execute(f"CREATE DATABASE IF NOT EXISTS {vpi_config.DB_DATABASE}")
-				await temp_cursor.execute(f"USE {vpi_config.DB_DATABASE}")
+				await temp_cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_DATABASE}")
+				await temp_cursor.execute(f"USE {DB_DATABASE}")
 				await temp_cursor.execute("""CREATE TABLE IF NOT EXISTS mge_playerdata (
 					steam_id INTEGER PRIMARY KEY,
 					name VARCHAR(255),
@@ -235,6 +369,7 @@ banned_files = [".gitignore", ".git", ".vscode", "README.md", "mge_windows_setup
 
 @WrapInterface
 async def VPI_MGE_AutoUpdate(info):
+	global repo
 
 	"""
 	Git clones a repository and returns a list of changed files
@@ -247,9 +382,6 @@ async def VPI_MGE_AutoUpdate(info):
 	Returns:
 		list: List of changed files, or empty list if no changes/error
 	"""
-
-	if not 'git' in sys.modules:
-		import os, tempfile, shutil, git
 	try:
 		# Get repo URL and branch from kwargs
 		kwargs = info["kwargs"]
@@ -261,11 +393,14 @@ async def VPI_MGE_AutoUpdate(info):
 			return []
 
 		# Create temp directory for clone
-		temp_dir = tempfile.mkdtemp()
+		temp_dir = mkdtemp()
+
+		if not repo or not 'git' in sys.modules:
+			from git import Repo as repo
 
 		LOGGER.info(f"Cloning repository {repo_url} into {temp_dir}")
 		# Clone the repository using GitPython
-		repo = git.Repo.clone_from(repo_url, temp_dir, branch=branch)
+		repo.clone_from(repo_url, temp_dir, branch=branch)
 
 		# Get list of changed files by comparing with current directory
 		changed_files = []
@@ -293,7 +428,7 @@ async def VPI_MGE_AutoUpdate(info):
 
 		#move changed files to the clone directory
 		for file in changed_files:
-			shutil.move(os.path.join(temp_dir, file), os.path.join(clone_dir, file))
+			move(os.path.join(temp_dir, file), os.path.join(clone_dir, file))
 
 
 		return changed_files
@@ -306,43 +441,58 @@ async def VPI_MGE_AutoUpdate(info):
 		# Cleanup temp directory
 		if 'temp_dir' in locals():
 			try:
-				shutil.rmtree(temp_dir, ignore_errors=True)
+				rmtree(temp_dir, ignore_errors=True)
 			except Exception as e:
 				LOGGER.warning(f"Warning: Could not clean up temp directory {temp_dir}: {str(e)}")
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info):
+	global date_time, requests_get, requests_put, STEAMAPI_LAST_REQUEST_TIME
 
-	if not 'requests' in sys.modules:
-		import requests, datetime
-		
+	if not date_time or not 'datetime' in sys.modules:
+		from datetime import datetime as date_time
+
+	# now = int(date_time.now().timestamp())
+	# if now < STEAMAPI_LAST_REQUEST_TIME + STEAMAPI_REQUEST_RATE_LIMIT and STEAMAPI_LAST_REQUEST_TIME:
+	# 	err = f"""
+	# 	[VPI ERROR] Steam API rate limit exceeded!
+	# 	Last request time: {STEAMAPI_LAST_REQUEST_TIME}
+	# 	Current time: {now}
+	# 	Difference: {now - STEAMAPI_LAST_REQUEST_TIME}
+	# 	Time until next request: {STEAMAPI_REQUEST_RATE_LIMIT - (now - STEAMAPI_LAST_REQUEST_TIME)}
+	# 	"""
+	# 	LOGGER.error(err)
+	# 	return err
+
 	kwargs = info["kwargs"]
-
-	# Convert time dictionary to datetime object
-	time_data   = kwargs["update_time"]
-	server_tags = kwargs["server_tags"] if "server_tags" in kwargs else r'gametype\mvm'
-
-	timestamp = datetime.datetime(
-		year	= time_data.get("year", datetime.datetime.now().year),
-		month	= time_data.get("month", 1),
-		day		= time_data.get("day", 1),
-		hour	= time_data.get("hour", 0),
-		minute	= time_data.get("minute", 0),
-		second	= time_data.get("second", 0)
-		).strftime('%Y-%m-%d %H:%M:%S')
+	server_tags = kwargs["server_tags"] if "server_tags" in kwargs else "gametype\\mvm"
 
 	name = kwargs["server_name"]
 
 	tags = "gametype\\" + server_tags.replace(",", "\\gametype\\")
 
 	del kwargs["server_tags"]
-	endpoint = f'https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={vpi_config.STEAM_API_KEY}&limit=50000&filter=\\gamedir\\tf\\{tags}'
-	response = requests.get(endpoint)
+	endpoint = f'https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={STEAM_API_KEY}&limit=50000&filter=\\gamedir\\tf\\{tags}'
+
+	if not requests_get or not 'requests' in sys.modules:
+
+		from requests import get as requests_get
+		from requests import put as requests_put
+
+	# STEAMAPI_LAST_REQUEST_TIME = now
+	response = requests_get(endpoint)
 
 	if not 'servers' in response.json()['response']:
 		LOGGER.error(endpoint)
 
-	server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
+	server = [server for server in response.json()['response']['servers'] if server['name'] == name]
+
+	if not len(server):
+		err = "No servers found in steam API response!"
+		LOGGER.error(err)
+		return err
+
+	server = server[0]
 
 	if server and "addr" in server:
 		kwargs['address'] = server['addr']
@@ -361,21 +511,23 @@ async def VPI_MGE_UpdateServerData(info):
 			camelcase_kwargs[key] = value
 
 	kwargs = camelcase_kwargs
-	requests.put(kwargs["endpointUrl"], headers={"auth-token": vpi_config.WEB_API_KEY}, json=kwargs)
+	requests_put(kwargs["endpointUrl"], headers={"auth-token": WEB_API_KEY}, json=kwargs)
 	return info
 
 @WrapDB
 async def VPI_MGE_UpdateServerDataDB(info, cursor):
+	global date_time, requests_get
 	kwargs = info["kwargs"]
 
 	# Convert time dictionary to datetime object
 	time_data = kwargs["update_time"]
 	tags = "gametype\\" + kwargs["server_tags"].replace(",", "\\gametype\\") if "server_tags" in kwargs else "gametype\\mvm"
-	if not 'requests' in sys.modules:
-		import requests, datetime
 
-	timestamp = datetime.datetime(
-		year=time_data.get("year", datetime.datetime.now().year),
+	if not date_time or not 'datetime' in sys.modules:
+		from datetime import datetime as date_time
+
+	timestamp = date_time(
+		year=time_data.get("year", date_time.now().year),
 		month=time_data.get("month", 1),
 		day=time_data.get("day", 1),
 		hour=time_data.get("hour", 0),
@@ -385,7 +537,10 @@ async def VPI_MGE_UpdateServerDataDB(info, cursor):
 
 	name = kwargs["server_name"]
 
-	response = requests.get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={vpi_config.STEAM_API_KEY}&limit=50000&filter=\\gamedir\\tf\\{tags}")
+	if not requests_get or not 'requests' in sys.modules:
+		from requests import get as requests_get
+
+	response = requests_get(rf"https://api.steampowered.com/IGameServersService/GetServerList/v1/?key={STEAM_API_KEY}&limit=50000&filter=\\gamedir\\tf\\{tags}")
 
 	server = [server for server in response.json()['response']['servers'] if server['name'] == name][0]
 

@@ -1,6 +1,9 @@
-from vpi_imports import os, sys
+import os
+import sys
 import logging
 from logging.handlers import TimedRotatingFileHandler
+
+VERSION = "11.04.2025.1"
 
 genv = os.environ.get
 USE_COLOR = True
@@ -26,7 +29,7 @@ except:
 
 # This should be the same token returned in the GetSecret function in vpi.nut
 # It's used to identify files created by VPI
-SECRET = r"9320fksXlk4d5a4fFP0"
+SECRET = r""
 BYPASS_SECRET = False #do not set this to true unless you know what you're doing
 if (not SECRET and not BYPASS_SECRET):
 	raise RuntimeError("Please set your secret token")
@@ -48,6 +51,9 @@ DB_PASSWORD	  =  genv("DB_PASSWORD",    "")
 DB_LITE       =  genv("DB_LITE",        "sqlite_filename.db")
 STEAM_API_KEY =  genv("STEAM_API_KEY",  "000000")
 WEB_API_KEY   =  genv("WEB_API_KEY", 	"000000")
+
+RETRY_COUNT_MAX = 5
+RETRY_DELAY = 2
 
 aiomysql = None
 aiosqlite = None

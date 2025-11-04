@@ -1,4 +1,5 @@
-from vpi_imports import os, sys
+import os
+import sys
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
@@ -48,6 +49,9 @@ DB_PASSWORD	  =  genv("DB_PASSWORD",    "")
 DB_LITE       =  genv("DB_LITE",        "sqlite_filename.db")
 STEAM_API_KEY =  genv("STEAM_API_KEY",  "000000")
 WEB_API_KEY   =  genv("WEB_API_KEY", 	"000000")
+
+RETRY_COUNT_MAX = 5
+RETRY_DELAY = 2
 
 aiomysql = None
 aiosqlite = None
