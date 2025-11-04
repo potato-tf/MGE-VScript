@@ -73,6 +73,8 @@ elif DB_TYPE == "sqlite":
 # Get a connection to the current database
 async def _GetDBConnection():
 
+	global DB
+
 	if not DB:
 		
 		if (DB_TYPE == "mysql"):
@@ -84,21 +86,20 @@ async def _GetDBConnection():
 
 # Ping the database to see if we're connected
 async def PingDB():
+		
+	global DB
 
+	conn = await _GetDBConnection()
 	try:
-		conn = await _GetDBConnection()
-		try:
-			cursor = await conn.cursor()
-			await cursor.execute("SELECT 1")
-			return True
-		except Exception as e:
-			LOGGER.error(f"Could not establish connection to database! {e}")
-			return False
-		finally:
-			if (DB_TYPE == "mysql"):
-				DB.release(conn)
-	except:
+		cursor = await conn.cursor()
+		await cursor.execute("SELECT 1")
+		return True
+	except Exception as e:
+		LOGGER.error(f"Could not establish connection to database! {e}")
 		return False
+	finally:
+		if (DB_TYPE == "mysql"):
+			await DB.release(conn)
 
 if (DB_SUPPORT):
 	DB = None
