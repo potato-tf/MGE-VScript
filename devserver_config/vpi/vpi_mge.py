@@ -11,7 +11,7 @@ import json, time, math, asyncio, importlib, datetime
 from itertools import islice
 from random import randint
 import vpi_interfaces
-from vpi_config import PingDB, SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
+from vpi_config import SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
 
 ###################################################################################################
 
