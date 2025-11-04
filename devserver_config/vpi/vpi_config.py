@@ -69,39 +69,6 @@ if DB_TYPE == "mysql":
 elif DB_TYPE == "sqlite":
 	import aiosqlite as _aiosqlite
 	aiosqlite = _aiosqlite
-
-# Get a connection to the current database
-async def _GetDBConnection():
-
-	if not DB_SUPPORT:
-		return None
-
-	global DB
-
-	if (DB_TYPE == "mysql"):
-		return await DB.acquire() # Pool
-	elif (DB_TYPE == "sqlite"):
-		return DB # Connection
-	else:
-		return None
-
-# Ping the database to see if we're connected
-async def PingDB():
-		
-	global DB
-
-	conn = await _GetDBConnection()
-	try:
-		cursor = await conn.cursor()
-		await cursor.execute("SELECT 1")
-		return True
-	except Exception as e:
-		LOGGER.error(f"Could not establish connection to database! {e}")
-		return False
-	finally:
-		if (DB_TYPE == "mysql"):
-			DB.release(conn)
-
 if (DB_SUPPORT):
 
 	DB = None

@@ -1,4 +1,4 @@
-from vpi_config import DB_HOST, DB_USER, DB_PORT, DB_DATABASE, DB_PASSWORD, LOGGER, RETRY_COUNT_MAX, RETRY_DELAY, STEAM_API_KEY, WEB_API_KEY
+from vpi_config import DB_HOST, DB_USER, DB_PORT, DB_DATABASE, DB_PASSWORD, DB_TYPE, LOGGER, RETRY_COUNT_MAX, RETRY_DELAY, STEAM_API_KEY, WEB_API_KEY
 from asyncio import sleep as async_sleep
 from functools import wraps
 from re import sub
@@ -71,7 +71,7 @@ def WrapDB(func):
 			conn = None
 			cursor = None
 			try:
-				conn = await pool.acquire()
+				conn = await pool.acquire() if DB_TYPE == "mysql" else pool
 				cursor = await conn.cursor()
 				result = None
 				error = None

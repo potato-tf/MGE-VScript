@@ -177,12 +177,6 @@ def WriteCallbacksToFile():
 async def ExecCalls():
 	tasks	 = []
 	contexts = []
-	
-	db_connected = False
-	if (DB_SUPPORT):
-		db_connected = await PingDB()
-		if (not db_connected):
-			LOGGER.warning("Could not establish connection to database! DB functions will be postponed")
 
 	async def ExecCallChain(call_chain):
 		result = None
@@ -251,8 +245,6 @@ def ExtractCallsFromFile(path):
 async def main():
 
 	LOGGER.info("VScript-Python Interface Server version %s startup", VERSION)
-
-	await PingDB()
 
 	global calls
 	global callbacks
