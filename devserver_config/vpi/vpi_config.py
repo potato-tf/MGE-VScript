@@ -42,6 +42,7 @@ if (not os.path.exists(SCRIPTDATA_DIR)): raise RuntimeError("SCRIPTDATA_DIR does
 DB_SUPPORT = True
 
 # What type?
+DB = None
 DB_TYPE		  =  genv("DB_TYPE",        "mysql") # mysql or sqlite
 DB_HOST       =  genv("DB_HOST",        "localhost")
 DB_USER       =  genv("DB_USER",        "root")
@@ -71,16 +72,19 @@ elif DB_TYPE == "sqlite":
 
 # Get a connection to the current database
 async def _GetDBConnection():
-	if (DB_TYPE == "mysql"):
-		return await DB.acquire() # Pool
-	elif (DB_TYPE == "sqlite"):
-		return DB # Connection
-	else:
-		return None
 
-DB = None
+	if not DB:
+		
+		if (DB_TYPE == "mysql"):
+			DB = await aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
+		elif (DB_TYPE == "sqlite"):
+			DB = await aiosqlite.connect(DB_LITE)
+
+	return DB.acquire() if DB_TYPE == "mysql" else DB
+
 # Ping the database to see if we're connected
 async def PingDB():
+
 	try:
 		conn = await _GetDBConnection()
 		try:
