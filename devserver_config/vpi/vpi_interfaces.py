@@ -2,7 +2,6 @@ from vpi_config import DB_HOST, DB_USER, DB_PORT, DB_DATABASE, DB_PASSWORD, LOGG
 from asyncio import sleep as async_sleep
 from functools import wraps
 from re import sub
-import logging
 import sys
 import os
 from aiomysql import connect as aiomysql_connect

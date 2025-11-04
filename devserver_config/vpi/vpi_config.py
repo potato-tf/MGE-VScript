@@ -87,7 +87,8 @@ async def PingDB():
 			cursor = await conn.cursor()
 			await cursor.execute("SELECT 1")
 			return True
-		except:
+		except Exception as e:
+			LOGGER.error(f"Could not establish connection to database! {e}")
 			return False
 		finally:
 			if (DB_TYPE == "mysql"):
