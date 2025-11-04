@@ -253,7 +253,7 @@ async def main():
 	LOGGER.info("VScript-Python Interface Server version %s startup", VERSION)
 	# global DB
 
-	_GetDBConnection()
+	await _GetDBConnection()
 	# try:
 	# 	if (DB_TYPE == "mysql"):
 	# 		DB = await aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
