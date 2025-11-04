@@ -78,18 +78,6 @@ async def _GetDBConnection():
 
 	global DB
 
-	if not DB:
-		try:
-			if (DB_TYPE == "mysql"):
-				DB = await aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
-			elif (DB_TYPE == "sqlite"):
-				DB = await aiosqlite.connect(DB_LITE)
-			if (DB is not None):
-				LOGGER.warning("!RECONNECTING! to %s database using %s", DB_TYPE, str(DB))
-		except Exception as e:
-			LOGGER.critical(f"Could not establish connection to database! {e}")
-			return False
-
 	if (DB_TYPE == "mysql"):
 		return await DB.acquire() # Pool
 	elif (DB_TYPE == "sqlite"):
@@ -115,10 +103,13 @@ async def PingDB():
 			DB.release(conn)
 
 if (DB_SUPPORT):
+
 	DB = None
 
 	DB_TYPE = DB_TYPE.lower()
 	if (DB_TYPE == "mysql"):
+
+		DB = aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
 
 		# Validation
 		for env in [DB_HOST, DB_USER, DB_PORT, DB_DATABASE, SCRIPTDATA_DIR]:
@@ -130,8 +121,7 @@ if (DB_SUPPORT):
 
 	elif (DB_TYPE == "sqlite"):
 
-		# Put the path to your .db file here
-		DB_LITE = "test.db"
+		DB = aiosqlite.connect(DB_LITE)
 
 	else:
 		raise RuntimeError("DB_TYPE must be either 'mysql' or 'sqlite'")
