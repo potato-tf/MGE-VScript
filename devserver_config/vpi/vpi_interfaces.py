@@ -71,8 +71,11 @@ def WrapDB(func):
 			conn = None
 			cursor = None
 			try:
-				conn = pool
-				cursor = await conn.cursor()
+				conn = await pool.acquire() if DB_TYPE == "mysql" else pool
+				cursor = await conn.cursor() if DB_TYPE == "mysql" else await conn.execute("SELECT 1")
+				if DB_TYPE != "mysql":
+					# For sqlite, conn is already a cursor
+					cursor = conn
 				result = None
 				error = None
 
