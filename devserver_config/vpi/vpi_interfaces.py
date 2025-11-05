@@ -70,70 +70,70 @@ def WrapDB(func):
 		while (retry_count < RETRY_COUNT_MAX):
 			conn = None
 			cursor = None
+			# try:
+			if DB_TYPE == "mysql":
+				# For aiomysql, pool is an awaitable context manager, so use "async with"
+				async with pool as mysql_pool:
+					conn = await mysql_pool.acquire()
+			else:
+				conn = pool
+			cursor = await conn.cursor() if DB_TYPE == "mysql" else await conn.execute("SELECT 1")
+			if DB_TYPE != "mysql":
+				# For sqlite, conn is already a cursor
+				cursor = conn
+			result = None
+			error = None
+
 			try:
-				if DB_TYPE == "mysql":
-					# For aiomysql, pool is an awaitable context manager, so use "async with"
-					async with pool as mysql_pool:
-						conn = await mysql_pool.acquire()
-				else:
-					conn = pool
-				cursor = await conn.cursor() if DB_TYPE == "mysql" else await conn.execute("SELECT 1")
-				if DB_TYPE != "mysql":
-					# For sqlite, conn is already a cursor
-					cursor = conn
-				result = None
-				error = None
-
-				try:
-					result = await func(info=info, cursor=cursor)
-					break
-
-				except Exception as e:
-					if (hasattr(e, 'errno') and e.errno == 2013) or (hasattr(e, "args") and len(e.args) > 0 and e.args[0] == 2013):
-						LOGGER.warning("Lost connection to MySQL server during query, retrying...")
-
-						# Clean up the broken connection without trying to commit
-						if cursor:
-							try:
-								await cursor.close()
-							except:
-								pass
-						if conn:
-							pool.release(conn)
-
-						retry_count += 1
-						if retry_count >= RETRY_COUNT_MAX:
-							LOGGER.error(f"Failed to reconnect to MySQL server after {RETRY_COUNT_MAX} retries, returning error to client")
-							error = f"[VPI ERROR] ({func.__name__}) :: Failed to reconnect to MySQL server after {RETRY_COUNT_MAX} retries"
-							break
-
-						await async_sleep(RETRY_DELAY)
-						continue
-					else:
-						error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
-						LOGGER.error(f"[VPI ERROR] ({func.__name__}) :: {e}")
-
-						if "try restarting transaction" in str(e):
-							quit() # restart if we get this error
-						break
-
-				finally:
-					if cursor:
-						await cursor.close()
-					if conn:
-						if error is None:
-							try:
-								await conn.commit()
-							except Exception as commit_error:
-								LOGGER.error(f"Failed to commit transaction: {commit_error}")
-								error = f"[VPI ERROR] ({func.__name__}) :: Failed to commit transaction"
-						pool.release(conn)
+				result = await func(info=info, cursor=cursor)
+				break
 
 			except Exception as e:
-				LOGGER.error(f"Error in WrapDB: {e}")
-				error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
-				LOGGER.error(f"[VPI ERROR] ({func.__name__}) :: {e}")
-				break
+				if (hasattr(e, 'errno') and e.errno == 2013) or (hasattr(e, "args") and len(e.args) > 0 and e.args[0] == 2013):
+					LOGGER.warning("Lost connection to MySQL server during query, retrying...")
+
+					# Clean up the broken connection without trying to commit
+					if cursor:
+						try:
+							await cursor.close()
+						except:
+							pass
+					if conn:
+						pool.release(conn)
+
+					retry_count += 1
+					if retry_count >= RETRY_COUNT_MAX:
+						LOGGER.error(f"Failed to reconnect to MySQL server after {RETRY_COUNT_MAX} retries, returning error to client")
+						error = f"[VPI ERROR] ({func.__name__}) :: Failed to reconnect to MySQL server after {RETRY_COUNT_MAX} retries"
+						break
+
+					await async_sleep(RETRY_DELAY)
+					continue
+				else:
+					error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
+					LOGGER.error(f"[VPI ERROR] ({func.__name__}) :: {e}")
+
+					if "try restarting transaction" in str(e):
+						quit() # restart if we get this error
+					break
+
+			finally:
+				if cursor:
+					await cursor.close()
+				if conn:
+					if error is None:
+						try:
+							await conn.commit()
+						except Exception as commit_error:
+							LOGGER.error(f"Failed to commit transaction: {commit_error}")
+							error = f"[VPI ERROR] ({func.__name__}) :: Failed to commit transaction"
+					pool.release(conn)
+
+			# except Exception as e:
+			# 	LOGGER.error(f"Error in WrapDB: {e}")
+			# 	error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
+			# 	LOGGER.error(f"[VPI ERROR] ({func.__name__}) :: {e}")
+			# 	break
 
 		return error if error is not None else result
 
