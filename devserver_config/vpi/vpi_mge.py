@@ -11,7 +11,7 @@ import json, time, math, asyncio, importlib, datetime
 from itertools import islice
 from random import randint
 import vpi_interfaces
-from vpi_config import SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
+from vpi_config import SECRET, BYPASS_SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
 
 ###################################################################################################
 
@@ -133,6 +133,7 @@ def WriteCallbacksToFile():
 			f.truncate(0)
 
 			table	 = {"Calls": info}
+			table["Identity"] = Encrypt(SECRET)
 			overflow = {}
 
 			# Find the number of responses we can write fitting into the max VScript readable file size of 16kb
@@ -231,6 +232,11 @@ def ExtractCallsFromFile(path):
 				contents = contents[:-1]
 
 			data = json.loads(contents)
+
+			ident = Decrypt(**data["Identity"])
+			if (ident != SECRET and not BYPASS_SECRET):
+				LOGGER.error(f"Invalid identification in file: {path}; ignoring")
+				return
 
 			host = GetHostname(path)
 			if (host not in calls):
