@@ -1,5 +1,6 @@
 import os
 import sys
+import asyncio
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
@@ -70,31 +71,37 @@ if DB_TYPE == "mysql":
 elif DB_TYPE == "sqlite":
 	import aiosqlite as _aiosqlite
 	aiosqlite = _aiosqlite
-if (DB_SUPPORT):
 
-	DB = None
+async def SetupDB():
 
-	DB_TYPE = DB_TYPE.lower()
-	if (DB_TYPE == "mysql"):
+	global DB, POOL
+	if (DB_SUPPORT):
 
-		POOL = aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
-		DB = POOL.acquire()
+		DB = None
 
-		# Validation
-		for env in [DB_HOST, DB_USER, DB_PORT, DB_DATABASE, SCRIPTDATA_DIR]:
-			assert env is not None
+		DB_TYPE = DB_TYPE.lower()
+		if (DB_TYPE == "mysql"):
 
-		if (DB_PASSWORD is None):
-			DB_PASSWORD = input(f"Enter password for {DB_USER}@{DB_HOST}:{DB_PORT} >>> ")
-			print()
+			POOL = aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
+			DB = await POOL.acquire()
 
-	elif (DB_TYPE == "sqlite"):
+			# Validation
+			for env in [DB_HOST, DB_USER, DB_PORT, DB_DATABASE, SCRIPTDATA_DIR]:
+				assert env is not None
 
-		POOL = aiosqlite.connect(DB_LITE)
-		DB = POOL
+			if (DB_PASSWORD is None):
+				DB_PASSWORD = input(f"Enter password for {DB_USER}@{DB_HOST}:{DB_PORT} >>> ")
+				print()
 
-	else:
-		raise RuntimeError("DB_TYPE must be either 'mysql' or 'sqlite'")
+		elif (DB_TYPE == "sqlite"):
+
+			POOL = await aiosqlite.connect(DB_LITE)
+			DB = POOL
+
+		else:
+			raise RuntimeError("DB_TYPE must be either 'mysql' or 'sqlite'")
+
+asyncio.run(SetupDB())
 
 # ====================================================================================================================== #
 
