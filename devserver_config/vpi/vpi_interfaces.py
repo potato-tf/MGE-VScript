@@ -71,7 +71,12 @@ def WrapDB(func):
 			conn = None
 			cursor = None
 			try:
-				conn = await pool.acquire() if DB_TYPE == "mysql" else pool
+				if DB_TYPE == "mysql":
+					# For aiomysql, pool is an awaitable context manager, so use "async with"
+					async with pool as mysql_pool:
+						conn = await mysql_pool.acquire()
+				else:
+					conn = pool
 				cursor = await conn.cursor() if DB_TYPE == "mysql" else await conn.execute("SELECT 1")
 				if DB_TYPE != "mysql":
 					# For sqlite, conn is already a cursor

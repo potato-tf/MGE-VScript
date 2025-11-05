@@ -43,6 +43,7 @@ DB_SUPPORT = True
 
 # What type?
 DB = None
+POOL = None
 DB_TYPE		  =  genv("DB_TYPE",        "mysql") # mysql or sqlite
 DB_HOST       =  genv("DB_HOST",        "localhost")
 DB_USER       =  genv("DB_USER",        "root")
@@ -76,7 +77,8 @@ if (DB_SUPPORT):
 	DB_TYPE = DB_TYPE.lower()
 	if (DB_TYPE == "mysql"):
 
-		DB = aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
+		POOL = aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
+		DB = POOL.acquire()
 
 		# Validation
 		for env in [DB_HOST, DB_USER, DB_PORT, DB_DATABASE, SCRIPTDATA_DIR]:
@@ -88,7 +90,8 @@ if (DB_SUPPORT):
 
 	elif (DB_TYPE == "sqlite"):
 
-		DB = aiosqlite.connect(DB_LITE)
+		POOL = aiosqlite.connect(DB_LITE)
+		DB = POOL
 
 	else:
 		raise RuntimeError("DB_TYPE must be either 'mysql' or 'sqlite'")
