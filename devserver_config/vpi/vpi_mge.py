@@ -288,7 +288,8 @@ async def main():
 		# Watch for changes to vpi_interfaces and reload the module if necessary
 		last_modtime = os.path.getmtime("vpi_interfaces.py")
 		if (last_modtime != last_interface_modtime):
-			quit()	# restart on update
+			# quit()	# restart on update
+			os._exit(0)
 			# last_interface_modtime = last_modtime
 			# try:
 			# 	importlib.reload(vpi_interfaces)
