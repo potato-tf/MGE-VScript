@@ -11,11 +11,9 @@ import json, time, math, asyncio, importlib, datetime
 from itertools import islice
 from random import randint
 import vpi_interfaces
-from vpi_config import SECRET, BYPASS_SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT
+from vpi_config import SECRET, BYPASS_SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, DB, DB_SUPPORT
 
 ###################################################################################################
-
-POOL = None
 
 loop = asyncio.new_event_loop()
 
@@ -186,7 +184,7 @@ async def ExecCalls():
 			if (not func.startswith("VPI_")): continue
 			try:
 				func = getattr(vpi_interfaces, func)
-				result = await func(call, POOL)
+				result = await func(call, DB)
 			except:
 				continue
 
@@ -199,7 +197,7 @@ async def ExecCalls():
 			if (not func.startswith("VPI_")): continue
 			try:
 				func = getattr(vpi_interfaces, func)
-				tasks.append(func(call, POOL))
+				tasks.append(func(call, DB))
 				contexts.append({"host":host, "call":call})
 			except Exception as e:
 				LOGGER.error(e)
