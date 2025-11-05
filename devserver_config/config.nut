@@ -74,7 +74,7 @@ const GAMEMODE_AUTOUPDATE_INTERVAL           = 120
  * VPI_MGE_UpdateServerDataDB does work but is unused                                                          	  *
  ******************************************************************************************************************/
 const UPDATE_SERVER_DATA                     = true
-const VPI_SERVERINFO_UPDATE_INTERVAL         = 5
+const VPI_SERVERINFO_UPDATE_INTERVAL         = 10
 
 //general
 const DEFAULT_FRAGLIMIT                      = 20
