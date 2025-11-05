@@ -81,7 +81,7 @@ async def SetupDB():
 
 		if (DB_TYPE == "mysql"):
 
-			POOL = aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
+			POOL = await aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
 			DB = await POOL.acquire()
 
 			# Validation
