@@ -151,8 +151,7 @@ function MGE::InitEntities() {
 	TimerScope.Inputsettime <- TimerScope.InputSetTime
 	TimerScope.hinted <- false
 
-	function TimerScope::TimerThink()
-	{
+	function TimerScope::TimerThink() {
 
 		local time_left = (base_timestamp - Time()).tointeger()
 		if (time_left > 0)
@@ -210,8 +209,7 @@ function MGE::InitEntities() {
 				}
 			}
 
-
-			return -1
+			return 0.5
 		}
 
 		SetPropString(self, "m_iszScriptThinkFunction", "")

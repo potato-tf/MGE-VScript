@@ -111,6 +111,7 @@ def GetHostname(path):
 	return host[:sep]
 
 # Write responses from interface functions to file
+MAX_FILE_SIZE = 16000
 def WriteCallbacksToFile():
 	# Hosts to delete
 	delete = []
@@ -130,13 +131,36 @@ def WriteCallbacksToFile():
 			# Wipe the file
 			f.truncate(0)
 
-			table	 = {"Calls": info}
+			table = {"Calls": info}
 			table["Identity"] = Encrypt(SECRET)
+
+			string   = json.dumps(table, cls=Encoder)
 			overflow = {}
 
-			# Find the number of responses we can write fitting into the max VScript readable file size of 16kb
-			string = None
-			while (True):
+			if (len(string) >= MAX_FILE_SIZE):
+				# Sort responses by size
+				cbs = [[token, response] for token, response in info.items()]
+				for l in cbs: l.append(len(json.dumps(l)))
+				cbs.sort(key=lambda l: l[2])
+
+				# Loop through and get as many as can fit
+				totalsize = 0
+				fits = {}
+				for l in cbs:
+					token, response, size = l
+
+					# Client expects error responses to start with [VPI ERROR]
+					if (size >= MAX_FILE_SIZE):
+						response = "[VPI ERROR] (token) :: Response size exceeds maximum"
+						size = len(json.dumps(response, cls=Encoder))
+
+					if (totalsize + size < MAX_FILE_SIZE):
+						totalsize   += size
+						fits[token] =  response
+					else:
+						overflow[token] = response
+
+				table["Calls"] = fits
 				string = json.dumps(table, cls=Encoder)
 				strlen = len(string)
 
