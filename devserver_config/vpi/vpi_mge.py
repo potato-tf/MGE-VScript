@@ -288,12 +288,13 @@ async def main():
 		# Watch for changes to vpi_interfaces and reload the module if necessary
 		last_modtime = os.path.getmtime("vpi_interfaces.py")
 		if (last_modtime != last_interface_modtime):
-			last_interface_modtime = last_modtime
-			try:
-				importlib.reload(vpi_interfaces)
-				LOGGER.info("Successfully hot-loaded changes to vpi_interfaces.py")
-			except:
-				LOGGER.error("Failed to hot-load changes to vpi_interfaces.py due to error:", exc_info=True)
+			quit()	# restart on update
+			# last_interface_modtime = last_modtime
+			# try:
+			# 	importlib.reload(vpi_interfaces)
+			# 	LOGGER.info("Successfully hot-loaded changes to vpi_interfaces.py")
+			# except:
+			# 	LOGGER.error("Failed to hot-load changes to vpi_interfaces.py due to error:", exc_info=True)
 
 
 
