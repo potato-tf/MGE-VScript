@@ -153,8 +153,8 @@ function MGE::InitEntities() {
 
 	function TimerScope::TimerThink()
 	{
-		local time_left = base_timestamp - Time()
 
+		local time_left = (base_timestamp - Time()).tointeger()
 		if (time_left > 0)
 		{
 			if ( !(time_left % VPI_SERVERINFO_UPDATE_INTERVAL) )
@@ -163,7 +163,7 @@ function MGE::InitEntities() {
 
 					LocalTime(MGE.LOCALTIME)
 					MGE.SERVER_DATA.update_time = MGE.LOCALTIME
-					MGE.SERVER_DATA.max_wave = time_left
+					MGE.SERVER_DATA.max_wave = base_timestamp
 					MGE.SERVER_DATA.wave = time_left
 					local players = array(2, 0)
 					local spectators = 0
@@ -200,7 +200,7 @@ function MGE::InitEntities() {
 			}
 
 			// Show countdown message in last minute
-			if ( time_left < 60 && !(time_left.tointeger() % 10) )
+			if ( time_left < 60 && !(time_left % 10) )
 			{
 				if ( !hinted )
 				{
