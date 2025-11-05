@@ -74,7 +74,7 @@ elif DB_TYPE == "sqlite":
 
 async def SetupDB():
 
-	global DB, POOL
+	global DB, POOL, DB_HOST, DB_USER, DB_PASSWORD, DB_PORT, DB_DATABASE, DB_LITE, SCRIPTDATA_DIR
 	if (DB_SUPPORT):
 
 		DB = None
