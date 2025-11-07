@@ -102,14 +102,14 @@ local function GetSanitizedHostname()
 
 			str += code.tochar()
 		}
-		return str
+		return HOSTNAME = str
 	}
 	catch (e) {
 
 		error( "COULDN'T GET HOSTNAME! " + e )
 		error( "COULDN'T GET HOSTNAME! " + e )
 		error( "COULDN'T GET HOSTNAME! " + e )
-		return "team_fortress"
+		return HOSTNAME = "team_fortress"
 	}
 }
 
@@ -797,7 +797,7 @@ local function WriteCallList(list, combined=false)
 	// Reading files seems to be about 3x as expensive as writing
 	// If we used a single output file we would have to read to see if we can write,
 	// so the simple solution is to base file name off timestamp and tick count and let the server handle the hard work
-	local output_file = format("%s_vpi_%d_%d_output.interface", HOSTNAME, Timestamp(), time / 0.015)
+	local output_file = format("%s_vpi_%d_%d_output.interface", HOSTNAME || GetSanitizedHostname(), Timestamp(), time / 0.015)
 	StringToFile(output_file, EncodeOutput(list))
 
 	// Clear calls
@@ -1013,8 +1013,6 @@ function SCRIPT_SCOPE::VPIThink() {
 	// Read input
 	if (callbacks.len())
 	{
-        if ( !HOSTNAME )
-            HOSTNAME = GetSanitizedHostname()
 		// We wrote to file recently and are expecting a response from the server
 		// Read more frequently
 		if (expecting_iters != null && expecting_iters < MAX_EXPECTING_ITERS)
