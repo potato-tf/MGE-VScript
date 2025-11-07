@@ -209,7 +209,8 @@ async def ExecCalls():
 			try:
 				func = getattr(vpi_interfaces, func)
 				result = await func(call, POOL)
-			except:
+			except Exception as e:
+				LOGGER.error(f"Error in ExecCallChain: {e}")
 				continue
 
 		return result
@@ -224,7 +225,7 @@ async def ExecCalls():
 				tasks.append(func(call, POOL))
 				contexts.append({"host":host, "call":call})
 			except Exception as e:
-				LOGGER.error(e)
+				LOGGER.error(f"Error in ExecCalls: {e}")
 
 		for call_chain in table["chain"]:
 			if (not len(call_chain)): continue
@@ -247,28 +248,28 @@ async def ExecCalls():
 			callbacks[host][token] = result
 
 def ExtractCallsFromFile(path):
-	try:
-		with open(path, "r+") as f:
-			contents = f.read()
-			if (contents.endswith("\x00")):
-				contents = contents[:-1]
+	# try:
+	with open(path, "r+") as f:
+		contents = f.read()
+		if (contents.endswith("\x00")):
+			contents = contents[:-1]
 
-			data = json.loads(contents)
+		data = json.loads(contents)
 
-			ident = Decrypt(**data["Identity"])
-			if (ident != SECRET and not BYPASS_SECRET):
-				LOGGER.error(f"Invalid identification in file: {path}; ignoring")
-				return
+		ident = Decrypt(**data["Identity"])
+		if (ident != SECRET and not BYPASS_SECRET):
+			LOGGER.error(f"Error in ExtractCallsFromFile: Invalid identification in file: {path}; ignoring")
+			return
 
-			host = GetHostname(path)
-			if (host not in calls):
-				calls[host] = {"async":[], "chain":[]}
+		host = GetHostname(path)
+		if (host not in calls):
+			calls[host] = {"async":[], "chain":[]}
 
-			calls[host]["async"].extend(data["Calls"]["async"])
-			calls[host]["chain"].extend(data["Calls"]["chain"])
+		calls[host]["async"].extend(data["Calls"]["async"])
+		calls[host]["chain"].extend(data["Calls"]["chain"])
 
-	except Exception as e:
-		LOGGER.error(f"Invalid input received from client in: \"{path}\"")
+	# except Exception as e:
+		# LOGGER.error(f"Invalid input received from client in: \"{path}\"")
 
 async def main():
 
