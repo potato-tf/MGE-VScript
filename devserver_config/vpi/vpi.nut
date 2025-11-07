@@ -82,7 +82,6 @@ local used_tokens = {}
 
 // We delay sending calls until this is true so hostname can have the proper value
 local server_cfg_execd = false
-local HOSTNAME = "team_fortress"
 local INPUT_FILE = "team_fortress_vpi_input.interface"
 
 local function GetSanitizedHostname()
@@ -104,14 +103,14 @@ local function GetSanitizedHostname()
 			str += code.tochar()
 		}
         INPUT_FILE = str + "_vpi_input.interface"
-		return HOSTNAME = str
+		return str
 	}
 	catch (e) {
 
 		error( "COULDN'T GET HOSTNAME! " + e )
 		error( "COULDN'T GET HOSTNAME! " + e )
 		error( "COULDN'T GET HOSTNAME! " + e )
-		return HOSTNAME
+		return "team_fortress"
 	}
 }
 
@@ -797,7 +796,7 @@ local function WriteCallList(list, combined=false)
 	// Reading files seems to be about 3x as expensive as writing
 	// If we used a single output file we would have to read to see if we can write,
 	// so the simple solution is to base file name off timestamp and tick count and let the server handle the hard work
-	local output_file = format("%s_vpi_%d_%d_output.interface", HOSTNAME || GetSanitizedHostname(), Timestamp(), time / 0.015)
+	local output_file = format("%s_vpi_%d_%d_output.interface", GetSanitizedHostname(), Timestamp(), time / 0.015)
 	StringToFile(output_file, EncodeOutput(list))
 
 	// Clear calls
