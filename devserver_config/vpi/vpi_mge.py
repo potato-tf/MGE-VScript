@@ -163,11 +163,11 @@ async def ExecCalls():
 
 		for call_chain in table["chain"]:
 
+			LOGGER.info(f"Preparing call chain: [{host}] {len(call_chain)} calls")
+
 			if (not len(call_chain)): continue
 
 			last = call_chain[-1]
-
-			LOGGER.info(f"Preparing call chain: [{host}] {func}")
 			tasks.append(ExecCallChain(call_chain))
 			contexts.append({"host":host, "call":last})
 
