@@ -122,6 +122,7 @@ def WriteCallbacksToFile():
 
 
 async def ExecCalls():
+
 	tasks	 = []
 	contexts = []
 
@@ -150,6 +151,7 @@ async def ExecCalls():
 		for call in table["async"]:
 
 			func = call["func"]
+			LOGGER.info(f"Preparing call: [{host}] {func}")
 			if (not func.startswith("VPI_")): continue
 
 			try:
