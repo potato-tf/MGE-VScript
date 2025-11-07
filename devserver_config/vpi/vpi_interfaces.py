@@ -114,7 +114,7 @@ def WrapDB(func):
 					LOGGER.error(f"[VPI ERROR] ({func.__name__}) :: {e}")
 
 					if "try restarting transaction" in str(e):
-						quit() # restart if we get this error
+						os._exit(0) # restart if we get this error
 					break
 
 			finally:

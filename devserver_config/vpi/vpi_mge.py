@@ -174,9 +174,9 @@ async def ExecCalls():
 			contexts.append({"host":host, "call":last})
 
 	# Go
+	LOGGER.info(f"Tasks: {tasks}")
 	results = await asyncio.gather(*tasks)
-
-	LOGGER.info(f"Executed {len(results)} calls")
+	LOGGER.info(f"Results: {results}")
 
 	# Set callbacks
 	for result, context in zip(results, contexts):
@@ -199,6 +199,7 @@ def ExtractCallsFromFile(path):
 
 			LOGGER.info(f"Extracting calls from {path}")
 			contents = f.read()
+
 			if (contents.endswith("\x00")):
 				contents = contents[:-1]
 
@@ -230,16 +231,7 @@ async def main():
 		# Watch for changes to vpi_interfaces and reload the module if necessary
 		last_modtime = os.path.getmtime("vpi_interfaces.py")
 		if (last_modtime != last_interface_modtime):
-			# quit()	# restart on update
 			os._exit(0)
-			# last_interface_modtime = last_modtime
-			# try:
-			# 	importlib.reload(vpi_interfaces)
-			# 	LOGGER.info("Successfully hot-loaded changes to vpi_interfaces.py")
-			# except:
-			# 	LOGGER.error("Failed to hot-load changes to vpi_interfaces.py due to error:", exc_info=True)
-
-
 
 		files = os.listdir(SCRIPTDATA_DIR)
 		LOGGER.info(f"Found {len(files)} files in {SCRIPTDATA_DIR}")
