@@ -201,7 +201,6 @@ async def main():
 	# Watchdog loop
 	while True:
 		time.sleep(0.2)
-		current_time = time.time()
 
 		# Watch for changes to vpi_interfaces and reload the module if necessary
 		last_modtime = os.path.getmtime("vpi_interfaces.py")
@@ -231,7 +230,9 @@ async def main():
 				os.remove(path)
 			# Grab info from clients
 			elif (file.endswith("_output.interface")):
+				LOGGER.info(f"Extracting calls from {path}")
 				ExtractCallsFromFile(path)
+				LOGGER.info(f"Removed {path}")
 				os.remove(path)
 
 		await ExecCalls()
