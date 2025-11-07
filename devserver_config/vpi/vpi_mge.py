@@ -155,7 +155,7 @@ async def ExecCalls():
 			try:
 				# LOGGER.info(f"Preparing call: [{host}] {func}")
 				func = getattr(vpi_interfaces, func)
-				tasks.append((lambda: LOGGER.info(f"Executing call: [{host}] {func}"), func(call, POOL)))
+				tasks.append((lambda: await LOGGER.info(f"Executing call: [{host}] {func}"), func(call, POOL)))
 				contexts.append({"host":host, "call":call})
 
 			except Exception as e:
