@@ -153,10 +153,10 @@ async def ExecCalls():
 			if (not func.startswith("VPI_")): continue
 
 			try:
-				# LOGGER.info(f"Preparing call: [{host}] {func}")
+				LOGGER.info(f"Preparing call: [{host}] {func}")
 				func = getattr(vpi_interfaces, func)
-				tasks.append(lambda: LOGGER.info(f"Executing call: [{host}] {func}"))
-				tasks.append(func(call, POOL))
+				async def logtxt(host, func): LOGGER.info( f"Executing call: [{host}] {func}" )
+				tasks.append((logtxt(host, func), func(call, POOL)))
 				contexts.append({"host":host, "call":call})
 
 			except Exception as e:
