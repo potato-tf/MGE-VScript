@@ -218,6 +218,7 @@ async def main():
 
 
 		files = os.listdir(SCRIPTDATA_DIR)
+		LOGGER.info(f"Found {len(files)} files in {SCRIPTDATA_DIR}")
 
 		for file in files:
 			path = os.path.join(SCRIPTDATA_DIR, file)
