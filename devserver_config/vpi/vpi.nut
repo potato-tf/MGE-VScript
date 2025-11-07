@@ -83,6 +83,7 @@ local used_tokens = {}
 // We delay sending calls until this is true so hostname can have the proper value
 local server_cfg_execd = false
 local HOSTNAME = "team_fortress"
+local INPUT_FILE = "team_fortress_vpi_input.interface"
 
 local function GetSanitizedHostname()
 {
@@ -102,6 +103,7 @@ local function GetSanitizedHostname()
 
 			str += code.tochar()
 		}
+        INPUT_FILE = str + "_vpi_input.interface"
 		return HOSTNAME = str
 	}
 	catch (e) {
@@ -112,8 +114,6 @@ local function GetSanitizedHostname()
 		return HOSTNAME
 	}
 }
-
-local INPUT_FILE
 
 local MAX_FILE_SIZE = 16000
 local INT_MAX	   = 2147483647
