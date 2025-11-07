@@ -126,11 +126,17 @@ async def ExecCalls():
 	contexts = []
 
 	async def ExecCallChain(call_chain):
+
 		result = None
+
 		for call in call_chain:
+
 			func = call["func"]
+
 			if (not func.startswith("VPI_")): continue
+
 			try:
+				LOGGER.info(f"Executing call: [{host}] {func}")
 				func = getattr(vpi_interfaces, func)
 				result = await func(call, POOL)
 			except:
@@ -140,19 +146,28 @@ async def ExecCalls():
 
 	# Prepare calls
 	for host, table in calls.items():
+
 		for call in table["async"]:
+
 			func = call["func"]
 			if (not func.startswith("VPI_")): continue
+
 			try:
+				LOGGER.info(f"Preparing call: [{host}] {func}")
 				func = getattr(vpi_interfaces, func)
 				tasks.append(func(call, POOL))
 				contexts.append({"host":host, "call":call})
+
 			except Exception as e:
 				LOGGER.error(e)
 
 		for call_chain in table["chain"]:
+
 			if (not len(call_chain)): continue
+
 			last = call_chain[-1]
+
+			LOGGER.info(f"Preparing call chain: [{host}] {func}")
 			tasks.append(ExecCallChain(call_chain))
 			contexts.append({"host":host, "call":last})
 
@@ -232,12 +247,12 @@ async def main():
 			elif (file.endswith("_output.interface")):
 				LOGGER.info(f"Extracting calls from {path}")
 				ExtractCallsFromFile(path)
-				LOGGER.info(f"Removed {path}")
 				os.remove(path)
 
 		await ExecCalls()
 
 		# Send to clients
+		LOGGER.info(f"Writing callbacks to files")
 		WriteCallbacksToFile()
 
 		calls = {}
