@@ -82,7 +82,7 @@ local used_tokens = {}
 
 // We delay sending calls until this is true so hostname can have the proper value
 local server_cfg_execd = false
-local HOSTNAME
+local HOSTNAME = "team_fortress"
 
 local function GetSanitizedHostname()
 {
@@ -109,7 +109,7 @@ local function GetSanitizedHostname()
 		error( "COULDN'T GET HOSTNAME! " + e )
 		error( "COULDN'T GET HOSTNAME! " + e )
 		error( "COULDN'T GET HOSTNAME! " + e )
-		return HOSTNAME = "team_fortress"
+		return HOSTNAME
 	}
 }
 
