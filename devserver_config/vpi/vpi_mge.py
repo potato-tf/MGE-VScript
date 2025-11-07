@@ -140,7 +140,7 @@ async def ExecCalls():
 				func = getattr(vpi_interfaces, func)
 				result = await func(call, POOL)
 			except:
-				continue
+				LOGGER.error(f"Error executing call: [{host}] {func}")
 
 		return result
 
