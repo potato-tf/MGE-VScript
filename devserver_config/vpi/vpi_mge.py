@@ -214,6 +214,7 @@ async def ExecCalls():
 				LOGGER.error(f"Error in ExecCallChain: {e}")
 				continue
 
+		LOGGER.info(f"ExecCallChain: [{host}] {func}")
 		return result
 
 	# Prepare calls
