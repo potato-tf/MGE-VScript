@@ -176,10 +176,12 @@ async def ExecCalls():
 
 	# Set callbacks
 	for result, context in zip(results, contexts):
+
 		host  = context["host"]
 		call  = context["call"]
 		token = call["token"]
 
+		LOGGER.info(f"Setting callback: [{host}] {token}")
 		if call["callback"] and token:
 			if host not in callbacks:
 				callbacks[host] = {}
