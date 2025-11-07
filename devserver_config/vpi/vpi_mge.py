@@ -155,7 +155,8 @@ async def ExecCalls():
 			try:
 				# LOGGER.info(f"Preparing call: [{host}] {func}")
 				func = getattr(vpi_interfaces, func)
-				tasks.append((lambda: await LOGGER.info(f"Executing call: [{host}] {func}"), func(call, POOL)))
+				tasks.append(lambda: LOGGER.info(f"Executing call: [{host}] {func}"))
+				tasks.append(func(call, POOL))
 				contexts.append({"host":host, "call":call})
 
 			except Exception as e:
@@ -170,7 +171,7 @@ async def ExecCalls():
 			if (not len(call_chain)): continue
 
 			last = call_chain[-1]
-			tasks.append((lambda: LOGGER.info(f"Executing call chain: [{host}] {len(call_chain)} calls"), ExecCallChain(call_chain)))
+			tasks.append(ExecCallChain(call_chain))
 			contexts.append({"host":host, "call":last})
 
 	# Go
