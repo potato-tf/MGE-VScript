@@ -191,6 +191,7 @@ def WriteCallbacksToFile():
 
 			if (not len(string)): continue
 
+			LOGGER.info(f"WriteCallbacksToFile: [{host}] {len(string)} bytes")
 			f.write(string)
 
 	for host in delete:
@@ -219,6 +220,7 @@ async def ExecCalls():
 	for host, table in calls.items():
 		for call in table["async"]:
 			func = call["func"]
+			LOGGER.info(f"ExecCalls: [{host}] {func}")
 			if (not func.startswith("VPI_")): continue
 			try:
 				func = getattr(vpi_interfaces, func)
@@ -248,6 +250,7 @@ async def ExecCalls():
 			callbacks[host][token] = result
 
 def ExtractCallsFromFile(path):
+
 	# try:
 	with open(path, "r+") as f:
 		contents = f.read()
