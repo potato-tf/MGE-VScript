@@ -693,10 +693,10 @@ local VPICallInfo = class
 {
 	token    = null
 	func     = null
-	kwargs   = null
-	callback = null
 	urgent   = null
-	timeout  = null
+	callback = null
+	kwargs   = null
+	script   = null
 
 	constructor(s=null, f=null, k=null, c=null, u=null)
 	{
