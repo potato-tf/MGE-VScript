@@ -175,7 +175,7 @@ async def ExecCalls():
 
 	# Go
 	LOGGER.info(f"Tasks: {tasks}")
-	results = await asyncio.gather(*tasks)
+	results = await asyncio.gather(**tasks, return_exceptions=True)
 	LOGGER.info(f"Results: {results}")
 
 	# Set callbacks
