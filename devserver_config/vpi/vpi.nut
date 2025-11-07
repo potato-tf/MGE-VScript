@@ -80,27 +80,40 @@ local call_list = {
 local callbacks   = {}
 local used_tokens = {}
 
-// Strip hostname of characters other than [a-z0-9_]
-local hostname = Convars.GetStr("hostname").tolower()
-try
+// We delay sending calls until this is true so hostname can have the proper value
+local server_cfg_execd = false
+local HOSTNAME
+
+local function GetSanitizedHostname()
 {
-	local str = ""
-	foreach (code in hostname)
+	// Strip hostname of characters other than [a-z0-9_]
+	try
 	{
-		if (code < 33 && !endswith(hostname, "_"))
+		local hostname = GetStr("hostname").tolower()
+		local str = ""
+		foreach (code in hostname)
 		{
-			str += "_"
-			continue
+			if (code < 33 && hostname[hostname.len() - 1] != '_')
+			{
+				str += "_"
+				continue
+			}
+			if (code < 48 || (code > 57 && code < 97) || code > 122) continue
+
+			str += code.tochar()
 		}
-		if (code < 48 || (code > 57 && code < 97) || code > 122) continue
-
-		str += code.tochar()
+		return str
 	}
-	hostname = str
-}
-catch (e) {}
+	catch (e) {
 
-local INPUT_FILE = hostname + "_vpi_input.interface"
+		error( "COULDN'T GET HOSTNAME! " + e )
+		error( "COULDN'T GET HOSTNAME! " + e )
+		error( "COULDN'T GET HOSTNAME! " + e )
+		return "team_fortress"
+	}
+}
+
+local INPUT_FILE
 
 local MAX_FILE_SIZE = 16000
 local INT_MAX	   = 2147483647
@@ -784,7 +797,7 @@ local function WriteCallList(list, combined=false)
 	// Reading files seems to be about 3x as expensive as writing
 	// If we used a single output file we would have to read to see if we can write,
 	// so the simple solution is to base file name off timestamp and tick count and let the server handle the hard work
-	local output_file = format("%s_vpi_%d_%d_output.interface", hostname, Timestamp(), time / 0.015)
+	local output_file = format("%s_vpi_%d_%d_output.interface", HOSTNAME, Timestamp(), time / 0.015)
 	StringToFile(output_file, EncodeOutput(list))
 
 	// Clear calls
@@ -996,9 +1009,12 @@ SCRIPT_SCOPE <- SCRIPT_ENTITY.GetScriptScope()
 
 SCRIPT_SCOPE.tickcount <- 0
 function SCRIPT_SCOPE::VPIThink() {
+
 	// Read input
 	if (callbacks.len())
 	{
+        if ( !HOSTNAME )
+            HOSTNAME = GetSanitizedHostname()
 		// We wrote to file recently and are expecting a response from the server
 		// Read more frequently
 		if (expecting_iters != null && expecting_iters < MAX_EXPECTING_ITERS)

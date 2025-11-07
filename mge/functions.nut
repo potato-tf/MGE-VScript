@@ -185,14 +185,13 @@ function MGE::InitEntities() {
 						func   = "VPI_MGE_UpdateServerData"
 						kwargs = MGE.SERVER_DATA
 
-						// function callback(response, err) {
+						function callback(response, err) {
 
-						// 	if (err)
-						// 		error( err + "\n" )
+							if ( err ) printl( err )
 
-						// 	if (MGE.SERVER_DATA.address == 0 && "address" in response)
-						// 		MGE.SERVER_DATA.address = response.address
-						// }
+							if ( !MGE.SERVER_DATA.address && "address" in response )
+								MGE.SERVER_DATA.address = response.address
+						}
 					})
 
 					return 1.1
