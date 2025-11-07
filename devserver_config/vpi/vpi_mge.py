@@ -11,7 +11,7 @@ import json, time, math, asyncio, importlib, datetime
 from itertools import islice
 from random import randint
 import vpi_interfaces
-from vpi_config import SECRET, BYPASS_SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, POOL, DB_SUPPORT
+from vpi_config import SECRET, BYPASS_SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, POOL, DB_SUPPORT, SetupDB
 
 ###################################################################################################
 
@@ -223,6 +223,7 @@ async def main():
 	global callbacks
 
 	last_interface_modtime = os.path.getmtime("vpi_interfaces.py")
+	await SetupDB()
 
 	# Watchdog loop
 	while True:
