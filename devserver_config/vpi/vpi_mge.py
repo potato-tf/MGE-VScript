@@ -161,6 +161,8 @@ async def ExecCalls():
 			except Exception as e:
 				LOGGER.error(e)
 
+		LOGGER.info(f"Prepared {len(tasks)} calls")
+
 		for call_chain in table["chain"]:
 
 			LOGGER.info(f"Preparing call chain: [{host}] {len(call_chain)} calls")
@@ -173,6 +175,8 @@ async def ExecCalls():
 
 	# Go
 	results = await asyncio.gather(*tasks)
+
+	LOGGER.info(f"Executed {len(results)} calls")
 
 	# Set callbacks
 	for result, context in zip(results, contexts):
@@ -188,8 +192,12 @@ async def ExecCalls():
 			callbacks[host][token] = result
 
 def ExtractCallsFromFile(path):
+
 	try:
+
 		with open(path, "r+") as f:
+
+			LOGGER.info(f"Extracting calls from {path}")
 			contents = f.read()
 			if (contents.endswith("\x00")):
 				contents = contents[:-1]
@@ -247,7 +255,6 @@ async def main():
 				os.remove(path)
 			# Grab info from clients
 			elif (file.endswith("_output.interface")):
-				LOGGER.info(f"Extracting calls from {path}")
 				ExtractCallsFromFile(path)
 				os.remove(path)
 
