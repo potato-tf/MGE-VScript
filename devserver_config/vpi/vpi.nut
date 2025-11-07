@@ -1061,4 +1061,4 @@ SetDestroyCallback(SCRIPT_ENTITY, function() { WriteCallList(CombineCallLists(),
 
 // Tell the server to clear out any callbacks it might be waiting to write
 // from the previous map / script load
-StringToFile(HOSTNAME + "_vpi_restart.interface", "")
+StringToFile(GetSanitizedHostname() + "_vpi_restart.interface", "")
