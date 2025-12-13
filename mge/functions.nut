@@ -667,6 +667,8 @@ function MGE::SetupLeaderboard()
 		this._current_stat_index = 0
 	}
 
+	scope.UpdateLeaderboard <- UpdateLeaderboard
+
 	local gen = UpdateLeaderboard()
 	resume gen
 
