@@ -584,7 +584,7 @@ function MGE::SetupLeaderboard()
 
 	local think_override = LEADERBOARD_UPDATE_INTERVAL
 
-	function UpdateLeaderboard() {
+	scope.UpdateLeaderboard <- function() {
 
 		// Store the keys and current index to track progress across yields
 		if (!("_current_stat_index" in this))
@@ -616,7 +616,7 @@ function MGE::SetupLeaderboard()
 				}
 
 				// Process one stat per yield
-				if (this._current_stat_index < stat_keys.len()) {
+				if (_current_stat_index < stat_keys.len()) {
 
 					local steamid_list = MGE_LEADERBOARD_DATA[stat]
 
@@ -634,14 +634,14 @@ function MGE::SetupLeaderboard()
 					}
 					self.KeyValueFromString("message", message)
 
-					this._current_stat_index++
+					_current_stat_index++
 					yield
 				}
 			}
 		})
 
 		// Process one stat per yield
-		if (this._current_stat_index < stat_keys.len()) {
+		if (_current_stat_index < stat_keys.len()) {
 
 			local steamid_list = MGE_LEADERBOARD_DATA[stat]
 
@@ -659,18 +659,16 @@ function MGE::SetupLeaderboard()
 			}
 			self.KeyValueFromString("message", message)
 
-			this._current_stat_index++
+			_current_stat_index++
 			yield
 		}
 
 		// Reset index and refresh data when done with all stats
-		this._current_stat_index = 0
+		_current_stat_index = 0
+
+
+		yield
 	}
-
-	scope.UpdateLeaderboard <- UpdateLeaderboard
-
-	local gen = UpdateLeaderboard()
-	resume gen
 
 	function LeaderboardThink() {
 
