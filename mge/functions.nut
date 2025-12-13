@@ -579,12 +579,12 @@ function MGE::SetupLeaderboard()
 	DispatchSpawn(MGE_Leaderboard)
 	MGE.MGE_Leaderboard <- MGE_Leaderboard
 	MGE_Leaderboard.ValidateScriptScope()
-	LeaderboardScope <- MGE_Leaderboard.GetScriptScope()
-	LeaderboardScope.MGE_LEADERBOARD_DATA <- MGE_LEADERBOARD_DATA
+	local scope = MGE_Leaderboard.GetScriptScope()
+	scope.MGE_LEADERBOARD_DATA <- MGE_LEADERBOARD_DATA
 
 	local think_override = LEADERBOARD_UPDATE_INTERVAL
 
-	function LeaderboardScope::UpdateLeaderboard() {
+	function UpdateLeaderboard() {
 
 		// Store the keys and current index to track progress across yields
 		if (!("_current_stat_index" in this))
@@ -667,10 +667,10 @@ function MGE::SetupLeaderboard()
 		this._current_stat_index = 0
 	}
 
-	local gen = LeaderboardScope.UpdateLeaderboard()
+	local gen = UpdateLeaderboard()
 	resume gen
 
-	function LeaderboardScope::LeaderboardThink() {
+	function LeaderboardThink() {
 
 		if (gen.getstatus() == "dead")
 			gen = UpdateLeaderboard()
@@ -679,6 +679,7 @@ function MGE::SetupLeaderboard()
 		return think_override
 	}
 
+	scope.LeaderboardThink <- LeaderboardThink
 	AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
 }
 
