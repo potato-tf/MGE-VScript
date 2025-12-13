@@ -72,8 +72,16 @@ MGE.Events <- {
 
 			if (split_text_len > 1)
 			{
+				local handicap_text = split_text[1]
+
+				if ( handicap_text.tolower() == "off" )
+				{
+					scope.handicap_hp_penalty <- 0
+					return
+				}
+
 				local handicap = abs(ToStrictNum(split_text[1]))
-				if (handicap == 0 || handicap > scope.player_max_health_handicap)
+				if (!handicap || handicap > scope.player_max_health_handicap)
 				{
 					MGE_ClientPrint(player, HUD_PRINTTALK, handicap > scope.player_max_health_handicap ? "InvalidHandicap" : "HandicapDisabled")
 					// player.RemoveCustomAttribute("max health additive penalty")
@@ -411,6 +419,7 @@ MGE.Events <- {
 			{
 				if (!arena.IsUltiduo && !((arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && arena.IsCustomRuleset))
 					MGE.ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
+
 				else if (arena.IsUltiduo)
 				{
 					local current_medics = arena.Ultiduo.CurrentMedics
@@ -445,7 +454,7 @@ MGE.Events <- {
 				if (arena.IsMGE)
 				{
 					local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
-					MGE.ScriptEntFireSafe(p, format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio), GENERIC_DELAY)
+					MGE.ScriptEntFireSafe(p, format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio), -1)
 				}
 			}
 
