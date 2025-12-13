@@ -361,7 +361,7 @@ MGE.Events <- {
 
 		ValidatePlayerClass(player, player.GetPlayerClass())
 
-		ScriptEntFireSafe("__mge_main",  @"
+		MGE.ScriptEntFireSafe("__mge_main",  @"
 
 			for (local child = activator.FirstMoveChild(); child; child = child.NextMovePeer())
 			{
@@ -410,7 +410,7 @@ MGE.Events <- {
 			if (arena.State == AS_IDLE && arena_players.len() == arena.MaxPlayers)
 			{
 				if (!arena.IsUltiduo && !((arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && arena.IsCustomRuleset))
-					ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
+					MGE.ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
 				else if (arena.IsUltiduo)
 				{
 					local current_medics = arena.Ultiduo.CurrentMedics
@@ -419,7 +419,7 @@ MGE.Events <- {
 							current_medics[p.GetTeam() - 2] = p
 
 					if (current_medics[0] && current_medics[1])
-						ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
+						MGE.ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
 					else
 					{
 						foreach(p in arena_players)
@@ -430,7 +430,7 @@ MGE.Events <- {
 				}
 			}
 
-			ScriptEntFireSafe("__mge_main", format("SetSpecialArena(activator, `%s`)", arena_name), GENERIC_DELAY, player)
+			MGE.ScriptEntFireSafe("__mge_main", format("SetSpecialArena(activator, `%s`)", arena_name), GENERIC_DELAY, player)
 
 			//spawn player
 			local idx = TryGetClearSpawnPoint(player, arena_name)
@@ -445,7 +445,7 @@ MGE.Events <- {
 				if (arena.IsMGE)
 				{
 					local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
-					ScriptEntFireSafe(p, format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio), GENERIC_DELAY)
+					MGE.ScriptEntFireSafe(p, format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio), GENERIC_DELAY)
 				}
 			}
 
@@ -495,7 +495,7 @@ MGE.Events <- {
 		{
 			// tf_bot_quota spawned bots will always be forced to a team and cause error spew when they attack eachother in the void
 			if (player.IsFakeClient())
-				ScriptEntFireSafe(player, "self.AddBotAttribute(IGNORE_ENEMIES); self.TakeDamage(99999, DMG_GENERIC, self)", GENERIC_DELAY, null, null)
+				MGE.ScriptEntFireSafe(player, "self.AddBotAttribute(IGNORE_ENEMIES); self.TakeDamage(99999, DMG_GENERIC, self)", GENERIC_DELAY, null, null)
 			else if (player.GetTeam() > TEAM_SPECTATOR)
 				MGE_ClientPrint(null, HUD_PRINTTALK, "\x07FF0000[VScript MGE] WARNING: '%s' spawned outside of arena!", scope.player_name)
 		}
@@ -657,9 +657,9 @@ MGE.Events <- {
 			}
 		}
 		if (!arena.IsAmmomod)
-			ScriptEntFireSafe(victim, "printl(self); self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime)
+			MGE.ScriptEntFireSafe(victim, "printl(self); self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime)
 		else
-			ScriptEntFireSafe("__mge_main", format("SetArenaState(`%s`, AS_COUNTDOWN)", arena_name), AMMOMOD_RESPAWN_DELAY)
+			MGE.ScriptEntFireSafe("__mge_main", format("SetArenaState(`%s`, AS_COUNTDOWN)", arena_name), AMMOMOD_RESPAWN_DELAY)
 	}
 
 	function OnGameEvent_player_team(params)

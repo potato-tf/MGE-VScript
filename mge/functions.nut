@@ -1136,7 +1136,7 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 		{
 			if ("cap_trigger" in _arena || "cap" in _arena)
 			{
-				ScriptEntFireSafe("__mge_main", format(@"
+				MGE.ScriptEntFireSafe("__mge_main", format(@"
 
 					local _arena = ARENAS[`%s`]
 					local point = `cap_trigger` in _arena && !(`cap` in _arena) ? _arena.cap_trigger : _arena.cap
@@ -1202,7 +1202,7 @@ function MGE::BBall_SpawnBall(arena_name, origin_override = null, custom_ruleset
 		arena.RulesetVote.ground_ball <- ground_ball
 	}
 
-	ScriptEntFireSafe(ground_ball, "DispatchSpawn(self)", 0.2, null, null)
+	MGE.ScriptEntFireSafe(ground_ball, "DispatchSpawn(self)", 0.2, null, null)
 }
 
 function MGE::BBall_Pickup(player = null)
@@ -1258,7 +1258,7 @@ function MGE::BBall_Pickup(player = null)
 
 	EntFireByHandle(ball_ent, "SetParent", "!activator", -1, player, player)
 	EntFireByHandle(ball_ent, "SetParentAttachment", "flag", -1, player, player)
-	ScriptEntFireSafe(ball_ent, "DispatchSpawn(self)", GENERIC_DELAY)
+	MGE.ScriptEntFireSafe(ball_ent, "DispatchSpawn(self)", GENERIC_DELAY)
 
 	DispatchParticleEffect(player.GetTeam() == TF_TEAM_RED ? BBALL_PARTICLE_PICKUP_RED : BBALL_PARTICLE_PICKUP_BLUE, player.GetOrigin(), Vector(0, 90, 0))
 	EntFire(format("__mge_bball_trail_%d", player.GetTeam()), "StartTouch", "!activator", -1, player)
@@ -1963,7 +1963,7 @@ function MGE::SetArenaState(arena_name, state) {
 				{
 					for (local i = 0; i < countdown_time; ++i)
 					{
-						ScriptEntFireSafe("__mge_main", format(@"
+						MGE.ScriptEntFireSafe("__mge_main", format(@"
 
 							local arena = ARENAS[`%s`]
 							//left before countdown ended
@@ -1980,7 +1980,7 @@ function MGE::SetArenaState(arena_name, state) {
 					}
 				}
 				_players[p.GetTeam() - 2] = p
-				ScriptEntFireSafe("__mge_main", format(@"
+				MGE.ScriptEntFireSafe("__mge_main", format(@"
 
 					local arena_name = `%s`
 					local arena = ARENAS[arena_name]
@@ -2055,7 +2055,7 @@ function MGE::SetArenaState(arena_name, state) {
 				foreach(p in arena_players)
 					RemovePlayer(p)
 
-			ScriptEntFireSafe("__mge_main", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
+			MGE.ScriptEntFireSafe("__mge_main", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
 		}
 
 	}.setdelegate(MGE)
@@ -2479,7 +2479,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			scope.hoop_validated <- false
 			scope.hoop_cooldown <- 0.0
 
-			ScriptEntFireSafe(self, @"
+			MGE.ScriptEntFireSafe(self, @"
 
 				local visbit = 1 << self.entindex()
 
@@ -2522,7 +2522,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				_scope.temp_point <- ShowModelToPlayer(p, [KOTH_POINT_MODEL, 0, 0], cap_point.GetOrigin(), QAngle(), 9999.0)
 				SetPropInt(_scope.temp_point, "m_nRenderFX", kRenderFxDistort)
 
-				ScriptEntFireSafe(p, format(@"
+				MGE.ScriptEntFireSafe(p, format(@"
 
 					SendGlobalGameEvent(`show_annotation`, {
 
@@ -2628,7 +2628,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 						_scope.temp_ball <- ShowModelToPlayer(p, [BBALL_BALL_MODEL, 0, 0], hoop_trace.endpos, QAngle(), 9999.0)
 						SetPropInt(_scope.temp_ball, "m_nRenderFX", kRenderFxDistort)
 
-						ScriptEntFireSafe(p, format(@"
+						MGE.ScriptEntFireSafe(p, format(@"
 
 							SendGlobalGameEvent(`show_annotation`, {
 
@@ -2831,7 +2831,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				{
 					foreach(p in arena_players)
 					{
-						ScriptEntFireSafe("__mge_main", @"
+						MGE.ScriptEntFireSafe("__mge_main", @"
 
 							SwitchWeaponSlot(activator, 3)
 							SwitchWeaponSlot(activator, 1)
@@ -2846,7 +2846,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 						", GENERIC_DELAY, p)
 
-						ScriptEntFireSafe(p, format(@"
+						MGE.ScriptEntFireSafe(p, format(@"
 
 							SendGlobalGameEvent(`show_annotation`, {
 
@@ -3040,7 +3040,7 @@ function MGE::ArenaNavGenerator(only_this_arena = null) {
 			// Process spawn points for current arena
 			foreach(spawn_point in arena.SpawnPoints) {
 				generate_delay += 0.01
-				ScriptEntFireSafe(player, format(@"
+				MGE.ScriptEntFireSafe(player, format(@"
 
 					local origin = Vector(%f, %f, %f)
 					self.SetAbsOrigin(origin)
@@ -3052,7 +3052,7 @@ function MGE::ArenaNavGenerator(only_this_arena = null) {
 			}
 
 			// Schedule nav generation for current arena
-			ScriptEntFireSafe("__mge_main", format(@"
+			MGE.ScriptEntFireSafe("__mge_main", format(@"
 
 				ClientPrint(null, 3, `Areas marked!`)
 				ClientPrint(null, 3, `Generating nav...`)
@@ -3069,7 +3069,7 @@ function MGE::ArenaNavGenerator(only_this_arena = null) {
 		local generate_delay = 0.0
 		foreach(spawn_point in arena.SpawnPoints) {
 			generate_delay += 0.01
-			ScriptEntFireSafe(player, format(@"
+			MGE.ScriptEntFireSafe(player, format(@"
 
 				local origin = Vector(%f, %f, %f)
 				self.SetAbsOrigin(origin)
@@ -3081,7 +3081,7 @@ function MGE::ArenaNavGenerator(only_this_arena = null) {
 		}
 
 		// Schedule nav generation for current arena
-		ScriptEntFireSafe("__mge_main", @"
+		MGE.ScriptEntFireSafe("__mge_main", @"
 
 			ClientPrint(null, 3, `Areas marked!`)
 			ClientPrint(null, 3, `Generating nav...`)
@@ -3136,7 +3136,7 @@ function MGE::DoChangelevel() {
 	{
 		SetValue("mp_chattime", 9999.0)
 		EntFire("__mge_changelevel", "Activate") //do this anyway just to bring up the scoreboard/"end the round" instead of suddenly kicking everyone out
-		ScriptEntFireSafe("player", "EntFire(`__mge_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
+		MGE.ScriptEntFireSafe("player", "EntFire(`__mge_clientcommand`, `Command`, `retry`, -1, self)", 1.0)
 		EntFire("worldspawn", "Kill", "", 1.03)
 		return
 	}
