@@ -670,6 +670,9 @@ function MGE::SetupLeaderboard()
 		yield
 	}
 
+	local gen = scope.UpdateLeaderboard()
+	resume gen
+
 	function LeaderboardThink() {
 
 		if (gen.getstatus() == "dead")
