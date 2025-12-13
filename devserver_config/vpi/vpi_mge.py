@@ -11,7 +11,8 @@ import json, time, math, asyncio, importlib, datetime
 from itertools import islice
 from random import randint
 import vpi_interfaces
-from vpi_config import SECRET, BYPASS_SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, POOL, DB_SUPPORT, SetupDB
+import vpi_config
+from vpi_config import SECRET, BYPASS_SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, DB_SUPPORT, SetupDB
 
 ###################################################################################################
 
@@ -140,7 +141,12 @@ async def ExecCalls():
 			try:
 				LOGGER.info(f"Executing call: [{host_name}] {func}")
 				func = getattr(vpi_interfaces, func)
-				result = await func(call, POOL)
+				# Get POOL from vpi_config module to ensure we have the latest value
+				pool = vpi_config.POOL
+				if pool is None:
+					LOGGER.error(f"POOL is None when trying to execute call: [{host_name}] {func}")
+					continue
+				result = await func(call, pool)
 			except Exception as e:
 				LOGGER.error(f"Error executing call: [{host_name}] {func}: {e}")
 
@@ -158,7 +164,12 @@ async def ExecCalls():
 			try:
 				LOGGER.info(f"Preparing call: [{host}] {func}")
 				func = getattr(vpi_interfaces, func)
-				tasks.append( func(call, POOL) )
+				# Get POOL from vpi_config module to ensure we have the latest value
+				pool = vpi_config.POOL
+				if pool is None:
+					LOGGER.error(f"POOL is None when trying to prepare call: [{host}] {func}")
+					continue
+				tasks.append( func(call, pool) )
 				contexts.append({"host":host, "call":call})
 
 			except Exception as e:
@@ -231,6 +242,13 @@ async def main():
 
 	last_interface_modtime = os.path.getmtime("vpi_interfaces.py")
 	await SetupDB()
+	
+	# Verify POOL was created successfully
+	if DB_SUPPORT and vpi_config.POOL is None:
+		LOGGER.error("Database connection pool is None after SetupDB(). Cannot continue.")
+		raise RuntimeError("Failed to initialize database connection pool")
+	elif DB_SUPPORT:
+		LOGGER.info("Database connection pool initialized successfully")
 
 	# Watchdog loop
 	while True:
