@@ -53,7 +53,7 @@ function MGE::InitEntities() {
 
 		foreach(ent in ents) {
 
-			printl(ent.GetName().toupper().slice(2))
+			// printl(ent.GetName().toupper().slice(2))
 			MGE[ ent.GetName().toupper().slice(2) ] <- ent
 		}
 	}
@@ -338,7 +338,6 @@ function MGE::InitPlayerScope(player)
 	scope.player_name	   <- GetClientConvarValue("name", player_entindex)
 	scope.language   	   <- GetClientConvarValue("cl_language", player_entindex)
 	scope.arena_info 	   <- null
-	scope.queue      	   <- null
 	scope.enable_announcer <- true
 	scope.enable_hud	   <- true
 	scope.enable_countdown <- true
