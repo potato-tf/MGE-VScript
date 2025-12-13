@@ -496,7 +496,7 @@ MGE.Events <- {
 			// tf_bot_quota spawned bots will always be forced to a team and cause error spew when they attack eachother in the void
 			if (player.IsFakeClient())
 				ScriptEntFireSafe(player, "self.AddBotAttribute(IGNORE_ENEMIES); self.TakeDamage(99999, DMG_GENERIC, self)", GENERIC_DELAY, null, null)
-			else if (player.GetTeam() != TEAM_UNASSIGNED)
+			else if (player.GetTeam() > TEAM_SPECTATOR)
 				MGE_ClientPrint(null, HUD_PRINTTALK, "\x07FF0000[VScript MGE] WARNING: '%s' spawned outside of arena!", scope.player_name)
 		}
 	}
