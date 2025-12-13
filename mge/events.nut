@@ -615,7 +615,7 @@ MGE.Events <- {
 		}
 
 		local hudstr = format("%s\n", arena_name)
-		if (attacker && attacker != victim)
+		if (MGE_HUD && MGE_HUD.IsValid() && attacker && attacker != victim)
 		{
 			MGE_ClientPrint(victim, HUD_PRINTTALK, "HPLeft", attacker.GetHealth())
 			MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
