@@ -284,7 +284,7 @@ local function Tokenize(str)
 }
 
 local ParseTokens
-function ParseTokens(tokens, start_index=0)
+ParseTokens = function(tokens, start_index=0)
 {
 	local next_index = start_index + 1
 
