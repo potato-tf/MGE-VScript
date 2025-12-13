@@ -100,7 +100,8 @@ async def SetupDB():
 		else:
 			raise RuntimeError("DB_TYPE must be either 'mysql' or 'sqlite'")
 
-asyncio.run(SetupDB())
+# Note: SetupDB() should be called in the main event loop, not here
+# asyncio.run(SetupDB())  # Removed - will be called in main event loop
 
 # ====================================================================================================================== #
 

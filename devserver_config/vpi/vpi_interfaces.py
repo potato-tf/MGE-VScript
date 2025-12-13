@@ -70,21 +70,19 @@ def WrapDB(func):
 		while (retry_count < RETRY_COUNT_MAX):
 			conn = None
 			cursor = None
-			# try:
-			if DB_TYPE == "mysql":
-				# For aiomysql, pool is an awaitable context manager, so use "async with"
-				async with pool as mysql_pool:
-					conn = await mysql_pool.acquire()
-			else:
-				conn = pool
-			cursor = await conn.cursor() if DB_TYPE == "mysql" else await conn.execute("SELECT 1")
-			if DB_TYPE != "mysql":
-				# For sqlite, conn is already a cursor
-				cursor = conn
 			result = None
 			error = None
 
 			try:
+				if DB_TYPE == "mysql":
+					# For aiomysql, acquire connection from pool
+					conn = await pool.acquire()
+					cursor = await conn.cursor()
+				else:
+					# For sqlite, pool is the connection
+					conn = pool
+					cursor = conn
+
 				result = await func(info=info, cursor=cursor)
 				break
 
@@ -98,8 +96,11 @@ def WrapDB(func):
 							await cursor.close()
 						except:
 							pass
-					if conn:
-						pool.release(conn)
+					if conn and DB_TYPE == "mysql":
+						try:
+							pool.release(conn)
+						except:
+							pass
 
 					retry_count += 1
 					if retry_count >= RETRY_COUNT_MAX:
@@ -118,16 +119,23 @@ def WrapDB(func):
 					break
 
 			finally:
-				if cursor:
-					await cursor.close()
+				if cursor and DB_TYPE == "mysql":
+					try:
+						await cursor.close()
+					except:
+						pass
 				if conn:
-					if error is None:
+					if error is None and DB_TYPE == "mysql":
 						try:
 							await conn.commit()
 						except Exception as commit_error:
 							LOGGER.error(f"Failed to commit transaction: {commit_error}")
 							error = f"[VPI ERROR] ({func.__name__}) :: Failed to commit transaction"
-					pool.release(conn)
+					if DB_TYPE == "mysql":
+						try:
+							pool.release(conn)
+						except:
+							pass
 
 			# except Exception as e:
 			# 	LOGGER.error(f"Error in WrapDB: {e}")

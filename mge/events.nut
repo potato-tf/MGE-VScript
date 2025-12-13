@@ -616,17 +616,10 @@ MGE.Events <- {
 
 		local hudstr = format("%s\n", arena_name)
 
-		local hud = FindByName( null, "__mge_hud")
-
-		if (!hud || !hud.IsValid())
-			MGE.InitEntities()
-
-		hud = FindByName( null, "__mge_hud")
-
 		if (attacker && attacker != victim)
 		{
 			MGE_ClientPrint(victim, HUD_PRINTTALK, "HPLeft", attacker.GetHealth())
-			hud.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+			MGE.MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
 		}
 
 		// Koth / bball mode doesn't count deaths

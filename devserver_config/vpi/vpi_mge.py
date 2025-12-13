@@ -16,6 +16,7 @@ from vpi_config import SECRET, BYPASS_SECRET, SCRIPTDATA_DIR, LOGGER, VERSION, P
 ###################################################################################################
 
 loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 
 # {
 #	  "<host>": {
@@ -126,7 +127,7 @@ async def ExecCalls():
 	tasks	 = []
 	contexts = []
 
-	async def ExecCallChain(call_chain):
+	async def ExecCallChain(call_chain, host_name):
 
 		result = None
 
@@ -137,11 +138,11 @@ async def ExecCalls():
 			if (not func.startswith("VPI_")): continue
 
 			try:
-				LOGGER.info(f"Executing call: [{host}] {func}")
+				LOGGER.info(f"Executing call: [{host_name}] {func}")
 				func = getattr(vpi_interfaces, func)
 				result = await func(call, POOL)
-			except:
-				LOGGER.error(f"Error executing call: [{host}] {func}")
+			except Exception as e:
+				LOGGER.error(f"Error executing call: [{host_name}] {func}: {e}")
 
 		return result
 
@@ -172,13 +173,17 @@ async def ExecCalls():
 			if (not len(call_chain)): continue
 
 			last = call_chain[-1]
-			tasks.append(ExecCallChain(call_chain))
+			tasks.append(ExecCallChain(call_chain, host))
 			contexts.append({"host":host, "call":last})
 
 	# Go
-	LOGGER.info(f"Tasks: {tasks}")
+	if not tasks:
+		LOGGER.info("No tasks to execute")
+		return
+	
+	LOGGER.info(f"Executing {len(tasks)} tasks")
 	results = await asyncio.gather(*tasks, return_exceptions=True)
-	LOGGER.info(f"Results: {results}")
+	LOGGER.info(f"Completed {len(results)} tasks with results: {results}")
 
 	# Set callbacks
 	for result, context in zip(results, contexts):
