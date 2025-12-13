@@ -682,7 +682,7 @@ function MGE::SetupLeaderboard()
 		return think_override
 	}
 
-	scope.LeaderboardThink <- LeaderboardThink
+	scope.LeaderboardThink <- LeaderboardThink.bindenv(scope)
 	AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
 }
 
