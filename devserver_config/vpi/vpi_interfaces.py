@@ -413,6 +413,7 @@ async def VPI_MGE_AutoUpdate(info):
 
 @WrapInterface
 async def VPI_MGE_UpdateServerData(info):
+
 	global date_time, requests_get, requests_put, STEAMAPI_LAST_REQUEST_TIME
 
 	if not date_time or not 'datetime' in sys.modules:

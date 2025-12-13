@@ -164,8 +164,8 @@ if ( !("MGE_GAMESTRINGS" in ROOT) )
     ::MGE_GAMESTRINGS <- {}
 
 
-EntFire( "*", "RunScriptCode", "SetPropBool(self, STRING_NETPROP_PURGESTRINGS, true); MGE_GAMESTRINGS[self.GetScriptId()] <- null" )
-MGE_GAMESTRINGS["SetPropBool(self, STRING_NETPROP_PURGESTRINGS, true); MGE_GAMESTRINGS[self.GetScriptId()] <- null"] <- null
+// EntFire( "*", "RunScriptCode", "SetPropBool(self, STRING_NETPROP_PURGESTRINGS, true); MGE_GAMESTRINGS[self.GetScriptId()] <- null" )
+// MGE_GAMESTRINGS["SetPropBool(self, STRING_NETPROP_PURGESTRINGS, true); MGE_GAMESTRINGS[self.GetScriptId()] <- null"] <- null
 
 local function GameStringGenerator() {
 

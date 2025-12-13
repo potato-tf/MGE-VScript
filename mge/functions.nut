@@ -194,6 +194,8 @@ function MGE::InitEntities() {
 						}
 					})
 
+					printl("Updating server data")
+
 					return 1.1
 				}
 				return -1
