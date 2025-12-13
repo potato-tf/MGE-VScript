@@ -840,8 +840,8 @@ local function HandleCallbacks()
 	local contents = FileToString(INPUT_FILE)
 
 	if (!contents || contents == "") return
-	// try
-	// {
+	try
+	{
 		local table = JSON.Decode(contents)
 
 		// Look to see if any of our callbacks have results
@@ -864,12 +864,12 @@ local function HandleCallbacks()
 			}
 			delete callbacks[token]
 		}
-	// }
-	// catch (e)
-	// {
-	// 	printl(e)
-	// 	printl("[VPI] INVALID INPUT RECEIVED FROM SERVER")
-	// }
+	}
+	catch (e)
+	{
+		printl(e)
+		printl("[VPI] INVALID INPUT RECEIVED FROM SERVER")
+	}
 
 	// Wipe the file to let the server know we've handled its contents
 	// and it can send anything else it's waiting to write
