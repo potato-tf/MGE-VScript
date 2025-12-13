@@ -49,7 +49,7 @@ function MGE::InitEntities() {
 		}
 	})
 
-	function template_scope::PostSpawn() {
+	function template_scope::PostSpawn(...) {
 
 		foreach(ent in ents) {
 
