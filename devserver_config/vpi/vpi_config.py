@@ -81,16 +81,65 @@ async def SetupDB():
 
 		if (DB_TYPE == "mysql"):
 
-			POOL = await aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, db=DB_DATABASE, autocommit=False)
-			DB = await POOL.acquire()
-
 			# Validation
 			for env in [DB_HOST, DB_USER, DB_PORT, DB_DATABASE, SCRIPTDATA_DIR]:
 				assert env is not None
 
-			if (DB_PASSWORD is None):
+			# Check if password is needed
+			if (DB_PASSWORD is None or DB_PASSWORD == ""):
+				LOGGER.warning(f"DB_PASSWORD is not set, prompting for password...")
 				DB_PASSWORD = input(f"Enter password for {DB_USER}@{DB_HOST}:{DB_PORT} >>> ")
 				print()
+
+			try:
+				LOGGER.info(f"Attempting to create MySQL connection pool: {DB_USER}@{DB_HOST}:{DB_PORT}/{DB_DATABASE}")
+				POOL = await aiomysql.create_pool(
+					host=DB_HOST, 
+					user=DB_USER, 
+					password=DB_PASSWORD, 
+					port=DB_PORT, 
+					db=DB_DATABASE, 
+					autocommit=False,
+					minsize=1,
+					maxsize=10
+				)
+				LOGGER.info(f"MySQL connection pool created successfully: {POOL}")
+			except Exception as e:
+				error_msg = str(e)
+				LOGGER.error(f"Error creating MySQL connection pool: {type(e).__name__}: {e}", exc_info=True)
+				LOGGER.error(f"Connection details: host={DB_HOST}, user={DB_USER}, port={DB_PORT}, database={DB_DATABASE}")
+				
+				# Provide helpful error messages for common issues
+				if "Access denied" in error_msg or "1045" in error_msg:
+					LOGGER.error("Access denied - check username and password")
+				elif "Unknown database" in error_msg or "1049" in error_msg:
+					LOGGER.error(f"Database '{DB_DATABASE}' does not exist. Create it first or check the database name.")
+				elif "Can't connect" in error_msg or "2003" in error_msg or "2005" in error_msg:
+					LOGGER.error(f"Cannot connect to MySQL server at {DB_HOST}:{DB_PORT} - check if server is running and accessible")
+				elif "timed out" in error_msg.lower():
+					LOGGER.error(f"Connection timed out - check network connectivity and firewall settings")
+				
+				POOL = None
+				return
+
+			if not POOL:
+				LOGGER.error("POOL is None after creation attempt")
+				return
+
+			try:
+				DB = await POOL.acquire()
+				LOGGER.info("Successfully acquired initial database connection from pool")
+				# Test the connection
+				await DB.ping()
+				LOGGER.info("Database connection ping successful")
+				POOL.release(DB)
+			except Exception as e:
+				LOGGER.error(f"Failed to acquire/test connection from pool: {type(e).__name__}: {e}", exc_info=True)
+				if POOL:
+					POOL.close()
+					await POOL.wait_closed()
+				POOL = None
+				return
 
 		elif (DB_TYPE == "sqlite"):
 
