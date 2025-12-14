@@ -585,7 +585,9 @@ SetValue("tf_fall_damage_disablespread", 1)
 
 // requires a custom plugin to feed m_iszMvMPopfileName to SteamWorks_SetGameDescription
 // this can be done with SteamworksPy instead for 100% vanilla compatibility
-local gamedesc = format("Potato MGE (%s)", MGE_MAPINFO[MAPNAME_CONFIG_OVERRIDE].nice_name)
-SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
+if (MAPNAME_CONFIG_OVERRIDE in MGE_MAPINFO) {
+	local gamedesc = format("Potato MGE (%s)", MGE_MAPINFO[MAPNAME_CONFIG_OVERRIDE].nice_name)
+	SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
+}
 
 printl("[VScript MGE] READY!")
