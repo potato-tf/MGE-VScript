@@ -1,6 +1,6 @@
 ::SpawnConfigs <-
 {
-    "mge_rework_v1": {
+    "mge_newmaps1_v2_d": {
 
         "Mound 1": {
 
