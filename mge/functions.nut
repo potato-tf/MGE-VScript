@@ -1077,7 +1077,7 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 		if (idx == null && !idx_failed)
 		{
 			idx_failed = true
-			ARENAS_LIST = ARENAS_LIST.filter( @(arena) arena )
+			ARENAS_LIST = ARENAS_LIST.filter( @(_, arena) arena )
 		}
 
 		if (idx_failed)
