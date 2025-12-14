@@ -18,6 +18,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 0,
         }
         "Mound 2": {
 
@@ -35,6 +36,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 1,
         }
         "Mound 3": {
 
@@ -52,6 +54,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 2,
         }
         "Mound 4": {
 
@@ -69,6 +72,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 3,
         }
         "Mound 5": {
 
@@ -86,6 +90,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 4,
         }
         "Crate Bridge 1": {
 
@@ -103,6 +108,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 5,
         }
         "Crate Bridge 2": {
 
@@ -120,6 +126,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 6,
         }
         "Crate Bridge 3": {
 
@@ -137,6 +144,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 7,
         }
         "Crate Bridge 4": {
 
@@ -154,6 +162,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 8,
         }
         "Crate Bridge 5": {
 
@@ -171,6 +180,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 9,
         }
         "Undercross 1": {
 
@@ -192,6 +202,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 10,
         }
         "Undercross 2": {
 
@@ -213,6 +224,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 11,
         }
         "Undercross 3": {
 
@@ -234,6 +246,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 12,
         }
         "Undercross 4": {
 
@@ -255,6 +268,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 13,
         }
         "Undercross 5": {
 
@@ -276,6 +290,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 14,
         }
         "waterborder 1": {
 
@@ -293,6 +308,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 15,
         }
         "waterborder 2": {
 
@@ -310,6 +326,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 16,
         }
         "waterborder 3": {
 
@@ -327,6 +344,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 17,
         }
         "waterborder 4": {
 
@@ -344,6 +362,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 18,
         }
         "waterborder 5": {
 
@@ -361,6 +380,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 19,
         }
         "granary pro 1": {
 
@@ -378,6 +398,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 20,
         }
         "granary pro 2": {
 
@@ -395,6 +416,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 21,
         }
         "granary pro 3": {
 
@@ -412,6 +434,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 22,
         }
         "granary pro 4": {
 
@@ -429,6 +452,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 23,
         }
         "granary pro 5": {
 
@@ -446,6 +470,7 @@
             "showhp": "0"
             "mindist": "550"
             "4player": "1"
+            "idx": 24,
         }
     }
     "duels_midair_v2": {
