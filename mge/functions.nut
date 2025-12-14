@@ -2195,10 +2195,15 @@ function MGE::GetStats(player) {
 		//load stats from file
 		printl("Getting player data from file...")
 		if (FileToString(filename))
-		{
-			compilestring(FileToString(filename))()
-			scope.stats <- ROOT[steam_id_slice]
-			delete ROOT[steam_id_slice]
+		{	
+			try {
+				compilestring(FileToString(filename))()
+				scope.stats <- ROOT[steam_id_slice]
+				delete ROOT[steam_id_slice]
+			} catch (e) {
+				printf(MGE_Localization[DEFAULT_LANGUAGE]["Error_StatsNotFound"], steam_id)
+				return
+			}
 		}
 		else
 		{
