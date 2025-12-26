@@ -454,7 +454,7 @@ MGE.Events <- {
 				if (arena.IsMGE)
 				{
 					local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
-					MGE.ScriptEntFireSafe(p, format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio), -1)
+					MGE.ScriptEntFireSafe(p, format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio), GENERIC_DELAY)
 				}
 			}
 
