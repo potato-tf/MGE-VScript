@@ -2447,7 +2447,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 	local ruleset_inits = {
 
-		function bball() {
+		function bball[MGE]() {
 
 			//set some temporary bball variables
 			if (!("validatedhoops" in arena.RulesetVote))
@@ -2501,7 +2501,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 			", GENERIC_DELAY)
 		}
-		function koth() {
+		function koth[MGE]() {
 
 			local cap_point = CreateByClassname("prop_dynamic")
 			cap_point.SetModel(KOTH_POINT_MODEL)
@@ -2526,7 +2526,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				_scope.temp_point <- ShowModelToPlayer(p, [KOTH_POINT_MODEL, 0, 0], cap_point.GetOrigin(), QAngle(), 9999.0)
 				SetPropInt(_scope.temp_point, "m_nRenderFX", kRenderFxDistort)
 
-				MGE.ScriptEntFireSafe(p, format(@"
+				ScriptEntFireSafe(p, format(@"
 
 					SendGlobalGameEvent(`show_annotation`, {
 
@@ -2543,33 +2543,33 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				", _scope.temp_point.entindex()), GENERIC_DELAY)
 			}
 		}
-		function ultiduo() {
-			MGE.LoadSpawnPoints(arena_name)
+		function ultiduo[MGE]() {
+			LoadSpawnPoints(arena_name)
 			return
 		}
-		function ammomod() {
-			MGE.LoadSpawnPoints(arena_name)
+		function ammomod[MGE]() {
+			LoadSpawnPoints(arena_name)
 			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
 			arena.hpratio = AMMOMOD_DEFAULT_HP_MULT
 			return
 		}
-		function endif() {
-			MGE.LoadSpawnPoints(arena_name)
+		function endif[MGE]() {
+			LoadSpawnPoints(arena_name)
 			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
 			return
 		}
-		function midair() {
-			MGE.LoadSpawnPoints(arena_name)
+		function midair[MGE]() {
+			LoadSpawnPoints(arena_name)
 			arena.fraglimit = fraglimit
 			return
 		}
-		function allmeat() {
-			MGE.LoadSpawnPoints(arena_name)
+		function allmeat[MGE]() {
+			LoadSpawnPoints(arena_name)
 			arena.fraglimit = ALLMEAT_DEFAULT_FRAGLIMIT
 			return
 		}
-		"4player" : function() {
-			MGE.LoadSpawnPoints(arena_name)
+		"4player" : function[MGE]() {
+			LoadSpawnPoints(arena_name)
 			return
 		}
 	}
@@ -2578,7 +2578,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 		// absolute formatting nightmare
 		// does not cleanly map to in-game behavior when reading top to bottom
 
-		function bball() {
+		function bball[MGE]() {
 			local scope = self.GetScriptScope()
 			if (hoop_cooldown > Time()) return
 
@@ -2869,7 +2869,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				}
 			}
 		}
-		function koth() {
+		function koth[MGE]() {
 
 			if (point_cooldown > Time()) return
 
@@ -2938,7 +2938,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 					for (local hack; hack = FindByClassnameWithin(hack, "obj_teleporter", point.GetOrigin(), 200.0);)
 						EntFireByHandle(hack, "Kill", "", -1, null, null)
 
-					MGE.LoadSpawnPoints(arena_name)
+					LoadSpawnPoints(arena_name)
 
 					delete arena.RulesetVote.pointvote_pos
 
@@ -2974,22 +2974,22 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				point_cooldown = Time() + KOTH_POINT_PLACEMENT_COOLDOWN
 			}
 		}
-		function ultiduo() {
+		function ultiduo[MGE]() {
 			return
 		}
-		function ammomod() {
+		function ammomod[MGE]() {
 			return
 		}
-		function endif() {
+		function endif[MGE]() {
 			return
 		}
-		function midair() {
+		function midair[MGE]() {
 			return
 		}
-		function allmeat() {
+		function allmeat[MGE]() {
 			return
 		}
-		"4player" : function() {
+		"4player" : function[MGE]() {
 			return
 		}
 	}
