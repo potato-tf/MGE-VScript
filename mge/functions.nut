@@ -1373,7 +1373,7 @@ function MGE::AddPlayer(player, arena_name)
 		arena.Queue.append(player)
 
 		local idx = arena.Queue.len() - 1
-		local str = format(GetLocalizedString(!idx ? "NextInLine" : "InLine", player), arena.Queue.len().tostring())
+		local str = format(GetLocalizedString(!idx ? "NextInLine " : "InLine ", player), arena.Queue.len().tostring())
 		MGE_ClientPrint(player, HUD_PRINTTALK, str)
 	}
 }
@@ -1620,10 +1620,10 @@ function MGE::CalcELO2(winner, winner2, loser, loser2) {
 	MGE_ClientPrint(loser2,  HUD_PRINTTALK, "LostPoints",   loserscore.tostring())
 
 	// Update stats in database/file
-	UpdateStats(winner,  winner_stats, false)
-	UpdateStats(winner2, winner_stats, false)
-	UpdateStats(loser,   loser_stats, false)
-	UpdateStats(loser2,  loser_stats, false)
+	UpdateStats(winner,  winner_scope.stats, false)
+	UpdateStats(winner2, winner_scope.stats, false)
+	UpdateStats(loser,   loser_scope.stats, false)
+	UpdateStats(loser2,  loser2_scope.stats, false)
 
 	if (PER_ARENA_LOGGING)
 	{
@@ -1632,10 +1632,10 @@ function MGE::CalcELO2(winner, winner2, loser, loser2) {
 			arena_name  = arena_name
 			score 	    = arena.Score
 			fraglimit   = arena.fraglimit
-			winner      = winner_stats
-			winner2     = winner2_stats
-			loser       = loser_stats
-			loser2      = loser2_stats
+			winner      = winner_scope.stats
+			winner2     = winner2_scope.stats
+			loser       = loser_scope.stats
+			loser2      = loser2_scope.stats
 			winner_gain = winnerscore
 			loser_loss  = loserscore
 		}
