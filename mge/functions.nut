@@ -2544,32 +2544,32 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			}
 		}
 		function ultiduo() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			return
 		}
 		function ammomod() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
 			arena.hpratio = AMMOMOD_DEFAULT_HP_MULT
 			return
 		}
 		function endif() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
 			return
 		}
 		function midair() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = fraglimit
 			return
 		}
 		function allmeat() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = ALLMEAT_DEFAULT_FRAGLIMIT
 			return
 		}
 		"4player" : function() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			return
 		}
 	}
@@ -2696,7 +2696,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 							if (scope.temp_ball)
 								EntFireByHandle(scope.temp_ball, "Kill", "", -1, null, null)
 						}
-						LoadSpawnPoints(arena_name)
+						MGE.LoadSpawnPoints(arena_name)
 
 						//why does this need to be set here
 						// if ("mge" in arena)
@@ -2938,7 +2938,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 					for (local hack; hack = FindByClassnameWithin(hack, "obj_teleporter", point.GetOrigin(), 200.0);)
 						EntFireByHandle(hack, "Kill", "", -1, null, null)
 
-					LoadSpawnPoints(arena_name)
+					MGE.LoadSpawnPoints(arena_name)
 
 					delete arena.RulesetVote.pointvote_pos
 
