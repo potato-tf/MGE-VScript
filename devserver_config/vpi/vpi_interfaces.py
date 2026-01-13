@@ -161,8 +161,7 @@ def WrapInterface(func):
 			LOGGER.error("Failed to execute interface function due to error:", exc_info=True)
 			error = f"[VPI ERROR] ({func.__name__}) :: {type(e).__name__}"
 		finally:
-			if (error is None): return result
-			else:				return error
+			return result if error is None else error
 
 	return inner
 
