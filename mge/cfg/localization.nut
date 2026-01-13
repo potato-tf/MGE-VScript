@@ -48,7 +48,9 @@ const MGE_COLOR_SUBJECT = "edf781"
 const MGE_COLOR_BACKGROUND = "ad4800"
 
 ::MGE_Localization <- {
+
 	english = {
+
 		MenuTitle                  = "Join arena..."
 		MenuRemove                 = "Remove from queue"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Your opponent had \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF health remaining."
@@ -131,10 +133,12 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_AutoUpdateError 	   = "[VPI]: Autoupdate failed, couldn't clone repository.\n[VPI]: Repository: %s"
 		VPI_AutoUpdateSuccess      = "[VPI]: Autoupdate successful! (%s) sending changelevel..."
 
-		AdminCmd	 			   = "Executing admin command: %s"
-		ServerCommandDisabled 	   = "admin scripts require 'sv_allow_point_servercommand always'"
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Executing admin command: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"admin scripts require 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"You do not have access to this command."
 	}
 	polish = {
+
 		MenuTitle 				   = "Dołącz do areny..."
 		MenuRemove 				   = "Wyjdź z kolejki"
 		HPLeft 					   = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Twój przeciwnik miał \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF HP."
@@ -200,8 +204,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_AutoUpdateError        = "[VPI]: Błąd automatycznej aktualizacji, nie udało się sklonować repozytorium.\n[VPI]: Repozytorium: %s"
 		VPI_AutoUpdateSuccess      = "[VPI]: Automatyczna aktualizacja wykonana! Wykonuję changelevel..."
 
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Wykonywanie polecenia administratora: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"skrypty administracyjne wymagają 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Nie masz dostępu do tej komendy."
+
 	}
 	dutch = {
+
 		MenuTitle                  = "Sluit je aan bij arena..."
 		MenuRemove                 = "Verwijder uit wachtrij"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Je tegenstander had \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF HP over."
@@ -264,8 +273,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: Error data vinden voor gebruiker %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Data geschreven voor gebruiker %s.\n"
 		VPI_WriteError             = "[VPI]: Error data schrijven voor gebruiker %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Voer admin commando uit: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"admin scripts vereisen 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Je hebt geen toegang tot dit commando."
 	}
 	german = {
+
 		MenuTitle                  = "Arena betreten..."
 		MenuRemove                 = "Aus Warteschlange entfernen"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Dein Gegner überlebte mit \x07"+MGE_COLOR_MAIN+"%s\x07FFFFFF HP."
@@ -327,8 +341,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: Fehler beim Abrufen der Daten für Benutzer %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Daten für Benutzer %s geschrieben.\n\n"
 		VPI_WriteError             = "[VPI]: Fehler beim Schreiben der Daten für Benutzer %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Admin-Befehl ausführen: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Admin-Skripte erfordern 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Sie haben keine Berechtigung für diesen Befehl."
 	}
 	danish = {
+
 		MenuTitle                  = "Tilslut arena..."
 		MenuRemove                 = "Fjern fra kø"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Din modstander har \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF liv tilbage."
@@ -390,8 +409,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: Fehler beim Abrufen der Daten für Benutzer %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Daten für Benutzer %s geschrieben.\n\n"
 		VPI_WriteError             = "[VPI]: Fehler beim Schreiben der Daten für Benutzer %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Udfører admin kommando: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"admin scripts kræver 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Du har ikke adgang til denne kommando."
 	}
 	greek = {
+
 		MenuTitle                  = "Είσοδος στην αρένα..."
 		MenuRemove                 = "Αφαίρεση από την ουρά"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Ο αντίπαλός σας είχε \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF πόντους υγείας."
@@ -453,8 +477,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: Σφάλμα κατά τη λήψη δεδομένων για τον χρήστη %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Εγγράφηκαν δεδομένα για τον χρήστη %s.\n"
 		VPI_WriteError             = "[VPI]: Σφάλμα κατά την εγγραφή δεδομένων για τον χρήστη %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Εκτελείται admin εντολή: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Admin scripts απαιτούν 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Δεν έχετε πρόσβαση σε αυτήν την εντολή."
 	}
 	turkish = {
+
 		MenuTitle                  = "Arenaya katıl..."
 		MenuRemove                 = "Sıradan çıkar"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Rakibinin \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF canı kaldı."
@@ -516,8 +545,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: %s kullanıcısının verileri alınırken hata oluştu.\n\n"
 		VPI_WriteSuccess           = "[VPI]: %s kullanıcısının verileri yazıldı.\n\n"
 		VPI_WriteError             = "[VPI]: %s kullanıcısının verileri yazılırken hata oluştu.\n\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Admin kommando çalıştırılıyor: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Admin scripts 'sv_allow_point_servercommand always' gerektirir"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Bu komutu kullanmaya yetkiniz yok."
 	}
 	romanian = {
+
         MenuTitle              	   = "Arena comuna "
         MenuRemove             	   = "Scoate din queque"
         HPLeft                 	   = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Rivalul tău a avut \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF sănătatea ramasa."
@@ -579,8 +613,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
         VPI_ReadError              = "[VPI]: Eroare la obținerea datelor pentru playerul %s.\n"
         VPI_WriteSuccess           = "[VPI]: Am scris date pentru playerul %s.\n"
         VPI_WriteError             = "[VPI]: Eroare la scrierea datelor pentru playerul %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Admin command se execută: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Admin scripts 'sv_allow_point_servercommand always' necesare"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Nu aveți acces la această comandă."
 	}
 	czech = {
+
 		MenuTitle            	   = "Připojit se k aréně..."
 		MenuRemove           	   = "Odejít z fronty"
 		HPLeft               	   = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Tvému soupeři zbylo \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF zdraví."
@@ -637,14 +676,18 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound   	   = "\n\nChyba: statistiky pro %s nenalezeny! Stahuji znovu a přeskakuji aktualizaci...\n\n"
 
-
 		VPI_InitDB 				   = "[VPI]: Inicializace databáze..."
 		VPI_ReadSuccess      	   = "[VPI]: Získána data pro uživatele %s.\n"
 		VPI_ReadError        	   = "[VPI]: Chyba při získávání dat pro uživatele %s.\n"
 		VPI_WriteSuccess     	   = "[VPI]: Zapsána data pro uživatele %s.\n"
 		VPI_WriteError       	   = "[VPI]: Chyba při zápisu dat pro uživatele %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Vykonávání admin příkazu: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Admin skripty vyžadují 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Nemáte přístup k tomuto příkazu."
 	}
 	hungarian = {
+
 		MenuTitle                  = "Csatlakozás az arénához..."
 		MenuRemove                 = "Eltávolítás a várólistáról"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Az ellenfélnek \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF életpontja maradt."
@@ -700,14 +743,19 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		Airshot                    = "\x07"+MGE_COLOR_SUBJECT+"Légilövés!"
 		Error_StatsNotFound        = "\n\nHiba: %s statisztikái nem találhatók! újralekérdezés és frissítés kihagyása...\n\n"
 
-
 		VPI_InitDB 				   = "[VPI]: Inicializace databáze..."
 		VPI_ReadSuccess            = "[VPI]: %s felhasználó adatai lekérve.\n\n"
 		VPI_ReadError              = "[VPI]: Hiba %s felhasználó adatainak lekérésekor.\n\n"
 		VPI_WriteSuccess           = "[VPI]: %s felhasználó adatai elmentve.\n\n"
 		VPI_WriteError             = "[VPI]: Hiba %s felhasználó adatainak mentésekor.\n\n"
+
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Wykonując admin polecenie: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Admin skrypty wymagają 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Nie masz dostępu do tej komendy."
 	}
 	swedish = {
+
 		MenuTitle                  = "Ansluts till arenan..."
 		MenuRemove                 = "Ta bort från kö"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Din motståndare hade \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF återstående hälsa."
@@ -769,8 +817,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: Fel vid hämtning av data för användare %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Skrev data för användare %s.\n"
 		VPI_WriteError             = "[VPI]: Fel vid skrivning av data för användare %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Utför administratörskommando: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"adminscript kräver 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Du har inte tillgång till detta kommando."
 	}
 	norwegian = {
+
 		MenuTitle                  = "Bli med i arena..."
 		MenuRemove                 = "Fjern fra kø"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Motstanderen din hadde \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF helse igjen."
@@ -832,8 +885,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: Feil ved henting av data for bruker %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Skrev data for bruker %s.\n"
 		VPI_WriteError             = "[VPI]: Feil ved skriving av data for bruker %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Utfører admin kommando: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Admin scripts kræver 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Du har ikke tilgang til dette kommando."
 	}
 	finnish = {
+
 		MenuTitle                  = "Liity areenalle..."
 		MenuRemove                 = "Poista jonosta"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Vastustajallasi oli \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF terveyttä jäljellä."
@@ -895,8 +953,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: Virhe haettaessa tietoja käyttäjälle %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Kirjoitettiin tiedot käyttäjälle %s.\n"
 		VPI_WriteError             = "[VPI]: Virhe kirjoitettaessa tietoja käyttäjälle %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+ "Suoritetaan ylläpitäjän komento: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+ "ylläpitäjäskriptit vaativat asetuksen 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+ "Sinulla ei ole oikeuksia tähän komentoon."
 	}
 	vietnamese = {
+
 		MenuTitle                  = "Tham gia đấu trường..."
 		MenuRemove                 = "Xóa khỏi hàng đợi"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Đối thủ của bạn còn \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF máu."
@@ -958,8 +1021,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: Đã gặp lỗi khi cố lấy dữ liệu cho người dùng %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Đã viết dữ liệu cho người dùng %s.\n"
 		VPI_WriteError             = "[VPI]: Đã gặp lỗi khi cố viết dữ liệu cho người dùng %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Thực thi lệnh quản trị: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Admin scripts yêu cầu 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Bạn không có quyền thực thi lệnh này."
 	}
 	french = {
+
 		MenuTitle                  = "Sélectionnez une arène..."
 		MenuRemove             	   = "Quitter la file d'attente"
 		HPLeft                 	   = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Votre adversaire a \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF points de vie restant."
@@ -1021,8 +1089,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError          	   = "[VPI]: Erreur de données pour joueur %s.\n"
 		VPI_WriteSuccess       	   = "[VPI]: Données sauvegardées pour joueur %s.\n"
 		VPI_WriteError         	   = "[VPI]: Erreur de sauvegarde pour joueur %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Exécution de la commande admin: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Les scripts admin nécessitent 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Vous n'avez pas accès à cette commande."
 	}
 	spanish = {
+
 		MenuTitle                  = "Salta a la palestra..."
 		MenuRemove                 = "Salir de la cola"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Tu oponente tiene \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF de vida restante."
@@ -1084,8 +1157,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: Error, no se ha podido conseguir la información del usuario %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Informacion sobreescrita para el usuariou %s.\n"
 		VPI_WriteError             = "[VPI]: Error, no se ha podido sobreescribir la informacion del usuario %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Ejecutando comando admin: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Los scripts admin requieren 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"No tienes acceso a este comando."
 	}
 	latam = {
+
 		MenuTitle                  = "Unirse a la arena..."
 		MenuRemove                 = "Salir de la cola"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Tu oponente tenia \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF de vida restante."
@@ -1153,8 +1231,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_DBInitSuccess          = "[VPI]: Base de datos inicializada correctamente."
 		VPI_AutoUpdateError    	   = "[VPI]: Actualización automática fallida, no se pudo clonar el repositorio.\n[VPI]: Repositorio: %s"
 		VPI_AutoUpdateSuccess      = "[VPI]: Actualización automática exitosa! Enviando changelevel..."
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Ejecutando comando admin: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Los scripts admin requieren 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"No tienes acceso a este comando."
 	}
 	thai = {
+
 		MenuTitle                  = "เข้าร่วม Arena"
 		MenuRemove                 = "ลบออกจากคิว"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF คู่ต่อสู้ของคุณมีพลังชีวิตที่เหลือ \x07"+MGE_COLOR_SUBJECT+"%d\x07FFFFFF "
@@ -1208,15 +1291,18 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound        = "\n\nข้อผิดพลาด: ไม่พบสถิติสำหรับ %s! กำลังดึงข้อมูลอีกครั้งและข้ามการอัปเดต...\n\n"
 
-
 		VPI_InitDB 				   = "[VPI]: กำลังเริ่มต้นฐานข้อมูล..."
 		VPI_ReadSuccess            = "[VPI]: ได้รับข้อมูลสำหรับผู้ใช้ %s แล้ว\n\n"
 		VPI_ReadError              = "[VPI]: เกิดข้อผิดพลาดในการรับข้อมูลสำหรับผู้ใช้ %s\n\n"
 		VPI_WriteSuccess           = "[VPI]: เขียนข้อมูลสำหรับผู้ใช้ %s แล้ว\n\n"
 		VPI_WriteError             = "[VPI]: เกิดข้อผิดพลาดในการเขียนข้อมูลสำหรับผู้ใช้ %s\n\n"
 
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"กำลังดำเนินการคำสั่งของผู้ดูแลระบบ: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Admin scripts ต้องการ 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"คุณไม่มีสิทธิ์ใช้งานคำสั่งนี้."
 	}
 	russian = {
+
 		MenuTitle                  =  "Вступить в арену..."
 		MenuRemove                 =  "Удалить из очереди"
 		HPLeft                     =  "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Ваш оппонент имел \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF здоровья."
@@ -1278,15 +1364,19 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound        =  "\n\nОшибка: статистика не найдена для %s! Повторное получение и пропуск обновления...\n\n"
 
-
 		VPI_InitDB 				   = "[VPI]: Инициализация базы данных..."
 		VPI_ReadSuccess            =  "[VPI]: Получены данные для пользователя %s.\n"
 		VPI_ReadError              =  "[VPI]: Ошибка получения данных для пользователя %s.\n"
 		VPI_WriteSuccess           =  "[VPI]: Записаны данные для пользователя %s.\n"
 		VPI_WriteError             =  "[VPI]: Ошибка записи данных для пользователя %s.\n"
 
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Виконання команди адміністратора: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Admin scripts вимагають 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"У вас немає доступу до цієї команди."
+
 	}
 	ukranian = {
+
 		MenuTitle 				   = "Приєднатися до арени..."
 		MenuRemove 				   = "Вилучити з черги"
 		HPLeft 				  	   = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF У вашого опонента залишилося  \x07"+MGE_COLOR_SUBJECT+"%d\x07FFFFFF здоров'я."
@@ -1345,8 +1435,14 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError 			   = "[VPI]: Помилка отримання даних для користувача %s.\n"
 		VPI_WriteSuccess 		   = "[VPI]: Дані записані для користувача %s.\n"
 		VPI_WriteError 		   	   = "[VPI]: Помилка запису даних для користувача %s.\n"
+
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Виконується команда адміністратора: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"адмін-скрипти потребують 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"У вас немає доступу до цієї команди."
 	}
 	brazilian = {
+
 		MenuTitle                  = "Entrar na arena..."
 		MenuRemove                 = "Remover da fila"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Seu oponente tinha \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF de vida restante."
@@ -1408,8 +1504,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: Erro ao obter dados para o usuário %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Dados escritos para o usuário %s.\n"
 		VPI_WriteError             = "[VPI]: Erro ao escrever dados para o usuário %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Executando comando administrativo: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"scripts de admin requerem 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Você não tem acesso a este comando."
 	}
 	italian = {
+
 		MenuTitle            	   = "Entra nell'arena..."
 		MenuRemove           	   = "Esci dalla coda"
 		HPLeft               	   = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Il tuo avversario ha \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF di vita rimanente."
@@ -1470,8 +1571,14 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError        	   = "[VPI]: Errore nel ricevere i dati dell'utente %s.\n"
 		VPI_WriteSuccess     	   = "[VPI]: Dati scritti per l'utente %s.\n"
 		VPI_WriteError       	   = "[VPI]: Errore nella scrittura dei dati per l'utente %s.\n"
+
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Esecuzione comando admin: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"admin scripts richiedono 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"Non hai accesso a questo comando."
 	}
 	korean = {
+
 		MenuTitle            	   = "아레나 참가..."
 		MenuRemove           	   = "대기열에서 제거"
 		HPLeft               	   = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF 상대방의 남은 체력: \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF"
@@ -1533,8 +1640,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError        	   = "[VPI]: 사용자 %s의 데이터를 가져오는 중 오류가 발생했습니다.\n\n"
 		VPI_WriteSuccess     	   = "[VPI]: 사용자 %s의 데이터를 기록했습니다.\n\n"
 		VPI_WriteError       	   = "[VPI]: 사용자 %s의 데이터를 기록하는 중 오류가 발생했습니다.\n\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"관리자 명령 실행: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"관리자 스크립트를 사용하려면 'sv_allow_point_servercommand always'가 필요합니다."
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"이 명령어에 대한 권한이 없습니다."
 	}
 	japanese = {
+
 		MenuTitle                  = "アリーナに参加..."
 		MenuRemove                 = "キューから削除"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF 相手の残りHP: \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF"
@@ -1591,14 +1703,18 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound        = "\n\nエラー: %sの統計が見つかりません! 再取得中でアップデートをスキップします...\n\n"
 
-
 		VPI_InitDB 				   = "[VPI]: データベースを初期化中..."
 		VPI_ReadSuccess            = "[VPI]: ユーザー %s のデータを取得しました。\n\n"
 		VPI_ReadError              = "[VPI]: ユーザー %s のデータ取得中にエラーが発生しました。\n\n"
 		VPI_WriteSuccess           = "[VPI]: ユーザー %s のデータを書き込みました。\n\n"
 		VPI_WriteError             = "[VPI]: ユーザー %s のデータ書き込み中にエラーが発生しました。\n\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"管理者コマンドを実行しています: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"管理者スクリプトは 'sv_allow_point_servercommand always' が必要です"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"このコマンドにアクセスできません。"
 	}
 	tchinese = {
+
 		MenuTitle           	   = "加入競技場……"
 		MenuRemove          	   = "退出隊列"
 		HPLeft              	   = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF 您的對手還剩 \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF 生命值。"
@@ -1660,8 +1776,13 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError       	   = "[VPI]: 獲取 %s 的資料時出錯。\n\n"
 		VPI_WriteSuccess    	   = "[VPI]: 已寫入 %s 的資料。\n\n"
 		VPI_WriteError      	   = "[VPI]: 寫入 %s 的資料時出錯。\n\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"執行管理員指令：%s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"管理員腳本需要 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"您沒有權限使用此指令。"
 	}
 	schinese = {
+
 		MenuTitle 				   = "加入竞技场……"
 		MenuRemove 				   = "退出匹配队列"
 		HPLeft 				   	   = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF 您的对手还剩 \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF 点生命值。"
@@ -1718,14 +1839,18 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 
 		Error_StatsNotFound 	   = "\n\n错误：未找到 %s 的统计数据！正在重新获取并跳过更新...\n\n"
 
-
 		VPI_InitDB 				   = "[VPI]: 正在初始化数据库..."
 		VPI_ReadSuccess 		   = "[VPI]: 已获取 %s 的数据。\n\n"
 		VPI_ReadError 			   = "[VPI]: 获取 %s 的数据时出错。\n\n"
 		VPI_WriteSuccess 		   = "[VPI]: 已写入 %s 的数据。\n\n"
 		VPI_WriteError 			   = "[VPI]: 写入 %s 的数据时出错。\n\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"正在执行管理员命令：%s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"管理员脚本需要设置 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"您没有权限使用此命令。"
 	}
 	pirate = {
+
 		MenuTitle                  = "Choose yer arena, matey..."
 		MenuRemove                 = "Abandon ship (leave queue)"
 		HPLeft                     = "\x07"+MGE_COLOR_MAIN+"[VScript MGE]\x07FFFFFF Yer opponent had \x07"+MGE_COLOR_SUBJECT+"%s\x07FFFFFF health left in their bones."
@@ -1787,5 +1912,9 @@ const MGE_COLOR_BACKGROUND = "ad4800"
 		VPI_ReadError              = "[VPI]: Error readin' the records for sailor %s.\n"
 		VPI_WriteSuccess           = "[VPI]: Wrote in the logbook for sailor %s.\n"
 		VPI_WriteError             = "[VPI]: Error writin' in the logbook for sailor %s.\n"
+
+		AdminCmd	 			   = "\x07"+MGE_COLOR_MAIN+"Executing admin command: %s"
+		ServerCommandDisabled 	   = "\x07"+MGE_COLOR_BACKGROUND+"Admin scripts require 'sv_allow_point_servercommand always'"
+		AdminCmdError			   = "\x07"+MGE_COLOR_BACKGROUND+"You do not have access to this command."
 	}
 }

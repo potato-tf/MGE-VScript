@@ -51,16 +51,22 @@ const MGE_VERSION = "0.5.0"
 ::ROOT  <- getroottable()
 ::CONST <- getconsttable()
 
-// get clean map name from workshop map name
-local mapname = GetMapName()
-::MAPNAME_CONFIG_OVERRIDE <- 8 in mapname && mapname[8] == '/' ? mapname.slice(9, mapname.find(".") ) : mapname
+local MAPNAME = GetMapName()
+
+// get clean map name from workshop map
+if ( 8 in MAPNAME && MAPNAME[8] == '/' ) 
+	MAPNAME = MAPNAME.slice(9, MAPNAME.find(".") )
+
+CONST.MAPNAME <- MAPNAME
 
 local Include = @(file) IncludeScript("mge/"+file)
 
 Include("cfg/mgemod_spawns")
 
+Assert( ("SpawnConfigs" in ROOT), "[MGE VScript] Failed to load MGE spawn config (scripts/vscripts/mge/cfg/mgemod_spawns.nut)!" )
+
 // spawns not configured, bail and don't load anything
-if (!(MAPNAME_CONFIG_OVERRIDE in SpawnConfigs)) {
+if (!(MAPNAME in SpawnConfigs)) {
 
 	local failed_msg = "Map not configured for MGE, goodbye..."
 	error(format("\n%s\n%s\n%s\n\n", failed_msg, failed_msg, failed_msg))
@@ -68,12 +74,10 @@ if (!(MAPNAME_CONFIG_OVERRIDE in SpawnConfigs)) {
 	ClientPrint(null, 4, "[MGE VScript] "+failed_msg)
 
 	delete CONST.MGE_VERSION
-	delete MAPNAME_CONFIG_OVERRIDE
+	delete CONST.MAPNAME
 	delete SpawnConfigs
 
-	collectgarbage()
-
-	return
+	return collectgarbage()
 }
 
 Include("constants")
@@ -208,41 +212,53 @@ function MGE_CREATE_SCOPE( name = "__mge_scope"+UniqueString(), namespace = null
 // this will stop the spam after the first player spawn
 // some maps (chillypunch) also use cap logic to override the global respawn times
 // we force "infinite" respawn times to avoid problems
-function ROOT::MGE_RESPAWN_FIX()
-{
-	// delay until ents are spawned
-	EntFire("worldspawn", "RunScriptCode", @"
+// function ROOT::MGE_RESPAWN_FIX()
 
-		local base_spawn = Entities.FindByClassname(null, `info_player_teamspawn`)
+// 	// delay until ents are spawned
+// 	EntFire("worldspawn", "RunScriptCode", @"
 
-		// will be null for > 1 spawn point
-		if (!base_spawn) return
+// 		local base_spawn = Entities.FindByClassname(null, `info_player_teamspawn`)
 
-		local function make_spawn( team, offset ) {
+// 		// will be null for > 1 spawn point
+// 		if (!base_spawn) return
 
-			SpawnEntityFromTable(`info_player_teamspawn`, {
+// 		local function make_spawn( team, offset ) {
 
-				targetname 	= `__mge_spawn_override_`+team
-				TeamNum 	= team
-				origin 		= base_spawn.GetOrigin() + offset
-				spawnflags 	= 511
-			})
-		}
+// 			SpawnEntityFromTable(`info_player_teamspawn`, {
 
-		local blu_spawn = make_spawn(2, Vector(0, 0, 10))
-		local red_spawn = make_spawn(3, Vector(0, 0, 20))
+// 				targetname 	= `__mge_spawn_override_`+team
+// 				TeamNum 	= team
+// 				origin 		= base_spawn.GetOrigin() + offset
+// 				spawnflags 	= 511
+// 			})
+// 		}
 
-		MGE.MGE_RESPAWN_OVERRIDE <- SpawnEntityFromTable(`trigger_player_respawn_override`, {
+// 		local blu_spawn = make_spawn(2, Vector(0, 0, 10))
+// 		local red_spawn = make_spawn(3, Vector(0, 0, 20))
 
-			targetname  = `__mge_respawn_override`
-			RespawnTime = IDLE_RESPAWN_TIME
-			spawnflags  = 1
-		})
-		MGE.MGE_RESPAWN_OVERRIDE.SetSolid(2)
-		MGE.MGE_RESPAWN_OVERRIDE.SetSize(Vector(), Vector(1, 1, 1))
+		// local respawn_override = SpawnEntityFromTable(`trigger_player_respawn_override`, {
 
-	", 1)
-}
+		// 	targetname  = `__mge_respawn_override`
+		// 	RespawnTime = IDLE_RESPAWN_TIME
+		// 	spawnflags  = 1
+		// 	vscripts    = ` ` // same thing as respawn_override.ValidateScriptScope()
+		// })
+		// respawn_override.SetSolid(2)
+		// respawn_override.SetSize(Vector(), Vector(1, 1, 1))
+		// local scope = respawn_override.GetScriptScope()
+
+		// function TouchCrashFix() { return ( ( caller && caller.IsValid() ) || caller = activator ) && activator.IsValid() }
+		// scope.InputEndTouch      <- TouchCrashFix
+		// scope.Inputendtouch      <- TouchCrashFix
+		// scope.InputStartTouch    <- TouchCrashFix
+		// scope.Inputstarttouch    <- TouchCrashFix
+		// scope.InputStartTouchAll <- TouchCrashFix
+		// scope.Inputstarttouchall <- TouchCrashFix
+
+		// MGE.MGE_RESPAWN_OVERRIDE <- respawn_override
+
+	// ", 1)
+// }
 
 Include("itemdef_constants")
 Include("cfg/config")
@@ -266,7 +282,8 @@ if (
 ) {
 	Include("vpi/vpi")
 
-	// create scriptdata directories
+	// FileToString with an invalid filename on windows/linux (space) that is still a valid C++ character will create our directories
+	// if they don't exist CreateAndValidateFileLocation still runs before FileToString attempts to open the nonexistent file
 	FileToString("mge_playerdata/ ")
 	FileToString("mge_arenalogs/ ")
 }

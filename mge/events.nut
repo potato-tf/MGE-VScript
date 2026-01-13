@@ -1,5 +1,14 @@
 MGE.Events <- {
 
+	valid_chars = {
+
+		['!']  = 33,
+		['.']  = 46,
+		['/']  = 47,
+		['?']  = 63,
+		['\\'] = 92
+	}
+
 	chat_commands = {
 
 		function add(params) {
@@ -46,13 +55,13 @@ MGE.Events <- {
 		function remove(params) {
 
 			local player = GetPlayerFromUserID(params.userid)
-			// local scope = player.GetScriptScope()
+			local scope = player.GetScriptScope()
+			local arena = scope.arena_info.arena
 
-			if (!("name" in player.GetScriptScope().arena_info))
-				return
+			if (!arena) return
 
 			player.AddEFlags(EFL_REMOVE_FROM_ARENA)
-			CycleQueue(player.GetScriptScope().arena_info.name)
+			CycleQueue(scope.arena_info.name)
 			// RemovePlayer(player)
 		}
 
@@ -61,7 +70,7 @@ MGE.Events <- {
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 
-			local arena = "arena_info" in scope && "arena" in scope.arena_info ? scope.arena_info.arena : {State = -1}
+			local arena = scope.arena_info.arena || {State = -1}
 
 			// if (arena.State != AS_IDLE) return
 
@@ -118,18 +127,13 @@ MGE.Events <- {
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 
-			if (!("arena" in scope.arena_info))
-			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "MustJoinArena")
-				return
-			}
 			local arena = scope.arena_info.arena
 
+			if (!arena)
+				return MGE_ClientPrint(player, HUD_PRINTTALK, "MustJoinArena")
+
 			if (arena.State == AS_AFTERFIGHT)
-			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetCannotSet")
-				return
-			}
+				return MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetCannotSet")
 
 			local arena_name = scope.arena_info.name
 			local ruleset_split = split(params.text, " ", true)
@@ -264,35 +268,26 @@ MGE.Events <- {
 
 			local player = GetPlayerFromUserID(params.userid)
 			local steam_id = GetPropString(player, "m_szNetworkIDString")
+			
+			if ( !(steam_id in MGE_ADMINLIST) )
+				return MGE_ClientPrint(player, HUD_PRINTTALK, "AdminCmdError")
+
+			else if (GetStr("sv_allow_point_servercommand") != "always")
+				return MGE_ClientPrint(player, HUD_PRINTTALK, "ServerCommandDisabled")
+
 			local cmd = ""
 
+			// strip out redundant spaces
 			foreach( s in split(params.text, " ", true).slice(1) )
-				cmd += s
+				cmd += s + " "
 
-			if (GetStr("sv_allow_point_servercommand") != "always")
-			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "ServerCommandDisabled")
-				return
-			}
-			if (steam_id in MGE_ADMINLIST) {
-				cmd = CharReplace(cmd, "'", "\"")
-				MGE_ClientPrint(player, HUD_PRINTTALK, "AdminCmd", cmd)
-				SendToServerConsole(format("%s %s", prefix, cmd))
-			}
+			cmd = CharReplace(cmd, "'", "\"")
+			MGE_ClientPrint(player, HUD_PRINTTALK, "AdminCmd", cmd)
+			SendToServerConsole(prefix + " " + cmd)
 		}
 
 		function adminscript(params) { admincmd( params, "script" ) }
 	}
-
-	valid_chars = {
-
-		['!']  = 33,
-		['.']  = 46,
-		['/']  = 47,
-		['?']  = 63,
-		['\\'] = 92
-	}
-
 
 	function OnGameEvent_player_changename(params) { GetPlayerFromUserID(params.userid).GetScriptScope().player_name = params.newname }
 	function OnGameEvent_teamplay_round_start(params) { HandleRoundStart() }
@@ -356,20 +351,23 @@ MGE.Events <- {
 
 	function OnGameEvent_player_spawn(params)
 	{
+		if ( !params.team )
+			return
 
 		local player = GetPlayerFromUserID(params.userid)
-
 		local scope = player.GetScriptScope() || (player.ValidateScriptScope(), player.GetScriptScope())
 
-		// if (player.GetTeam() > TEAM_SPECTATOR) {
+		if (player.GetTeam() > TEAM_SPECTATOR) {
 
-			// EntFire("__mge_respawn_override", "SetRespawnName", "__mge_spawn_override_" + player.GetTeam())
-			// EntFire("__mge_respawn_override", "StartTouch", "!activator", -1, player)
-		// }
+			// see MGE_RESPAWN_FIX in mapspawn.nut
+			EntFire("__mge_respawn_override", "SetRespawnName", "__mge_spawn_override_" + player.GetTeam())
+			// needs a caller or it will crash
+			DoEntFire("__mge_respawn_override", "StartTouch", "", -1, player, player)
+		}
 
 		ValidatePlayerClass(player, player.GetPlayerClass())
 
-		MGE.ScriptEntFireSafe("__mge_main",  @"
+		ScriptEntFireSafe("__mge_main",  @"
 
 			for (local child = activator.FirstMoveChild(); child; child = child.NextMovePeer())
 			{
@@ -404,21 +402,19 @@ MGE.Events <- {
 
 		", GENERIC_DELAY, player)
 
-		if ("arena_info" in scope && scope.arena_info)
-		{
+		if (scope.arena_info.arena) {
 
-			local arena      = scope.arena_info.arena
-			local arena_name = scope.arena_info.name
+			local arena         = scope.arena_info.arena
+			local arena_name    = scope.arena_info.name
 			local arena_players = arena.CurrentPlayers.keys()
 
 			local _arena = ARENAS[arena_name]
-
 
 			//set arena state to countdown
 			if (arena.State == AS_IDLE && arena_players.len() == arena.MaxPlayers)
 			{
 				if (!arena.IsUltiduo && !((arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && arena.IsCustomRuleset))
-					MGE.ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
+					ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
 
 				else if (arena.IsUltiduo)
 				{
@@ -428,7 +424,7 @@ MGE.Events <- {
 							current_medics[p.GetTeam() - 2] = p
 
 					if (current_medics[0] && current_medics[1])
-						MGE.ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
+						ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
 					else
 					{
 						foreach(p in arena_players)
@@ -439,7 +435,7 @@ MGE.Events <- {
 				}
 			}
 
-			MGE.ScriptEntFireSafe("__mge_main", format("SetSpecialArena(activator, `%s`)", arena_name), GENERIC_DELAY, player)
+			ScriptEntFireSafe("__mge_main", format("SetSpecialArena(activator, `%s`)", arena_name), GENERIC_DELAY, player)
 
 			//spawn player
 			local idx = TryGetClearSpawnPoint(player, arena_name)
@@ -447,19 +443,22 @@ MGE.Events <- {
 			player.SnapEyeAngles(arena.SpawnPoints[idx][1])
 
 			//regenerate all players
-			if (!arena.IsBBall)
-			foreach (p in arena_players)
-			{
-				p.Regenerate(true)
-				if (arena.IsMGE)
+			if (!arena.IsBBall) {
+
+				foreach (p in arena_players)
 				{
-					local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
-					MGE.ScriptEntFireSafe(p, format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio), GENERIC_DELAY)
+					p.Regenerate(true)
+					if (arena.IsMGE)
+					{
+						local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
+						ScriptEntFireSafe(p, format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio))
+					}
 				}
 			}
 
 			//play spawn sound
-			if (arena.State == AS_FIGHT)
+			if (arena.State == AS_FIGHT) {
+
 				EmitSoundEx({
 					sound_name 	= SPAWN_SOUND
 					entity 		= player
@@ -467,6 +466,7 @@ MGE.Events <- {
 					channel 	= CHAN_STREAM
 					sound_level = 65
 				})
+			}
 
 			if (scope.enable_hud)
 			{
@@ -483,18 +483,13 @@ MGE.Events <- {
 					hudstr += format("%s: %d (%d)\n", scope.player_name, arena.Score[team - 2], scope.stats.elo.tointeger())
 				}
 
-				local hud = FindByName( null, "__mge_hud")
+				if (!MGE_HUD || !MGE_HUD.IsValid())
+					InitEntities()
 
-				if (!hud || !hud.IsValid())
-					MGE.InitEntities()
-
-				hud = FindByName( null, "__mge_hud")
-
-				hud.KeyValueFromString("message", hudstr)
-				hud.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+				MGE_HUD.KeyValueFromString("message", hudstr)
+				MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
 				// MGE_HUD.AcceptInput("Display", "", player, player)
-				EntFireByHandle(hud, "Display", "", GENERIC_DELAY, player, player)
-
+				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, player, player)
 			}
 
 			// if (arena.IsBBall)
@@ -504,7 +499,7 @@ MGE.Events <- {
 		{
 			// tf_bot_quota spawned bots will always be forced to a team and cause error spew when they attack eachother in the void
 			if (player.IsFakeClient())
-				MGE.ScriptEntFireSafe(player, "self.AddBotAttribute(IGNORE_ENEMIES); self.TakeDamage(99999, DMG_GENERIC, self)", GENERIC_DELAY, null, null)
+				ScriptEntFireSafe(player, "self.AddBotAttribute(IGNORE_ENEMIES); self.TakeDamage(99999, DMG_GENERIC, self)", GENERIC_DELAY, null, null)
 			else if (player.GetTeam() > TEAM_SPECTATOR)
 				MGE_ClientPrint(null, HUD_PRINTTALK, "\x07FF0000[VScript MGE] WARNING: '%s' spawned outside of arena!", scope.player_name)
 		}
@@ -519,10 +514,10 @@ MGE.Events <- {
 
 		if (player.IsFakeClient()) return
 
-		if ( !( "arena" in scope.arena_info ) )
-			return player.ForceChangeTeam( TEAM_SPECTATOR, true )
-
 		local arena = scope.arena_info.arena
+
+		if ( !arena )
+			return player.ForceChangeTeam( TEAM_SPECTATOR, true )
 
 		if (arena.State != AS_FIGHT || arena.IsBBall || arena.IsKoth) return
 
@@ -552,9 +547,10 @@ MGE.Events <- {
 		local victim_scope = victim.GetScriptScope()
 		local attacker_scope = attacker ? attacker.GetScriptScope() : victim_scope
 
-		if (!victim_scope.arena_info) return
-
 		local arena = victim_scope.arena_info.arena
+
+		if (!arena) return
+
 		local arena_name = victim_scope.arena_info.name
 		local arena_players = arena.CurrentPlayers.keys()
 
@@ -628,7 +624,7 @@ MGE.Events <- {
 		if (attacker && attacker != victim)
 		{
 			MGE_ClientPrint(victim, HUD_PRINTTALK, "HPLeft", attacker.GetHealth())
-			MGE.MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+			MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
 		}
 
 		// Koth / bball mode doesn't count deaths
@@ -666,9 +662,9 @@ MGE.Events <- {
 			}
 		}
 		if (!arena.IsAmmomod)
-			MGE.ScriptEntFireSafe(victim, "printl(self); self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime)
+			ScriptEntFireSafe(victim, "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime)
 		else
-			MGE.ScriptEntFireSafe("__mge_main", format("SetArenaState(`%s`, AS_COUNTDOWN)", arena_name), AMMOMOD_RESPAWN_DELAY)
+			ScriptEntFireSafe("__mge_main", format("SetArenaState(`%s`, AS_COUNTDOWN)", arena_name), AMMOMOD_RESPAWN_DELAY)
 	}
 
 	function OnGameEvent_player_team(params)
@@ -690,7 +686,7 @@ MGE.Events <- {
 				SetPropEntity(player, "m_hObserverTarget", MGE_LeaderboardCam)
 
 			local spec_cooldown_time = 0.0
-			local arena = "arena_info" in scope && "arena" in scope.arena_info ? scope.arena_info.arena : {State = -1}
+			local arena = scope.arena_info.arena || {State = -1}
 			// if (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT)
 			// {
 				// MGE_ClientPrint(player, HUD_PRINTTALK, "SpecRemove")
@@ -727,7 +723,7 @@ MGE.Events <- {
 
 		if (!victim.IsPlayer()) return
 
-		local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? ARENAS[victim_scope.arena_info.name] : {}
+		local arena = victim_scope.arena_info.arena || {State = -1}
 		// if ("endif_killme" in victim_scope || ("endif" in arena && arena.endif == "1"))
 		// {
 		// 	if (!("midair" in arena) || arena.midair == "0")
@@ -802,12 +798,13 @@ MGE.Events <- {
 	{
 		local victim = GetPlayerFromUserID(params.userid)
 		local victim_scope = victim.GetScriptScope()
-		local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
+		local arena = victim_scope.arena_info.arena
+
+		if (!arena || victim.IsFakeClient())
+			return
+
 		local attacker = GetPlayerFromUserID(params.attacker)
 		local attacker_scope = attacker ? attacker.GetScriptScope() : {}
-
-		if (!("State" in arena) && victim.IsFakeClient())
-			return
 
 		if (!victim.IsFakeClient() && arena.State == AS_FIGHT && !arena.IsEndif && !arena.IsMidair)
 		{
@@ -817,7 +814,7 @@ MGE.Events <- {
 		}
 
 		//set this here instead of OnTakeDamage since damage_force isn't set until after damage is applied
-		//TODO: test this again, it wasn't working before due to multiplying vectors correctly and might work fine in OnTakeDamage
+		//TODO: test this again, it wasn't working before due to multiplying vectors incorrectly and might work fine in OnTakeDamage
 		if (arena.IsEndif)
 		{
 			local old_vel = victim.GetAbsVelocity()

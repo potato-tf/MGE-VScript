@@ -7,9 +7,8 @@
 		// e.g. "MGE (Classic Training)" instead of "Team Fortress"
 		// private plugin handles this, rewrite this plugin using VPI instead
 		nice_name = "Classic Training"
-		// this is not needed and will be automatically added if "OnMapLoad" doesn't exist
-		// you can override this by setting `OnMapLoad = null`, or replace it with your own function
-		OnMapLoad = MGE_RESPAWN_FIX
+		// optional function to run on map load
+		// OnMapLoad = function() { printl("Map loaded") }
 	},
 
 	mge_chillypunch_final4_fix2 = { nice_name = "Chillypunch" },
@@ -18,20 +17,22 @@
 	mge_oihguv_sucks_a12 		= { nice_name = "Oihguv" },
 }
 
-if (MAPNAME_CONFIG_OVERRIDE in MGE_MAPINFO) {
+if (MAPNAME in MGE_MAPINFO) {
 
-	local map_config = MGE_MAPINFO[MAPNAME_CONFIG_OVERRIDE]
+	local map_config = MGE_MAPINFO[MAPNAME]
 
 	if (!("OnMapLoad" in map_config))
-		map_config.OnMapLoad <- MGE_RESPAWN_FIX
+		map_config.OnMapLoad <- null
 
-	else if (!map_config.OnMapLoad)
+	else if (map_config.OnMapLoad)
 		map_config.OnMapLoad()
 }
 
 ::MGE_ADMINLIST <- {
-	"[U:1:28266263]" : "Braindawg",
-	"[U:1:5202410]"  : "Hell-met"
+
+	"[U:1:28266263]"  : "Braindawg",
+	"[U:1:5202410]"   : "Hell-met",
+	"[U:1:115359431]" : "Pilhéria"
 }
 
 //CONFIG CONSTANTS
@@ -105,8 +106,9 @@ const LEADERBOARD_TEXT_SIZE                  = 1.0
 const LEADERBOARD_UPDATE_INTERVAL            = 10
 const MAX_LEADERBOARD_ENTRIES                = 7 //anything greater than 7 gets cut off
 
+//spawn shuffle modes
+
 /*******************************************************************************************************
- * spawn shuffle modes                                                                                 *
  * 0 = none, spawns are iterated over in consistent order based on provided config                     *
  * 1 = random shuffle, iterates over a randomly shuffled array of spawns (classic MGE plugin behavior) *
  * 2 = random except, picks a truly random spawn so long as it's not the last one we spawned at        *
@@ -122,17 +124,20 @@ const ENABLE_ANNOUNCER                       = true //enable announcer quips (fi
 const ANNOUNCER_VOLUME                       = 0.5 //volume of announcer quips
 const KILLSTREAK_ANNOUNCER_INTERVAL          = 5 //killstreak announcer will play every KILLSTREAK_ANNOUNCER_INTERVAL number of kills
 
-//round misc
-const DEFAULT_CDTIME                         = 3 //default countdown time
+//countdown/round misc
+const COUNTDOWN_DEFAULT_TIME                 = 3 //default countdown time
 
 const COUNTDOWN_START_DELAY                  = 1.0 //delay before countdown starts, additive to queue cycle delay
-const QUEUE_CYCLE_DELAY                      = 3.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
 
 const COUNTDOWN_SOUND                        = "ui/chime_rd_2base_pos.wav" //a few other things besides countdown use this sound
 const COUNTDOWN_SOUND_VOLUME                 = 0.5
 
 const ROUND_START_SOUND                      = "ui/chime_rd_2base_neg.wav" //a few other things besides round start use this sound
 const ROUND_START_SOUND_VOLUME               = 0.5
+
+const QUEUE_CYCLE_DELAY                      = 3.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
+
+const IGNORE_CLASS_RESTRICTIONS              = true //if true, all player classes will be able to join any arena, regardless of restrictions set in the arena config.
 
 //hud
 //see KOTH section for KOTH hud

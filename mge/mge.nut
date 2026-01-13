@@ -87,7 +87,7 @@ MGE.SERVER_DATA <- {
 	mission					  = "MGE"
 	region					  = ""
 	classes					  = ""
-	domain 					  = "potato.tf"
+    domain 					  = GetStr( "sv_downloadurl" )
 	password 				  = ""
 	campaign_name 			  = "Other Gamemodes"
 	status 					  = "Waiting for players"
@@ -106,22 +106,32 @@ MGE.SERVER_DATA <- {
 	}
 }
 
-MGE.ScriptEntFireSafe("__mge_main", @"
+function MGE::InitServerData() {
 
-	local server_name  = GetStr(`hostname`)
-	local split_server = split(server_name, `#`)
-	local split_region = split_server.len() == 1 ? [``, `]`] : split(split_server[1], `[`)
+	local server_name  = GetStr("hostname")
+	local split_server = split(server_name, "#")
+	local split_region = split_server.len() == 1 ? ["", "]"] : split(split_server[1], "[")
 
 	SERVER_DATA.server_name = server_name
-	SERVER_DATA.server_tags = GetStr(`sv_tags`)
-	SERVER_DATA.server_key	= split_server.len() == 1 ? `` : split_server[1].slice(0, split_server[1].find(`[`))
-	SERVER_DATA.region		= split_region.len() == 1 ? `` : split_region[1].slice(0, split_region[1].find(`]`))
-	SERVER_DATA.domain		= SERVER_DATA.region == `USA` ? `us.potato.tf` : format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
+	SERVER_DATA.server_tags = GetStr("sv_tags")
+	SERVER_DATA.server_key	= split_server.len() == 1 ? "" : split_server[1].slice(0, split_server[1].find("["))
+	SERVER_DATA.region		= split_region.len() == 1 ? "" : split_region[1].slice(0, split_region[1].find("]"))
+	// SERVER_DATA.domain		= SERVER_DATA.region == "USA" ? "us.potato.tf" : format("%s.%s", SERVER_DATA.region.tolower(), SERVER_DATA.domain)
 
-	if ( SERVER_DATA.domain == `ustx.potato.tf` )
-		SERVER_DATA.domain += `:22443`
+    SERVER_DATA.domain = GetStr( "sv_downloadurl" )
 
-", 5)
+	// sv_downloadurl not set, use region as domain
+	// if ( !SERVER_DATA.domain || SERVER_DATA.domain == "" )
+	// 	SERVER_DATA.domain = SERVER_DATA.region.tolower() + "." + SERVER_DATA.domain
+
+	// domain overrides
+	// if ( SERVER_DATA.domain == "ustx.potato.tf" )
+	// 	SERVER_DATA.domain += ":22443"
+
+	delete MGE.InitServerData
+}
+
+EntFire("__mge_main", "CallScriptFunction", "InitServerData", 5)
 
 
 if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
@@ -585,8 +595,8 @@ SetValue("tf_fall_damage_disablespread", 1)
 
 // requires a custom plugin to feed m_iszMvMPopfileName to SteamWorks_SetGameDescription
 // this can be done with SteamworksPy instead for 100% vanilla compatibility
-if (MAPNAME_CONFIG_OVERRIDE in MGE_MAPINFO) {
-	local gamedesc = format("Potato MGE (%s)", MGE_MAPINFO[MAPNAME_CONFIG_OVERRIDE].nice_name)
+if (MAPNAME in MGE_MAPINFO) {
+	local gamedesc = format("Potato MGE (%s)", MGE_MAPINFO[MAPNAME].nice_name)
 	SetPropString(FindByClassname(null, "tf_objective_resource"), "m_iszMvMPopfileName",  gamedesc)
 }
 

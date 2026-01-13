@@ -7,7 +7,7 @@ MGE.LOCALTIME   <- {}
 
 function MGE::_OnDestroy() {
 
-	foreach (k in ["MGE_CREATE_SCOPE", "MGE_RESPAWN_FIX", "MGE_GAMESTRINGS", "MAPNAME_CONFIG_OVERRIDE"])
+	foreach (k in ["MGE_CREATE_SCOPE", "MGE_GAMESTRINGS", "MAPNAME"])
 		if (k in ROOT)
 			delete ROOT[k]
 }
@@ -53,8 +53,33 @@ function MGE::InitEntities() {
 
 		foreach(ent in ents) {
 
-			// printl(ent.GetName().toupper().slice(2))
 			MGE[ ent.GetName().toupper().slice(2) ] <- ent
+
+			// fix null activator/caller crash on trigger brushes
+			if ( HasProp( ent, "m_hFilter" ) ) {
+
+				local scope = ( ent.ValidateScriptScope(), ent.GetScriptScope() )
+
+				local function TouchCrashFix() { return ( ( caller && caller.IsValid() ) || ( caller = activator ) ) && activator.IsValid() }
+				scope.InputEndTouch      <- TouchCrashFix
+				scope.Inputendtouch      <- TouchCrashFix
+				scope.InputStartTouch    <- TouchCrashFix
+				scope.Inputstarttouch    <- TouchCrashFix
+				scope.InputStartTouchAll <- TouchCrashFix
+				scope.Inputstarttouchall <- TouchCrashFix
+
+				ent.SetSolid( SOLID_BBOX )
+				ent.SetSize( Vector(), Vector(1, 1, 1) )
+			}
+
+			// see MGE_RESPAWN_FIX in mapspawn.nut
+			local base_spawn = FindByClassname(null, "info_player_teamspawn")
+
+			// will be null for > 1 spawn point
+			if (!base_spawn || !ent.GetClassname() == "info_player_teamspawn") 
+				continue
+
+			ent.SetAbsOrigin( base_spawn.GetOrigin() + Vector( 0, 0, 10 * ( ent.GetTeam() - 1 ) ) )
 		}
 	}
 
@@ -110,11 +135,30 @@ function MGE::InitEntities() {
 		y			= KOTH_HUD_BLU_POS_Y
 	})
 
+	template.AddTemplate( "info_player_teamspawn", {
+
+		targetname 	= "__mge_spawn_override_2"
+		TeamNum 	= 2
+		spawnflags 	= 511
+		vscripts	= " "
+		origin 		= Vector(0, 0, 10)
+	})
+
+	template.AddTemplate( "info_player_teamspawn", {
+
+		targetname 	= "__mge_spawn_override_3"
+		TeamNum 	= 3
+		spawnflags 	= 511
+		vscripts	= " "
+		origin 		= Vector(0, 0, 20)
+	})
+
 	template.AddTemplate("trigger_player_respawn_override", {
 
 		targetname  = "__mge_respawn_override"
 		RespawnTime = IDLE_RESPAWN_TIME
 		spawnflags  = 1
+		// "OnStartTouch#1" : "!self,RunScriptCode,printl(activator),0,-1"
 	})
 
 	template.AddTemplate("team_round_timer", {
@@ -123,9 +167,9 @@ function MGE::InitEntities() {
 		vscripts			= " "
 		max_length 			= MAP_RESTART_TIMER
 		timer_length 		= MAP_RESTART_TIMER
-		start_paused 		= false
-		show_in_hud 		= true
-		auto_countdown 		= true
+		start_paused 		= true
+		show_in_hud 		= false //IMPORTANT: this crashes the game if set to true
+		auto_countdown 		= false
 		show_time_remaining = true
 		"OnFinished#1"		: "__mge_main,CallScriptFunction,DoChangelevel,1,-1"
 
@@ -133,14 +177,13 @@ function MGE::InitEntities() {
 
 	template.AcceptInput("ForceSpawn", null, null, null)
 
-	local timer = FindByName(null, "__mge_timer")
-
-	EntFire("__mge_timer", "Resume")
+	// delay to avoid server crash
 	EntFire("__mge_timer", "ShowInHUD", "1")
+	EntFire("__mge_timer", "Resume")
 
-	TimerScope <- timer.GetScriptScope()
-	TimerScope.time_left <- GetPropFloat(timer, "m_flTimeRemaining")
-	TimerScope.base_timestamp <- GetPropFloat(timer, "m_flTimeRemaining")
+	TimerScope <- MGE.MGE_TIMER.GetScriptScope()
+	TimerScope.time_left <- GetPropFloat(MGE.MGE_TIMER, "m_flTimeRemaining")
+	TimerScope.base_timestamp <- GetPropFloat(MGE.MGE_TIMER, "m_flTimeRemaining")
 
 	function TimerScope::InputSetTime() {
 
@@ -217,7 +260,7 @@ function MGE::InitEntities() {
 
 		SetPropString(self, "m_iszScriptThinkFunction", "")
 	}
-	MGE.ScriptEntFireSafe(timer, "AddThinkToEnt(self, `TimerThink`)")
+	ScriptEntFireSafe(MGE_TIMER, "AddThinkToEnt(self, `TimerThink`)")
 
 	if (ENABLE_LEADERBOARD)
 		SetupLeaderboard()
@@ -337,7 +380,6 @@ function MGE::InitPlayerScope(player)
 	scope.cvarhijack	   <- GetClientConvarValue("cl_class", player_entindex)
 	scope.player_name	   <- GetClientConvarValue("name", player_entindex)
 	scope.language   	   <- GetClientConvarValue("cl_language", player_entindex)
-	scope.arena_info 	   <- null
 	scope.enable_announcer <- true
 	scope.enable_hud	   <- true
 	scope.enable_countdown <- true
@@ -358,6 +400,14 @@ function MGE::InitPlayerScope(player)
 		market_gardens 	   = -INT_MAX
 		hoops_scored 	   = -INT_MAX
 		koth_points_capped = -INT_MAX
+	}
+	scope.arena_info <- {
+
+		arena     = null
+		name      = null
+		team	  = null
+		queue_for = null
+		queue_pos = null
 	}
 
 	// fake custom cvars in vscript
@@ -397,22 +447,34 @@ function MGE::ForceChangeClass(player, classIndex)
 
 function MGE::ValidatePlayerClass(player, newclass, pre=false)
 {
-	local scope = player.GetScriptScope()
-	if (!("arena_info" in scope) || !scope.arena_info) return
 
-	local arena = scope.arena_info.arena
-	local classes = arena.classes
-	if (!classes.len()) return
-
-	newclass = ArenaClasses[newclass]   // Get string version of class
-	if (classes.find(newclass) != null) // Class is in the whitelist
+	// ignore all class restrictions
+	if ( IGNORE_CLASS_RESTRICTIONS )
 		return
 
-	if (pre)
-		ForceChangeClass(player, player.GetPlayerClass())
-	else
-		ForceChangeClass(player, ("scout" in classes) ? TF_CLASS_SCOUT : ArenaClasses.find(classes[0]))
+	local scope = player.GetScriptScope()
+	local arena = scope.arena_info.arena
 
+	// somehow not in an arena
+	if (!arena) return
+
+	local classes = arena.classes
+	local classes_len = classes.len()
+
+	// no class whitelist set
+	if (!classes_len) 
+		return
+
+	// Get string version of class if class index is passed
+	if ( typeof newclass == "integer" )
+		newclass = ArenaClasses[newclass]
+
+	// Class is in the whitelist
+	if (classes.find(newclass) != null)
+		return
+
+	// class is not whitelisted
+	ForceChangeClass(player, pre ? player.GetPlayerClass() : classes[RandomInt(0, classes_len - 1)])
 	MGE_ClientPrint(player, HUD_PRINTTALK, "ClassIsNotAllowed", newclass)
 }
 // tointeger() allows trailing garbage (e.g. "123abc")
@@ -512,7 +574,7 @@ function MGE::SetupLeaderboard()
 
 	local leaderboard_cam_pos = Vector()
 	local leaderboard_cam_angles = QAngle()
-	local config = SpawnConfigs[MAPNAME_CONFIG_OVERRIDE]
+	local config = SpawnConfigs[MAPNAME]
 	// this config has a leaderboard cam position set
 	if ("leaderboard_cam" in config)
 	{
@@ -549,15 +611,20 @@ function MGE::SetupLeaderboard()
 		if (_cam.GetName() == "__mge_leaderboard_cam")
 			continue
 
-		local cam_angle_inverse = (_cam.GetAbsAngles() - QAngle(0, 180, 0))
-		local endpos = _cam.GetOrigin() + cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET
-		local trace = TraceLine(_cam.GetOrigin(), endpos, _cam)
+		// local cam_angle_inverse = (_cam.GetAbsAngles() - QAngle(0, 180, 0))
+		// local endpos = _cam.GetOrigin() + cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET
+		// local trace = TraceLine(_cam.GetOrigin(), endpos, _cam)
 
 		// DebugDrawLine(_cam.GetOrigin(), endpos, 255, 100, 255, true, 10)
 
-		if (trace && trace == 1)
+		// if (trace == 1)
 			valid_cams.append(_cam)
 	}
+
+	// try again 1 second later
+	if (!valid_cams.len())
+		return EntFire("__mge_main", "CallScriptFunction", "SetupLeaderboard", 1.0)
+
 	local random_cam = valid_cams.len() == 1 ? valid_cams[0] : valid_cams[RandomInt(0, valid_cams.len() - 1)]
 	local random_cam_angle_inverse = (random_cam.GetAbsAngles() - QAngle(0, 180, 0))
 
@@ -577,110 +644,103 @@ function MGE::SetupLeaderboard()
 	SetPropBool(MGE_Leaderboard, STRING_NETPROP_PURGESTRINGS, true)
 	DispatchSpawn(MGE_Leaderboard)
 	MGE.MGE_Leaderboard <- MGE_Leaderboard
+
 	MGE_Leaderboard.ValidateScriptScope()
 	local scope = MGE_Leaderboard.GetScriptScope()
 	scope.MGE_LEADERBOARD_DATA <- MGE_LEADERBOARD_DATA
+	scope.current_stat_index   <- 0
 
 	local think_override = LEADERBOARD_UPDATE_INTERVAL
 
-	scope.UpdateLeaderboard <- function() {
-
-		// Store the keys and current index to track progress across yields
-		if (!("_current_stat_index" in this))
-			this._current_stat_index <- 0
+	function UpdateLeaderboard[scope]() {
 
 		local stat_keys = MGE_LEADERBOARD_DATA.keys()
-		local stat = stat_keys[_current_stat_index in stat_keys ? _current_stat_index : 0]
+
+		if ( current_stat_index >= stat_keys.len() )
+			current_stat_index = 0
+
+		local stat = stat_keys[current_stat_index]
 
 		local column_name = ""
-		split(stat, " ").apply( @(str) column_name += format("_%s", str.tolower()) )
+		split(stat, " ").apply( @(str) column_name += "_" + str.tolower() )
 		column_name = column_name.slice(1)
 
-		VPI.AsyncCall({
+		local vpi_call = {
 
 			func	= "VPI_MGE_PopulateLeaderboard"
 			timeout = INT_MAX
 			kwargs	= {
-
 				order_filter 			= column_name
 				max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES
 			}
 
 			function callback(response, error) {
 
-				if (typeof(response) != "array" || !response.len())
+				// if (typeof(response) != "array" || !response.len())
+				// {
+				// 	// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
+				// 	return
+				// }
+
+				printl( "Got bad response for VPI_MGE_PopulateLeaderboard: " + response)
+
+				local steamid_list = MGE_LEADERBOARD_DATA[stat]
+
+				local message = format("          %s:\n", stat)
+				foreach(i, user_info in steamid_list)
 				{
-					// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
-					return
+					if (!user_info)
+						user_info = ["NONE", -INT_MAX]
+
+					// cycle through and fetch user stats faster if the leaderboard is empty
+					think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
+
+					local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
+					message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 				}
+				self.KeyValueFromString("message", message)
 
-				// Process one stat per yield
-				if (_current_stat_index < stat_keys.len()) {
+				current_stat_index++
 
-					local steamid_list = MGE_LEADERBOARD_DATA[stat]
-
-					local message = format("          %s:\n", stat)
-					foreach(i, user_info in steamid_list)
-					{
-						if (!user_info)
-							user_info = ["NONE", -INT_MAX]
-
-						// cycle through and fetch user stats faster if the leaderboard is empty
-						think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
-
-						local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
-						message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
-					}
-					self.KeyValueFromString("message", message)
-
-					_current_stat_index++
-					yield
-				}
+				// reset index if we've reached the end
+				if ( current_stat_index >= stat_keys.len() )
+					current_stat_index = 0
 			}
-		})
+		}.setdelegate(scope)
+		VPI.AsyncCall( vpi_call )
 
-		// Process one stat per yield
-		if (_current_stat_index < stat_keys.len()) {
-
-			local steamid_list = MGE_LEADERBOARD_DATA[stat]
-
-			local message = format("          %s:\n", stat)
-			foreach(i, user_info in steamid_list)
-			{
-				if (!user_info)
-					user_info = ["NONE", -INT_MAX]
-
-				// cycle through and fetch user stats faster if the leaderboard is empty
-				think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
-
-				local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
-				message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
-			}
-			self.KeyValueFromString("message", message)
-
-			_current_stat_index++
-			yield
-		}
-
-		// Reset index and refresh data when done with all stats
-		_current_stat_index = 0
+		if ( LEADERBOARD_DEBUG )
+			vpi_call.callback(null, "test")
 
 
-		yield
+		// if (current_stat_index < stat_keys.len()) {
+
+		// 	local steamid_list = MGE_LEADERBOARD_DATA[stat]
+
+		// 	local message = format("          %s:\n", stat)
+		// 	foreach(i, user_info in steamid_list)
+		// 	{
+		// 		if (!user_info)
+		// 			user_info = ["NONE", -INT_MAX]
+
+		// 		// cycle through and fetch user stats faster if the leaderboard is empty
+		// 		think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
+
+		// 		local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
+		// 		message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
+		// 	}
+		// 	self.KeyValueFromString("message", message)
+
+		// 	yield current_stat_index++
+		// }
+
+		// // Reset index and refresh data when done with all stats
+		// yield current_stat_index = 0
 	}
 
-	local gen = scope.UpdateLeaderboard()
-	resume gen
+	function LeaderboardThink() { UpdateLeaderboard(); return think_override }
 
-	function LeaderboardThink() {
-
-		if (gen.getstatus() == "dead")
-			gen = UpdateLeaderboard()
-
-		resume gen
-		return think_override
-	}
-
+	scope.UpdateLeaderboard <- UpdateLeaderboard.bindenv(scope)
 	scope.LeaderboardThink <- LeaderboardThink.bindenv(scope)
 	AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
 }
@@ -697,7 +757,7 @@ function MGE::SetupLeaderboard()
  // passing an arena name and setting arena_reset to true will convert the existing arena to a standard MGE arena
 function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = false)
 {
-	local config = SpawnConfigs[MAPNAME_CONFIG_OVERRIDE]
+	local config = SpawnConfigs[MAPNAME]
 
 	//custom ruleset handling
 	if (custom_ruleset_arena_name)
@@ -942,7 +1002,7 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 		_arena.State          <- AS_IDLE
 
 		//0 breaks our countdown system, default to 1
-		_arena.cdtime         <- "cdtime" in _arena ? _arena.cdtime != "0" ? _arena.cdtime : 1 : DEFAULT_CDTIME
+		_arena.cdtime         <- "cdtime" in _arena ? _arena.cdtime != "0" ? _arena.cdtime : 1 : COUNTDOWN_DEFAULT_TIME
 		_arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
 		// _arena.MaxPlayers    <- 1 //debug
 		_arena.classes        <- "classes" in _arena && typeof _arena.classes != "array" ? split(_arena.classes, " ", true) : []
@@ -1004,24 +1064,25 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 				particle_pickup_generic = "bball_particle_pickup_generic" in _arena ? _arena.bball_particle_pickup_generic : BBALL_PARTICLE_PICKUP_GENERIC
 			}
 
+			local spawn_lens = {
+				[3] = true,
+				[4] = true,
+				[6] = true,
+			}
+
 			foreach (k, v in bball_points)
 			{
 				if (typeof v != "string") continue
 				local split_spawns = split(v, " ")
 				split_spawns.apply( @(str) MGE.ToStrictNum(str, true) )
-				local spawn_lens = {
-					[3] = true,
-					[4] = true,
-					[6] = true,
-				}
 				if (split_spawns.len() in spawn_lens)
 					bball_points[k] <- Vector(split_spawns[0], split_spawns[1], split_spawns[2])
 			}
 
 			_arena.BBall <- bball_points
 			BBall_SpawnBall(arena_name)
-
 		}
+
 		if (_arena.IsKoth)
 		{
 			//alternative keyvalues for KOTH logic
@@ -1185,7 +1246,7 @@ function MGE::BBall_SpawnBall(arena_name, origin_override = null, custom_ruleset
 	//I did this specifically to annoy mince
 	ground_ball.SetAbsOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
 
-	AddOutput(ground_ball, "OnPlayerTouch", "!activator", "CallScriptFunction", "BBall_Pickup", 0.0, 1)
+	AddOutput(ground_ball, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self)", 0.0, 1)
 	AddOutput(ground_ball, "OnPlayerTouch", "!self", "Kill", "", SINGLE_TICK, 1)
 
 	if (!custom_ruleset_arena)
@@ -1276,7 +1337,7 @@ function MGE::AddBot(arena_name)
 
 		local scope = player.GetScriptScope() || (player.ValidateScriptScope(), player.GetScriptScope())
 
-		if (!bot && (!("arena_info" in scope) || !scope.arena_info))
+		if (!bot && !scope.arena_info.arena)
 		{
 			bot = player
 			break
@@ -1346,7 +1407,6 @@ function MGE::AddPlayer(player, arena_name)
 	if (scope.stats.elo == -INT_MAX && ELO_TRACKING_MODE == 2)
 		GetStats(player)
 
-
 	RemovePlayer(player, false)
 
 	if (!arena.IsCustomRuleset)
@@ -1371,9 +1431,12 @@ function MGE::AddPlayer(player, arena_name)
 	else
 	{
 		arena.Queue.append(player)
-
 		local idx = arena.Queue.len() - 1
-		local str = format(GetLocalizedString(!idx ? "NextInLine " : "InLine ", player), arena.Queue.len().tostring())
+
+		scope.arena_info.queue_for = arena_name
+		scope.arena_info.queue_pos = idx
+
+		local str = format( GetLocalizedString( !idx ? "NextInLine " : "InLine ", player ), "" + (idx + 1) )
 		MGE_ClientPrint(player, HUD_PRINTTALK, str)
 	}
 }
@@ -1383,11 +1446,13 @@ function MGE::AddToArena(player, arena_name)
 	local scope = player.GetScriptScope()
 	local arena = ARENAS[arena_name]
 
-	scope.arena_info <- {
-		arena = arena,
-		name  = arena_name,
-		team = player.GetTeam()
-	}
+	scope.arena_info.arena = arena
+	scope.arena_info.name  = arena_name
+	scope.arena_info.team  = player.GetTeam()
+
+	scope.arena_info.queue_for = null
+	scope.arena_info.queue_pos = null
+
 	// Choose the team with the lower amount of players
 	local red = 0, blue = 0
 	foreach(p, _ in arena.CurrentPlayers)
@@ -1435,29 +1500,29 @@ function MGE::RemovePlayer(player, changeteam=true)
 	if (changeteam && player.GetTeam() != TEAM_SPECTATOR)
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
 
-	if (scope.arena_info)
-	{
-		local arena = scope.arena_info.arena
-		local arena_name = scope.arena_info.name
+	local arena = scope.arena_info.arena
 
-		local queue = arena.Queue
-		local player_idx = queue.find(player)
-		if (player_idx != null)
-			queue.remove(player_idx)
+	if (!arena && scope.arena_info.queue_for)
+		arena = ARENAS[scope.arena_info.queue_for]
 
-		if (player in arena.CurrentPlayers)
-			delete arena.CurrentPlayers[player]
+	if (!arena) return
 
-		// printl(arena.IsCustomRuleset && !arena.IsMGE)
-		if (arena.IsCustomRuleset && !arena.IsMGE && (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT))
-			LoadSpawnPoints(arena_name, true)
+	local arena_name = scope.arena_info.name
+	local queue = arena.Queue
+	local player_idx = queue.find(player)
 
-		SetArenaState(arena_name, AS_IDLE)
+	if (player_idx != null)
+		queue.remove(player_idx)
 
-		player.RemoveEFlags(EFL_REMOVE_FROM_ARENA)
+	if (player in arena.CurrentPlayers)
+		delete arena.CurrentPlayers[player]
 
-	//	scope.arena_info.name = "<SPECTATING>"
-	}
+	if (arena.IsCustomRuleset && !arena.IsMGE && (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT))
+		LoadSpawnPoints(arena_name, true)
+
+	SetArenaState(arena_name, AS_IDLE)
+
+	player.RemoveEFlags(EFL_REMOVE_FROM_ARENA)
 }
 
 function MGE::CycleQueue(arena_name)
@@ -1465,33 +1530,36 @@ function MGE::CycleQueue(arena_name)
 	local arena = ARENAS[arena_name]
 
 	local queue = arena.Queue
+	local queue_len = queue.len()
 	local arena_players = arena.CurrentPlayers.keys()
 
-	if (!queue.len())
+	// queue is empty, remove flagged players from arena and return
+	if (!queue_len)
 	{
 		foreach (p in arena_players)
 			if (p.IsEFlagSet(EFL_REMOVE_FROM_ARENA))
 				RemovePlayer(p)
 
-		SetArenaState(arena_name, AS_IDLE)
-		return
+		return SetArenaState(arena_name, AS_IDLE)
 	}
 
-	local next_player = queue[0]
+	local combined = ( arena_players.extend(queue) ).filter( @(_, player) player && player.IsValid() )
 
-	foreach (p in arena_players)
-		if (!p.GetScriptScope().won_last_match || p.IsEFlagSet(EFL_REMOVE_FROM_ARENA))
+	foreach ( p in combined )
+		if ( p.IsEFlagSet(EFL_REMOVE_FROM_ARENA) || ( queue.find(p) == null && !p.GetScriptScope().won_last_match ) )
 			RemovePlayer(p)
+	
+	// check queue again after removing flagged players
+	if (queue_len) {
 
-	AddToArena(next_player, arena_name)
-
-	if (queue.len())
+		AddToArena(queue[0], arena_name)
 		queue.remove(0)
 
-	SetArenaState(arena_name, AS_IDLE)
+		foreach(i, p in queue)
+			MGE_ClientPrint(p, HUD_PRINTTALK, "InLine", (i + 1))
+	}
 
-	foreach(i, p in queue)
-		MGE_ClientPrint(p, HUD_PRINTTALK, "InLine", (i + 1))
+	SetArenaState(arena_name, AS_IDLE)
 }
 
 function MGE::CalcELO(winner, loser) {
@@ -1506,7 +1574,6 @@ function MGE::CalcELO(winner, loser) {
 
 	if (arena.IsCustomRuleset)
 		return
-
 
 	local winner_stats = winner.GetScriptScope().stats
 	local loser_stats = loser.GetScriptScope().stats
@@ -1885,179 +1952,181 @@ function MGE::SetArenaState(arena_name, state) {
 
 	local arena_players = arena.CurrentPlayers.keys()
 
-	local arenaStates = {
+	if ( !("arenaStates" in this) ) {
 
-		function AS_IDLE() {
+		arenaStates <- {
 
-			arena.Score <- array(2, 0)
-			if (arena.IsBBall)
-			{
-				local ball_ent = ["bball_pickup_r", "bball_pickup_b", "ground_ball"]
+			function AS_IDLE() {
 
-				foreach(ent in ball_ent)
-					if (ent in arena.BBall && arena.BBall[ent] && arena.BBall[ent].IsValid())
-						EntFireByHandle(arena.BBall[ent], "Kill", "", -1, null, null)
-
-				foreach(player in arena_players)
-					EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", -1, null, null)
-			}
-		}
-
-		function AS_COUNTDOWN() {
-
-			local countdown_time = arena.cdtime.tointeger()
-
-			if (arena.IsBBall)
-			{
-				if ("ground_ball" in arena.BBall && arena.BBall.ground_ball && arena.BBall.ground_ball.IsValid())
-					arena.BBall.ground_ball.SetAbsOrigin(arena.BBall.neutral_home)
-
-				arena.BBall.bball_pickup_r <- CreateByClassname("trigger_particle")
-				arena.BBall.bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_2")
-				arena.BBall.bball_pickup_r.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_RED)
-				arena.BBall.bball_pickup_r.KeyValueFromString("attachment_name", "flag")
-				arena.BBall.bball_pickup_r.KeyValueFromInt("attachment_type", 4)
-				arena.BBall.bball_pickup_r.KeyValueFromInt("spawnflags", 1)
-				DispatchSpawn(arena.BBall.bball_pickup_r)
-				SetPropBool(arena.BBall.bball_pickup_r, STRING_NETPROP_PURGESTRINGS, true)
-
-				arena.BBall.bball_pickup_b <- CreateByClassname("trigger_particle")
-				arena.BBall.bball_pickup_b.KeyValueFromString("targetname", "__mge_bball_trail_3")
-				arena.BBall.bball_pickup_b.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_BLUE)
-				arena.BBall.bball_pickup_b.KeyValueFromString("attachment_name", "flag")
-				arena.BBall.bball_pickup_b.KeyValueFromInt("attachment_type", 4)
-				arena.BBall.bball_pickup_b.KeyValueFromInt("spawnflags", 1)
-				DispatchSpawn(arena.BBall.bball_pickup_b)
-				SetPropBool(arena.BBall.bball_pickup_b, STRING_NETPROP_PURGESTRINGS, true)
-			}
-			if (arena.IsKoth)
-			{
-				local koth = arena.Koth
-				koth.owner_team = 0
-				koth.current_cappers.clear()
-
-				koth.red_cap_time = arena.Koth.red_start_cap_time
-				koth.blu_cap_time = arena.Koth.blu_start_cap_time
-
-				koth.red_partial_cap_amount = 0.0
-				koth.blu_partial_cap_amount = 0.0
-
-				// koth.is_overtime = false
-			}
-			local _players = array(arena.MaxPlayers, null)
-			foreach(p in arena_players)
-			{
-				if (p.GetTeam() == TEAM_SPECTATOR) continue
-
-				local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? arena.round_start_sound : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
-
+				arena.Score <- array(2, 0)
 				if (arena.IsBBall)
-					if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
-						p.GetScriptScope().ball_ent.Kill()
-
-
-				p.ForceRespawn()
-
-				if (p.GetScriptScope().enable_countdown)
 				{
-					for (local i = 0; i < countdown_time; ++i)
-					{
-						MGE.ScriptEntFireSafe("__mge_main", format(@"
+					local ball_ent = ["bball_pickup_r", "bball_pickup_b", "ground_ball"]
 
-							local arena = ARENAS[`%s`]
-							//left before countdown ended
-							if (arena.CurrentPlayers.len() != arena.MaxPlayers) return
+					foreach(ent in ball_ent)
+						if (ent in arena.BBall && arena.BBall[ent] && arena.BBall[ent].IsValid())
+							EntFireByHandle(arena.BBall[ent], "Kill", "", -1, null, null)
 
-							EmitSoundEx({
-								sound_name 	= `%s`
-								volume 		= %.2f
-								channel 	= CHAN_STREAM
-								entity 		= activator
-								filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
-							})
-						", arena_name, arena.countdown_sound, arena.countdown_sound_volume), i, p)
-					}
+					foreach(player in arena_players)
+						EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", -1, null, null)
 				}
-				_players[p.GetTeam() - 2] = p
-				MGE.ScriptEntFireSafe("__mge_main", format(@"
-
-					local arena_name = `%s`
-					local arena = ARENAS[arena_name]
-
-					//left before countdown ended
-					if (arena.CurrentPlayers.len() != arena.MaxPlayers)
-					{
-						SetArenaState(arena_name, AS_IDLE)
-						return
-					}
-					SetArenaState(arena_name, AS_FIGHT)
-					EmitSoundEx({
-						sound_name 	= `%s`
-						volume 		= %.2f
-						channel 	= CHAN_STREAM
-						entity 		= activator
-						filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
-					})
-				", arena_name, arena.round_start_sound, arena.round_start_sound_volume), countdown_time, p)
 			}
 
-			if (arena.IsBBall)
-				BBall_SpawnBall(arena_name)
+			function AS_COUNTDOWN() {
 
-		}
-
-		function AS_FIGHT() {
-
-			foreach(p in arena_players)
-			{
-				local scope = p.GetScriptScope()
-				local round_start_sound = !ENABLE_ANNOUNCER || !scope.enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
-				PlayAnnouncer(p, round_start_sound)
+				local countdown_time = arena.cdtime.tointeger()
 
 				if (arena.IsBBall)
 				{
-					if (scope.ball_ent && scope.ball_ent.IsValid())
-						scope.ball_ent.Kill()
+					if ("ground_ball" in arena.BBall && arena.BBall.ground_ball && arena.BBall.ground_ball.IsValid())
+						arena.BBall.ground_ball.SetAbsOrigin(arena.BBall.neutral_home)
+
+					arena.BBall.bball_pickup_r <- CreateByClassname("trigger_particle")
+					arena.BBall.bball_pickup_r.KeyValueFromString("targetname", "__mge_bball_trail_2")
+					arena.BBall.bball_pickup_r.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_RED)
+					arena.BBall.bball_pickup_r.KeyValueFromString("attachment_name", "flag")
+					arena.BBall.bball_pickup_r.KeyValueFromInt("attachment_type", 4)
+					arena.BBall.bball_pickup_r.KeyValueFromInt("spawnflags", 1)
+					DispatchSpawn(arena.BBall.bball_pickup_r)
+					SetPropBool(arena.BBall.bball_pickup_r, STRING_NETPROP_PURGESTRINGS, true)
+
+					arena.BBall.bball_pickup_b <- CreateByClassname("trigger_particle")
+					arena.BBall.bball_pickup_b.KeyValueFromString("targetname", "__mge_bball_trail_3")
+					arena.BBall.bball_pickup_b.KeyValueFromString("particle_name", BBALL_PARTICLE_TRAIL_BLUE)
+					arena.BBall.bball_pickup_b.KeyValueFromString("attachment_name", "flag")
+					arena.BBall.bball_pickup_b.KeyValueFromInt("attachment_type", 4)
+					arena.BBall.bball_pickup_b.KeyValueFromInt("spawnflags", 1)
+					DispatchSpawn(arena.BBall.bball_pickup_b)
+					SetPropBool(arena.BBall.bball_pickup_b, STRING_NETPROP_PURGESTRINGS, true)
 				}
-
-				p.RemoveCustomAttribute("no_attack")
-			}
-		}
-
-		function AS_AFTERFIGHT() {
-
-			foreach(p in arena_players)
-			{
-				//20-0
-				if (arena.Score.find(arena.fraglimit.tointeger()) && arena.Score.find(0))
+				if (arena.IsKoth)
 				{
-					local sound = p.GetScriptScope().won_last_match ? format("vo/announcer_am_flawlessvictory0%d.mp3", RandomInt(1, 3)) : format("vo/announcer_am_flawlessdefeat0%d.mp3", RandomInt(1, 4))
-					PlayAnnouncer(p, sound)
-				}
-				//left early
-				else if (arena.Score[0] != arena.fraglimit.tointeger() && arena.Score[1] != arena.fraglimit.tointeger())
-				{
-					PlayAnnouncer(p, "vo/announcer_am_lastmanforfeit01.mp3")
-				}
-			}
-			if (arena.IsBBall)
-			{
-				EntFireByHandle(arena.BBall.bball_pickup_r, "Kill", "", -1, null, null)
-				EntFireByHandle(arena.BBall.bball_pickup_b, "Kill", "", -1, null, null)
-				EntFireByHandle(arena.BBall.ground_ball, "Kill", "", -1, null, null)
-			}
+					local koth = arena.Koth
+					koth.owner_team = 0
+					koth.current_cappers.clear()
 
-			if (arena.IsKoth)
-				arena.Koth.current_cappers.clear()
+					koth.red_cap_time = arena.Koth.red_start_cap_time
+					koth.blu_cap_time = arena.Koth.blu_start_cap_time
 
-			if (arena.IsCustomRuleset)
+					koth.red_partial_cap_amount = 0.0
+					koth.blu_partial_cap_amount = 0.0
+
+					// koth.is_overtime = false
+				}
+				local _players = array(arena.MaxPlayers, null)
 				foreach(p in arena_players)
-					RemovePlayer(p)
+				{
+					if (p.GetTeam() == TEAM_SPECTATOR) continue
 
-			MGE.ScriptEntFireSafe("__mge_main", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
-		}
+					local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? arena.round_start_sound : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
 
-	}.setdelegate(MGE)
+					if (arena.IsBBall)
+						if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
+							p.GetScriptScope().ball_ent.Kill()
+
+					p.ForceRespawn()
+
+					if (p.GetScriptScope().enable_countdown)
+					{
+						for (local i = 0; i < countdown_time; ++i)
+						{
+							MGE.ScriptEntFireSafe("__mge_main", format(@"
+
+								local arena = ARENAS[`%s`]
+								//left before countdown ended
+								if (arena.CurrentPlayers.len() != arena.MaxPlayers) return
+
+								EmitSoundEx({
+									sound_name 	= `%s`
+									volume 		= %.2f
+									channel 	= CHAN_STREAM
+									entity 		= activator
+									filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
+								})
+							", arena_name, arena.countdown_sound, arena.countdown_sound_volume), i, p)
+						}
+					}
+					_players[p.GetTeam() - 2] = p
+					MGE.ScriptEntFireSafe("__mge_main", format(@"
+
+						local arena_name = `%s`
+						local arena = ARENAS[arena_name]
+
+						//left before countdown ended
+						if (arena.CurrentPlayers.len() != arena.MaxPlayers)
+						{
+							SetArenaState(arena_name, AS_IDLE)
+							return
+						}
+						SetArenaState(arena_name, AS_FIGHT)
+						EmitSoundEx({
+							sound_name 	= `%s`
+							volume 		= %.2f
+							channel 	= CHAN_STREAM
+							entity 		= activator
+							filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
+						})
+					", arena_name, arena.round_start_sound, arena.round_start_sound_volume), countdown_time, p)
+				}
+
+				if (arena.IsBBall)
+					BBall_SpawnBall(arena_name)
+
+			}
+
+			function AS_FIGHT() {
+
+				foreach(p in arena_players)
+				{
+					local scope = p.GetScriptScope()
+					local round_start_sound = !ENABLE_ANNOUNCER || !scope.enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
+					PlayAnnouncer(p, round_start_sound)
+
+					if (arena.IsBBall)
+					{
+						if (scope.ball_ent && scope.ball_ent.IsValid())
+							scope.ball_ent.Kill()
+					}
+
+					p.RemoveCustomAttribute("no_attack")
+				}
+			}
+
+			function AS_AFTERFIGHT() {
+
+				foreach(p in arena_players)
+				{
+					//20-0
+					if (arena.Score.find(arena.fraglimit.tointeger()) && arena.Score.find(0))
+					{
+						local sound = p.GetScriptScope().won_last_match ? format("vo/announcer_am_flawlessvictory0%d.mp3", RandomInt(1, 3)) : format("vo/announcer_am_flawlessdefeat0%d.mp3", RandomInt(1, 4))
+						PlayAnnouncer(p, sound)
+					}
+					//left early
+					else if (arena.Score[0] != arena.fraglimit.tointeger() && arena.Score[1] != arena.fraglimit.tointeger())
+					{
+						PlayAnnouncer(p, "vo/announcer_am_lastmanforfeit01.mp3")
+					}
+				}
+				if (arena.IsBBall)
+				{
+					EntFireByHandle(arena.BBall.bball_pickup_r, "Kill", "", -1, null, null)
+					EntFireByHandle(arena.BBall.bball_pickup_b, "Kill", "", -1, null, null)
+					EntFireByHandle(arena.BBall.ground_ball, "Kill", "", -1, null, null)
+				}
+
+				if (arena.IsKoth)
+					arena.Koth.current_cappers.clear()
+
+				if (arena.IsCustomRuleset)
+					foreach(p in arena_players)
+						RemovePlayer(p)
+
+				MGE.ScriptEntFireSafe("__mge_main", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
+			}
+
+		}.setdelegate(MGE)
+	}
 
 	arenaStates[AS_IDLE]       <- arenaStates.AS_IDLE.bindenv(arenaStates)
 	arenaStates[AS_COUNTDOWN]  <- arenaStates.AS_COUNTDOWN.bindenv(arenaStates)

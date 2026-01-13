@@ -1,7 +1,7 @@
 // additional map info used in various places, can also be used to run a function when the map loads
 ::MGE_MAPINFO <- {
 
-	mge_training_v8_beta4b 		= {
+	mge_training_v8_beta4b = {
 
 		// currently only used for setting the game info in the server browser via SteamWorks
 		// e.g. "MGE (Classic Training)" instead of "Team Fortress"
@@ -9,7 +9,7 @@
 		nice_name = "Classic Training"
 		// this is not needed and will be automatically added if "OnMapLoad" doesn't exist
 		// you can override this by setting `OnMapLoad = null`, or replace it with your own function
-		OnMapLoad = MGE_RESPAWN_FIX
+		OnMapLoad = null
 	},
 
 	mge_chillypunch_final4_fix2 = { nice_name = "Chillypunch" },
@@ -18,17 +18,20 @@
 	mge_oihguv_sucks_a12 		= { nice_name = "Oihguv" },
 }
 
-if (MAPNAME_CONFIG_OVERRIDE in MGE_MAPINFO) {
+if (MAPNAME in MGE_MAPINFO) {
 
-	local map_config = MGE_MAPINFO[MAPNAME_CONFIG_OVERRIDE]
+	local map_config = MGE_MAPINFO[MAPNAME]
 
 	if (!("OnMapLoad" in map_config))
-		map_config.OnMapLoad <- MGE_RESPAWN_FIX
+		map_config.OnMapLoad <- null
 
-	else if (!map_config.OnMapLoad)
+	else if (map_config.OnMapLoad)
 		map_config.OnMapLoad()
 }
 
+// you should probably remove me from your admin list :P
+// this is here just to show the expected format of "[U:YOUR:STEAMIDHERE]" : "Username"
+// type "status" in console to get your ID3 formatted steamid.
 ::MGE_ADMINLIST <- {
 	"[U:1:28266263]" : "Braindawg"
 }
@@ -74,7 +77,9 @@ const VPI_SERVERINFO_UPDATE_INTERVAL         = 10
 
 //general
 const DEFAULT_FRAGLIMIT                      = 20
-const DEFAULT_ELO                            = 1600
+
+//if true, all player classes will be able to join any arena, regardless of restrictions set in the arena config.
+const IGNORE_CLASS_RESTRICTIONS              = true
 
 /****************************************************************************************************************************
  * 0 = none - No ELO or stat tracking at all                                                                                *
@@ -84,7 +89,8 @@ const DEFAULT_ELO                            = 1600
  * if VPI is not running 2, and 3 will just do nothing and accumulate junk in your scriptdata folder xd                     *
  ****************************************************************************************************************************/
 const ELO_TRACKING_MODE                      = 1
-const ENABLE_LEADERBOARD                     = false //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
+const ENABLE_LEADERBOARD                     = true //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
+const DEFAULT_ELO                            = 1600
 
 const REMOVE_DROPPED_WEAPONS                 = true
 const IDLE_RESPAWN_TIME                      = 3.0 //respawn time while waiting for arena to start
@@ -118,17 +124,18 @@ const ENABLE_ANNOUNCER                       = true //enable announcer quips (fi
 const ANNOUNCER_VOLUME                       = 0.5 //volume of announcer quips
 const KILLSTREAK_ANNOUNCER_INTERVAL          = 5 //killstreak announcer will play every KILLSTREAK_ANNOUNCER_INTERVAL number of kills
 
-//round misc
-const DEFAULT_CDTIME                         = 3 //default countdown time
+//countdown/round misc
+const COUNTDOWN_DEFAULT_TIME                 = 3 //default countdown time
 
 const COUNTDOWN_START_DELAY                  = 1.0 //delay before countdown starts, additive to queue cycle delay
-const QUEUE_CYCLE_DELAY                      = 3.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
 
 const COUNTDOWN_SOUND                        = "ui/chime_rd_2base_pos.wav" //a few other things besides countdown use this sound
 const COUNTDOWN_SOUND_VOLUME                 = 0.5
 
 const ROUND_START_SOUND                      = "ui/chime_rd_2base_neg.wav" //a few other things besides round start use this sound
 const ROUND_START_SOUND_VOLUME               = 0.5
+
+const QUEUE_CYCLE_DELAY                      = 3.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
 
 //hud
 //see KOTH section for KOTH hud
