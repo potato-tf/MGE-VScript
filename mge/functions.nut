@@ -706,40 +706,10 @@ function MGE::SetupLeaderboard()
 			}
 		})
 
-		// if ( LEADERBOARD_DEBUG )
-		// 	vpi_call.callback(null, "test")
-
-
-		// if (current_stat_index < stat_keys.len()) {
-
-		// 	local steamid_list = MGE_LEADERBOARD_DATA[stat]
-
-		// 	local message = format("          %s:\n", stat)
-		// 	foreach(i, user_info in steamid_list)
-		// 	{
-		// 		if (!user_info)
-		// 			user_info = ["NONE", -INT_MAX]
-
-		// 		// cycle through and fetch user stats faster if the leaderboard is empty
-		// 		think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
-
-		// 		local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
-		// 		message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
-		// 	}
-		// 	self.KeyValueFromString("message", message)
-
-		// 	yield current_stat_index++
-		// }
-
-		// // Reset index and refresh data when done with all stats
-		// yield current_stat_index = 0
+		return think_override
 	}
-
-	function LeaderboardThink() { UpdateLeaderboard(); return think_override }
-
 	scope.UpdateLeaderboard <- UpdateLeaderboard.bindenv(scope)
-	scope.LeaderboardThink <- LeaderboardThink.bindenv(scope)
-	AddThinkToEnt(MGE_Leaderboard, "LeaderboardThink")
+	AddThinkToEnt(MGE_Leaderboard, "UpdateLeaderboard")
 }
 
  // calling this function with no/null arena argument will:
