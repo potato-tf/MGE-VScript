@@ -665,7 +665,7 @@ function MGE::SetupLeaderboard()
 		split(stat, " ").apply( @(str) column_name += "_" + str.tolower() )
 		column_name = column_name.slice(1)
 
-		local vpi_call = {
+		VPI.AsyncCall({
 
 			func	= "VPI_MGE_PopulateLeaderboard"
 			timeout = INT_MAX
@@ -676,13 +676,11 @@ function MGE::SetupLeaderboard()
 
 			function callback(response, error) {
 
-				// if (typeof(response) != "array" || !response.len())
-				// {
-				// 	// printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
+				if (typeof(response) != "array" || !response.len())
+				{
+					printl(format(MGE_Localization[DEFAULT_LANGUAGE]["VPI_ReadError"], "Could not populate leaderboard"))
 				// 	return
-				// }
-
-				printl( "Got bad response for VPI_MGE_PopulateLeaderboard: " + response)
+				}
 
 				local steamid_list = MGE_LEADERBOARD_DATA[stat]
 
@@ -706,11 +704,10 @@ function MGE::SetupLeaderboard()
 				if ( current_stat_index >= stat_keys.len() )
 					current_stat_index = 0
 			}
-		}.setdelegate(scope)
-		VPI.AsyncCall( vpi_call )
+		})
 
-		if ( LEADERBOARD_DEBUG )
-			vpi_call.callback(null, "test")
+		// if ( LEADERBOARD_DEBUG )
+		// 	vpi_call.callback(null, "test")
 
 
 		// if (current_stat_index < stat_keys.len()) {
