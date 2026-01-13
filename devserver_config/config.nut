@@ -88,7 +88,7 @@ const DEFAULT_ELO                            = 1600
  * 3 = database NO fallback - Database connection only, don't write player data to files                                    *
  * if VPI is not running 2, and 3 will just do nothing and accumulate junk in your scriptdata folder xd                     *
  ****************************************************************************************************************************/
-const ELO_TRACKING_MODE                      = 2
+const ELO_TRACKING_MODE                      = 3
 const ENABLE_LEADERBOARD                     = true //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
 
 const REMOVE_DROPPED_WEAPONS                 = true
