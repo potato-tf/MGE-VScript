@@ -566,11 +566,14 @@ function MGE::GetUnixTimestamp(time)
 function MGE::SetupLeaderboard()
 {
 	//spawn our camera
+	for ( local cam; cam = FindByName( cam, "__mge_leaderboard*" ); )
+		EntFireByHandle(cam, "Kill", "", -1, null, null)
+
 	MGE.MGE_LeaderboardCam <- CreateByClassname("info_observer_point")
-	SetPropBool(MGE_LeaderboardCam, STRING_NETPROP_PURGESTRINGS, true)
 	MGE_LeaderboardCam.KeyValueFromString("targetname", "__mge_leaderboard_cam")
 	MGE_LeaderboardCam.KeyValueFromInt("fov",  120)
 	DispatchSpawn(MGE_LeaderboardCam)
+	SetPropBool(MGE_LeaderboardCam, STRING_NETPROP_PURGESTRINGS, true)
 
 	local leaderboard_cam_pos = Vector()
 	local leaderboard_cam_angles = QAngle()
