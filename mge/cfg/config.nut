@@ -262,7 +262,7 @@ const KOTH_POINT_PLACEMENT_COOLDOWN         = 2.0
 //See BBall notes about adding more spawns
 const ULTIDUO_MAX_SPAWNS                    = 4
 
-const LEADERBOARD_DEBUG                     = true
+const LEADERBOARD_DEBUG                     = false
 
 PrecacheModel(BBALL_BALL_MODEL)
 PrecacheModel(BBALL_HOOP_MODEL)
