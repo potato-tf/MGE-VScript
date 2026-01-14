@@ -685,7 +685,7 @@ function MGE::SetupLeaderboard()
 				// 	return
 				}
 
-				local steamid_list = MGE_LEADERBOARD_DATA[stat]
+				local steamid_list = scope.MGE_LEADERBOARD_DATA[stat]
 
 				local message = format("          %s:\n", stat)
 				foreach(i, user_info in steamid_list)
