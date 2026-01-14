@@ -2566,7 +2566,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				_scope.temp_point <- MGE.ShowModelToPlayer(p, [KOTH_POINT_MODEL, 0, 0], cap_point.GetOrigin(), QAngle(), 9999.0)
 				SetPropInt(_scope.temp_point, "m_nRenderFX", kRenderFxDistort)
 
-				ScriptEntFireSafe(p, format(@"
+				MGE.ScriptEntFireSafe(p, format(@"
 
 					SendGlobalGameEvent(`show_annotation`, {
 
