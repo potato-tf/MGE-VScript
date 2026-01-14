@@ -1612,6 +1612,14 @@ function MGE::CalcELO(winner, loser) {
 	}
 }
 
+function MGE::CalcELOMulti(winners, losers) {
+
+	Assert( winners.len() == losers.len(), "CalcELOMulti: Winners and losers must have the same length" )
+
+	foreach(i, winner in winners)
+		CalcELO(winner, losers[i])
+}
+
 //TODO, refactor CalcELO into something that can accept any arbitrary number of players instead
 function MGE::CalcELO2(winner, winner2, loser, loser2) {
 
@@ -1742,10 +1750,11 @@ function MGE::CalcArenaScore(arena_name)
 			foreach(p in arena_players)
 				arena.Score[p.GetTeam() - 2] >= fraglimit ? winner = p : loser = p
 
-			local loser_scope = loser ? loser.GetScriptScope() : false
-			local winner_scope = winner ? winner.GetScriptScope() : false
-
 			if (!winner || !loser) return
+
+			local loser_scope  = loser.GetScriptScope()
+			local winner_scope = winner.GetScriptScope()
+
 
 			loser_scope.won_last_match = false
 			winner_scope.won_last_match = true
@@ -1757,6 +1766,7 @@ function MGE::CalcArenaScore(arena_name)
 				loser_scope.stats.elo.tostring(),
 				fraglimit.tostring(),
 				arena_name)
+
 			CalcELO(winner, loser)
 		}
 		else
@@ -1767,32 +1777,39 @@ function MGE::CalcArenaScore(arena_name)
 			foreach(p in arena_players)
 			{
 				local scope = p.GetScriptScope()
-				if (arena.Score[0] >= fraglimit && p.GetTeam() == TF_TEAM_RED)
-				{
+				if (arena.Score[p.GetTeam() - 2] >= fraglimit) {
+
 					winners.append(p)
 					scope.won_last_match = true
 				}
-				else if (arena.Score[1] >= fraglimit && p.GetTeam() == TF_TEAM_BLUE)
-				{
-					winners.append(p)
-					scope.won_last_match = true
-				}
-				else
-				{
+				else {
+
 					losers.append(p)
 					scope.won_last_match = false
 				}
 			}
 
-			MGE_ClientPrint(null, HUD_PRINTTALK, "XdefeatsY",
-				format("%s, %s", winners[0].GetScriptScope().player_name, winners[1].GetScriptScope().player_name),
-				format("%s, %s", winners[0].GetScriptScope().stats.elo.tostring(), winners[1].GetScriptScope().stats.elo.tostring()),
-				format("%s, %s", losers[0].GetScriptScope().player_name, losers[1].GetScriptScope().player_name),
-				format("%s, %s", losers[0].GetScriptScope().stats.elo.tostring(), losers[1].GetScriptScope().stats.elo.tostring()),
-				fraglimit.tostring(),
-				arena_name)
+			local str1 = "", str2 = "", str3 = "", str4 = ""
 
-			CalcELO2(winners[0], winners[1], losers[0], losers[1])
+			for ( local i = 0; i < winners.len(); i += 2 ) {
+
+				local scope1 = winners[i].GetScriptScope()
+				local scope2 = winners[i + 1].GetScriptScope()
+				str1 += scope1.player_name + ", " + scope2.player_name
+				str2 += scope1.stats.elo + ", " + scope2.stats.elo
+			}
+
+			for ( local i = 0; i < losers.len(); i += 2 ) {
+
+				local scope1 = losers[i].GetScriptScope()
+				local scope2 = losers[i + 1].GetScriptScope()
+				str3 += scope1.player_name + ", " + scope2.player_name
+				str4 += scope1.stats.elo + ", " + scope2.stats.elo
+			}
+
+			MGE_ClientPrint(null, HUD_PRINTTALK, "XdefeatsY", str1, str2, str3, str4, fraglimit.tostring(), arena_name )
+
+			CalcELOMulti(winners, losers)
 		}
 		SetArenaState(arena_name, AS_AFTERFIGHT)
 	}
