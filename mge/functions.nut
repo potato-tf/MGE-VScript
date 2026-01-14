@@ -1467,9 +1467,6 @@ function MGE::RemovePlayer(player, changeteam=true)
 			if (k != "ConCommandHijack")
 				delete scope.ThinkTable[k]
 
-	if (changeteam && player.GetTeam() != TEAM_SPECTATOR)
-		player.ForceChangeTeam(TEAM_SPECTATOR, true)
-
 	local arena = scope.arena_info.arena
 
 	if (!arena && scope.arena_info.queue_for)
@@ -1489,6 +1486,9 @@ function MGE::RemovePlayer(player, changeteam=true)
 
 	if (arena.IsCustomRuleset && !arena.IsMGE /*&& (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT) */)
 		LoadSpawnPoints(arena_name, true)
+
+	if (changeteam && player.GetTeam() != TEAM_SPECTATOR)
+		player.ForceChangeTeam(TEAM_SPECTATOR, true)
 
 	SetArenaState(arena_name, AS_IDLE)
 
