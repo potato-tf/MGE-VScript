@@ -3040,8 +3040,9 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 	foreach (p in arena_players)
 	{
-		ruleset_inits[ruleset].call(p.GetScriptScope())
-		p.GetScriptScope().ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset]
+		local scope = p.GetScriptScope()
+		ruleset_inits[ruleset].call(scope)
+		scope.ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset].bindenv(scope)
 
 		if (ruleset == "bball" || ruleset == "koth")
 		{
