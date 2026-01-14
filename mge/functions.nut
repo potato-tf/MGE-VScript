@@ -1406,7 +1406,7 @@ function MGE::AddPlayer(player, arena_name)
 		scope.arena_info.queue_for = arena_name
 		scope.arena_info.queue_pos = idx
 
-		local str = format( GetLocalizedString( !idx ? "NextInLine " : "InLine ", player ), "" + (idx + 1) )
+		local str = format( GetLocalizedString( !idx ? "NextInLine" : "InLine", player ), "" + (idx + 1) )
 		MGE_ClientPrint(player, HUD_PRINTTALK, str)
 	}
 }
