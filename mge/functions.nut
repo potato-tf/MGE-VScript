@@ -699,7 +699,7 @@ function MGE::SetupLeaderboard()
 					local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
 					message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 				}
-				self.KeyValueFromString("message", message)
+				MGE_Leaderboard.KeyValueFromString("message", message)
 
 				current_stat_index++
 
