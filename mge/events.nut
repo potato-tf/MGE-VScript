@@ -161,8 +161,9 @@ MGE.Events <- {
 
 			local votes = arena.RulesetVote[ruleset]
 			votes.append(player)
-
-			if ( votes.len() >= arena.CurrentPlayers.len() * 0.75 )
+			
+			local votes_len = votes.len()
+			if ( votes_len == arena.CurrentPlayers.len() || votes_len == arena.CurrentPlayers.len() * 0.75 )
 			{
 				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetVote", ruleset)
 
