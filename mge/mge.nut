@@ -574,7 +574,7 @@ if (ELO_TRACKING_MODE > 1)
 
 		func = "VPI_MGE_DBInit",
 		callback = function(response, error) {
-			printl(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_DBInitError" : "VPI_DBInitSuccess"])
+			printl(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_DBInitError" : "VPI_DBInitSuccess"] + "\n" + error)
 		}
 	})
 }
