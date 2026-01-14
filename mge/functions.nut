@@ -2934,7 +2934,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			}
 
 			point.KeyValueFromVector("origin", point_trace.pos + Vector(0, 0, 10))
-			local normal_angles = VectorAngles(point_trace.plane_normal)
+			local normal_angles = MGE.VectorAngles(point_trace.plane_normal)
 			point.SetAbsAngles(QAngle(normal_angles.x, normal_angles.y, normal_angles.z) + QAngle(90, 0, 0))
 
 			scope.point_cooldown <- 0.0
