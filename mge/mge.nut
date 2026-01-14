@@ -119,7 +119,7 @@ function MGE::InitServerData() {
 	// SERVER_DATA.domain		= SERVER_DATA.region == "USA" ? "us.potato.tf" : format("%s.%s", SERVER_DATA.region.tolower(), SERVER_DATA.domain)
 
     SERVER_DATA.domain = GetStr( "sv_downloadurl" )
-	SERVER_DATA.domain = SERVER_DATA.domain.slice(0, SERVER_DATA.domain.find("/gameassets/mge"))
+	SERVER_DATA.domain = SERVER_DATA.domain.slice(7, SERVER_DATA.domain.find("/gameassets/mge"))
 
 	// sv_downloadurl not set, use region as domain
 	// if ( !SERVER_DATA.domain || SERVER_DATA.domain == "" )
