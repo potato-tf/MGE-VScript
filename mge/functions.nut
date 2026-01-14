@@ -1791,7 +1791,9 @@ function MGE::CalcArenaScore(arena_name)
 
 			local str1 = "", str2 = "", str3 = "", str4 = ""
 
-			for ( local i = 0; i < winners.len(); i += 2 ) {
+			local winners_len = winners.len()
+			local losers_len = losers.len()
+			for ( local i = 0; i < winners_len; i += 2 ) {
 
 				local scope1 = winners[i].GetScriptScope()
 				local scope2 = winners[i + 1].GetScriptScope()
@@ -1799,7 +1801,7 @@ function MGE::CalcArenaScore(arena_name)
 				str2 += scope1.stats.elo + ", " + scope2.stats.elo
 			}
 
-			for ( local i = 0; i < losers.len(); i += 2 ) {
+			for ( local i = 0; i < losers_len; i += 2 ) {
 
 				local scope1 = losers[i].GetScriptScope()
 				local scope2 = losers[i + 1].GetScriptScope()
