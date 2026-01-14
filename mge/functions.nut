@@ -685,9 +685,9 @@ function MGE::SetupLeaderboard()
 				// 	return
 				}
 
-				foreach(k, v in response)
-					foreach(k2, v2 in v)
-						printl(k2 + " : " + v2)
+				// foreach(k, v in response)
+				// 	foreach(k2, v2 in v)
+				// 		printl(k2 + " : " + v2)
 
 				local steamid_list = scope.MGE_LEADERBOARD_DATA[stat]
 
@@ -695,7 +695,7 @@ function MGE::SetupLeaderboard()
 				foreach(i, user_info in steamid_list)
 				{
 					if (!user_info)
-						user_info = ["NONE", -INT_MAX]
+						user_info = i in response ? response[i] : ["NONE", -INT_MAX]
 
 					// cycle through and fetch user stats faster if the leaderboard is empty
 					think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
@@ -703,6 +703,7 @@ function MGE::SetupLeaderboard()
 					local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
 					message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 				}
+
 				MGE.MGE_Leaderboard.KeyValueFromString("message", message)
 
 				scope.current_stat_index++
