@@ -653,8 +653,6 @@ function MGE::SetupLeaderboard()
 	scope.MGE_LEADERBOARD_DATA <- MGE_LEADERBOARD_DATA
 	scope.current_stat_index   <- 0
 
-	local think_override = LEADERBOARD_UPDATE_INTERVAL
-
 	function UpdateLeaderboard[scope]() {
 
 		local stat_keys = MGE_LEADERBOARD_DATA.keys()
@@ -697,9 +695,6 @@ function MGE::SetupLeaderboard()
 					if (!user_info)
 						user_info = i in response ? response[i] : ["NONE", -INT_MAX]
 
-					// cycle through and fetch user stats faster if the leaderboard is empty
-					think_override = steamid_list[0] == null ? 1 : LEADERBOARD_UPDATE_INTERVAL
-
 					local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
 					message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 				}
@@ -714,7 +709,7 @@ function MGE::SetupLeaderboard()
 			}
 		})
 
-		return think_override
+		return LEADERBOARD_UPDATE_INTERVAL
 	}
 	scope.UpdateLeaderboard <- UpdateLeaderboard.bindenv(scope)
 	AddThinkToEnt(MGE_Leaderboard, "UpdateLeaderboard")
