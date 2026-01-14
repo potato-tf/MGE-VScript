@@ -685,7 +685,8 @@ function MGE::SetupLeaderboard()
 				// 	return
 				}
 
-				__DumpScope(0, response)
+				foreach(k, v in response)
+					printl(k + " : " + v)
 
 				local steamid_list = scope.MGE_LEADERBOARD_DATA[stat]
 
