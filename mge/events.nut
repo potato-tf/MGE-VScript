@@ -235,12 +235,16 @@ MGE.Events <- {
 			local data = ""
 			if (stat == "elo")
 			{
-				for (local i = 0; i < 5; i++)
+				for (local i = 0; i < 5; i++) {
+
+					foreach(k, v in MGE_LEADERBOARD_DATA.ELO[i])
+						printl(k + " : " + v)
+
 					data += format("%s: %s\n", MGE_LEADERBOARD_DATA.ELO[i][2], MGE_LEADERBOARD_DATA.ELO[i][1].tostring())
+				}
 
 				MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Title", format(" (ELO)\n%s", data))
 				return
-
 			}
 
 			foreach(leaderboard_stat, user_data in MGE_LEADERBOARD_DATA)
