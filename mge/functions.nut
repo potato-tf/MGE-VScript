@@ -685,6 +685,8 @@ function MGE::SetupLeaderboard()
 				// 	return
 				}
 
+				__DumpScope(0, response)
+
 				local steamid_list = scope.MGE_LEADERBOARD_DATA[stat]
 
 				local message = format("          %s:\n", stat)
