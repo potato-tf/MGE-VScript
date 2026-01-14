@@ -126,7 +126,7 @@ function MGE_CREATE_SCOPE( name = "__mge_scope"+UniqueString(), namespace = null
 
 		function _newslot( k, v ) {
 
-			if ( k == "_OnDestroy" && _OnDestroy == null )
+			if ( k == "_OnDestroy" && !_OnDestroy )
 				_OnDestroy = v.bindenv( ent_scope )
 
 			this.rawset( k, v )

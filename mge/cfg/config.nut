@@ -102,7 +102,7 @@ const PER_ARENA_LOGGING                      = false
 
 //leaderboard
 const LEADERBOARD_FORWARD_OFFSET             = 12
-const LEADERBOARD_VERTICAL_OFFSET            = 6
+const LEADERBOARD_VERTICAL_OFFSET            = 12
 const LEADERBOARD_TEXT_SIZE                  = 1.0
 const LEADERBOARD_UPDATE_INTERVAL            = 10
 const MAX_LEADERBOARD_ENTRIES                = 7 //anything greater than 7 gets cut off

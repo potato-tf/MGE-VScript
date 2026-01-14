@@ -169,11 +169,9 @@ if ( !("MGE_GAMESTRINGS" in ROOT) )
 
 local function GameStringGenerator() {
 
-	local gamestrings_snapshot = clone MGE_GAMESTRINGS
-
     // printl( gamestrings_snapshot.len() )
 
-	foreach( str1, str2 in gamestrings_snapshot ) {
+	foreach( str1, str2 in MGE_GAMESTRINGS ) {
 
 		PurgeGameString(str1)
 		PurgeGameString(str2)
