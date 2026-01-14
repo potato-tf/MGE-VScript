@@ -2563,7 +2563,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			{
 				local _scope = p.GetScriptScope()
 
-				_scope.temp_point <- ShowModelToPlayer(p, [KOTH_POINT_MODEL, 0, 0], cap_point.GetOrigin(), QAngle(), 9999.0)
+				_scope.temp_point <- MGE.ShowModelToPlayer(p, [KOTH_POINT_MODEL, 0, 0], cap_point.GetOrigin(), QAngle(), 9999.0)
 				SetPropInt(_scope.temp_point, "m_nRenderFX", kRenderFxDistort)
 
 				ScriptEntFireSafe(p, format(@"
@@ -2584,32 +2584,32 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			}
 		}
 		function ultiduo() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			return
 		}
 		function ammomod() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
 			arena.hpratio = AMMOMOD_DEFAULT_HP_MULT
 			return
 		}
 		function endif() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
 			return
 		}
 		function midair() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = fraglimit
 			return
 		}
 		function allmeat() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = ALLMEAT_DEFAULT_FRAGLIMIT
 			return
 		}
 		"4player" : function() {
-			LoadSpawnPoints(arena_name)
+			MGE.LoadSpawnPoints(arena_name)
 			return
 		}
 	}.setdelegate(MGE)
@@ -2670,7 +2670,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 					{
 						local _scope = p.GetScriptScope()
 
-						_scope.temp_ball <- ShowModelToPlayer(p, [BBALL_BALL_MODEL, 0, 0], hoop_trace.endpos, QAngle(), 9999.0)
+						_scope.temp_ball <- MGE.ShowModelToPlayer(p, [BBALL_BALL_MODEL, 0, 0], hoop_trace.endpos, QAngle(), 9999.0)
 						SetPropInt(_scope.temp_ball, "m_nRenderFX", kRenderFxDistort)
 
 						MGE.ScriptEntFireSafe(p, format(@"
@@ -2860,7 +2860,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				{
 					foreach(p in arena_players)
 					{
-						local glow_dummy = ShowModelToPlayer(p, [BBALL_HOOP_MODEL, 0, __hoop.GetTeam()], __hoop.GetOrigin(), __hoop.GetAbsAngles(), 9999.0)
+						local glow_dummy = MGE.ShowModelToPlayer(p, [BBALL_HOOP_MODEL, 0, __hoop.GetTeam()], __hoop.GetOrigin(), __hoop.GetAbsAngles(), 9999.0)
 						// printl(glow_dummy)
 						glow_dummy.AcceptInput("SetParent", "!activator", __hoop, __hoop)
 						SetPropBool(glow_dummy, "m_bGlowEnabled", true)
@@ -2929,7 +2929,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			local point = scope.temp_point
 			if (!point || !point.IsValid())
 			{
-				RemovePlayer(self)
+				MGE.RemovePlayer(self)
 				return
 			}
 
@@ -2979,14 +2979,14 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 					for (local hack; hack = FindByClassnameWithin(hack, "obj_teleporter", point.GetOrigin(), 200.0);)
 						EntFireByHandle(hack, "Kill", "", -1, null, null)
 
-					LoadSpawnPoints(arena_name)
+					MGE.LoadSpawnPoints(arena_name)
 
 					delete arena.RulesetVote.pointvote_pos
 
 					foreach(p in arena_players)
 					{
 
-						local glow_dummy = ShowModelToPlayer(p, [KOTH_POINT_MODEL, 0, cap_point.GetTeam()], cap_point.GetOrigin(), QAngle(), 9999.0)
+						local glow_dummy = MGE.ShowModelToPlayer(p, [KOTH_POINT_MODEL, 0, cap_point.GetTeam()], cap_point.GetOrigin(), QAngle(), 9999.0)
 
 						glow_dummy.AcceptInput("SetParent", "!activator", cap_point, cap_point)
 						SetPropBool(glow_dummy, "m_bGlowEnabled", true)
@@ -2994,7 +2994,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 						if ("CustomRulesetThink" in scope.ThinkTable)
 							delete scope.ThinkTable.CustomRulesetThink
 					}
-					SetArenaState(arena_name, AS_COUNTDOWN)
+					MGE.SetArenaState(arena_name, AS_COUNTDOWN)
 					return
 				}
 
@@ -3043,7 +3043,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 		if (ruleset == "bball" || ruleset == "koth")
 		{
-			for(local child = p.FirstMoveChild(); child; child = child.NextMovePeer())
+			for (local child = p.FirstMoveChild(); child; child = child.NextMovePeer())
 				if (child instanceof CEconEntity)
 					SetPropInt(child, "m_nRenderMode", kRenderTransColor),
 					SetPropInt(child, "m_clrRender", 0)
