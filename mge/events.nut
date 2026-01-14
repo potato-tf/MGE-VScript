@@ -242,7 +242,8 @@ MGE.Events <- {
 
 				printl(data)
 
-				MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Title", format(" (ELO)\n%s", data))
+				MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Title")
+				MGE_ClientPrint(player, HUD_PRINTTALK, "(ELO)\n" + data)
 				return
 			}
 
