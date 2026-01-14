@@ -569,11 +569,11 @@ function MGE::SetupLeaderboard()
 	for ( local cam; cam = FindByName( cam, "__mge_leaderboard*" ); )
 		EntFireByHandle(cam, "Kill", "", -1, null, null)
 
-	MGE.MGE_LeaderboardCam <- CreateByClassname("info_observer_point")
-	MGE_LeaderboardCam.KeyValueFromString("targetname", "__mge_leaderboard_cam")
-	MGE_LeaderboardCam.KeyValueFromInt("fov",  120)
-	DispatchSpawn(MGE_LeaderboardCam)
-	SetPropBool(MGE_LeaderboardCam, STRING_NETPROP_PURGESTRINGS, true)
+	MGE.MGE_LEADERBOARDCAM <- CreateByClassname("info_observer_point")
+	MGE_LEADERBOARDCAM.KeyValueFromString("targetname", "__mge_leaderboard_cam")
+	MGE_LEADERBOARDCAM.KeyValueFromInt("fov",  120)
+	DispatchSpawn(MGE_LEADERBOARDCAM)
+	SetPropBool(MGE_LEADERBOARDCAM, STRING_NETPROP_PURGESTRINGS, true)
 
 	local leaderboard_cam_pos = Vector()
 	local leaderboard_cam_angles = QAngle()
@@ -590,8 +590,8 @@ function MGE::SetupLeaderboard()
 		else if (origin_len == 6)
 			leaderboard_cam_angles = QAngle(origin[3], origin[4], origin[5])
 
-		MGE_LeaderboardCam.SetAbsOrigin(leaderboard_cam_pos)
-		MGE_LeaderboardCam.SetAbsAngles(leaderboard_cam_angles)
+		MGE_LEADERBOARDCAM.SetAbsOrigin(leaderboard_cam_pos)
+		MGE_LEADERBOARDCAM.SetAbsAngles(leaderboard_cam_angles)
 		return
 	}
 
@@ -631,31 +631,30 @@ function MGE::SetupLeaderboard()
 	local random_cam = valid_cams.len() == 1 ? valid_cams[0] : valid_cams[RandomInt(0, valid_cams.len() - 1)]
 	local random_cam_angle_inverse = (random_cam.GetAbsAngles() - QAngle(0, 180, 0))
 
-	MGE_LeaderboardCam.SetAbsOrigin(random_cam.GetOrigin())
-	MGE_LeaderboardCam.SetAbsAngles(random_cam_angle_inverse)
+	MGE_LEADERBOARDCAM.SetAbsOrigin(random_cam.GetOrigin())
+	MGE_LEADERBOARDCAM.SetAbsAngles(random_cam_angle_inverse)
 
 	local leaderboard_pos = (random_cam.GetOrigin() + (random_cam_angle_inverse.Forward() * LEADERBOARD_FORWARD_OFFSET)) + Vector(0, 0, LEADERBOARD_VERTICAL_OFFSET)
 
-	MGE_Leaderboard <- CreateByClassname("point_worldtext")
+	MGE_LEADERBOARD <- CreateByClassname("point_worldtext")
 
-	MGE_Leaderboard.KeyValueFromString("targetname", "__mge_leaderboard_text")
-	MGE_Leaderboard.KeyValueFromString("message", "      Placeholder:\n       #9999 | aaaa\n")
-	MGE_Leaderboard.KeyValueFromInt("textsize", LEADERBOARD_TEXT_SIZE)
-	MGE_Leaderboard.KeyValueFromString("color", "255 255 255")
-	MGE_Leaderboard.KeyValueFromInt("orientation", 1)
-	MGE_Leaderboard.SetAbsOrigin(leaderboard_pos)
-	SetPropBool(MGE_Leaderboard, STRING_NETPROP_PURGESTRINGS, true)
-	DispatchSpawn(MGE_Leaderboard)
-	MGE.MGE_Leaderboard <- MGE_Leaderboard
+	MGE_LEADERBOARD.KeyValueFromString("targetname", "__mge_leaderboard_text")
+	MGE_LEADERBOARD.KeyValueFromString("message", "      Placeholder:\n       #9999 | aaaa\n")
+	MGE_LEADERBOARD.KeyValueFromInt("textsize", LEADERBOARD_TEXT_SIZE)
+	MGE_LEADERBOARD.KeyValueFromString("color", "255 255 255")
+	MGE_LEADERBOARD.KeyValueFromInt("orientation", 1)
+	MGE_LEADERBOARD.SetAbsOrigin(leaderboard_pos)
+	SetPropBool(MGE_LEADERBOARD, STRING_NETPROP_PURGESTRINGS, true)
+	DispatchSpawn(MGE_LEADERBOARD)
+	MGE.MGE_LEADERBOARD <- MGE_LEADERBOARD
 
-	MGE_Leaderboard.ValidateScriptScope()
-	local scope = MGE_Leaderboard.GetScriptScope()
-	scope.MGE_LEADERBOARD_DATA <- MGE_LEADERBOARD_DATA
+	MGE_LEADERBOARD.ValidateScriptScope()
+	local scope = MGE_LEADERBOARD.GetScriptScope()
 	scope.current_stat_index   <- 0
 
 	function UpdateLeaderboard[scope]() {
 
-		local stat_keys = MGE_LEADERBOARD_DATA.keys()
+		local stat_keys = MGE.MGE_LEADERBOARD_DATA.keys()
 
 		if ( current_stat_index >= stat_keys.len() )
 			current_stat_index = 0
@@ -687,19 +686,20 @@ function MGE::SetupLeaderboard()
 				// 	foreach(k2, v2 in v)
 				// 		printl(k2 + " : " + v2)
 
-				local steamid_list = scope.MGE_LEADERBOARD_DATA[stat]
-
 				local message = format("          %s:\n", stat)
-				foreach(i, user_info in steamid_list)
-				{
-					if (!user_info)
+				foreach(i, user_info in MGE.MGE_LEADERBOARD_DATA[stat]) {
+
+					if (!user_info) {
+
 						user_info = i in response ? response[i] : ["NONE", -INT_MAX]
+						MGE.MGE_LEADERBOARD_DATA[stat][i] = user_info
+					}
 
 					local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
 					message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 				}
 
-				MGE.MGE_Leaderboard.KeyValueFromString("message", message)
+				MGE.MGE_LEADERBOARD.KeyValueFromString("message", message)
 
 				scope.current_stat_index++
 
@@ -712,7 +712,7 @@ function MGE::SetupLeaderboard()
 		return LEADERBOARD_UPDATE_INTERVAL
 	}
 	scope.UpdateLeaderboard <- UpdateLeaderboard.bindenv(scope)
-	AddThinkToEnt(MGE_Leaderboard, "UpdateLeaderboard")
+	AddThinkToEnt(MGE_LEADERBOARD, "UpdateLeaderboard")
 }
 
  // calling this function with no/null arena argument will:
