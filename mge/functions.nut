@@ -1487,7 +1487,7 @@ function MGE::RemovePlayer(player, changeteam=true)
 	if (player in arena.CurrentPlayers)
 		delete arena.CurrentPlayers[player]
 
-	if (arena.IsCustomRuleset && !arena.IsMGE && (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT))
+	if (arena.IsCustomRuleset && !arena.IsMGE /*&& (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT) */)
 		LoadSpawnPoints(arena_name, true)
 
 	SetArenaState(arena_name, AS_IDLE)
