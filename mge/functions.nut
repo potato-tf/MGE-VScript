@@ -699,13 +699,13 @@ function MGE::SetupLeaderboard()
 					local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]
 					message += format("\n          %d | %s | %d\n", i + 1, name.tostring(), user_info[1])
 				}
-				MGE_Leaderboard.KeyValueFromString("message", message)
+				MGE.MGE_Leaderboard.KeyValueFromString("message", message)
 
-				current_stat_index++
+				scope.current_stat_index++
 
 				// reset index if we've reached the end
-				if ( current_stat_index >= stat_keys.len() )
-					current_stat_index = 0
+				if ( scope.current_stat_index >= stat_keys.len() )
+					scope.current_stat_index = 0
 			}
 		})
 
