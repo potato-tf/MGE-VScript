@@ -237,13 +237,13 @@ MGE.Events <- {
 			{
 				for (local i = 0; i < 5; i++) {
 
-					data += format("%s: %s\n", MGE_LEADERBOARD_DATA.ELO[i][2], MGE_LEADERBOARD_DATA.ELO[i][1].tostring())
+					data += format("\x07"+MGE_COLOR_SUBJECT+"%s\x01: %s\n", MGE_LEADERBOARD_DATA.ELO[i][2], MGE_LEADERBOARD_DATA.ELO[i][1].tostring())
 				}
 
 				printl(data)
 
 				MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Title")
-				MGE_ClientPrint(player, HUD_PRINTTALK, "(ELO)\n" + data)
+				MGE_ClientPrint(player, HUD_PRINTTALK, "\x07"+MGE_COLOR_MAIN+"(ELO)\n" + data)
 				return
 			}
 
