@@ -511,7 +511,7 @@ if (GAMEMODE_AUTOUPDATE_REPO && GAMEMODE_AUTOUPDATE_REPO != "")
 				clone_dir = GAMEMODE_AUTOUPDATE_TARGET_DIR
 			}
 
-			function callback(response, error) {
+			callback = function(response, error) {
 
 				//gamemode has been updated
 				if (!error && response.len()) {
@@ -572,7 +572,7 @@ if (ELO_TRACKING_MODE > 1)
 	VPI.AsyncCall({
 
 		func = "VPI_MGE_DBInit",
-		function callback (response, error) {
+		callback = function(response, error) {
 			printl(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_DBInitError" : "VPI_DBInitSuccess"])
 		}
 	})

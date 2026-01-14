@@ -228,7 +228,7 @@ function MGE::InitEntities() {
 						func   = "VPI_MGE_UpdateServerData"
 						kwargs = MGE.SERVER_DATA
 
-						function callback(response, err) {
+						callback = function(response, err) {
 
 							if ( err ) printl( err )
 
@@ -677,7 +677,7 @@ function MGE::SetupLeaderboard()
 				max_leaderboard_entries = MAX_LEADERBOARD_ENTRIES
 			}
 
-			function callback(response, error) {
+			callback = function(response, error) {
 
 				if (typeof(response) != "array" || !response.len())
 				{
@@ -2277,7 +2277,7 @@ function MGE::GetStats(player) {
 				network_id	= steam_id_slice
 				default_elo	= DEFAULT_ELO
 			}
-			function callback(response, error) {
+			callback = function(response, error) {
 
 				if (typeof(response) != "array" || !response.len())
 				{
@@ -2355,7 +2355,7 @@ function MGE::UpdateStats(player, _stats = {}, additive = false) {
 					stats		= _stats
 					additive	= additive
 				}
-				function callback(response, error) {
+				callback = function(response, error) {
 					printf(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_WriteError" : "VPI_WriteSuccess"], GetPropString(player, "m_szNetworkIDString"))
 				}
 			})
@@ -2372,7 +2372,7 @@ function MGE::UpdateStats(player, _stats = {}, additive = false) {
 					stats		= _stats
 					additive	= additive
 				}
-				function callback(response, error) {
+				callback = function(response, error) {
 					printf(MGE_Localization[DEFAULT_LANGUAGE][error ? "VPI_WriteError" : "VPI_WriteSuccess"], GetPropString(player, "m_szNetworkIDString"))
 				}
 			})
