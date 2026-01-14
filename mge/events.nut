@@ -163,28 +163,24 @@ MGE.Events <- {
 			votes.append(player)
 			
 			local votes_len = votes.len()
-			if ( votes_len == arena.CurrentPlayers.len() || votes_len == arena.CurrentPlayers.len() * 0.75 )
-			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetVote", ruleset)
 
-				foreach(p, _ in arena.CurrentPlayers)
-				{
-					if (p == player) continue
+			// we have enough votes to set the ruleset
+			if ( votes_len >= arena.CurrentPlayers.len() * 0.75 )
+				return SetCustomArenaRuleset(arena_name, ruleset, fraglimit)
 
+			// need more votes
+			MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetVote", ruleset)
+			foreach(p, _ in arena.CurrentPlayers)
+				if (p != player)
 					MGE_ClientPrint(p, HUD_PRINTTALK, "RulesetVoteArena", scope.player_name, ruleset, ruleset)
-				}
-				return
-			}
-
-			SetCustomArenaRuleset(arena_name, ruleset, fraglimit)
 		}
 
 		function language(params) {
 
 			local lang = split(params.text, " ", true)
 			local player = GetPlayerFromUserID(params.userid)
-			if (lang.len() > 1 && lang[1] in MGE_Localization)
-			{
+			if (lang.len() > 1 && lang[1] in MGE_Localization) {
+
 				MGE_ClientPrint(player, HUD_PRINTTALK, "LanguageSet", lang[1])
 				player.GetScriptScope().language <- lang[1]
 			}
