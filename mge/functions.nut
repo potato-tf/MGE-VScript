@@ -2698,7 +2698,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			{
 				local ball = scope.temp_ball
 				ball.KeyValueFromVector("origin", hoop_trace.pos + Vector(0, 0, 10))
-				local normal_angles = VectorAngles(hoop_trace.plane_normal)
+				local normal_angles = MGE.VectorAngles(hoop_trace.plane_normal)
 				ball.SetAbsAngles(QAngle(normal_angles.x, normal_angles.y, normal_angles.z) + QAngle(90, 0, 0))
 
 				if (CanPlaceHoop(ball))
@@ -2754,7 +2754,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 						// arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
 						arena.RulesetVote.clear()
-						SetArenaState(arena_name, AS_COUNTDOWN)
+						MGE.SetArenaState(arena_name, AS_COUNTDOWN)
 
 						foreach(p in arena_players)
 						{
@@ -2792,7 +2792,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			hoop.KeyValueFromVector("origin", hoop_trace.pos)
 
 			// Convert the plane normal to angles that face away from the wall
-			local normal_angles = VectorAngles(hoop_trace.plane_normal)
+			local normal_angles = MGE.VectorAngles(hoop_trace.plane_normal)
 
 			// Set the hoop angles perpendicular to the wall
 			hoop.SetAbsAngles(QAngle(normal_angles.x, normal_angles.y, normal_angles.z))
