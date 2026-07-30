@@ -10,9 +10,8 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
   - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
 - Alternatively, if you are not using any database integration, you can rename mapspawn.nut to something else and add `script_execute new_filename_here` to your server.cfg
 
-## Don't pack this into your map
-- I generally don't recommend you do this, this will receive live regular updates like a sourcemod plugin, and will conflict with server configs
-- If you must pack this into your map, you should modify it so it loads in a way that it doesn't override any existing mge scripts on the server
+## Don't pack this into your map (yet)
+This gamemode is still WIP and has some bugs/missing features that still need to be cleaned up.  If you're interested in packing this into a map, please let me know.
 
 
 ## Configuration/Modifying game rules
@@ -30,9 +29,9 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | Turris | ✅ |
 | BBall | ✅ |
 | Allmeat | ✅ |
-| Koth | ⚠️ |
+| Koth | ✅ |
 | Midair? |⚠️|
-| Ultiduo | ❌ |
+| Ultiduo | ⚠️ |
 | Plain text ELO/stat tracking | ✅ |
 | Quake-style announcer lines (toggleable) | ✅ |
 | Localization | ⚠️ |
@@ -42,7 +41,36 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
 | Custom rulesets | ⚠️ |
 | Arbitrary team sizes | ❌ |
 
-⚠️KOTH works but the logic is super janky right now, partial cap time can go negative and you can just trade the point back and forth (doesn't contest/pause)
+Original file line number	Original file line	Diff line number	Diff line change
+	@@ -10,8 +10,9 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
+  - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
+- Alternatively, if you are not using any database integration, you can rename mapspawn.nut to something else and add `script_execute new_filename_here` to your server.cfg
+
+
+## Don't pack this into your map (yet)
+This gamemode is still WIP and has some bugs/missing features that still need to be cleaned up.  If you're interested in packing this into a map, please let me know.
+
+
+
+
+
+## Configuration/Modifying game rules
+
+	@@ -29,9 +30,9 @@ This gamemode is still WIP and has some bugs/missing features that still need to
+| Turris | ✅ |
+| BBall | ✅ |
+| Allmeat | ✅ |
+| Koth | ✅ |
+| Midair? |⚠️|
+| Ultiduo | ⚠️ |
+| Plain text ELO/stat tracking | ✅ |
+| Quake-style announcer lines (toggleable) | ✅ |
+| Localization | ⚠️ |
+| Custom rulesets | ⚠️ |
+| Arbitrary team sizes | ❌ |
+
+
+⚠️Ultiduo code does exist, but it's not tested.  If you run ultiduo and run into issues please let me know.
 
 ⚠️I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
 
@@ -70,7 +98,6 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
     - Failing to index your maps will result in !add being unordered, rendering everyone's !add binds useless
 
 ## Known bugs/limitations
-- Custom ruleset spawns may not rotate correctly
 - No Ultiduo yet
 - There's no way to make a menu of arena options like SourceMod can, stuck to chat commands or a fully custom screen overlay or something even more exotic.
 - !add only supports arena indexes right now (1-18 for classic mge_training), !add viaduct for example will not work, only !add 1 will.
