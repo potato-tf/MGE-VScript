@@ -104,7 +104,7 @@ This gamemode is still WIP and has some bugs/missing features that still need to
 - Leaderboard currently only works with a database and is disabled by default.
 - Many chat commands either aren't implemented or were changed to something else (goodbye !hitblip).
 
-I am not an MGE main and there are probably plenty of minor parity issues to hammer out (endif knockback height being the main one), pls report and major discrepancies between this and standard MGEMod behavior below.
+I am not an MGE main and there are probably plenty of minor parity issues to hammer out, pls report any discrepancies between this and standard MGEMod behavior.
 
 ## Adding new BBall/Koth/etc spawns:
 - BBall, Koth, and other "specialty" modes still supports reading hoop/koth point/ball spawn points/etc using the old method for backwards compatibility
