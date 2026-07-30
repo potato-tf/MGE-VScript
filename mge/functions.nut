@@ -1744,12 +1744,19 @@ function MGE::CalcArenaScore(arena_name)
 
 	foreach(p in arena_players)
 		if (p && p.IsValid())
-			hudstr = format("%s%s: %d (%s)\n",
-				hudstr,
-				p.GetScriptScope().player_name,
-				arena.Score[p.GetTeam() - 2],
-				p.IsFakeClient() ? "BOT" : p.GetScriptScope().stats.elo.tostring()
-			)
+			if (ELO_TRACKING_MODE > 0)
+				hudstr = format("%s%s: %d (%s)\n",
+					hudstr,
+					p.GetScriptScope().player_name,
+					arena.Score[p.GetTeam() - 2],
+					p.IsFakeClient() ? "BOT" : p.GetScriptScope().stats.elo.tostring()
+				)
+			else
+				hudstr = format("%s%s: %d\n",
+					hudstr,
+					p.GetScriptScope().player_name,
+					arena.Score[p.GetTeam() - 2]
+				)
 
 	MGE_HUD.KeyValueFromString("message", hudstr)
 

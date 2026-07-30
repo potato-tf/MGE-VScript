@@ -503,7 +503,10 @@ MGE.Events <- {
 					//joined spectator directly without using !remove
 					if (team <= TEAM_SPECTATOR) continue
 
-					hudstr += format("%s: %d (%s)\n", scope.player_name, arena.Score[team - 2], p.IsFakeClient() ? "BOT" : scope.stats.elo.tostring())
+					if (ELO_TRACKING_MODE > 0)
+						hudstr += format("%s: %d (%s)\n", scope.player_name, arena.Score[team - 2], p.IsFakeClient() ? "BOT" : scope.stats.elo.tostring())
+					else
+						hudstr += format("%s: %d\n", scope.player_name, arena.Score[team - 2])
 				}
 
 				if (!MGE_HUD || !MGE_HUD.IsValid())
