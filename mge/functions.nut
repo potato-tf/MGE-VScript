@@ -270,15 +270,14 @@ function MGE::ScriptEntFireSafe( target, code, delay = -1, activator = null, cal
 
 	local entfirefunc = typeof target == "string" ? DoEntFire : EntFireByHandle
 
-	entfirefunc( target, "RunScriptCode", format( @"
+	local _code = format( @"
 
 		if ( self && self.IsValid() ) {
 
 			SetPropBool( self, STRING_NETPROP_PURGESTRINGS, true )
-
+	
 			if ( self.IsPlayer() && !self.IsAlive() && !%d ) {
 
-				// PZI_Ext.Error.DebugLog( `Ignoring dead player in ScriptEntFireSafe: ` + self )
 				return
 			}
 
@@ -290,42 +289,12 @@ function MGE::ScriptEntFireSafe( target, code, delay = -1, activator = null, cal
 
 		// Assert( false, `Invalid target passed to ScriptEntFireSafe: ` + self )
 
-	", allow_dead.tointeger(), code ), delay, activator, caller )
+	", allow_dead.tointeger(), code )
 
-	MGE_GAMESTRINGS[code] <- null
+	entfirefunc( target, "RunScriptCode", _code, delay, activator, caller )
+
+	MGE_GAMESTRINGS[_code] <- null
 }
-
-// function MGE::PreserveEnts(preserve = true)
-// {
-// 	for (local ent; ent = FindByName(ent, "__mge*");)
-// 	{
-// 		local scope = ent.GetScriptScope() || (ent.ValidateScriptScope(), ent.GetScriptScope())
-// 		local classname = ent.GetClassname()
-// 		if (preserve)
-// 		{
-// 			if (classname == "move_rope")
-// 				continue
-// 			// these ents don't like having classname changed
-// 			// EFL_KILLME seemingly doesn't have any major side effects here
-// 			// (besides blocking Kill inputs)
-// 			if (classname == "info_observer_point" || classname == "trigger_player_respawn_override")
-// 			{
-// 				preserve ? ent.AddEFlags(EFL_KILLME) : ent.RemoveEFlags(EFL_KILLME)
-// 				continue
-// 			}
-
-// 			if (!("original_classname" in scope))
-// 				scope.original_classname <- ""
-
-// 			scope.original_classname = classname
-
-// 			// set this to a random preserved entity classname
-// 			ent.KeyValueFromString("classname", "move_rope")
-// 		}
-// 		else if ("original_classname" in scope)
-// 			ent.KeyValueFromString("classname", scope.original_classname)
-// 	}
-// }
 
 function MGE::HandleRoundStart()
 {
@@ -343,7 +312,6 @@ function MGE::HandleRoundStart()
 	if (player_manager)
 	{
 		player_manager.ValidateScriptScope()
-		local prop_array_size = GetPropArraySize(player_manager, "m_flNextRespawnTime")
 		PlayerManagerScope <- player_manager.GetScriptScope()
 		PlayerManagerScope.ALL_PLAYERS <- MGE.ALL_PLAYERS
 
@@ -382,7 +350,7 @@ function MGE::InitPlayerScope(player)
 	scope.language   	   <- GetClientConvarValue("cl_language", player_entindex)
 	scope.enable_announcer <- true
 	scope.enable_hud	   <- true
-	scope.enable_countdown <- true
+	// scope.enable_countdown <- true
 	scope.won_last_match   <- false
 	scope.ball_ent		   <- null
 
@@ -430,7 +398,7 @@ function MGE::InitPlayerScope(player)
 
 	function scope::PlayerThink() {
 
-		foreach(name, func in ThinkTable)
+		foreach( func in ThinkTable )
 			func()
 
 		return PLAYER_THINK_INTERVAL
@@ -474,12 +442,23 @@ function MGE::ValidatePlayerClass(player, newclass, pre=false)
 		return
 
 	// class is not whitelisted
-	ForceChangeClass(player, pre ? player.GetPlayerClass() : classes[RandomInt(0, classes_len - 1)])
+	ForceChangeClass(player, pre ? player.GetPlayerClass() : ArenaClasses.find( classes[ RandomInt(0, classes_len - 1 ) ] ) )
 	MGE_ClientPrint(player, HUD_PRINTTALK, "ClassIsNotAllowed", newclass)
 }
+
+// function MGE::ValidateArenaPlayers(arena_name) {
+
+// 	local arena = ARENAS[arena_name]
+
+// 	if (!arena) return
+
+// 	arena.Queue = arena.Queue.filter( @(i, player) player && player.IsValid() )
+// 	arena.CurrentPlayers = arena.CurrentPlayers.filter( @(player, userid) player && player.IsValid() )
+// }
+
 // tointeger() allows trailing garbage (e.g. "123abc")
 // This will only allow strictly integers (also floats with only zeroes: e.g "1.00")
-function MGE::ToStrictNum(str, float = false)
+function MGE::ToStrictNum(str = "", float = false)
 {
 //	local rex = regexp(@"-?[0-9]+(\.0+)?")  // [-](digit)[.(>0 zeroes)]
 	local rex = regexp(@"-?[0-9]+(\.[0-9]+)?")
@@ -493,17 +472,17 @@ function MGE::ToStrictNum(str, float = false)
 
 function MGE::KVStringToVectorOrQAngle(str, angles = false, startidx = 0)
 {
-	local split = (str.find(",") ? split(str, ",", true) : split(str, " ", true)).apply(@(str) MGE.ToStrictNum(str, true))
+	local splitkv = split(str, str.find(",") ? "," : " ", true).apply(@(str) MGE.ToStrictNum(str, true))
 
 	// if (split.len() < 3 || split.find(null))
 	// this is allegedly faster
 	local errorstr = "KVString CONVERSION ERROR: %s"
-	if (!(2 in split))
+	if (!(2 in splitkv))
 	{
 		error(format(errorstr, "Not enough values (need at least 3)"))
 		return angles ? QAngle() : Vector()
 	}
-	local invalid = split.find(null)
+	local invalid = splitkv.find(null)
 	if (invalid != null)
 	{
 		local invalid_kvstringidx = invalid
@@ -517,7 +496,7 @@ function MGE::KVStringToVectorOrQAngle(str, angles = false, startidx = 0)
 		error(format(errorstr, "Could not convert string to number for KVString %s (index %d)", kvstringvalue[invalid_kvstringidx], invalid))
 		return angles ? QAngle() : Vector()
 	}
-	return angles ? QAngle(split[startidx], split[startidx + 1], split[startidx + 2]) : Vector(split[startidx], split[startidx + 1], split[startidx + 2])
+	return angles ? QAngle(splitkv[startidx], splitkv[startidx + 1], splitkv[startidx + 2]) : Vector(splitkv[startidx], splitkv[startidx + 1], splitkv[startidx + 2])
 }
 
 function MGE::GetUnixTimestamp(time)
@@ -946,10 +925,12 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 
 		//rulset updated, re-add everyone to the arena
 		ARENAS[custom_ruleset_arena_name] <- _arena
+
+		local player_class = 0
 		foreach(p, _ in _arena.CurrentPlayers)
 		{
-			RemovePlayer(p, custom_ruleset_arena_name)
-			AddPlayer(p, custom_ruleset_arena_name)
+			player_class = p.GetPlayerClass()
+			AddToArenaQueue(p, custom_ruleset_arena_name, player_class)
 		}
 		return
 	}
@@ -1294,75 +1275,9 @@ function MGE::BBall_Pickup(player = null)
 	EntFire(format("__mge_bball_trail_%d", player.GetTeam()), "StartTouch", "!activator", -1, player)
 }
 
-function MGE::AddBot(arena_name)
+function MGE::AddToArenaQueue(player, arena_name, player_class = 0)
 {
-	if (!(arena_name in ARENAS))
-		return
 
-	// Ideally find a bot that isn't currently in an arena, but we aren't picky at the end of the day
-	local bot
-	foreach (player, userid in ALL_PLAYERS)
-	{
-		if (!player || !player.IsValid() || !player.IsFakeClient()) continue
-
-		local scope = player.GetScriptScope() || (player.ValidateScriptScope(), player.GetScriptScope())
-
-		if (!bot && !scope.arena_info.arena)
-		{
-			bot = player
-			break
-		}
-	}
-
-	AddPlayer(bot, arena_name)
-}
-
-function MGE::RemoveBot(arena_name, all=false)
-{
-	if ( !(arena_name in ARENAS) )
-		return
-
-	local arena = ARENAS[arena_name]
-
-	// Remove active bot(s)
-	foreach (player, _ in arena.CurrentPlayers)
-	{
-		if (player.IsFakeClient())
-		{
-			player.ForceChangeTeam(TEAM_UNASSIGNED, true)
-			SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", 0)
-
-			RemovePlayer(player, false)
-
-			if (!all) return
-		}
-	}
-
-	// No active bot(s) found, remove from queue
-	local rem = []
-	foreach (idx, player in arena.Queue)
-	{
-		if (player.IsFakeClient())
-			rem.append(player)
-
-		if (!all) break
-	}
-	foreach (player in rem)
-	{
-		player.ForceChangeTeam(TEAM_UNASSIGNED, true)
-		SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", 0)
-		RemovePlayer(player, false)
-	}
-}
-
-function MGE::RemoveAllBots()
-{
-	foreach (arena_name, _ in ARENAS)
-		RemoveBot(arena_name, true)
-}
-
-function MGE::AddPlayer(player, arena_name)
-{
 	local arena = ARENAS[arena_name]
 
 	if (player in arena.CurrentPlayers || arena.Queue.find(player) != null)
@@ -1371,13 +1286,14 @@ function MGE::AddPlayer(player, arena_name)
 		return
 	}
 
+
 	local scope = player.GetScriptScope()
 
 	//somehow we didn't get our stats, fetch again on arena join
 	if (scope.stats.elo == -INT_MAX && ELO_TRACKING_MODE == 2)
 		GetStats(player)
 
-	RemovePlayer(player, false)
+	RemoveFromArena(player, false)
 
 	if (!arena.IsCustomRuleset)
 		MGE_ClientPrint(player, HUD_PRINTTALK, "ChoseArena", arena_name)
@@ -1385,14 +1301,15 @@ function MGE::AddPlayer(player, arena_name)
 	// Enough room, add to arena
 	if (arena.CurrentPlayers.len() < arena.MaxPlayers)
 	{
-		AddToArena(player, arena_name)
+		AddToArena(player, arena_name, player_class)
+
 		local name = scope.player_name
 		local elo = scope.stats.elo
 		// printl(arena_name)
 		if (!arena.IsCustomRuleset)
 		{
 			local str = ELO_TRACKING_MODE ?
-				format(GetLocalizedString("JoinsArena", player), name, elo.tostring(), arena_name) :
+				format(GetLocalizedString("JoinsArena", player), name, player.IsFakeClient() ? "BOT" : elo.tostring(), arena_name) :
 				format(GetLocalizedString("JoinsArenaNoStats", player), scope.player_name, arena_name)
 			MGE_ClientPrint(null, HUD_PRINTTALK, str)
 		}
@@ -1411,7 +1328,7 @@ function MGE::AddPlayer(player, arena_name)
 	}
 }
 
-function MGE::AddToArena(player, arena_name)
+function MGE::AddToArena(player, arena_name, player_class = 0)
 {
 	local scope = player.GetScriptScope()
 	local arena = ARENAS[arena_name]
@@ -1440,9 +1357,13 @@ function MGE::AddToArena(player, arena_name)
 		team = (red < blue) ? TF_TEAM_RED : TF_TEAM_BLUE
 
 	// Make sure spectators have a class chosen to be able to spawn
+
+	if ( player_class ) 
+		SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", player_class)
+
 	if (!GetPropInt(player, "m_Shared.m_iDesiredPlayerClass"))
 	{
-			ForceChangeClass(player, TF_CLASS_SCOUT)
+			ForceChangeClass(player, player_class || TF_CLASS_SCOUT)
 			player.ForceRespawn()
 	}
 	arena.CurrentPlayers[player] <- scope.stats.elo.tointeger()
@@ -1458,7 +1379,7 @@ function MGE::AddToArena(player, arena_name)
 		player.RemoveBotAttribute(IGNORE_ENEMIES)
 }
 
-function MGE::RemovePlayer(player, changeteam=true)
+function MGE::RemoveFromArena(player, changeteam=true)
 {
 	local scope = player.GetScriptScope()
 
@@ -1475,6 +1396,12 @@ function MGE::RemovePlayer(player, changeteam=true)
 	if (!arena) return
 
 	local arena_name = scope.arena_info.name
+
+	scope.arena_info.name  = null
+	scope.arena_info.arena = null
+
+	arena.CurrentPlayers = arena.CurrentPlayers.filter( @(p, _) p && p.IsValid() )
+	arena.Queue = arena.Queue.filter( @(_, p) p && p.IsValid() )
 	local queue = arena.Queue
 	local player_idx = queue.find(player)
 
@@ -1490,37 +1417,129 @@ function MGE::RemovePlayer(player, changeteam=true)
 	if (changeteam && player.GetTeam() != TEAM_SPECTATOR)
 		player.ForceChangeTeam(TEAM_SPECTATOR, true)
 
+	local check_bots_only = !player.IsFakeClient() && (arena.CurrentPlayers.len() || arena.Queue.len())
+
+	if (check_bots_only)
+		RemoveBot(arena_name, true)
+
 	SetArenaState(arena_name, AS_IDLE)
 
 	player.RemoveEFlags(EFL_REMOVE_FROM_ARENA)
 }
 
+function MGE::AddBot(arena_name, bot_class = 0)
+{
+	if (!(arena_name in ARENAS))
+		return
+
+	local bot
+	foreach (player, _ in ALL_PLAYERS)
+	{
+		if (!player || !player.IsValid() || !player.IsFakeClient()) continue
+
+		local scope = player.GetScriptScope() || (player.ValidateScriptScope(), player.GetScriptScope())
+
+		if (!bot && !scope.arena_info.arena)
+		{
+			bot = player
+			break
+		}
+	}
+
+	if (!bot) {
+
+		local spawner = SpawnEntityFromTable( "bot_generator", {
+
+			targetname 			   = "__mge_bot_generator"
+			team 			 	   = "auto"
+			"class"	   : bot_class   
+			count 				   = 1
+			maxActive			   = 1
+			difficulty 			   = 3
+			actionOnDeath		   = 0
+			useTeamSpawnPoint 	   = true
+			spawnOnlyWhenTriggered = true
+
+			"OnSpawned#1"		   : "__mge_bot_generator:Kill::0:-1"
+		})
+
+		spawner.AcceptInput("SpawnBot", null, null, null)
+		return ScriptEntFireSafe( "__mge_main", format("AddBot(`%s`, %d)", arena_name, bot_class), GENERIC_DELAY)
+	}
+
+	AddToArenaQueue(bot, arena_name, bot_class)
+}
+
+function MGE::RemoveBot(arena_name, all=false)
+{
+	if ( !(arena_name in ARENAS) )
+		return
+
+	local arena = ARENAS[arena_name]
+
+	// Remove active bot(s)
+	foreach (player, _ in arena.CurrentPlayers)
+	{
+		if (player.IsFakeClient())
+		{
+			player.AddBotAttribute(REMOVE_ON_DEATH)
+			player.TakeDamage(INT_MAX, DMG_GENERIC, player)
+			RemoveFromArena(player, false)
+			player.ForceChangeTeam(TEAM_UNASSIGNED, true)
+			SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", 0)
+			if (!all) break
+		}
+	}
+
+	// No active bot(s) found, remove from queue
+	if ( all )
+	{
+		foreach (player in arena.Queue) 
+		{
+			if (player.IsFakeClient())
+			{
+				player.AddBotAttribute(REMOVE_ON_DEATH)
+				player.TakeDamage(INT_MAX, DMG_GENERIC, player)
+				RemoveFromArena(player, false)
+				player.ForceChangeTeam(TEAM_UNASSIGNED, true)
+				SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", 0)
+			}
+		}
+	}
+	CycleQueue(arena_name)
+}
+
+function MGE::RemoveAllBots()
+{
+	foreach (arena_name, _ in ARENAS)
+		RemoveBot(arena_name, true)
+}
+
 function MGE::CycleQueue(arena_name)
 {
+
 	local arena = ARENAS[arena_name]
 
 	local queue = arena.Queue
-	local queue_len = queue.len()
-	local arena_players = arena.CurrentPlayers.keys()
 
 	// queue is empty, remove flagged players from arena and return
-	if (!queue_len)
+	if (!queue.len())
 	{
-		foreach (p in arena_players)
+		foreach (p, _ in arena.CurrentPlayers)
 			if (p.IsEFlagSet(EFL_REMOVE_FROM_ARENA))
-				RemovePlayer(p)
+				RemoveFromArena(p)
 
 		return SetArenaState(arena_name, AS_IDLE)
 	}
 
-	local combined = ( arena_players.extend(queue) ).filter( @(_, player) player && player.IsValid() )
+	local combined = arena.CurrentPlayers.keys().extend(queue)
 
 	foreach ( p in combined )
 		if ( p.IsEFlagSet(EFL_REMOVE_FROM_ARENA) || ( queue.find(p) == null && !p.GetScriptScope().won_last_match ) )
-			RemovePlayer(p)
+			RemoveFromArena(p)
 	
 	// check queue again after removing flagged players
-	if (queue_len) {
+	if (queue.len()) {
 
 		AddToArena(queue[0], arena_name)
 		queue.remove(0)
@@ -1725,11 +1744,11 @@ function MGE::CalcArenaScore(arena_name)
 
 	foreach(p in arena_players)
 		if (p && p.IsValid())
-			hudstr = format("%s%s: %d (%d)\n",
+			hudstr = format("%s%s: %d (%s)\n",
 				hudstr,
 				p.GetScriptScope().player_name,
 				arena.Score[p.GetTeam() - 2],
-				p.GetScriptScope().stats.elo.tointeger()
+				p.IsFakeClient() ? "BOT" : p.GetScriptScope().stats.elo.tostring()
 			)
 
 	MGE_HUD.KeyValueFromString("message", hudstr)
@@ -1761,9 +1780,9 @@ function MGE::CalcArenaScore(arena_name)
 
 			MGE_ClientPrint(null, HUD_PRINTTALK, "XdefeatsY",
 				winner_scope.player_name,
-				winner_scope.stats.elo.tostring(),
+				winner.IsFakeClient() ? "BOT" : winner_scope.stats.elo.tostring(),
 				loser_scope.player_name,
-				loser_scope.stats.elo.tostring(),
+				loser.IsFakeClient() ? "BOT" : loser_scope.stats.elo.tostring(),
 				fraglimit.tostring(),
 				arena_name)
 
@@ -1797,16 +1816,20 @@ function MGE::CalcArenaScore(arena_name)
 
 				local scope1 = winners[i].GetScriptScope()
 				local scope2 = winners[i + 1].GetScriptScope()
+				local elo1 = winners[i].IsFakeClient() ? "BOT" : scope1.stats.elo
+				local elo2 = winners[i + 1].IsFakeClient() ? "BOT" : scope2.stats.elo
 				str1 += scope1.player_name + ", " + scope2.player_name
-				str2 += scope1.stats.elo + ", " + scope2.stats.elo
+				str2 += elo1 + ", " + elo2
 			}
 
 			for ( local i = 0; i < losers_len; i += 2 ) {
 
 				local scope1 = losers[i].GetScriptScope()
 				local scope2 = losers[i + 1].GetScriptScope()
+				local elo1 = losers[i].IsFakeClient() ? "BOT" : scope1.stats.elo
+				local elo2 = losers[i + 1].IsFakeClient() ? "BOT" : scope2.stats.elo
 				str3 += scope1.player_name + ", " + scope2.player_name
-				str4 += scope1.stats.elo + ", " + scope2.stats.elo
+				str4 += elo1 + ", " + elo2
 			}
 
 			MGE_ClientPrint(null, HUD_PRINTTALK, "XdefeatsY", str1, str2, str3, str4, fraglimit.tostring(), arena_name )
@@ -1939,13 +1962,11 @@ function MGE::SetArenaState(arena_name, state) {
 	local arena = ARENAS[arena_name]
 	arena.State = state
 
-	local arena_players = arena.CurrentPlayers.keys()
-
 	if ( !("arenaStates" in this) ) {
 
 		arenaStates <- {
 
-			function AS_IDLE() {
+			function AS_IDLE(arena_name, arena) {
 
 				arena.Score <- array(2, 0)
 				if (arena.IsBBall)
@@ -1956,12 +1977,15 @@ function MGE::SetArenaState(arena_name, state) {
 						if (ent in arena.BBall && arena.BBall[ent] && arena.BBall[ent].IsValid())
 							EntFireByHandle(arena.BBall[ent], "Kill", "", -1, null, null)
 
-					foreach(player in arena_players)
+					foreach(player, _ in arena.CurrentPlayers)
 						EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", -1, null, null)
 				}
+
+				if ( arena.CurrentPlayers.len() == arena.MaxPlayers )
+					SetArenaState(arena_name, AS_COUNTDOWN)
 			}
 
-			function AS_COUNTDOWN() {
+			function AS_COUNTDOWN(arena_name, arena) {
 
 				local countdown_time = arena.cdtime.tointeger()
 
@@ -2002,41 +2026,43 @@ function MGE::SetArenaState(arena_name, state) {
 
 					// koth.is_overtime = false
 				}
-				local _players = array(arena.MaxPlayers, null)
-				foreach(p in arena_players)
-				{
-					if (p.GetTeam() == TEAM_SPECTATOR) continue
 
-					local round_start_sound = !ENABLE_ANNOUNCER || !p.GetScriptScope().enable_announcer ? arena.round_start_sound : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
+				local _players = array(arena.MaxPlayers, null)
+				foreach(p, _ in arena.CurrentPlayers)
+				{
+					local scope = p.GetScriptScope()
 
 					if (arena.IsBBall)
-						if (p.GetScriptScope().ball_ent && p.GetScriptScope().ball_ent.IsValid())
-							p.GetScriptScope().ball_ent.Kill()
+						if (scope.ball_ent && scope.ball_ent.IsValid())
+							scope.ball_ent.Kill()
 
 					p.ForceRespawn()
 
-					if (p.GetScriptScope().enable_countdown)
+					for (local i = 0; i < countdown_time; ++i)
 					{
-						for (local i = 0; i < countdown_time; ++i)
-						{
-							MGE.ScriptEntFireSafe("__mge_main", format(@"
+						ScriptEntFireSafe("__mge_main", format(@"
+							local arena_name = `%s`
+							local arena = ARENAS[arena_name]
 
-								local arena = ARENAS[`%s`]
-								//left before countdown ended
-								if (arena.CurrentPlayers.len() != arena.MaxPlayers) return
+							//left before countdown ended
+							if (arena.CurrentPlayers.len() != arena.MaxPlayers)
+							{
+								SetArenaState(arena_name, AS_IDLE)
+								return
+							}
 
-								EmitSoundEx({
-									sound_name 	= `%s`
-									volume 		= %.2f
-									channel 	= CHAN_STREAM
-									entity 		= activator
-									filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
-								})
-							", arena_name, arena.countdown_sound, arena.countdown_sound_volume), i, p)
-						}
+							EmitSoundEx({
+								sound_name 	= `%s`
+								volume 		= %.2f
+								channel 	= CHAN_STREAM
+								entity 		= activator
+								filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
+							})
+						", arena_name, arena.countdown_sound, arena.countdown_sound_volume), i, p)
 					}
+
 					_players[p.GetTeam() - 2] = p
-					MGE.ScriptEntFireSafe("__mge_main", format(@"
+					ScriptEntFireSafe("__mge_main", format(@"
 
 						local arena_name = `%s`
 						local arena = ARENAS[arena_name]
@@ -2063,9 +2089,9 @@ function MGE::SetArenaState(arena_name, state) {
 
 			}
 
-			function AS_FIGHT() {
+			function AS_FIGHT(arena_name, arena) {
 
-				foreach(p in arena_players)
+				foreach(p, _ in arena.CurrentPlayers)
 				{
 					local scope = p.GetScriptScope()
 					local round_start_sound = !ENABLE_ANNOUNCER || !scope.enable_announcer ? ROUND_START_SOUND : format("vo/announcer_am_roundstart0%d.mp3", RandomInt(1, 4))
@@ -2081,9 +2107,9 @@ function MGE::SetArenaState(arena_name, state) {
 				}
 			}
 
-			function AS_AFTERFIGHT() {
+			function AS_AFTERFIGHT(arena_name, arena) {
 
-				foreach(p in arena_players)
+				foreach(p, _ in arena.CurrentPlayers)
 				{
 					//20-0
 					if (arena.Score.find(arena.fraglimit.tointeger()) && arena.Score.find(0))
@@ -2108,10 +2134,10 @@ function MGE::SetArenaState(arena_name, state) {
 					arena.Koth.current_cappers.clear()
 
 				if (arena.IsCustomRuleset)
-					foreach(p in arena_players)
-						RemovePlayer(p)
+					foreach(p, _ in arena.CurrentPlayers)
+						RemoveFromArena(p)
 
-				MGE.ScriptEntFireSafe("__mge_main", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
+				ScriptEntFireSafe("__mge_main", format("CycleQueue(`%s`)", arena_name), QUEUE_CYCLE_DELAY)
 			}
 
 		}.setdelegate(MGE)
@@ -2122,8 +2148,9 @@ function MGE::SetArenaState(arena_name, state) {
 	arenaStates[AS_FIGHT]      <- arenaStates.AS_FIGHT.bindenv(arenaStates)
 	arenaStates[AS_AFTERFIGHT] <- arenaStates.AS_AFTERFIGHT.bindenv(arenaStates)
 
-	arenaStates[state]()
+	arenaStates[state](arena_name, arena)
 }
+
 function MGE::SetSpecialArena(player, arena_name) {
 
 	local arena = ARENAS[arena_name]
@@ -2236,7 +2263,10 @@ function MGE::MGE_ClientPrint(...) {
 	}
 }
 
-function MGE::GetStats(player) {
+function MGE::GetStats(player = null) {
+
+	if (!player)
+		player = activator
 
 	if (!ELO_TRACKING_MODE || player.IsFakeClient()) return
 
@@ -2472,6 +2502,7 @@ function MGE::SwitchWeaponSlot(player, slot, delay = -2)
 	else
 		EntFireByHandle(MGE_CLIENTCOMMAND, "Command", format("slot%d", slot), delay, player, player)
 }
+
 function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 {
 	local arena = ARENAS[arena_name]
@@ -2948,7 +2979,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			local point = scope.temp_point
 			if (!point || !point.IsValid())
 			{
-				MGE.RemovePlayer(self)
+				MGE.RemoveFromArena(self)
 				return
 			}
 
@@ -3093,6 +3124,7 @@ function MGE::CharReplace(str, findwhat, replace) {
 	generator  = null
 	is_running = false
 }
+
 function MGE::ArenaNavGenerator(only_this_arena = null) {
 	local player = GetListenServerHost()
 
@@ -3176,9 +3208,9 @@ function MGE::MGE_CreateNav(only_this_arena = null) {
 	if (!ARENAS.len())
 		LoadSpawnPoints()
 
-	AddPlayer(player, ARENAS_LIST[0])
+	AddToArenaQueue(player, ARENAS_LIST[0])
 
-	scope <- player.ValidateScriptScope(), player.GetScriptScope()
+	scope <- player.ValidateScriptScope() && player.GetScriptScope()
 
 	function scope::NavThink() {
 

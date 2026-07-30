@@ -79,7 +79,10 @@ const VPI_SERVERINFO_UPDATE_INTERVAL         = 10
 const DEFAULT_FRAGLIMIT                      = 20
 
 //if true, all player classes will be able to join any arena, regardless of restrictions set in the arena config.
-const IGNORE_CLASS_RESTRICTIONS              = true
+const IGNORE_CLASS_RESTRICTIONS              = false
+
+//writes JSON logs after each match
+const PER_ARENA_LOGGING                      = false
 
 /****************************************************************************************************************************
  * 0 = none - No ELO or stat tracking at all                                                                                *
@@ -89,16 +92,13 @@ const IGNORE_CLASS_RESTRICTIONS              = true
  * if VPI is not running 2, and 3 will just do nothing and accumulate junk in your scriptdata folder xd                     *
  ****************************************************************************************************************************/
 const ELO_TRACKING_MODE                      = 1
-const ENABLE_LEADERBOARD                     = true //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
+const ENABLE_LEADERBOARD                     = false //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
 const DEFAULT_ELO                            = 1600
 
 const REMOVE_DROPPED_WEAPONS                 = true
 const IDLE_RESPAWN_TIME                      = 3.0 //respawn time while waiting for arena to start
 const AIRSHOT_HEIGHT_THRESHOLD               = 100
 const SPECTATOR_MESSAGE_COOLDOWN             = 25.0
-
-//writes JSON logs after each match
-const PER_ARENA_LOGGING                      = false
 
 //leaderboard
 const LEADERBOARD_FORWARD_OFFSET             = 12

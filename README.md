@@ -70,12 +70,10 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
     - Failing to index your maps will result in !add being unordered, rendering everyone's !add binds useless
 
 ## Known bugs/limitations
-- KOTH is jank
 - Custom ruleset spawns may not rotate correctly
-- No Ultiduo yet, I forgot xd
+- No Ultiduo yet
 - There's no way to make a menu of arena options like SourceMod can, stuck to chat commands or a fully custom screen overlay or something even more exotic.
 - !add only supports arena indexes right now (1-18 for classic mge_training), !add viaduct for example will not work, only !add 1 will.
-- Queue cycling might be buggy and put people on the wrong teams, pls report
 - Leaderboard currently only works with a database and is disabled by default.
 - Many chat commands either aren't implemented or were changed to something else (goodbye !hitblip).
 
@@ -200,11 +198,11 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 
 Included is a tool to generate a navmesh for every arena on a given map.  Load any map you want to generate a navmesh for in singleplayer, enable cheats, and paste this into console
 
-`ent_fire bignet CallScriptFunction "MGE_CreateNav"`
+`ent_fire __mge_main CallScriptFunction "MGE_CreateNav"`
 
 Or for only one arena:
 
-```ent_fire bignet RunScriptCode "MGE_CreateNav(`Badlands Middle`)"```
+```ent_fire __mge_main RunScriptCode "MGE_CreateNav(`Badlands Middle`)"```
 
 ### **WARNING:
 - This is very slow and will freeze your game for every arena

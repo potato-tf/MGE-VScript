@@ -132,7 +132,8 @@ function MGE::InitServerData() {
 	delete MGE.InitServerData
 }
 
-EntFire("__mge_main", "CallScriptFunction", "InitServerData", 5)
+if ( UPDATE_SERVER_DATA )
+	EntFire("__mge_main", "CallScriptFunction", "InitServerData", 5)
 
 
 if (ENABLE_LEADERBOARD && (ELO_TRACKING_MODE > 1 || LEADERBOARD_DEBUG))
@@ -455,7 +456,7 @@ MGE.special_arenas <- {
 		{
 			if (child instanceof CEconEntity && GetPropInt(child, STRING_NETPROP_ITEMDEF) == ID_MANTREADS)
 			{
-				ENDIF_DELETE_MANTREADS ? EntFireByHandle(child, "Kill", "", -1, null, null) : RemovePlayer(player)
+				ENDIF_DELETE_MANTREADS ? EntFireByHandle(child, "Kill", "", -1, null, null) : RemoveFromArena(player)
 				MGE_ClientPrint(player, HUD_PRINTTALK, "EndifMantreads")
 				break
 			}
