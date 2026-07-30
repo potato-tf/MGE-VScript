@@ -41,6 +41,35 @@ This gamemode is still WIP and has some bugs/missing features that still need to
 | Custom rulesets | ⚠️ |
 | Arbitrary team sizes | ❌ |
 
+Original file line number	Original file line	Diff line number	Diff line change
+	@@ -10,8 +10,9 @@ The biggest obstacle that obviously cannot be worked around is the lack of a pro
+  - If you know github/git, I recommend cloning the repository to this directory so you're always up to date.
+- Alternatively, if you are not using any database integration, you can rename mapspawn.nut to something else and add `script_execute new_filename_here` to your server.cfg
+
+
+## Don't pack this into your map (yet)
+This gamemode is still WIP and has some bugs/missing features that still need to be cleaned up.  If you're interested in packing this into a map, please let me know.
+
+
+
+
+
+## Configuration/Modifying game rules
+
+	@@ -29,9 +30,9 @@ This gamemode is still WIP and has some bugs/missing features that still need to
+| Turris | ✅ |
+| BBall | ✅ |
+| Allmeat | ✅ |
+| Koth | ✅ |
+| Midair? |⚠️|
+| Ultiduo | ⚠️ |
+| Plain text ELO/stat tracking | ✅ |
+| Quake-style announcer lines (toggleable) | ✅ |
+| Localization | ⚠️ |
+| Custom rulesets | ⚠️ |
+| Arbitrary team sizes | ❌ |
+
+
 ⚠️Ultiduo code does exist, but it's not tested.  If you run ultiduo and run into issues please let me know.
 
 ⚠️I have never played midair and am only going off of what the plugin describes (same as endif but no height threshold?), it might not be faithful to the original thing
@@ -69,7 +98,7 @@ This gamemode is still WIP and has some bugs/missing features that still need to
     - Failing to index your maps will result in !add being unordered, rendering everyone's !add binds useless
 
 ## Known bugs/limitations
-- No Ultiduo yet, I forgot xd
+- No Ultiduo yet
 - There's no way to make a menu of arena options like SourceMod can, stuck to chat commands or a fully custom screen overlay or something even more exotic.
 - !add only supports arena indexes right now (1-18 for classic mge_training), !add viaduct for example will not work, only !add 1 will.
 - Leaderboard currently only works with a database and is disabled by default.
@@ -196,11 +225,11 @@ Support [This github issue](https://github.com/ValveSoftware/Source-1-Games/issu
 
 Included is a tool to generate a navmesh for every arena on a given map.  Load any map you want to generate a navmesh for in singleplayer, enable cheats, and paste this into console
 
-`ent_fire bignet CallScriptFunction "MGE_CreateNav"`
+`ent_fire __mge_main CallScriptFunction "MGE_CreateNav"`
 
 Or for only one arena:
 
-```ent_fire bignet RunScriptCode "MGE_CreateNav(`Badlands Middle`)"```
+```ent_fire __mge_main RunScriptCode "MGE_CreateNav(`Badlands Middle`)"```
 
 ### **WARNING:
 - This is very slow and will freeze your game for every arena

@@ -1,8 +1,41 @@
-::ADMIN_LIST <- {
+// additional map info used in various places, can also be used to run a function when the map loads
+::MGE_MAPINFO <- {
+
+	mge_training_v8_beta4b = {
+
+		// currently only used for setting the game info in the server browser via SteamWorks
+		// e.g. "MGE (Classic Training)" instead of "Team Fortress"
+		// private plugin handles this, rewrite this plugin using VPI instead
+		nice_name = "Classic Training"
+		// this is not needed and will be automatically added if "OnMapLoad" doesn't exist
+		// you can override this by setting `OnMapLoad = null`, or replace it with your own function
+		OnMapLoad = null
+	},
+
+	mge_chillypunch_final4_fix2 = { nice_name = "Chillypunch" },
+	mge_triumph_beta7_rc1 		= { nice_name = "Triumph" },
+	mge_oihguv_sucks_b5 		= { nice_name = "Oihguv" },
+	mge_oihguv_sucks_a12 		= { nice_name = "Oihguv" },
+}
+
+if (MAPNAME in MGE_MAPINFO) {
+
+	local map_config = MGE_MAPINFO[MAPNAME]
+
+	if (!("OnMapLoad" in map_config))
+		map_config.OnMapLoad <- null
+
+	else if (map_config.OnMapLoad)
+		map_config.OnMapLoad()
+}
+
+// you should probably remove me from your admin list :P
+// this is here just to show the expected format of "[U:YOUR:STEAMIDHERE]" : "Username"
+// type "status" in console to get your ID3 formatted steamid.
+::MGE_ADMINLIST <- {
 	"[U:1:28266263]" : "Braindawg"
 }
 
-//CONFIG CONSTANTS
 const DEFAULT_LANGUAGE                        = "english"
 
 /********************************************************************************************************************
@@ -40,11 +73,16 @@ const GAMEMODE_AUTOUPDATE_INTERVAL           = 120
 //this function is empty for the release version, feel free to use it for your own purposes
 //VPI_MGE_UpdateServerDataDB does work but is unused
 const UPDATE_SERVER_DATA                     = false
-const VPI_SERVERINFO_UPDATE_INTERVAL         = 3
+const VPI_SERVERINFO_UPDATE_INTERVAL         = 10
 
 //general
 const DEFAULT_FRAGLIMIT                      = 20
-const DEFAULT_ELO                            = 1600
+
+//if true, all player classes will be able to join any arena, regardless of restrictions set in the arena config.
+const IGNORE_CLASS_RESTRICTIONS              = false
+
+//writes JSON logs after each match
+const PER_ARENA_LOGGING                      = false
 
 /****************************************************************************************************************************
  * 0 = none - No ELO or stat tracking at all                                                                                *
@@ -55,18 +93,16 @@ const DEFAULT_ELO                            = 1600
  ****************************************************************************************************************************/
 const ELO_TRACKING_MODE                      = 1
 const ENABLE_LEADERBOARD                     = false //This only works if ELO_TRACKING_MODE is set to 2 or 3, file-based leaderboards don't exist yet
+const DEFAULT_ELO                            = 1600
 
 const REMOVE_DROPPED_WEAPONS                 = true
 const IDLE_RESPAWN_TIME                      = 3.0 //respawn time while waiting for arena to start
 const AIRSHOT_HEIGHT_THRESHOLD               = 100
 const SPECTATOR_MESSAGE_COOLDOWN             = 25.0
 
-//writes JSON logs after each match
-const PER_ARENA_LOGGING                      = false
-
 //leaderboard
 const LEADERBOARD_FORWARD_OFFSET             = 12
-const LEADERBOARD_VERTICAL_OFFSET            = 6
+const LEADERBOARD_VERTICAL_OFFSET            = 12
 const LEADERBOARD_TEXT_SIZE                  = 1.0
 const LEADERBOARD_UPDATE_INTERVAL            = 10
 const MAX_LEADERBOARD_ENTRIES                = 7 //anything greater than 7 gets cut off
@@ -88,17 +124,18 @@ const ENABLE_ANNOUNCER                       = true //enable announcer quips (fi
 const ANNOUNCER_VOLUME                       = 0.5 //volume of announcer quips
 const KILLSTREAK_ANNOUNCER_INTERVAL          = 5 //killstreak announcer will play every KILLSTREAK_ANNOUNCER_INTERVAL number of kills
 
-//round misc
-const DEFAULT_CDTIME                         = 3 //default countdown time
+//countdown/round misc
+const COUNTDOWN_DEFAULT_TIME                 = 3 //default countdown time
 
 const COUNTDOWN_START_DELAY                  = 1.0 //delay before countdown starts, additive to queue cycle delay
-const QUEUE_CYCLE_DELAY                      = 3.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
 
 const COUNTDOWN_SOUND                        = "ui/chime_rd_2base_pos.wav" //a few other things besides countdown use this sound
 const COUNTDOWN_SOUND_VOLUME                 = 0.5
 
 const ROUND_START_SOUND                      = "ui/chime_rd_2base_neg.wav" //a few other things besides round start use this sound
 const ROUND_START_SOUND_VOLUME               = 0.5
+
+const QUEUE_CYCLE_DELAY                      = 3.0 //delay before cycling to next player in queue after a fight, additive to countdown start delay
 
 //hud
 //see KOTH section for KOTH hud
@@ -115,10 +152,11 @@ const ENDIF_HEIGHT_THRESHOLD                = 250
 // if set to true, mantreads will be deleted from the player
 // if set to false, players will be removed from the arena
 const ENDIF_DELETE_MANTREADS                = true
-//this is absolutely not the value that the .sp plugin implies it uses, 2.15 is way too high
-//on the majority of mge servers, endif force mult only barely pushes you over the threshold with a single non-DH shot to the toes
-//2.15 here is pinball mode
-//if someone wants to do a deep dive with side-by-side comparisons of the original plugin velocity vs this, I would love to see it
+
+// this is absolutely not the value that the .sp plugin implies it uses, 2.15 is way too high
+// on the majority of mge servers, endif force mult only barely
+// pushes you over the threshold with a single non-DH shot to the toes
+// if someone wants to do a deep dive with side-by-side comparisons of the original plugin velocity vs this, I would love to see it
 ::ENDIF_FORCE_MULT                          <- Vector(1.1, 1.1, 1.31) //no vector constants :(
 
 const ALLMEAT_DAMAGE_THRESHOLD              = 0.85
@@ -127,19 +165,18 @@ const ALLMEAT_DEFAULT_FRAGLIMIT             = 5
 //damage values here do not account for rampup/falloff
 //this effectively means we are only counting shots that hit every single pellet
 ::ALLMEAT_MAX_DAMAGE <- {
-	tf_weapon_scattergun = BASE_SHOTGUN_DAMAGE,
+
+	tf_weapon_scattergun 			= BASE_SHOTGUN_DAMAGE,
 	tf_weapon_handgun_scout_primary = BASE_SHOTGUN_DAMAGE * 0.8,
-	[ID_FORCE_A_NATURE] = BASE_SHOTGUN_DAMAGE * 1.08,
-	[ID_FESTIVE_FORCE_A_NATURE] = BASE_SHOTGUN_DAMAGE * 1.08,
-
-	tf_weapon_shotgun_primary = BASE_SHOTGUN_DAMAGE,
-	tf_weapon_shotgun_pyro = BASE_SHOTGUN_DAMAGE,
-	tf_weapon_shotgun_soldier = BASE_SHOTGUN_DAMAGE,
-	tf_weapon_shotgun_hwg = BASE_SHOTGUN_DAMAGE,
-	[ID_PANIC_ATTACK_SHOTGUN] = BASE_SHOTGUN_DAMAGE * 1.2,
-
-	tf_weapon_grenadelauncher = 100,
-	tf_weapon_pipebomblauncher = 100
+	[ID_FORCE_A_NATURE] 			= BASE_SHOTGUN_DAMAGE * 1.08,
+	[ID_FESTIVE_FORCE_A_NATURE] 	= BASE_SHOTGUN_DAMAGE * 1.08,
+	tf_weapon_shotgun_primary 		= BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_pyro 	  		= BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_soldier 	  	= BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_hwg 	  		= BASE_SHOTGUN_DAMAGE,
+	[ID_PANIC_ATTACK_SHOTGUN] 		= BASE_SHOTGUN_DAMAGE * 1.2,
+	tf_weapon_grenadelauncher 		= 100,
+	tf_weapon_pipebomblauncher 		= 100
 }
 
 //NOTE:
@@ -225,7 +262,7 @@ const KOTH_POINT_PLACEMENT_COOLDOWN         = 2.0
 //See BBall notes about adding more spawns
 const ULTIDUO_MAX_SPAWNS                    = 4
 
-const LEADERBOARD_DEBUG                     = true
+const LEADERBOARD_DEBUG                     = false
 
 PrecacheModel(BBALL_BALL_MODEL)
 PrecacheModel(BBALL_HOOP_MODEL)
@@ -237,10 +274,8 @@ PrecacheSound(ROUND_START_SOUND)
 PrecacheSound(SPAWN_SOUND)
 PrecacheSound(BBALL_PICKUP_SOUND)
 
-function PrecacheParticle(particle)
-{
-	PrecacheEntityFromTable({ classname = "info_particle_system" effect_name = particle })
-}
+local tbl = { classname = "info_particle_system" effect_name = "" }
+function PrecacheParticle(particle) { tbl.effect_name = particle; PrecacheEntityFromTable(tbl) }
 
 PrecacheParticle(BBALL_PARTICLE_PICKUP_RED)
 PrecacheParticle(BBALL_PARTICLE_PICKUP_BLUE)

@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: CI Dev
 
 # Controls when the workflow will run
 on:
@@ -10,7 +10,7 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  
+
 concurrency:
   group: dev
   cancel-in-progress: true
@@ -25,7 +25,7 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-      
+
       # Install wakeonlan
       # - name: Make scripts executable
       #   run: sudo apt-get install -y wakeonlan
@@ -36,13 +36,14 @@ jobs:
         run: |
             ssh-agent -a $SSH_AUTH_SOCK > /dev/null
             ssh-add - <<< "${{ secrets.DEPLOY_KEY }}"
-        
+
       # Runs a set of commands using the runners shell
       - name: Sync with game servers
         env:
             SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
           mapfile -t servers < <(curl -s https://raw.githubusercontent.com/potato-tf/deploy/refs/heads/main/serverlist.json | jq -r '.servers[]')
+          servers+=("22 pterodactyl@fr.potato.tf /var")
           for i in "${servers[@]}"; do a=( $i );
           {
             chmod +x ./devserver_config/vpi/*.py
@@ -61,5 +62,3 @@ jobs:
           } &
           done
           wait
-
-

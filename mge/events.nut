@@ -1,11 +1,21 @@
-class MGE_Events
-{
+MGE.Events <- {
+
+	valid_chars = {
+
+		['!']  = 33,
+		['.']  = 46,
+		['/']  = 47,
+		['?']  = 63,
+		['\\'] = 92
+	}
+
 	chat_commands = {
-		"add" : function(params) {
+
+		function add(params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 
-			local split_text = split(params.text, " ")
+			local split_text = split(params.text, " ", true)
 
 			local idx = null
 
@@ -13,12 +23,12 @@ class MGE_Events
 				idx = split_text[1].tointeger() - 1
 			catch(_) {}
 
-			if (split_text.len() < 2 || idx > Arenas_List.len() - 1 || idx < 0) {
+			if (split_text.len() < 2 || idx > ARENAS_LIST.len() - 1 || idx < 0) {
 
 				ClientPrint(player, 3, "Valid arenas:")
 
 				local i = 1
-				foreach (arena_name in Arenas_List) {
+				foreach (arena_name in ARENAS_LIST) {
 					ClientPrint(player, 3, format("\t%d: %s", i, arena_name))
 					i++
 				}
@@ -27,50 +37,89 @@ class MGE_Events
 
 			if (idx != null)
 			{
-				AddPlayer(player, Arenas_List[idx])
+				AddToArenaQueue(player, ARENAS_LIST[idx])
 			}
 			else
 			{
-				foreach (arena_name, _ in Arenas)
+				foreach (arena_name, _ in ARENAS)
 				{
 					if (startswith(arena_name, split_text[1]))
 					{
-						AddPlayer(player, arena_name)
+						AddToArenaQueue(player, arena_name)
 						break
 					}
 				}
 			}
-		},
-		"remove" : function(params) {
+		}
+
+		function remove(params) {
 
 			local player = GetPlayerFromUserID(params.userid)
-			// local scope = player.GetScriptScope()
+			local scope = player.GetScriptScope()
+			local arena = scope.arena_info.arena
 
-			if (!("name" in player.GetScriptScope().arena_info))
-				return
+			if (!arena) return
 
 			player.AddEFlags(EFL_REMOVE_FROM_ARENA)
-			CycleQueue(player.GetScriptScope().arena_info.name)
-			// RemovePlayer(player)
+			CycleQueue(scope.arena_info.name)
+			// RemoveFromArena(player)
 		}
-		"handicap" : function(params) {
+
+		function addbot(params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 
-			local arena = "arena_info" in scope && "arena" in scope.arena_info ? scope.arena_info.arena : {State = -1}
+			if (!scope.arena_info) return
+
+			local split_text = split(params.text, " ", true)
+
+			AddBot(scope.arena_info.name, 1 in split_text ? ArenaClasses.find(split_text[1]) : TF_CLASS_SOLDIER)
+		}
+
+		function removebot(params) {
+
+			local player = GetPlayerFromUserID(params.userid)
+			local scope = player.GetScriptScope()
+
+			if (!scope.arena_info) return
+
+			local split_text = split(params.text, " ", true)
+			
+			foreach(player, _ in scope.arena_info.arena.CurrentPlayers)
+				if (player.IsFakeClient())
+					player.AddEFlags(EFL_REMOVE_FROM_ARENA)
+
+			CycleQueue(scope.arena_info.name)
+			// RemoveBot(scope.arena_info.name, 1 in split_text && split_text[1].tolower() == "all")
+		}
+
+		function handicap(params) {
+
+			local player = GetPlayerFromUserID(params.userid)
+			local scope = player.GetScriptScope()
+
+			local arena = scope.arena_info.arena || {State = -1}
 
 			// if (arena.State != AS_IDLE) return
 
-			local split_text = split(params.text, " ")
+			local split_text = split(params.text, " ", true)
 			local split_text_len = split_text.len()
 			if (!("handicap_hp_penalty" in scope))
 				scope.player_max_health_handicap <- player.GetMaxHealth()
 
 			if (split_text_len > 1)
 			{
+				local handicap_text = split_text[1]
+
+				if ( handicap_text.tolower() == "off" )
+				{
+					scope.handicap_hp_penalty <- 0
+					return
+				}
+
 				local handicap = abs(ToStrictNum(split_text[1]))
-				if (handicap == 0 || handicap > scope.player_max_health_handicap)
+				if (!handicap || handicap > scope.player_max_health_handicap)
 				{
 					MGE_ClientPrint(player, HUD_PRINTTALK, handicap > scope.player_max_health_handicap ? "InvalidHandicap" : "HandicapDisabled")
 					// player.RemoveCustomAttribute("max health additive penalty")
@@ -85,37 +134,38 @@ class MGE_Events
 			MGE_ClientPrint(player, HUD_PRINTTALK, "CurrentHandicap", -scope.handicap_hp_penalty) :
 			MGE_ClientPrint(player, HUD_PRINTTALK, "NoCurrentHandicap")
 		}
-		"announcer" : function(params) {
+
+		function announcer(params) {
+
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 			scope.enable_announcer = !scope.enable_announcer
 			MGE_ClientPrint(player, HUD_PRINTTALK, scope.enable_announcer ? "AnnouncerEnabled" : "AnnouncerDisabled")
 		}
-		"hud" : function(params) {
+
+		function hud(params) {
+
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 			scope.enable_hud = !scope.enable_hud
 			MGE_ClientPrint(player, HUD_PRINTTALK, scope.enable_hud ? "HUDEnabled" : "HUDDisabled")
 		}
-		"ruleset" : function(params) {
+
+		function ruleset(params) {
+
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 
-			if (!("arena" in scope.arena_info))
-			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "MustJoinArena")
-				return
-			}
 			local arena = scope.arena_info.arena
 
+			if (!arena)
+				return MGE_ClientPrint(player, HUD_PRINTTALK, "MustJoinArena")
+
 			if (arena.State == AS_AFTERFIGHT)
-			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetCannotSet")
-				return
-			}
+				return MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetCannotSet")
 
 			local arena_name = scope.arena_info.name
-			local ruleset_split = split(params.text, " ")
+			local ruleset_split = split(params.text, " ", true)
 
 			if (ruleset_split.len() == 1 || !(ruleset_split[1] in special_arenas))
 			{
@@ -140,32 +190,33 @@ class MGE_Events
 
 			local votes = arena.RulesetVote[ruleset]
 			votes.append(player)
+			
+			local votes_len = votes.len()
 
-			if (votes.len() / arena.CurrentPlayers.len() < 0.5)
-			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetVote", ruleset)
+			// we have enough votes to set the ruleset
+			if ( votes_len >= arena.CurrentPlayers.len() * 0.75 )
+				return SetCustomArenaRuleset(arena_name, ruleset, fraglimit)
 
-				foreach(p, _ in arena.CurrentPlayers)
-				{
-					if (p == player) continue
-
+			// need more votes
+			MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetVote", ruleset)
+			foreach(p, _ in arena.CurrentPlayers)
+				if (p != player)
 					MGE_ClientPrint(p, HUD_PRINTTALK, "RulesetVoteArena", scope.player_name, ruleset, ruleset)
-				}
-				return
-			}
-
-			SetCustomArenaRuleset(arena_name, ruleset, fraglimit)
 		}
-		"language" : function(params) {
-			local lang = split(params.text, " ")
+
+		function language(params) {
+
+			local lang = split(params.text, " ", true)
 			local player = GetPlayerFromUserID(params.userid)
-			if (lang.len() > 1 && lang[1] in MGE_Localization)
-			{
+			if (lang.len() > 1 && lang[1] in MGE_Localization) {
+
 				MGE_ClientPrint(player, HUD_PRINTTALK, "LanguageSet", lang[1])
 				player.GetScriptScope().language <- lang[1]
 			}
 		}
-		"rank" : function(params) {
+
+		function rank(params) {
+
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 			local rank = scope.stats.elo
@@ -174,7 +225,9 @@ class MGE_Events
 			else
 				MGE_ClientPrint(player, HUD_PRINTTALK, "MyRankNoRating", scope.stats.wins.tostring(), scope.stats.losses.tostring())
 		}
-		"help" : function(params) {
+
+		function help(params) {
+
 			local player = GetPlayerFromUserID(params.userid)
 			MGE_ClientPrint(player, HUD_PRINTTALK, "Cmd_MGECmds")
 			MGE_ClientPrint(player, HUD_PRINTTALK, "Cmd_SeeConsole")
@@ -189,9 +242,11 @@ class MGE_Events
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Ruleset")
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Language")
 		}
-		"mgehelp": @(params) this["help"](params)
 
-		"top5": function(params) {
+		function mgehelp(params) { this["help"](params) }
+
+		function top5(params) {
+
 			local player = GetPlayerFromUserID(params.userid)
 			local text = params.text
 
@@ -206,12 +261,14 @@ class MGE_Events
 			local data = ""
 			if (stat == "elo")
 			{
-				for (local i = 0; i < 5; i++)
-					data += format("%s: %s\n", MGE_LEADERBOARD_DATA.ELO[i][2], MGE_LEADERBOARD_DATA.ELO[i][1].tostring())
+				for (local i = 0; i < 5; i++) {
 
-				MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Title", format(" (ELO)\n%s", data))
+					data += format("\x07"+MGE_COLOR_SUBJECT+"%s\x01: %s\n", MGE_LEADERBOARD_DATA.ELO[i][2], MGE_LEADERBOARD_DATA.ELO[i][1].tostring())
+				}
+
+				MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Title")
+				MGE_ClientPrint(player, HUD_PRINTTALK, "\x07"+MGE_COLOR_MAIN+"(ELO)\n" + data)
 				return
-
 			}
 
 			foreach(leaderboard_stat, user_data in MGE_LEADERBOARD_DATA)
@@ -226,572 +283,585 @@ class MGE_Events
 				}
 			}
 		}
-		"stats": function(params) {
+
+		function stats(params) {
+
 			local player = GetPlayerFromUserID(params.userid)
 			MGE_ClientPrint(player, HUD_PRINTTALK, "Cmd_SeeConsole")
 			foreach(k, v in player.GetScriptScope().stats)
 				ClientPrint(player, HUD_PRINTCONSOLE, k + " : " + v)
 		}
 
-		"adminscript": function(params) {
+		function admincmd(params, prefix = "") {
+
 			local player = GetPlayerFromUserID(params.userid)
 			local steam_id = GetPropString(player, "m_szNetworkIDString")
-			local script = ""
-			local splitscript = (split(params.text, " ", true).slice(1)).apply(@(s) script += s + " ")
-			if (GetStr("sv_allow_point_servercommand") != "always")
-			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "ServerCommandDisabled")
-				return
-			}
-			if (steam_id in ADMIN_LIST) {
-				script = CharReplace(script, "'", "\"")
-				MGE_ClientPrint(player, HUD_PRINTTALK, "AdminScript", script)
-				SendToServerConsole(format("script %s", script))
-			}
+			
+			if ( !(steam_id in MGE_ADMINLIST) )
+				return MGE_ClientPrint(player, HUD_PRINTTALK, "AdminCmdError")
+
+			else if (GetStr("sv_allow_point_servercommand") != "always")
+				return MGE_ClientPrint(player, HUD_PRINTTALK, "ServerCommandDisabled")
+
+			local cmd = ""
+
+			// strip out redundant spaces
+			foreach( s in split(params.text, " ", true).slice(1) )
+				cmd += s + " "
+
+			cmd = CharReplace(cmd, "'", "\"")
+			MGE_ClientPrint(player, HUD_PRINTTALK, "AdminCmd", cmd)
+			SendToServerConsole(prefix + " " + cmd)
 		}
+
+		function adminscript(params) { admincmd( params, "script" ) }
 	}
-	Events = {
-		function OnGameEvent_teamplay_round_start(params)
-		{
-			HandleRoundStart()
-		}
 
-		function OnGameEvent_player_activate(params)
-		{
-			local player = GetPlayerFromUserID(params.userid)
+	function OnGameEvent_player_changename(params) { GetPlayerFromUserID(params.userid).GetScriptScope().player_name = params.newname }
+	function OnGameEvent_teamplay_round_start(params) { HandleRoundStart() }
 
-			player.ValidateScriptScope()
+	function OnGameEvent_player_disconnect(params)
+	{
+		local player = GetPlayerFromUserID(params.userid)
+		if (!player) return
+
+		RemoveFromArena(player, false)
+
+		delete ALL_PLAYERS[player]
+	}
+
+	function OnGameEvent_player_say(params)
+	{
+
+		local split_text = split(params.text.tolower(), " ", true)
+
+		if ( !split_text.len() ) return
+
+		local command_only = split_text[0]
+		command_only = command_only.slice(1)
+
+		if (split_text[0][0] in valid_chars && command_only in chat_commands)
+			chat_commands[command_only](params)
+
+		//allow spectators to talk
+		//turns out this isn't necessary
+
+		// local player = GetPlayerFromUserID(params.userid)
+		// if (player.GetTeam() == TEAM_SPECTATOR)
+		// {
+		// 	local scope = player.GetScriptScope()
+		// 	foreach(p, userid in ALL_PLAYERS)
+		// 	{
+		// 		if (p != player && p.GetTeam() != TEAM_SPECTATOR)
+		// 		{
+		// 			ClientPrint(p, HUD_PRINTTALK, format("\x07CCCCCC %s \x07FBECCB : %s", scope.player_name, params.text))
+		// 		}
+		// 	}
+		// }
+	}
+
+	function OnGameEvent_player_spawn(params)
+	{
+		local player = GetPlayerFromUserID(params.userid)
+
+		if ( !params.team ) {
+
+			ALL_PLAYERS[player] <- params.userid
 			InitPlayerScope(player)
 
 			if (player.IsFakeClient()) return
 
-			ALL_PLAYERS[player] <- params.userid
-
-			GetStats(player)
+			EntFire("__mge_main", "CallScriptFunction", "GetStats", GENERIC_DELAY, player)
 
 			MGE_ClientPrint(player, HUD_PRINTTALK, "Welcome1", MGE_VERSION)
 			MGE_ClientPrint(player, HUD_PRINTTALK, "Welcome2")
 			MGE_ClientPrint(player, HUD_PRINTTALK, "Welcome3")
 		}
 
-		function OnGameEvent_player_disconnect(params)
-		{
-			local player = GetPlayerFromUserID(params.userid)
-			if (!player) return
+		local scope = player.GetScriptScope()
 
-			RemovePlayer(player, false)
+		if (params.team > TEAM_SPECTATOR) {
 
-			if (player.IsFakeClient()) return
-
-			delete ALL_PLAYERS[player]
+			// see MGE_RESPAWN_FIX in mapspawn.nut
+			EntFire("__mge_respawn_override", "SetRespawnName", "__mge_spawn_override_" + params.team)
+			// needs a caller or it will crash
+			DoEntFire("__mge_respawn_override", "StartTouch", "", -1, player, player)
 		}
 
-		function OnGameEvent_player_say(params)
-		{
-			local chat_commands = MGE_Events.chat_commands
+		ValidatePlayerClass(player, player.GetPlayerClass())
 
-			local split_text = split(params.text.tolower(), " ")
-			local command_only = split_text[0]
-			command_only = command_only.slice(1)
+		ScriptEntFireSafe("__mge_main",  @"
 
-			local valid_chars = {
-				[33] = "!",
-				[46] = ".",
-				[47] = "/",
-				[63] = "?",
-				[92] = "\\",
-			}
-
-			if (split_text[0][0] in valid_chars && command_only in chat_commands)
-				chat_commands[command_only](params)
-
-			//allow spectators to talk
-			//turns out this isn't necessary
-
-			// local player = GetPlayerFromUserID(params.userid)
-			// if (player.GetTeam() == TEAM_SPECTATOR)
-			// {
-			// 	local scope = player.GetScriptScope()
-			// 	foreach(p, userid in ALL_PLAYERS)
-			// 	{
-			// 		if (p != player && p.GetTeam() != TEAM_SPECTATOR)
-			// 		{
-			// 			ClientPrint(p, HUD_PRINTTALK, format("\x07CCCCCC %s \x07FBECCB : %s", scope.player_name, params.text))
-			// 		}
-			// 	}
-			// }
-		}
-
-		function OnGameEvent_player_spawn(params)
-		{
-			PreserveEnts()
-			EntFire("bignet", "RunScriptCode", "PreserveEnts(false)", GENERIC_DELAY)
-
-			local player = GetPlayerFromUserID(params.userid)
-
-			local scope = player.GetScriptScope()
-			if (!scope)
+			for (local child = activator.FirstMoveChild(); child; child = child.NextMovePeer())
 			{
-				player.ValidateScriptScope()
-				scope = player.GetScriptScope()
-			}
-			if (MGE_RESPAWN_OVERRIDE)
-			{
-				MGE_RESPAWN_OVERRIDE.AcceptInput("SetRespawnName", format("__mge_spawn_override_%d", player.GetTeam()), player, player)
-				MGE_RESPAWN_OVERRIDE.AcceptInput("StartTouch", "!activator", player, player)
-			}
-
-			ValidatePlayerClass(player, player.GetPlayerClass())
-
-			EntFireByHandle(player, "RunScriptCode",  @"
-				for (local child = self.FirstMoveChild(); child != null; child = child.NextMovePeer())
+				if (child instanceof CEconEntity)
 				{
-					if (startswith(child.GetClassname(), `tf_weapon`) || startswith(child.GetClassname(), `tf_wearable`))
+					if (!child.GetAttribute(`killstreak tier`, 0))
 					{
-						if (!child.GetAttribute(`killstreak tier`, 0))
-						{
-							child.AddAttribute(`killstreak tier`, 1, -1)
-							child.ReapplyProvision()
-						}
-						SetPropInt(child, `m_clrRender`, INT_COLOR_WHITE)
-						SetPropInt(child, `m_nRenderMode`, kRenderFxNone)
+						child.AddAttribute(`killstreak tier`, 1, -1)
+						child.ReapplyProvision()
 					}
+					SetPropInt(child, `m_clrRender`, INT_COLOR_WHITE)
+					SetPropInt(child, `m_nRenderMode`, kRenderFxNone)
 				}
-				local scope = self.GetScriptScope()
-				local handicap_hp_penalty = `handicap_hp_penalty` in scope ? scope.handicap_hp_penalty : false
-				local arena = `arena_info` in scope && `arena` in scope.arena_info ? scope.arena_info.arena : false
+			}
 
-				if (!arena) return
+			local scope = activator.GetScriptScope()
+			local handicap_hp_penalty = `handicap_hp_penalty` in scope ? scope.handicap_hp_penalty : false
+			local arena = `arena_info` in scope && `arena` in scope.arena_info ? scope.arena_info.arena : false
 
-				if (arena.State == AS_COUNTDOWN)
-				{
-					self.AddCustomAttribute(`no_attack`, 1.0, -1.0)
-				}
+			if (!arena) return
 
-				if (handicap_hp_penalty)
-				{
-					self.AddCustomAttribute(`max health additive penalty`, handicap_hp_penalty * - 1.0, -1.0)
-					MGE_ClientPrint(self, HUD_PRINTTALK, `CurrentHandicap`, -handicap_hp_penalty)
-				}
-
-			", GENERIC_DELAY, null, null)
-
-			if ("arena_info" in scope && scope.arena_info)
+			if (arena.State == AS_COUNTDOWN)
 			{
+				activator.AddCustomAttribute(`no_attack`, 1.0, -1.0)
+			}
 
-				local arena      = scope.arena_info.arena
-				local arena_name = scope.arena_info.name
-				local arena_players = arena.CurrentPlayers.keys()
+			if (handicap_hp_penalty)
+			{
+				activator.AddCustomAttribute(`max health additive penalty`, handicap_hp_penalty * - 1.0, -1.0)
+				MGE_ClientPrint(activator, HUD_PRINTTALK, `CurrentHandicap`, -handicap_hp_penalty)
+			}
 
-				local _arena = Arenas[arena_name]
+		", GENERIC_DELAY, player)
 
+		if (scope.arena_info.arena) {
 
-				//set arena state to countdown
-				if (arena.State == AS_IDLE && arena_players.len() == arena.MaxPlayers)
-					if (!arena.IsUltiduo && !((arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && arena.IsCustomRuleset))
-						EntFireByHandle(player, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
-					//ultiduo
-					else if (arena.IsUltiduo)
+			local arena         = scope.arena_info.arena
+			local arena_name    = scope.arena_info.name
+			local arena_players = arena.CurrentPlayers.keys()
+
+			local _arena = ARENAS[arena_name]
+
+			//set arena state to countdown
+			if (arena.State == AS_IDLE && arena_players.len() == arena.MaxPlayers)
+			{
+				if (!arena.IsUltiduo && !( (arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && arena.IsCustomRuleset) )
+					ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
+
+				else if (arena.IsUltiduo)
+				{
+					local current_medics = arena.Ultiduo.CurrentMedics
+					foreach(p in arena_players)
+						if (p.GetPlayerClass() == TF_CLASS_MEDIC)
+							current_medics[p.GetTeam() - 2] = p
+
+					if (current_medics[0] && current_medics[1])
+						ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
+					else
 					{
-						local current_medics = arena.Ultiduo.CurrentMedics
 						foreach(p in arena_players)
-							if (p.GetPlayerClass() == TF_CLASS_MEDIC)
-								current_medics[p.GetTeam() - 2] = p
+							MGE_ClientPrint(p, HUD_PRINTTALK, "UltiduoNotEnoughMedics")
 
-						if (current_medics[0] && current_medics[1])
-							EntFireByHandle(player, "RunScriptCode", "SetArenaState(self.GetScriptScope().arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY, null, null)
-						else
-						{
-							foreach(p in arena_players)
-								MGE_ClientPrint(p, HUD_PRINTTALK, "UltiduoNotEnoughMedics")
-
-							arena.Ultiduo.CurrentMedics <- array(2, null)
-						}
+						arena.Ultiduo.CurrentMedics <- array(2, null)
 					}
+				}
+			}
 
-				EntFireByHandle(player, "RunScriptCode", format("SetSpecialArena(self, `%s`)", arena_name), GENERIC_DELAY, null, null)
+			ScriptEntFireSafe("__mge_main", format("SetSpecialArena(activator, `%s`)", arena_name), GENERIC_DELAY, player)
 
-				//spawn player
-				local idx = TryGetClearSpawnPoint(player, arena_name)
-				player.SetAbsOrigin(arena.SpawnPoints[idx][0])
-				player.SnapEyeAngles(arena.SpawnPoints[idx][1])
+			//spawn player
+			local idx = TryGetClearSpawnPoint(player, arena_name)
+			player.SetAbsOrigin(arena.SpawnPoints[idx][0])
+			player.SnapEyeAngles(arena.SpawnPoints[idx][1])
 
-				//regenerate all players
-				if (!arena.IsBBall)
+			//regenerate all players
+			if (!arena.IsBBall) {
+
 				foreach (p in arena_players)
 				{
 					p.Regenerate(true)
 					if (arena.IsMGE)
 					{
 						local hpratio = "hpratio" in arena ? arena.hpratio.tofloat() : 1.0
-						EntFireByHandle(p, "RunScriptCode", format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio), GENERIC_DELAY, null, null)
+						ScriptEntFireSafe(p, format("self.SetHealth(self.GetMaxHealth() * %f)", hpratio))
 					}
 				}
-
-				//play spawn sound
-				if (arena.State == AS_FIGHT)
-					EmitSoundEx({
-						sound_name = SPAWN_SOUND,
-						entity = player,
-						volume = SPAWN_SOUND_VOLUME,
-						channel = CHAN_STREAM,
-						sound_level = 65
-					})
-
-				if (scope.enable_hud)
-				{
-					//update hud
-					local hudstr = format("%s\n", arena_name)
-					foreach(p in arena_players)
-					{
-						local scope = p.GetScriptScope()
-						local team = p.GetTeam()
-
-						//joined spectator directly without using !remove
-						if (team == TEAM_SPECTATOR) continue
-
-						hudstr += format("%s: %d (%d)\n", scope.player_name, arena.Score[team - 2], scope.stats.elo.tointeger())
-					}
-					MGE_HUD.KeyValueFromString("message", hudstr)
-					MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
-					// MGE_HUD.AcceptInput("Display", "", player, player)
-					EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, player, player)
-
-				}
-
-				// if (arena.IsBBall)
-				EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", GENERIC_DELAY, null, null)
-			}
-			else
-			{
-				// tf_bot_quota spawned bots will always be forced to a team and cause error spew when they attack eachother in the void
-				if (player.IsFakeClient())
-					EntFireByHandle(player, "RunScriptCode", "self.AddBotAttribute(IGNORE_ENEMIES); self.TakeDamage(99999, DMG_GENERIC, self)", GENERIC_DELAY, null, null)
-				else if (player.GetTeam() != TEAM_UNASSIGNED)
-					MGE_ClientPrint(null, HUD_PRINTTALK, "\x07FF0000[VScript MGE] WARNING: '%s' spawned outside of arena!", scope.player_name)
-			}
-		}
-
-		function OnGameEvent_player_changeclass(params)
-		{
-			local player = GetPlayerFromUserID(params.userid)
-			ValidatePlayerClass(player, params["class"], true)
-
-			local scope = player.GetScriptScope()
-
-			if (player.IsFakeClient()) return
-
-			if ( !( "arena" in scope.arena_info ) )
-				return player.ForceChangeTeam( TEAM_SPECTATOR, true )
-
-			local arena = scope.arena_info.arena
-
-			if (arena.State != AS_FIGHT || arena.IsBBall || arena.IsKoth) return
-
-			foreach(p, _ in arena.CurrentPlayers)
-				MGE_ClientPrint(p, HUD_PRINTTALK, player == p ? "ClassChangePoint" : "ClassChangePointOpponent")
-		}
-
-		function OnGameEvent_player_changename(params){
-			local player = GetPlayerFromUserID(params.userid)
-			local scope = player.GetScriptScope()
-			scope.player_name = params.newname
-		}
-
-		function OnGameEvent_player_death(params)
-		{
-			if (REMOVE_DROPPED_WEAPONS)
-				EntFire("tf_dropped_weapon", "Kill")
-
-			EntFire("tf_ammo_pack", "Kill")
-
-			if (params.death_flags & TF_DEATH_FEIGN_DEATH)
-				return
-
-			local victim = GetPlayerFromUserID(params.userid)
-			local attacker = GetPlayerFromUserID(params.attacker)
-			local victim_origin = victim.GetOrigin()
-
-			// disable freezecam
-			// causes a bug where players will get stuck with muted freecam sound
-			// likely spawning players after freeze cam starts but before it actually does the zoom-in/sfx
-			SetPropEntity(victim, "m_hObserverTarget", null)
-
-			local victim_scope = victim.GetScriptScope()
-			local attacker_scope = attacker ? attacker.GetScriptScope() : victim_scope
-
-			if (!victim_scope.arena_info) return
-
-			local arena = victim_scope.arena_info.arena
-			local arena_name = victim_scope.arena_info.name
-			local arena_players = arena.CurrentPlayers.keys()
-
-			if (arena.IsCustomRuleset && arena.State == AS_IDLE && "CustomRulesetThink" in victim_scope.ThinkTable && ("bball" in victim_scope.ThinkTable || "koth" in victim_scope.ThinkTable))
-			{
-				delete victim_scope.ThinkTable.CustomRulesetThink
-				LoadSpawnPoints(arena_name, true)
-				return
 			}
 
-			if (arena.State == AS_FIGHT)
-			{
-				attacker && attacker != victim && "kills" in attacker_scope.stats ? attacker_scope.stats.kills++ : attacker_scope.stats.kills <- 1
-				victim && "deaths" in victim_scope.stats ? victim_scope.stats.deaths++ : victim_scope.stats.deaths <- 1
+			//play spawn sound
+			if (arena.State == AS_FIGHT) {
+
+				EmitSoundEx({
+					sound_name 	= SPAWN_SOUND
+					entity 		= player
+					volume 		= SPAWN_SOUND_VOLUME
+					channel 	= CHAN_STREAM
+					sound_level = 65
+				})
 			}
 
-			local respawntime = "respawntime" in arena && arena.respawntime != "0" ? arena.respawntime.tofloat() : 0.2
-			local fraglimit = arena.fraglimit.tointeger()
-			local trace_dist = arena.IsEndif ? arena.Endif.height_threshold : arena.IsMidair ? arena.Midair.height_threshold : AIRSHOT_HEIGHT_THRESHOLD
-			local str = false, print_str = false
-			// local rocket_jumping = (!(victim.GetFlags() & FL_ONGROUND) && victim.InCond(TF_COND_BLASTJUMPING)
-			if (ENABLE_ANNOUNCER && arena.State == AS_FIGHT && attacker)
+			if (scope.enable_hud)
 			{
-				local killstreak_total = "kill_streak_total" in params ? params.kill_streak_total.tointeger() : 0
-				//first blood
-				if (!arena.Score[0] && !arena.Score[1] && !arena.IsBBall && !arena.IsKoth)
-				{
-					print_str = GetLocalizedString("FirstBlood", attacker)
-					str = format("vo/announcer_am_firstblood0%d.mp3", RandomInt(1, 6))
-				}
-				//we've hit a killstreak threshold
-				else if (killstreak_total && !(killstreak_total % KILLSTREAK_ANNOUNCER_INTERVAL))
-				{
-					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
-					print_str = format(GetLocalizedString("Killstreak", attacker), attacker_scope.player_name, killstreak_total.tostring())
-				}
-				//we've hit an airshot
-				else if (
-					params.damagebits & DMG_BLAST &&
-					TraceLine(victim_origin, victim_origin - Vector(0, 0, trace_dist), victim) == 1
-				) {
-					print_str = GetLocalizedString("Airshot", attacker)
-					str = format("vo/announcer_am_killstreak%d.mp3", RandomInt(10, 11))
-					"airshots" in attacker_scope.stats ? attacker_scope.stats.airshots++ : attacker_scope.stats.airshots <- 1
-				}
-				//we've hit a market garden
-				else if (
-					attacker && attacker.GetActiveWeapon() &&
-					attacker.GetActiveWeapon().GetAttribute("mod crit while airborne", 0) &&
-					attacker.InCond(TF_COND_BLASTJUMPING) && params.damagebits & DMG_CRITICAL
-				) {
-					print_str = GetLocalizedString("MarketGarden", attacker)
-					str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
-					"market_gardens" in attacker_scope.stats ? attacker_scope.stats.market_gardens++ : attacker_scope.stats.market_gardens <- 1
-				}
+				//update hud
+				local hudstr = format("%s\n", arena_name)
 				foreach(p in arena_players)
 				{
-					if (p.GetScriptScope().enable_announcer)
-					{
-						if (str)
-							PlayAnnouncer(p, str)
-						if (print_str)
-							MGE_ClientPrint(p, HUD_PRINTTALK, print_str)
-					}
+					local scope = p.GetScriptScope()
+					local team = p.GetTeam()
+
+					//joined spectator directly without using !remove
+					if (team <= TEAM_SPECTATOR) continue
+
+					hudstr += format("%s: %d (%s)\n", scope.player_name, arena.Score[team - 2], p.IsFakeClient() ? "BOT" : scope.stats.elo.tostring())
 				}
+
+				if (!MGE_HUD || !MGE_HUD.IsValid())
+					InitEntities()
+
+				MGE_HUD.KeyValueFromString("message", hudstr)
+				MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+				// MGE_HUD.AcceptInput("Display", "", player, player)
+				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, player, player)
 			}
 
-			local hudstr = format("%s\n", arena_name)
-			if (attacker && attacker != victim)
-			{
-				MGE_ClientPrint(victim, HUD_PRINTTALK, "HPLeft", attacker.GetHealth())
+			// if (arena.IsBBall)
+			EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", GENERIC_DELAY, null, null)
+		}
+		else
+		{
+			// tf_bot_quota spawned bots will always be forced to a team and cause error spew when they attack eachother in the void
+			if (!player.IsFakeClient() && player.GetTeam() > TEAM_SPECTATOR)
+				MGE_ClientPrint(null, HUD_PRINTTALK, "\x07FF0000[VScript MGE] WARNING: '%s' spawned outside of arena!", scope.player_name)
+		}
+	}
 
-				MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
-			}
+	function OnGameEvent_player_changeclass(params)
+	{
+		local player = GetPlayerFromUserID(params.userid)
+		ValidatePlayerClass(player, params["class"], true)
 
-			// Koth / bball mode doesn't count deaths
-			if (!arena.IsKoth && !arena.IsBBall && arena.State == AS_FIGHT)
-			{
-				(victim.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
+		local scope = player.GetScriptScope()
 
-				CalcArenaScore(arena_name)
-			}
-			else if (arena.IsBBall)
-			{
-				local scope = victim.GetScriptScope()
-				if (scope.ball_ent && scope.ball_ent.IsValid())
-				{
-					scope.ball_ent.Kill()
-					victim.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
-					local ball_pos = victim.GetFlags() & FL_ONGROUND ? victim.EyePosition() : victim_origin + Vector(0, 0, 10)
+		if (player.IsFakeClient()) return
 
-					if (!("freeze_ball" in arena) || !arena.freeze_ball)
-					{
-						local ball_trace = {
-							start  = victim_origin
-							end    = victim_origin - Vector(0, 0, 8192)
-							mask   = MASK_PLAYERSOLID
-							ignore = victim
-						}
+		local arena = scope.arena_info.arena
 
-						TraceLineEx(ball_trace)
+		if ( !arena )
+			return player.ForceChangeTeam( TEAM_SPECTATOR, true )
 
-						if (ball_trace.hit && ball_trace.enthit)
-							ball_pos = ball_trace.endpos
-					}
+		if (arena.State != AS_FIGHT || arena.IsBBall || arena.IsKoth) return
 
-					BBall_SpawnBall(arena_name, ball_pos)
-				}
-			}
-			if (!arena.IsAmmomod)
-				EntFireByHandle(victim, "RunScriptCode", "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime, null, null)
-			else
-				EntFire("bignet", "RunScriptCode", format("SetArenaState(`%s`, AS_COUNTDOWN)", arena_name), AMMOMOD_RESPAWN_DELAY)
+		foreach(p, _ in arena.CurrentPlayers)
+			MGE_ClientPrint(p, HUD_PRINTTALK, player == p ? "ClassChangePoint" : "ClassChangePointOpponent")
+	}
+
+	function OnGameEvent_player_death(params)
+	{
+		if (REMOVE_DROPPED_WEAPONS)
+			EntFire("tf_dropped_weapon", "Kill")
+
+		EntFire("tf_ammo_pack", "Kill")
+
+		if (params.death_flags & TF_DEATH_FEIGN_DEATH)
+			return
+
+		local victim = GetPlayerFromUserID(params.userid)
+		local attacker = GetPlayerFromUserID(params.attacker) || victim
+		local victim_origin = victim.GetOrigin()
+
+		local suicided = attacker == victim
+
+		// disable freezecam
+		// causes a bug where players will get stuck with muted freecam sound
+		// likely spawning players after freeze cam starts but before it actually does the zoom-in/sfx
+		SetPropEntity(victim, "m_hObserverTarget", null)
+
+		local victim_scope   = victim.GetScriptScope()
+		local attacker_scope = attacker.GetScriptScope()
+
+		local arena = victim_scope.arena_info.arena
+
+		if ( !arena || !(attacker in arena.CurrentPlayers) )
+			return
+
+		local arena_name = victim_scope.arena_info.name
+
+		if ( arena.IsCustomRuleset 
+			&& arena.State == AS_IDLE 
+			&& "CustomRulesetThink" in victim_scope.ThinkTable 
+			&& ("bball" in victim_scope.ThinkTable || "koth" in victim_scope.ThinkTable)
+		) {
+			delete victim_scope.ThinkTable.CustomRulesetThink
+			LoadSpawnPoints(arena_name, true)
+			return
 		}
 
-		function OnGameEvent_player_team(params)
+		if (arena.State == AS_FIGHT && "stats" in attacker_scope && "stats" in victim_scope)
 		{
-			local player = GetPlayerFromUserID(params.userid)
+			if (!suicided)
+				attacker_scope.stats.kills++
 
-			//this can return a null player handle on rafmod/potato servers but I don't remember it happening on vanilla
-			if (!player) return
-
-			local scope = player.GetScriptScope()
-			local team = params.team
-			if ("ThinkTable" in scope && "SpecThink" in scope.ThinkTable)
-				delete scope.ThinkTable.SpecThink
-
-			if (team == TEAM_SPECTATOR)
-			{
-				if ("MGE_LeaderboardCam" in ROOT)
-					SetPropEntity(player, "m_hObserverTarget", MGE_LeaderboardCam)
-
-				local spec_cooldown_time = 0.0
-				local arena = "arena_info" in scope && "arena" in scope.arena_info ? scope.arena_info.arena : {State = -1}
-				// if (arena.State == AS_FIGHT || arena.State == AS_AFTERFIGHT)
-				// {
-					// MGE_ClientPrint(player, HUD_PRINTTALK, "SpecRemove")
-					RemovePlayer(player, false)
-				// }
-				if (!player.IsFakeClient())
-				{
-					function SpecThink()
-					{
-						if (spec_cooldown_time < Time())
-						{
-							MGE_ClientPrint(player, HUD_PRINTTALK, "Adv")
-							spec_cooldown_time = Time() + SPECTATOR_MESSAGE_COOLDOWN
-						}
-					}
-					scope.ThinkTable.SpecThink <- SpecThink
-				}
-			}
-			else if (params.oldteam > TEAM_SPECTATOR && team > TEAM_SPECTATOR && !player.IsEFlagSet(EFL_ADDING_TO_ARENA))
-			{
-				if (!player.IsFakeClient())
-				{
-					printf("AUTOTEAM SWITCH BLOCKED! removing %s from arena\n", scope.player_name)
-					RemovePlayer(player)
-				}
-			}
+			victim_scope.stats.deaths++
 		}
 
-		function OnScriptHook_OnTakeDamage(params)
+		local respawntime = "respawntime" in arena && arena.respawntime != "0" ? arena.respawntime.tofloat() : 0.2
+		local trace_dist = AIRSHOT_HEIGHT_THRESHOLD
+
+		if (arena.IsEndif)
+			trace_dist = arena.Endif.height_threshold
+		else if (arena.IsMidair)
+			trace_dist = arena.Midair.height_threshold
+
+		local str, print_str
+		// local rocket_jumping = (!(victim.GetFlags() & FL_ONGROUND) && victim.InCond(TF_COND_BLASTJUMPING)
+		if (ENABLE_ANNOUNCER && !suicided && arena.State == AS_FIGHT)
 		{
-			local victim = params.const_entity
-			local attacker = params.attacker
-			local victim_scope = victim.GetScriptScope()
+			local killstreak_total = "kill_streak_total" in params ? params.kill_streak_total.tointeger() : 0
 
-			if (!victim.IsPlayer()) return
-
-			local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? Arenas[victim_scope.arena_info.name] : {}
-			// if ("endif_killme" in victim_scope || ("endif" in arena && arena.endif == "1"))
-			// {
-			// 	if (!("midair" in arena) || arena.midair == "0")
-			// 	{
-			// 		print("old velocity: " + victim.GetAbsVelocity())
-			// 		params.damage_force *= ENDIF_FORCE_MULT
-			// 		victim.ApplyAbsVelocityImpulse(victim.GetAbsVelocity() * ENDIF_FORCE_MULT)
-			// 		print("new velocity: " + victim.GetAbsVelocity())
-			// 	}
-
-			if (attacker != victim && arena.IsCustomRuleset && arena.State != AS_FIGHT)
+			//first blood
+			if (!arena.Score[0] && !arena.Score[1] && !arena.IsBBall && !arena.IsKoth)
 			{
-				params.early_out = true
-				params.damage = 0
-				return false
-			}
-			if ("IsAllMeat" in arena && arena.IsAllMeat)
-			{
-				local weapon = params.weapon
-				if (!weapon) return
-
-				local itemdef = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
-
-				//does not account for any conditional damage bonuses/penalties
-				//this technically means quickiebomb charged shots are cheating
-				//I don't care, this is meant for shotguns
-				local damage_mult_attribs = {
-					"damage bonus" : null,
-					"damage penalty" : null,
-					"damage bonus HIDDEN" : null,
-					"damage penalty HIDDEN" : null,
-					"CARD: damage bonus" : null,
-				}
-
-				local damage_attrib_mult = 1.0
-				foreach (attrib, _ in damage_mult_attribs)
-				{
-					local val = weapon.GetAttribute(attrib, 1.0)
-					if (val)
-					{
-						damage_attrib_mult = val
-						break
-					}
-				}
-
-				local wep_ref = AllMeat_FindWeapon(weapon)
-
-				if (!wep_ref || params.damage < ((ALLMEAT_MAX_DAMAGE[wep_ref] * arena.AllMeat.damage_threshold) * damage_attrib_mult))
-					params.damage = 0.0
+				print_str = GetLocalizedString("FirstBlood", attacker)
+				str = format("vo/announcer_am_firstblood0%d.mp3", RandomInt(1, 6))
 			}
 
-			if (victim.IsFakeClient()) return
+			//we've hit a killstreak threshold
+			else if (killstreak_total && !(killstreak_total % KILLSTREAK_ANNOUNCER_INTERVAL))
+			{
+				str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
+				print_str = format(GetLocalizedString("Killstreak", attacker), attacker_scope.player_name, killstreak_total.tostring())
+			}
 
-			if (
-				victim_scope && victim.IsPlayer() &&
-				attacker != victim &&
-				(arena.IsEndif || arena.IsMidair) &&
-				params.damage_type & DMG_BLAST &&
-				!(victim.GetFlags() & FL_ONGROUND)
+			//we've hit an airshot
+			else if ( params.damagebits & DMG_BLAST && TraceLine(victim_origin, victim_origin - Vector(0, 0, trace_dist), victim) == 1
 			) {
-				local trace_dist = arena.IsEndif ? arena.Endif.height_threshold : arena.IsMidair ? arena.Midair.height_threshold : AIRSHOT_HEIGHT_THRESHOLD
+				print_str = GetLocalizedString("Airshot", attacker)
+				str = format("vo/announcer_am_killstreak%d.mp3", RandomInt(10, 11))
+				"airshots" in attacker_scope.stats ? attacker_scope.stats.airshots++ : attacker_scope.stats.airshots <- 1
+			}
 
-				if (TraceLine(victim.GetOrigin(), victim.GetOrigin() - Vector(0, 0, trace_dist), victim) == 1)
+			//we've hit a market garden
+			else if ( 
+				!suicided 
+				&& attacker.GetActiveWeapon() 
+				&& attacker.GetActiveWeapon().GetAttribute("mod crit while airborne", 0) 
+				&& attacker.InCond(TF_COND_BLASTJUMPING) 
+				&& params.damagebits & DMG_CRITICAL
+			) {
+				print_str = GetLocalizedString("MarketGarden", attacker)
+				str = format("vo/announcer_am_killstreak0%d.mp3", RandomInt(1, 9))
+				
+				if ("market_gardens" in attacker_scope.stats)
+					attacker_scope.stats.market_gardens++
+			}
+	
+			foreach(p, _ in arena.CurrentPlayers)
+			{
+				if (p.GetScriptScope().enable_announcer)
 				{
-					victim.SetHealth(1)
-					params.damage_type = params.damage_type | DMG_CRITICAL
+					if (str)
+						PlayAnnouncer(p, str)
+					if (print_str)
+						MGE_ClientPrint(p, HUD_PRINTTALK, print_str)
 				}
 			}
 		}
 
-		function OnGameEvent_player_hurt(params)
+		if (!suicided)
 		{
-			local victim = GetPlayerFromUserID(params.userid)
-			local victim_scope = victim.GetScriptScope()
-			local arena = victim_scope && "arena_info" in victim_scope && victim_scope.arena_info ? victim_scope.arena_info.arena : {}
-			local attacker = GetPlayerFromUserID(params.attacker)
-			local attacker_scope = attacker ? attacker.GetScriptScope() : {}
+			MGE_ClientPrint(victim, HUD_PRINTTALK, "HPLeft", attacker.GetHealth())
+			MGE_HUD.KeyValueFromString("color2",  attacker.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+		}
 
-			if (!("State" in arena) && victim.IsFakeClient())
-				return
+		// Koth / bball mode doesn't count deaths
+		if (!arena.IsKoth && !arena.IsBBall && arena.State == AS_FIGHT)
+		{
+			(victim.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
 
-			if (!victim.IsFakeClient() && arena.State == AS_FIGHT && !arena.IsEndif && !arena.IsMidair)
+			CalcArenaScore(arena_name)
+		}
+		else if (arena.IsBBall)
+		{
+			if (victim_scope.ball_ent && victim_scope.ball_ent.IsValid())
 			{
-				"damage_taken" in victim_scope.stats ? victim_scope.stats.damage_taken += params.damageamount : victim_scope.stats.damage_taken <- params.damageamount
-				if (attacker && attacker != victim && !attacker.IsFakeClient())
-					"damage_dealt" in attacker_scope.stats ? attacker_scope.stats.damage_dealt += params.damageamount : attacker_scope.stats.damage_dealt <- params.damageamount
+				victim_scope.ball_ent.Kill()
+				victim.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
+				local ball_pos = victim.GetFlags() & FL_ONGROUND ? victim.EyePosition() : victim_origin + Vector(0, 0, 10)
+
+				if (!("freeze_ball" in arena) || !arena.freeze_ball)
+				{
+					local ball_trace = {
+						start  = victim_origin
+						end    = victim_origin - Vector(0, 0, 8192)
+						mask   = MASK_PLAYERSOLID
+						ignore = victim
+					}
+
+					TraceLineEx(ball_trace)
+
+					if (ball_trace.hit && ball_trace.enthit)
+						ball_pos = ball_trace.endpos + Vector(0, 0, 10)
+				}
+
+				BBall_SpawnBall(arena_name, ball_pos)
 			}
+		}
+		if (!arena.IsAmmomod) {
 
-			//set this here instead of OnTakeDamage since damage_force isn't set until after damage is applied
-			//TODO: test this again, it wasn't working before due to multiplying vectors correctly and might work fine in OnTakeDamage
-			if (arena.IsEndif)
+			ScriptEntFireSafe(victim, "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime)
+
+			if (!suicided && attacker.IsAlive())
+				attacker.SetHealth(attacker.GetMaxHealth() * ("hpratio" in arena ? arena.hpratio.tofloat() : 1))
+		}
+		else {
+			ScriptEntFireSafe("__mge_main", format("SetArenaState(`%s`, AS_COUNTDOWN)", arena_name), AMMOMOD_RESPAWN_DELAY)
+		}
+	}
+
+	function OnGameEvent_player_team(params)
+	{
+		local player = GetPlayerFromUserID(params.userid)
+
+		// this can return a null player handle on rafmod/potato servers
+		// not necessary in the vanilla game
+		if ( !player || !player.IsValid() ) return
+
+		local scope = player.GetScriptScope()
+		local team = params.team
+		if ("ThinkTable" in scope && "SpecThink" in scope.ThinkTable)
+			delete scope.ThinkTable.SpecThink
+
+		if (team == TEAM_SPECTATOR)
+		{
+			if ("MGE" in ROOT && "MGE_LeaderboardCam" in MGE)
+				SetPropEntity(player, "m_hObserverTarget", MGE_LeaderboardCam)
+
+			local spec_cooldown_time = 0.0
+			local arena = scope.arena_info.arena || {State = -1}
+			RemoveFromArena(player, false)
+			if (!player.IsFakeClient())
 			{
-				local old_vel = victim.GetAbsVelocity()
-				local vel = Vector(old_vel.x * ENDIF_FORCE_MULT.x, old_vel.y * ENDIF_FORCE_MULT.y, old_vel.z * ENDIF_FORCE_MULT.z)
-				victim.SetAbsVelocity(vel)
+				function SpecThink()
+				{
+					if (spec_cooldown_time < Time())
+					{
+						MGE_ClientPrint(player, HUD_PRINTTALK, "Adv")
+						spec_cooldown_time = Time() + SPECTATOR_MESSAGE_COOLDOWN
+					}
+				}
+				scope.ThinkTable.SpecThink <- SpecThink.bindenv(this)
+			}
+		}
+		else if (params.oldteam > TEAM_SPECTATOR && team > TEAM_SPECTATOR && !player.IsEFlagSet(EFL_ADDING_TO_ARENA))
+		{
+			if (!player.IsFakeClient())
+			{
+				printf("AUTOTEAM SWITCH BLOCKED! removing %s from arena\n", scope.player_name)
+				RemoveFromArena(player)
 			}
 		}
 	}
-}
 
-__CollectGameEventCallbacks(MGE_Events.Events)
+	function OnScriptHook_OnTakeDamage(params)
+	{
+		local victim = params.const_entity
+		local attacker = params.attacker
+		local victim_scope = victim.GetScriptScope()
+
+		if (!victim.IsPlayer()) return
+
+		local arena = victim_scope.arena_info.arena || {State = -1}
+		// if ("endif_killme" in victim_scope || ("endif" in arena && arena.endif == "1"))
+		// {
+		// 	if (!("midair" in arena) || arena.midair == "0")
+		// 	{
+		// 		print("old velocity: " + victim.GetAbsVelocity())
+		// 		params.damage_force *= ENDIF_FORCE_MULT
+		// 		victim.ApplyAbsVelocityImpulse(victim.GetAbsVelocity() * ENDIF_FORCE_MULT)
+		// 		print("new velocity: " + victim.GetAbsVelocity())
+		// 	}
+
+		if (attacker != victim && arena.IsCustomRuleset && arena.State != AS_FIGHT)
+		{
+			params.early_out = true
+			params.damage = 0
+			return false
+		}
+		if ("IsAllMeat" in arena && arena.IsAllMeat)
+		{
+			local weapon = params.weapon
+			if (!weapon) return
+
+			local itemdef = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)
+
+			//does not account for any conditional damage bonuses/penalties
+			//this technically means quickiebomb charged shots are cheating
+			//I don't care, this is meant for shotguns
+			local damage_mult_attribs = {
+				"damage bonus" : null,
+				"damage penalty" : null,
+				"damage bonus HIDDEN" : null,
+				"damage penalty HIDDEN" : null,
+				"CARD: damage bonus" : null,
+			}
+
+			local damage_attrib_mult = 1.0
+			foreach (attrib, _ in damage_mult_attribs)
+			{
+				local val = weapon.GetAttribute(attrib, 1.0)
+				if (val)
+				{
+					damage_attrib_mult = val
+					break
+				}
+			}
+
+			local wep_ref = AllMeat_FindWeapon(weapon)
+
+			if (!wep_ref || params.damage < ((ALLMEAT_MAX_DAMAGE[wep_ref] * arena.AllMeat.damage_threshold) * damage_attrib_mult))
+				params.damage = 0.0
+		}
+
+		if (victim.IsFakeClient()) return
+
+		if (
+			victim_scope && victim.IsPlayer() &&
+			attacker != victim &&
+			(arena.IsEndif || arena.IsMidair) &&
+			params.damage_type & DMG_BLAST &&
+			!(victim.GetFlags() & FL_ONGROUND)
+		) {
+			local trace_dist = arena.IsEndif ? arena.Endif.height_threshold : arena.IsMidair ? arena.Midair.height_threshold : AIRSHOT_HEIGHT_THRESHOLD
+
+			if (TraceLine(victim.GetOrigin(), victim.GetOrigin() - Vector(0, 0, trace_dist), victim) == 1)
+			{
+				victim.SetHealth(1)
+				params.damage_type = params.damage_type | DMG_CRITICAL
+			}
+		}
+	}
+
+	function OnGameEvent_player_hurt(params)
+	{
+		local victim = GetPlayerFromUserID(params.userid)
+		local victim_scope = victim.GetScriptScope()
+		local arena = victim_scope.arena_info.arena
+
+		if (!arena || victim.IsFakeClient())
+			return
+
+		local attacker = GetPlayerFromUserID(params.attacker)
+		local attacker_scope = attacker ? attacker.GetScriptScope() : {}
+
+		if (!victim.IsFakeClient() && arena.State == AS_FIGHT && !arena.IsEndif && !arena.IsMidair)
+		{
+			"damage_taken" in victim_scope.stats ? victim_scope.stats.damage_taken += params.damageamount : victim_scope.stats.damage_taken <- params.damageamount
+			if (attacker && attacker != victim && !attacker.IsFakeClient())
+				"damage_dealt" in attacker_scope.stats ? attacker_scope.stats.damage_dealt += params.damageamount : attacker_scope.stats.damage_dealt <- params.damageamount
+		}
+
+		//set this here instead of OnTakeDamage since damage_force isn't set until after damage is applied
+		//TODO: test this again, it wasn't working before due to multiplying vectors incorrectly and might work fine in OnTakeDamage
+		if (arena.IsEndif)
+		{
+			local old_vel = victim.GetAbsVelocity()
+			local vel = Vector(old_vel.x * ENDIF_FORCE_MULT.x, old_vel.y * ENDIF_FORCE_MULT.y, old_vel.z * ENDIF_FORCE_MULT.z)
+			victim.SetAbsVelocity(vel)
+		}
+	}
+}
+MGE.Events.chat_commands.setdelegate(MGE)
+MGE.Events.setdelegate(MGE)
+
+__CollectGameEventCallbacks(MGE.Events)

@@ -1,5 +1,56 @@
-::SpawnConfigs <-
-{
+::SpawnConfigs <- {
+
+    "mge_league_gullywashmiddle_autumn": {
+
+        "Gullywash Autumn Middle 1 [1v1]": {
+            "idx": 0,
+            "1": "4285 3715 -9660 0 -90 0",
+            "2": "3650 3710 -9660 0 -90 0",
+            "3": "3650 2180 -9660 0 90 0",
+            "4": "4285 2180 -9660 0 90 0",
+            "fraglimit": "20",
+            "cdtime": "3",
+            "classes": "soldier demoman scout sniper",
+            "hpratio": "1.25",
+            "earlyleave": "3",
+            "infammo": "0",
+            "showhp": "0",
+            "mindist": "700",
+            "4player": "0",
+        },
+        "Gullywash Autumn Middle 2 [1v1]": {
+            "idx": 1,
+            "1": "4285 3715 -5760 0 -90 0",
+            "2": "3650 3710 -5760 0 -90 0",
+            "3": "3650 2180 -5760 0 90 0",
+            "4": "4285 2180 -5760 0 90 0",
+            "fraglimit": "20",
+            "cdtime": "3",
+            "classes": "soldier demoman scout sniper",
+            "hpratio": "1.25",
+            "earlyleave": "3",
+            "infammo": "0",
+            "showhp": "0",
+            "mindist": "700",
+            "4player": "0",
+        },
+        "Gullywash Autumn Middle 3 [2v2]": {
+            "idx": 2,
+            "1": "4285 3715 -1950 0 -90 0",
+            "2": "3650 3710 -1950 0 -90 0",
+            "3": "3650 2180 -1950 0 90 0",
+            "4": "4285 2180 -1950 0 90 0",
+            "fraglimit": "20",
+            "cdtime": "3",
+            "classes": "soldier demoman scout sniper",
+            "hpratio": "1.25",
+            "earlyleave": "3",
+            "infammo": "0",
+            "showhp": "0",
+            "mindist": "700",
+            "4player": "1",
+        },
+    },
     "duels_midair_v2": {
         "[Midair] Turris 1": {
             "1": "412 -4677 -1260 -45",
@@ -9027,7 +9078,7 @@
             "infammo": "0",
             "showhp": "0",
             "mindist": "550",
-            "4player": "1",
+            "4player": "0",
         },
         "Granary Middle": {
             "idx": 1,
@@ -9067,7 +9118,7 @@
             "infammo": "0",
             "showhp": "0",
             "mindist": "550",
-            "4player": "1",
+            "4player": "0",
         },
         "Badlands Middle": {
             "idx": 3,
@@ -9091,7 +9142,7 @@
             "infammo": "0",
             "showhp": "0",
             "mindist": "550",
-            "4player": "1",
+            "4player": "0",
         },
         "Badlands Spire": {
             "idx": 4,
@@ -9179,7 +9230,7 @@
             "infammo": "0",
             "showhp": "0",
             "mindist": "550",
-            "4player": "1",
+            "4player": "0",
         },
         "Gullywash Second": {
             "idx": 8,
@@ -9200,7 +9251,7 @@
             "infammo": "0",
             "showhp": "0",
             "mindist": "550",
-            "4player": "1",
+            "4player": "0",
         },
         "Process Middle": {
             "idx": 9,
@@ -9221,7 +9272,7 @@
             "infammo": "0",
             "showhp": "0",
             "mindist": "550",
-            "4player": "1",
+            "4player": "0",
         },
         "Process Spire": {
             "idx": 10,
@@ -9242,7 +9293,7 @@
             "infammo": "0",
             "showhp": "0",
             "mindist": "750",
-            "4player": "1",
+            "4player": "0",
         },
         "Reckoner Middle": {
             "idx": 11,
@@ -9265,7 +9316,7 @@
             "infammo": "0",
             "showhp": "0",
             "mindist": "550",
-            "4player": "1",
+            "4player": "0",
         },
         "Propaganda Middle": {
             "idx": 12,
@@ -9307,7 +9358,7 @@
             "infammo": "0",
             "showhp": "0",
             "mindist": "550",
-            "4player": "1",
+            "4player": "0",
         },
         "Metalworks Middle": {
             "idx": 14,
@@ -9330,7 +9381,7 @@
             "showhp": "0",
             "mindist": "550",
             "cdtime": "0",
-            "4player": "1",
+            "4player": "0",
         },
         "Product Middle 2": {
             "idx": 15,
