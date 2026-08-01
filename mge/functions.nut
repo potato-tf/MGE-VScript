@@ -1192,7 +1192,7 @@ function MGE::BBall_SpawnBall(arena_name, origin_override = null, custom_ruleset
 	//I did this specifically to annoy mince
 	ground_ball.SetAbsOrigin(origin_override ? origin_override : last_score_team == -1 ? bball_points.neutral_home : last_score_team == TF_TEAM_RED ? bball_points.red_score_home : bball_points.blue_score_home)
 
-	AddOutput(ground_ball, "OnPlayerTouch", "!activator", "RunScriptCode", "BBall_Pickup(self)", 0.0, 1)
+	AddOutput(ground_ball, "OnPlayerTouch", "!activator", "RunScriptCode", "MGE.BBall_Pickup(self)", 0.0, 1)
 	AddOutput(ground_ball, "OnPlayerTouch", "!self", "Kill", "", SINGLE_TICK, 1)
 
 	if (!custom_ruleset_arena)
@@ -2826,7 +2826,6 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 						// arena.bball_home_blue 	<- ball.GetOrigin().ToKVString()
 						// arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
-						arena.RulesetVote.clear()
 
 						foreach(p in arena_players)
 						{
@@ -2837,6 +2836,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 							p.RemoveCustomAttribute("no_attack")
 							p.RemoveCustomAttribute("disable weapon switch")
 						}
+						arena.RulesetVote.clear()
 						MGE.LoadSpawnPoints(arena_name)
 						arena.BBall.ground_ball <- groundball
 						MGE.SetArenaState(arena_name, AS_COUNTDOWN)
@@ -3055,9 +3055,6 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 					for (local hack; hack = FindByClassnameWithin(hack, "obj_teleporter", point.GetOrigin(), 200.0);)
 						EntFireByHandle(hack, "Kill", "", -1, null, null)
 
-					MGE.LoadSpawnPoints(arena_name)
-
-					delete arena.RulesetVote.pointvote_pos
 
 					foreach(p in arena_players)
 					{
@@ -3069,6 +3066,8 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 						if ("CustomRulesetThink" in scope.ThinkTable)
 							delete scope.ThinkTable.CustomRulesetThink
 					}
+					delete arena.RulesetVote.pointvote_pos
+					MGE.LoadSpawnPoints(arena_name)
 					MGE.SetArenaState(arena_name, AS_COUNTDOWN)
 					return
 				}
