@@ -1390,7 +1390,7 @@ function MGE::RemoveFromArena(player, changeteam=true)
 
 	if (!arena) return
 
-	local arena_name = scope.arena_info.name
+	local arena_name = ""+scope.arena_info.name
 
 	scope.arena_info.name  = null
 	scope.arena_info.arena = null
@@ -1400,8 +1400,12 @@ function MGE::RemoveFromArena(player, changeteam=true)
 	local queue = arena.Queue
 	local player_idx = queue.find(player)
 
-	if (player_idx != null)
+	if (player_idx != null) {
+
 		queue.remove(player_idx)
+		scope.arena_info.queue_for = null
+		scope.arena_info.queue_pos = null
+	}
 
 	if (player in arena.CurrentPlayers)
 		delete arena.CurrentPlayers[player]
