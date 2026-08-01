@@ -2047,7 +2047,7 @@ function MGE::SetArenaState(arena_name, state) {
 							local arena = ARENAS[arena_name]
 
 							//left before countdown ended
-							if (arena.CurrentPlayers.len() != arena.MaxPlayers)
+							if (arena.State != AS_COUNTDOWN || arena.CurrentPlayers.len() != arena.MaxPlayers)
 							{
 								SetArenaState(arena_name, AS_IDLE)
 								return
@@ -2070,7 +2070,7 @@ function MGE::SetArenaState(arena_name, state) {
 						local arena = ARENAS[arena_name]
 
 						//left before countdown ended
-						if (arena.CurrentPlayers.len() != arena.MaxPlayers)
+						if (arena.State != AS_COUNTDOWN || arena.CurrentPlayers.len() != arena.MaxPlayers)
 						{
 							SetArenaState(arena_name, AS_IDLE)
 							return
@@ -2531,6 +2531,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 		arena.infammo <- "1"
 
 	SetArenaState(arena_name, AS_IDLE)
+
 	if ("mge" in arena)
 	{
 		delete arena.mge
@@ -2641,27 +2642,32 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			MGE.LoadSpawnPoints(arena_name)
 			return
 		}
+
 		function ammomod() {
 			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
 			arena.hpratio = AMMOMOD_DEFAULT_HP_MULT
 			return
 		}
+
 		function endif() {
 			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
 			return
 		}
+
 		function midair() {
 			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = fraglimit
 			return
 		}
+
 		function allmeat() {
 			MGE.LoadSpawnPoints(arena_name)
 			arena.fraglimit = ALLMEAT_DEFAULT_FRAGLIMIT
 			return
 		}
+
 		"4player" : function() {
 			MGE.LoadSpawnPoints(arena_name)
 			return
@@ -3101,8 +3107,10 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 		{
 			for (local child = p.FirstMoveChild(); child; child = child.NextMovePeer())
 				if (child instanceof CEconEntity)
-					SetPropInt(child, "m_nRenderMode", kRenderTransColor),
+				{
+					SetPropInt(child, "m_nRenderMode", kRenderTransColor)
 					SetPropInt(child, "m_clrRender", 0)
+				}
 
 			p.AddCustomAttribute("no_attack", 1, -1)
 			p.AddCustomAttribute("disable weapon switch", 1, -1)

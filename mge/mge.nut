@@ -183,7 +183,7 @@ MGE.special_arenas <- {
 		local arena_name 	= scope.arena_info.name
 		local arena_players = arena.CurrentPlayers.keys()
 
-		if (arena.State == AS_IDLE || !("Koth" in arena))
+		if (arena.State == AS_IDLE)
 		{
 			if ("KothThink" in scope.ThinkTable)
 				delete scope.ThinkTable.KothThink
@@ -381,9 +381,6 @@ MGE.special_arenas <- {
 		local team = player.GetTeam()
 
 		function scope::ThinkTable::BBallThink() {
-
-			if (!("BBall" in arena))
-				return
 
 			local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
 			if (scope.ball_ent && scope.ball_ent.IsValid())
