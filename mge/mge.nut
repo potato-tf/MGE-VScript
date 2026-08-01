@@ -178,7 +178,7 @@ MGE.special_arenas <- {
 	function koth()
 	{
 		local player 		= self
-		scope 				<- player.GetScriptScope()
+		local scope = player.GetScriptScope()
 		local arena			= scope.arena_info.arena
 		local arena_name 	= scope.arena_info.name
 		local arena_players = arena.CurrentPlayers.keys()
@@ -213,7 +213,7 @@ MGE.special_arenas <- {
 			point = point_vector
 		}
 		//cap logic think
-		function scope::ThinkTable::KothThink()
+		scope.ThinkTable.KothThink <- function()
 		{
 			local owner_team = arena.Koth.owner_team
 			local arena_players = arena.CurrentPlayers.keys()
@@ -374,14 +374,14 @@ MGE.special_arenas <- {
 	function bball()
 	{
 		local player = self
-		scope <- player.GetScriptScope()
+		local scope = player.GetScriptScope()
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
 		local arena_players = arena.CurrentPlayers.keys()
 		local team = player.GetTeam()
 		local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
 
-		function scope::ThinkTable::BBallThink() {
+		scope.ThinkTable.BBallThink <- function() {
 
 			if (scope.ball_ent && scope.ball_ent.IsValid())
 			{
@@ -414,9 +414,9 @@ MGE.special_arenas <- {
 	function turris()
 	{
 		local player = self
-		scope <- player.GetScriptScope()
+		local scope = player.GetScriptScope()
 		scope.turris_cooldown <- 0.0
-		function scope::ThinkTable::TurrisThink() {
+		scope.ThinkTable.TurrisThink <- function() {
 
 			if (turris_cooldown < Time())
 			{
@@ -474,9 +474,9 @@ MGE.special_arenas <- {
 	function infammo()
 	{
 		local player = self
-		scope <- player.GetScriptScope()
+		local scope = player.GetScriptScope()
 
-		function scope::ThinkTable::InfAmmoThink() {
+		scope.ThinkTable.InfAmmoThink <- function() {
 
 			local weapon = player.GetActiveWeapon()
 			local itemid = GetPropInt(weapon, STRING_NETPROP_ITEMDEF)

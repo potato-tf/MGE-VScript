@@ -2593,6 +2593,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 			", GENERIC_DELAY)
 		}
+
 		function koth() {
 
 			local cap_point = CreateByClassname("prop_dynamic")
@@ -2635,6 +2636,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				", _scope.temp_point.entindex()), GENERIC_DELAY)
 			}
 		}
+
 		function ultiduo() {
 			MGE.LoadSpawnPoints(arena_name)
 			return
@@ -2962,6 +2964,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				}
 			}
 		}
+
 		function koth() {
 
 			if (point_cooldown > Time()) return
@@ -3067,6 +3070,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				point_cooldown = Time() + KOTH_POINT_PLACEMENT_COOLDOWN
 			}
 		}
+
 		function ultiduo() {
 			return
 		}
