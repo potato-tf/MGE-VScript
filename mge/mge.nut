@@ -178,12 +178,12 @@ MGE.special_arenas <- {
 	function koth()
 	{
 		local player 		= self
-		local scope = player.GetScriptScope()
+		scope <- player.GetScriptScope()
 		local arena			= scope.arena_info.arena
 		local arena_name 	= scope.arena_info.name
 		local arena_players = arena.CurrentPlayers.keys()
 
-		if (arena.State == AS_IDLE)
+		if (arena.State == AS_IDLE || !("Koth" in arena))
 		{
 			if ("KothThink" in scope.ThinkTable)
 				delete scope.ThinkTable.KothThink
@@ -213,7 +213,7 @@ MGE.special_arenas <- {
 			point = point_vector
 		}
 		//cap logic think
-		scope.ThinkTable.KothThink <- function()
+		function scope::ThinkTable::KothThink()
 		{
 			local owner_team = arena.Koth.owner_team
 			local arena_players = arena.CurrentPlayers.keys()
@@ -374,13 +374,16 @@ MGE.special_arenas <- {
 	function bball()
 	{
 		local player = self
-		local scope = player.GetScriptScope()
+		scope <- player.GetScriptScope()
 		local arena = scope.arena_info.arena
 		local arena_name = scope.arena_info.name
 		local arena_players = arena.CurrentPlayers.keys()
 		local team = player.GetTeam()
 
-		scope.ThinkTable.BBallThink <- function() {
+		function scope::ThinkTable::BBallThink() {
+
+			if (!("BBall" in arena))
+				return
 
 			local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
 			if (scope.ball_ent && scope.ball_ent.IsValid())
@@ -414,9 +417,9 @@ MGE.special_arenas <- {
 	function turris()
 	{
 		local player = self
-		local scope = player.GetScriptScope()
+		scope <- player.GetScriptScope()
 		scope.turris_cooldown <- 0.0
-		scope.ThinkTable.TurrisThink <- function() {
+		function scope::ThinkTable::TurrisThink() {
 
 			if (turris_cooldown < Time())
 			{
