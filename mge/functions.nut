@@ -241,7 +241,7 @@ function MGE::InitEntities() {
 
 					return 1.1
 				}
-				return -1
+				return 1.1
 			}
 
 			// Show countdown message in last minute

@@ -160,13 +160,13 @@ const ALLMEAT_DEFAULT_FRAGLIMIT             = 5
 ::ALLMEAT_MAX_DAMAGE <- {
 	tf_weapon_scattergun = BASE_SHOTGUN_DAMAGE,
 	tf_weapon_handgun_scout_primary = BASE_SHOTGUN_DAMAGE * 0.8,
-	[ID_FORCE_A_NATURE] = BASE_SHOTGUN_DAMAGE * 1.08,
+	[ID_FORCE_A_NATURE]			= BASE_SHOTGUN_DAMAGE * 1.08,
 	[ID_FESTIVE_FORCE_A_NATURE] = BASE_SHOTGUN_DAMAGE * 1.08,
 
-	tf_weapon_shotgun_primary = BASE_SHOTGUN_DAMAGE,
-	tf_weapon_shotgun_pyro = BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_hwg 	  = BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_pyro 	  = BASE_SHOTGUN_DAMAGE,
 	tf_weapon_shotgun_soldier = BASE_SHOTGUN_DAMAGE,
-	tf_weapon_shotgun_hwg = BASE_SHOTGUN_DAMAGE,
+	tf_weapon_shotgun_primary = BASE_SHOTGUN_DAMAGE,
 	[ID_PANIC_ATTACK_SHOTGUN] = BASE_SHOTGUN_DAMAGE * 1.2,
 
 	tf_weapon_grenadelauncher = 100,
