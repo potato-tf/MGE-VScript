@@ -265,30 +265,30 @@ function MGE::ScriptEntFireSafe( target, code, delay = -1, activator = null, cal
 
 	local entfirefunc = typeof target == "string" ? DoEntFire : EntFireByHandle
 
-	// local _code = format( @"
+	local _code = format( @"
 
-	// 	if ( self && self.IsValid() ) {
+		if ( self && self.IsValid() ) {
 
-	// 		SetPropBool( self, STRING_NETPROP_PURGESTRINGS, true )
+			SetPropBool( self, STRING_NETPROP_PURGESTRINGS, true )
 	
-	// 		if ( self.IsPlayer() && !self.IsAlive() && !%d ) {
+			if ( self.IsPlayer() && !self.IsAlive() && !%d ) {
 
-	// 			return
-	// 		}
+				return
+			}
 
-	// 		// code passed to ScriptEntFireSafe
-	// 		%s
+			// code passed to ScriptEntFireSafe
+			%s
 
-	// 		return
-	// 	}
+			return
+		}
 
-	// 	// Assert( false, `Invalid target passed to ScriptEntFireSafe: ` + self )
+		// Assert( false, `Invalid target passed to ScriptEntFireSafe: ` + self )
 
-	// ", allow_dead.tointeger(), code )
+	", allow_dead.tointeger(), code )
 
-	entfirefunc( target, "RunScriptCode", code, delay, activator, caller )
+	entfirefunc( target, "RunScriptCode", _code, delay, activator, caller )
 
-	MGE_GAMESTRINGS[code] <- null
+	MGE_GAMESTRINGS[_code] <- null
 }
 
 function MGE::HandleRoundStart()
@@ -2913,7 +2913,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 					SendGlobalGameEvent("show_annotation", {
 
 						id 					= p.entindex() + BBALL_HOOP_SIZE
-						text 				= "Hoop placed by %s" + scope.player_name
+						text 				= "Hoop placed by " + _scope.player_name
 						lifetime 			= 5.0
 						show_effect 		= true
 						play_sound 			= COUNTDOWN_SOUND
@@ -2951,33 +2951,33 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				{
 					foreach(p in arena_players)
 					{
-						MGE.ScriptEntFireSafe("__mge_main", @"
+						MGE.ScriptEntFireSafe(p, @"
 
-							SwitchWeaponSlot(activator, 3)
-							SwitchWeaponSlot(activator, 1)
+							MGE.SwitchWeaponSlot(self, 3)
+							MGE.SwitchWeaponSlot(self, 1)
 
-							for (local child = activator.FirstMoveChild(); child; child = child.NextMovePeer())
+							for (local child = self.FirstMoveChild(); child; child = child.NextMovePeer())
 							{
 								SetPropInt(child, `m_clrRender`, INT_COLOR_WHITE)
 								SetPropInt(child, `m_nRenderMode`, kRenderFxNone)
 							}
-							activator.RemoveCustomAttribute(`disable weapon switch`)
-							activator.RemoveCustomAttribute(`no_attack`)
+							self.RemoveCustomAttribute(`disable weapon switch`)
+							self.RemoveCustomAttribute(`no_attack`)
 
-						", GENERIC_DELAY, p)
+						", GENERIC_DELAY)
 
 						MGE.ScriptEntFireSafe(p, format(@"
 
 							SendGlobalGameEvent(`show_annotation`, {
 
-								id 					= self.entindex() + BBALL_HOOP_SIZE, //add some constant to this value to singify it's a bball annotation
+								id 					= self.entindex() + BBALL_HOOP_SIZE
 								text 				= `Hoops placed! jump to your hoop`
 								lifetime 			= -1
 								play_sound 			= ROUND_START_SOUND
 								show_effect 		= true
 								show_distance 		= true
 								follow_entindex 	= %d
-								visibilityBitfield 	= 1 << self.entindex(
+								visibilityBitfield 	= 1 << self.entindex()
 							})
 
 						", hoop.entindex()), GENERIC_DELAY + 0.1)
