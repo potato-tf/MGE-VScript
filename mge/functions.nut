@@ -265,30 +265,30 @@ function MGE::ScriptEntFireSafe( target, code, delay = -1, activator = null, cal
 
 	local entfirefunc = typeof target == "string" ? DoEntFire : EntFireByHandle
 
-	local _code = format( @"
+	// local _code = format( @"
 
-		if ( self && self.IsValid() ) {
+	// 	if ( self && self.IsValid() ) {
 
-			SetPropBool( self, STRING_NETPROP_PURGESTRINGS, true )
+	// 		SetPropBool( self, STRING_NETPROP_PURGESTRINGS, true )
 	
-			if ( self.IsPlayer() && !self.IsAlive() && !%d ) {
+	// 		if ( self.IsPlayer() && !self.IsAlive() && !%d ) {
 
-				return
-			}
+	// 			return
+	// 		}
 
-			// code passed to ScriptEntFireSafe
-			%s
+	// 		// code passed to ScriptEntFireSafe
+	// 		%s
 
-			return
-		}
+	// 		return
+	// 	}
 
-		// Assert( false, `Invalid target passed to ScriptEntFireSafe: ` + self )
+	// 	// Assert( false, `Invalid target passed to ScriptEntFireSafe: ` + self )
 
-	", allow_dead.tointeger(), code )
+	// ", allow_dead.tointeger(), code )
 
-	entfirefunc( target, "RunScriptCode", _code, delay, activator, caller )
+	entfirefunc( target, "RunScriptCode", code, delay, activator, caller )
 
-	MGE_GAMESTRINGS[_code] <- null
+	MGE_GAMESTRINGS[code] <- null
 }
 
 function MGE::HandleRoundStart()
