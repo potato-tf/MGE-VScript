@@ -2851,7 +2851,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 							text 				= format("%s wants to spawn the ball here", scope.player_name)
 							lifetime 			= 3.0
 							play_sound 			= BBALL_PICKUP_SOUND
-							show_effect 		= tru
+							show_effect 		= true
 							show_distance 		= true
 							follow_entindex 	= scope.temp_ball.entindex()
 							visibilityBitfield = 1 << p.entindex()
@@ -2913,7 +2913,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 					SendGlobalGameEvent("show_annotation", {
 
 						id 					= p.entindex() + BBALL_HOOP_SIZE
-						text 				= "Hoop placed by " + _scope.player_name
+						text 				= "Hoop placed by " + scope.player_name
 						lifetime 			= 5.0
 						show_effect 		= true
 						play_sound 			= COUNTDOWN_SOUND
