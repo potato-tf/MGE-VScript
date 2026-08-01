@@ -2829,7 +2829,6 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 						// arena[self.GetTeam() == TF_TEAM_RED ? "bball_hoop_red" : "bball_hoop_blue"] <- scope.hoop.GetScriptScope().basket.ToKVString()
 
 						arena.RulesetVote.clear()
-						MGE.SetArenaState(arena_name, AS_COUNTDOWN)
 
 						foreach(p in arena_players)
 						{
@@ -2840,6 +2839,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 							p.RemoveCustomAttribute("no_attack")
 							p.RemoveCustomAttribute("disable weapon switch")
 						}
+						MGE.SetArenaState(arena_name, AS_COUNTDOWN)
 						return
 					}
 
@@ -2951,20 +2951,20 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				{
 					foreach(p in arena_players)
 					{
-						MGE.ScriptEntFireSafe("__mge_main", @"
+						MGE.ScriptEntFireSafe(p, @"
 
-							SwitchWeaponSlot(activator, 3)
-							SwitchWeaponSlot(activator, 1)
+							SwitchWeaponSlot(self, 3)
+							SwitchWeaponSlot(self, 1)
 
-							for (local child = activator.FirstMoveChild(); child; child = child.NextMovePeer())
+							for (local child = self.FirstMoveChild(); child; child = child.NextMovePeer())
 							{
 								SetPropInt(child, `m_clrRender`, INT_COLOR_WHITE)
 								SetPropInt(child, `m_nRenderMode`, kRenderFxNone)
 							}
-							activator.RemoveCustomAttribute(`disable weapon switch`)
-							activator.RemoveCustomAttribute(`no_attack`)
+							self.RemoveCustomAttribute(`disable weapon switch`)
+							self.RemoveCustomAttribute(`no_attack`)
 
-						", GENERIC_DELAY, p)
+						", GENERIC_DELAY)
 
 						MGE.ScriptEntFireSafe(p, format(@"
 
@@ -3061,7 +3061,6 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 					foreach(p in arena_players)
 					{
-
 						local glow_dummy = MGE.ShowModelToPlayer(p, [KOTH_POINT_MODEL, 0, cap_point.GetTeam()], cap_point.GetOrigin(), QAngle(), 9999.0)
 
 						glow_dummy.AcceptInput("SetParent", "!activator", cap_point, cap_point)
