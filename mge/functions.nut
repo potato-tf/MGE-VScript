@@ -1392,6 +1392,9 @@ function MGE::RemoveFromArena(player, changeteam=true)
 
 	local arena_name = ""+scope.arena_info.name
 
+	if ( !arena_name )
+		arena_name = ""+scope.arena_info.queue_for
+
 	scope.arena_info.name  = null
 	scope.arena_info.arena = null
 
