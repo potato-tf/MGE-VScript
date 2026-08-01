@@ -199,51 +199,6 @@ function MGE::InitEntities() {
 		local time_left = (base_timestamp - Time()).tointeger()
 		if (time_left > 0)
 		{
-			if ( !(time_left % VPI_SERVERINFO_UPDATE_INTERVAL) )
-			{
-				if (UPDATE_SERVER_DATA) {
-
-					LocalTime(MGE.LOCALTIME)
-					MGE.SERVER_DATA.update_time = MGE.LOCALTIME
-					MGE.SERVER_DATA.max_wave = base_timestamp
-					MGE.SERVER_DATA.wave = time_left
-					local players = array(2, 0)
-					local spectators = 0
-					foreach (player, userid in MGE.ALL_PLAYERS)
-					{
-						if (!player || !player.IsValid() || player.IsFakeClient()) continue
-
-						if (player.GetTeam() == TEAM_SPECTATOR)
-							spectators++
-						else
-							players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
-					}
-					MGE.SERVER_DATA.players_red = players[0]
-					MGE.SERVER_DATA.players_blu = players[1]
-					MGE.SERVER_DATA.players_connecting = spectators
-					MGE.SERVER_DATA.server_name = GetStr("hostname")
-
-					VPI.AsyncCall({
-
-						func   = "VPI_MGE_UpdateServerData"
-						kwargs = MGE.SERVER_DATA
-
-						callback = function(response, err) {
-
-							if ( err ) printl( err )
-
-							if ( !MGE.SERVER_DATA.address && "address" in response )
-								MGE.SERVER_DATA.address = response.address
-						}
-					})
-
-					// printl("Updating server data")
-
-					return 1.1
-				}
-				return 1.1
-			}
-
 			// Show countdown message in last minute
 			if ( time_left < 60 && !(time_left % 10) )
 			{
@@ -253,6 +208,46 @@ function MGE::InitEntities() {
 					hinted = true
 					MGE.ScriptEntFireSafe(self, "hinted = false", 1.1)
 				}
+			}
+
+			if (UPDATE_SERVER_DATA && !(time_left % VPI_SERVERINFO_UPDATE_INTERVAL)) {
+
+				LocalTime(MGE.LOCALTIME)
+				MGE.SERVER_DATA.update_time = MGE.LOCALTIME
+				MGE.SERVER_DATA.max_wave = base_timestamp
+				MGE.SERVER_DATA.wave = time_left
+				local players = array(2, 0)
+				local spectators = 0
+				foreach (player, userid in MGE.ALL_PLAYERS)
+				{
+					if (!player || !player.IsValid() || player.IsFakeClient()) continue
+
+					if (player.GetTeam() == TEAM_SPECTATOR)
+						spectators++
+					else
+						players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
+				}
+
+				MGE.SERVER_DATA.players_red = players[0]
+				MGE.SERVER_DATA.players_blu = players[1]
+				MGE.SERVER_DATA.players_connecting = spectators
+				MGE.SERVER_DATA.server_name = GetStr("hostname")
+
+				VPI.AsyncCall({
+
+					func   = "VPI_MGE_UpdateServerData"
+					kwargs = MGE.SERVER_DATA
+
+					callback = function(response, err) {
+
+						if ( err ) printl( err )
+
+						if ( !MGE.SERVER_DATA.address && "address" in response )
+							MGE.SERVER_DATA.address = response.address
+					}
+				})
+
+				return 1.1
 			}
 
 			return 0.5
