@@ -2592,7 +2592,6 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				})
 
 			", GENERIC_DELAY)
-			MGE.LoadSpawnPoints(arena_name)
 		}
 
 		function koth() {
@@ -2636,7 +2635,6 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 				", _scope.temp_point.entindex()), GENERIC_DELAY)
 			}
-			MGE.LoadSpawnPoints(arena_name)
 		}
 
 		function ultiduo() {

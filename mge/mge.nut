@@ -379,10 +379,10 @@ MGE.special_arenas <- {
 		local arena_name = scope.arena_info.name
 		local arena_players = arena.CurrentPlayers.keys()
 		local team = player.GetTeam()
-		local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
 
 		scope.ThinkTable.BBallThink <- function() {
 
+			local goal = team == TF_TEAM_RED ? arena.BBall.blue_hoop : arena.BBall.red_hoop
 			if (scope.ball_ent && scope.ball_ent.IsValid())
 			{
 				//bball score think
