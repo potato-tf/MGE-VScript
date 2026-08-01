@@ -2812,7 +2812,6 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 							if (scope.temp_ball)
 								EntFireByHandle(scope.temp_ball, "Kill", "", -1, null, null)
 						}
-						MGE.LoadSpawnPoints(arena_name)
 
 						//why does this need to be set here
 						// if ("mge" in arena)
@@ -2821,7 +2820,6 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 						// 	arena.IsMGE <- false
 						// }
 						// arena.IsBBall <- true
-						arena.BBall.ground_ball <- groundball
 
 						// arena.bball_home 		<- ball.GetOrigin().ToKVString()
 						// arena.bball_home_red 	<- ball.GetOrigin().ToKVString()
@@ -2839,6 +2837,8 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 							p.RemoveCustomAttribute("no_attack")
 							p.RemoveCustomAttribute("disable weapon switch")
 						}
+						MGE.LoadSpawnPoints(arena_name)
+						arena.BBall.ground_ball <- groundball
 						MGE.SetArenaState(arena_name, AS_COUNTDOWN)
 						return
 					}
