@@ -773,11 +773,18 @@ MGE.Events <- {
 		// 		print("new velocity: " + victim.GetAbsVelocity())
 		// 	}
 
-		if (attacker != victim && arena.IsCustomRuleset && arena.State != AS_FIGHT)
+		if ( arena.IsCustomRuleset && arena.State != AS_FIGHT )
 		{
-			params.early_out = true
-			params.damage = 0
-			return false
+			if (attacker != victim)
+			{
+				params.early_out = true
+				params.damage = 0
+				return false
+			}
+			else
+			{
+				victim.AddCondEx(TF_COND_HALLOWEEN_QUICK_HEAL, 2.0, victim)
+			}
 		}
 		if ("IsAllMeat" in arena && arena.IsAllMeat)
 		{
