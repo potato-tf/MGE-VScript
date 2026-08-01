@@ -1537,8 +1537,16 @@ function MGE::CycleQueue(arena_name)
 	local combined = arena.CurrentPlayers.keys().extend(queue)
 
 	foreach ( p in combined )
-		if ( p.IsEFlagSet(EFL_REMOVE_FROM_ARENA) || ( queue.find(p) == null && !p.GetScriptScope().won_last_match ) )
+	{
+		local requeue = queue.find(p) == null && !p.GetScriptScope().won_last_match
+		if ( p.IsEFlagSet(EFL_REMOVE_FROM_ARENA) || requeue )
+		{
 			RemoveFromArena(p)
+
+			if (requeue)
+				AddToArenaQueue(p, arena_name)
+		}
+	}
 	
 	// check queue again after removing flagged players
 	if (queue.len()) {
@@ -1982,9 +1990,17 @@ function MGE::SetArenaState(arena_name, state) {
 					foreach(player, _ in arena.CurrentPlayers)
 						EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", -1, null, null)
 				}
-
-				if ( arena.CurrentPlayers.len() == arena.MaxPlayers )
-					SetArenaState(arena_name, AS_COUNTDOWN)
+				local setting_custom_ruleset = false
+				foreach(player, _ in arena.CurrentPlayers)
+				{
+					if ( "CustomRulesetThink" in player.GetScriptScope().ThinkTable )
+					{
+						setting_custom_ruleset = true
+						break
+					}
+				}
+				if ( arena.CurrentPlayers.len() == arena.MaxPlayers && !setting_custom_ruleset )
+					SetArenaState( arena_name, AS_COUNTDOWN )
 			}
 
 			function AS_COUNTDOWN(arena_name, arena) {
@@ -2680,6 +2696,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 		// does not cleanly map to in-game behavior when reading top to bottom
 
 		function bball() {
+
 			local scope = self.GetScriptScope()
 			if (hoop_cooldown > Time()) return
 
@@ -3140,6 +3157,7 @@ function MGE::CharReplace(str, findwhat, replace) {
 }
 
 function MGE::ArenaNavGenerator(only_this_arena = null) {
+
 	local player = GetListenServerHost()
 
 	local progress = 0
