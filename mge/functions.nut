@@ -2953,8 +2953,8 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 					{
 						MGE.ScriptEntFireSafe(p, @"
 
-							SwitchWeaponSlot(self, 3)
-							SwitchWeaponSlot(self, 1)
+							MGE.SwitchWeaponSlot(self, 3)
+							MGE.SwitchWeaponSlot(self, 1)
 
 							for (local child = self.FirstMoveChild(); child; child = child.NextMovePeer())
 							{
