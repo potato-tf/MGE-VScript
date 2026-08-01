@@ -2047,7 +2047,7 @@ function MGE::SetArenaState(arena_name, state) {
 							local arena = ARENAS[arena_name]
 
 							//left before countdown ended
-							if (arena.State != AS_COUNTDOWN || arena.CurrentPlayers.len() != arena.MaxPlayers)
+							if (arena.State == AS_IDLE || arena.CurrentPlayers.len() != arena.MaxPlayers)
 							{
 								SetArenaState(arena_name, AS_IDLE)
 								return
@@ -2070,7 +2070,7 @@ function MGE::SetArenaState(arena_name, state) {
 						local arena = ARENAS[arena_name]
 
 						//left before countdown ended
-						if (arena.State != AS_COUNTDOWN || arena.CurrentPlayers.len() != arena.MaxPlayers)
+						if (arena.State == AS_IDLE || arena.CurrentPlayers.len() != arena.MaxPlayers)
 						{
 							SetArenaState(arena_name, AS_IDLE)
 							return
