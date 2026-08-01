@@ -2769,7 +2769,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			}
 
 			//spawn ball
-			else if (hoop_validated && arena.RulesetVote.validatedhoops == arena.MaxPlayers && "temp_ball" in scope)
+			else if (hoop_validated && "validatedhoops" in arena.RulesetVote && arena.RulesetVote.validatedhoops == arena.MaxPlayers && "temp_ball" in scope)
 			{
 				local ball = scope.temp_ball
 				ball.KeyValueFromVector("origin", hoop_trace.pos + Vector(0, 0, 10))
