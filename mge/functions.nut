@@ -2546,8 +2546,6 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 	if (ruleset in infammo_arenas)
 		arena.infammo <- "1"
 
-	SetArenaState(arena_name, AS_IDLE)
-
 	if ("mge" in arena)
 	{
 		delete arena.mge
@@ -3133,6 +3131,8 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			p.AddCustomAttribute("disable weapon switch", 1, -1)
 		}
 	}
+
+	SetArenaState(arena_name, AS_IDLE)
 
 	return
 }
