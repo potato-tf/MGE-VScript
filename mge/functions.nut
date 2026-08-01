@@ -811,7 +811,7 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 			{
 				if (typeof v != "string") continue
 				local split_spawns = split(v, " ")
-				split_spawns.apply( @(str) ToStrictNum(str, true) )
+				split_spawns.apply( @(str) MGE.ToStrictNum(str, true) )
 				local spawn_lens = {
 					[3] = true,
 					[4] = true,
@@ -2848,7 +2848,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 						SendGlobalGameEvent("show_annotation", {
 
 							id 					= self.entindex() + BBALL_HOOP_SIZE
-							text 				= format("%s wants to spawn the ball here", scope.player_name)
+							text 				= scope.player_name + " wants to spawn the ball here"
 							lifetime 			= 3.0
 							play_sound 			= BBALL_PICKUP_SOUND
 							show_effect 		= true
