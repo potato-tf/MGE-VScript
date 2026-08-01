@@ -2951,20 +2951,20 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				{
 					foreach(p in arena_players)
 					{
-						MGE.ScriptEntFireSafe(p, @"
+						MGE.ScriptEntFireSafe("__mge_main", @"
 
-							MGE.SwitchWeaponSlot(self, 3)
-							MGE.SwitchWeaponSlot(self, 1)
+							SwitchWeaponSlot(activator, 3)
+							SwitchWeaponSlot(activator, 1)
 
-							for (local child = self.FirstMoveChild(); child; child = child.NextMovePeer())
+							for (local child = activator.FirstMoveChild(); child; child = child.NextMovePeer())
 							{
 								SetPropInt(child, `m_clrRender`, INT_COLOR_WHITE)
 								SetPropInt(child, `m_nRenderMode`, kRenderFxNone)
 							}
-							self.RemoveCustomAttribute(`disable weapon switch`)
-							self.RemoveCustomAttribute(`no_attack`)
+							activator.RemoveCustomAttribute(`disable weapon switch`)
+							activator.RemoveCustomAttribute(`no_attack`)
 
-						", GENERIC_DELAY)
+						", GENERIC_DELAY, p)
 
 						MGE.ScriptEntFireSafe(p, format(@"
 
