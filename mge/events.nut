@@ -186,7 +186,7 @@ MGE.Events <- {
 				arena.RulesetVote <- {}
 
 			if (!(ruleset in arena.RulesetVote))
-				arena.RulesetVote[ruleset] <- array(arena.CurrentPlayers.len(), false)
+				arena.RulesetVote[ruleset] <- []
 
 			local votes = arena.RulesetVote[ruleset]
 			votes.append(player)
