@@ -161,7 +161,7 @@ MGE.Events <- {
 			if (!arena)
 				return MGE_ClientPrint(player, HUD_PRINTTALK, "MustJoinArena")
 
-			if (arena.State == AS_AFTERFIGHT)
+			if (arena.State == AS_AFTERFIGHT || arena.CurrentPlayers.len() != arena.MaxPlayers)
 				return MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetCannotSet")
 
 			local arena_name = scope.arena_info.name
