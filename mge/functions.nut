@@ -2798,7 +2798,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 						// arena.bball_hoop_red <- scope.hoop.GetScriptScope().basket.ToKVString()
 						// arena.bball_hoop_blue <- scope.hoop.GetScriptScope().basket.ToKVString()
 
-						arena.fraglimit /= 2
+						arena.fraglimit = 5
 
 						arena.bball_home 		<- ball.GetOrigin().ToKVString()
 						arena.bball_home_red 	<- ball.GetOrigin().ToKVString()
