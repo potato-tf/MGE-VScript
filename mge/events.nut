@@ -697,7 +697,7 @@ MGE.Events <- {
 		if (!arena.IsAmmomod) {
 
 			if ( arena.State != AS_AFTERFIGHT )
-				ScriptEntFireSafe(victim, "self.ForceRespawn()", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime)
+				ScriptEntFireSafe(victim, "self.ForceRespawn(); SetPropFloat(self, `m_flNextAttack`, Time() + 0.1)", arena.State == AS_IDLE ? IDLE_RESPAWN_TIME : respawntime)
 
 			if (!suicided && attacker.IsAlive())
 				attacker.SetHealth(attacker.GetMaxHealth() * ("hpratio" in arena ? arena.hpratio.tofloat() : 1))
