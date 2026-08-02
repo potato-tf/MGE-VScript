@@ -149,7 +149,9 @@ local function Escape(str)
 {
 	local res = ""
 
-	for (local i = 0; i < str.len(); i++)
+	local str_len = str.len()
+
+	for (local i = 0; i < str_len; i++)
 	{
 		local ch1 = (str[i] & 0xFF)
 
@@ -184,22 +186,22 @@ local function Escape(str)
 			if ((ch1 & 0xE0) == 0xC0)
 			{
 				// 110xxxxx = 2-byte unicode
-				local ch2 = (str[++i] & 0xFF)
+				local ch2 = (i + 1 in str) ? (str[i + 1] & 0xFF) : '?'
 				res += format("%c%c", ch1, ch2)
 			}
 			else if ((ch1 & 0xF0) == 0xE0)
 			{
 				// 1110xxxx = 3-byte unicode
-				local ch2 = (str[++i] & 0xFF)
-				local ch3 = (str[++i] & 0xFF)
+				local ch2 = (i + 1 in str) ? (str[i + 1] & 0xFF) : '?'
+				local ch3 = (i + 2 in str) ? (str[i + 2] & 0xFF) : '?'
 				res += format("%c%c%c", ch1, ch2, ch3)
 			}
 			else if ((ch1 & 0xF8) == 0xF0)
 			{
 				// 11110xxx = 4 byte unicode
-				local ch2 = (str[++i] & 0xFF)
-				local ch3 = (str[++i] & 0xFF)
-				local ch4 = (str[++i] & 0xFF)
+				local ch2 = (i + 1 in str) ? (str[i + 1] & 0xFF) : '?'
+				local ch3 = (i + 2 in str) ? (str[i + 2] & 0xFF) : '?'
+				local ch4 = (i + 3 in str) ? (str[i + 3] & 0xFF) : '?'
 				res += format("%c%c%c%c", ch1, ch2, ch3, ch4)
 			}
 		}
