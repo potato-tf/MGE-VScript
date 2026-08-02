@@ -759,6 +759,9 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 			_arena.IsAllMeat <- false
 			_arena.IsAmmomod <- false
 			_arena.IsUltiduo <- false
+
+			// reset custom ruleset flags
+			_arena.IsCustomRuleset = false
 		}
 
 		_arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
