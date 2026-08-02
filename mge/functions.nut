@@ -1424,6 +1424,11 @@ function MGE::RemoveFromArena(player, changeteam=true)
 	if (check_bots_only)
 		RemoveBot(arena_name, true)
 
+	if ("RulesetVote" in arena)
+		foreach(_, votes in arena.RulesetVote)
+			if (player in votes)
+				delete votes[player]
+
 	SetArenaState(arena_name, AS_IDLE)
 
 	player.RemoveEFlags(EFL_REMOVE_FROM_ARENA)

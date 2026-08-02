@@ -186,15 +186,12 @@ MGE.Events <- {
 				arena.RulesetVote <- {}
 
 			if (!(ruleset in arena.RulesetVote))
-				arena.RulesetVote[ruleset] <- []
+				arena.RulesetVote[ruleset] <- {}
 
-			local votes = arena.RulesetVote[ruleset]
-			votes.append(player)
-			
-			local votes_len = votes.len()
+			arena.RulesetVote[ruleset][player] <- null
 
 			// we have enough votes to set the ruleset
-			if ( votes_len >= arena.CurrentPlayers.len() )
+			if ( arena.RulesetVote[ruleset].len() >= arena.CurrentPlayers.len() )
 				return SetCustomArenaRuleset(arena_name, ruleset, fraglimit)
 
 			// need more votes
