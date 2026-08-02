@@ -3010,7 +3010,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 			local point = scope.temp_point
 			if (!point || !point.IsValid())
 			{
-				MGE.RemoveFromArena(self)
+				// MGE.RemoveFromArena(self)
 				return
 			}
 
