@@ -53,6 +53,8 @@ function MGE::InitEntities() {
 
 		foreach(ent in ents) {
 
+			// add var to MGE table.
+			// targetname "__mge_hud_koth_red" -> MGE.HUD_KOTH_RED
 			MGE[ ent.GetName().toupper().slice(2) ] <- ent
 
 			// fix null activator/caller crash on trigger brushes

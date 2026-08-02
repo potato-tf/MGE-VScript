@@ -279,15 +279,15 @@ MGE.special_arenas <- {
 					{
 						if (p.GetScriptScope().enable_hud)
 						{
-							MGE.KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d\n%s", arena.Koth.red_cap_time.tointeger(), str[0]))
-							MGE.KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d\n%s", arena.Koth.blu_cap_time.tointeger(), str[1]))
+							MGE.HUD_KOTH_RED.KeyValueFromString("message", format("Cap Time: %d\n%s", arena.Koth.red_cap_time.tointeger(), str[0]))
+							MGE.HUD_KOTH_BLU.KeyValueFromString("message", format("Cap Time: %d\n%s", arena.Koth.blu_cap_time.tointeger(), str[1]))
 
-							MGE.KOTH_HUD_RED.AcceptInput("Display", "", p, p)
-							MGE.KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
+							MGE.HUD_KOTH_RED.AcceptInput("Display", "", p, p)
+							MGE.HUD_KOTH_BLU.AcceptInput("Display", "", p, p)
 						}
 					}
-					MGE.KOTH_HUD_RED.KeyValueFromString("message", "")
-					MGE.KOTH_HUD_BLU.KeyValueFromString("message", "")
+					MGE.HUD_KOTH_RED.KeyValueFromString("message", "")
+					MGE.HUD_KOTH_BLU.KeyValueFromString("message", "")
 
 					partial_cap_cooldowntime = Time() + arena.Koth.partial_cap_interval
 					return
@@ -359,11 +359,11 @@ MGE.special_arenas <- {
 				{
 					if (!p.GetScriptScope().enable_hud) continue
 
-					MGE.KOTH_HUD_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
-					MGE.KOTH_HUD_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
+					MGE.HUD_KOTH_RED.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.red_cap_time.tointeger()))
+					MGE.HUD_KOTH_BLU.KeyValueFromString("message", format("Cap Time: %d", arena.Koth.blu_cap_time.tointeger()))
 
-					MGE.KOTH_HUD_RED.AcceptInput("Display", "", p, p)
-					MGE.KOTH_HUD_BLU.AcceptInput("Display", "", p, p)
+					MGE.HUD_KOTH_RED.AcceptInput("Display", "", p, p)
+					MGE.HUD_KOTH_BLU.AcceptInput("Display", "", p, p)
 				}
 
 				cap_countdown_interval = Time() + arena.Koth.countdown_interval
