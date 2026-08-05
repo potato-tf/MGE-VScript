@@ -184,7 +184,8 @@ function MGE::InitEntities() {
 	EntFire("__mge_timer", "Resume")
 
 	TimerScope <- MGE.MGE_TIMER.GetScriptScope()
-	TimerScope.time_left <- GetPropFloat(MGE.MGE_TIMER, "m_flTimeRemaining")
+	TimerScope.spawn_time 	  <- Time()
+	TimerScope.time_left	  <- GetPropFloat(MGE.MGE_TIMER, "m_flTimeRemaining")
 	TimerScope.base_timestamp <- GetPropFloat(MGE.MGE_TIMER, "m_flTimeRemaining")
 
 	function TimerScope::InputSetTime() {
@@ -198,7 +199,7 @@ function MGE::InitEntities() {
 
 	function TimerScope::TimerThink() {
 
-		local time_left = (base_timestamp - Time()).tointeger()
+		time_left = (base_timestamp - (Time() - spawn_time)).tointeger()
 		if (time_left > 0)
 		{
 			// Show countdown message in last minute
