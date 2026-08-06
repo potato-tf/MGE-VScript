@@ -770,7 +770,7 @@ MGE.Events <- {
 		// 		print("new velocity: " + victim.GetAbsVelocity())
 		// 	}
 
-		if ( arena.CustomRulesetState == 1 && arena.State != AS_FIGHT )
+		if ( "CustomRulesetState" in arena && arena.CustomRulesetState == 1 && arena.State != AS_FIGHT )
 		{
 			if (attacker != victim)
 			{

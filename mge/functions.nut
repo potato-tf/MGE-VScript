@@ -1436,6 +1436,8 @@ function MGE::AddToArenaQueue(player, arena_name, player_class = 0)
 	if (!arena.CustomRulesetState)
 		MGE_ClientPrint(player, HUD_PRINTTALK, "ChoseArena", arena_name)
 
+	// don't re-queue our previous arena if we add to a new one
+	player.RemoveEFlags(EFL_REQUEUE_FOR_ARENA)
 	// Add to queue
 	arena.Queue.append(player)
 	local idx = arena.Queue.len() - 1
