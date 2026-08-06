@@ -140,7 +140,7 @@ const QUEUE_CYCLE_DELAY                      = 3.0 //delay before cycling to nex
 //hud
 //see KOTH section for KOTH hud
 const MGE_HUD_POS_X                         = 0.1
-const MGE_HUD_POS_Y                         = 0.15
+const MGE_HUD_POS_Y                         = 0.2
 
 const AMMOMOD_RESPAWN_DELAY                 = 2.0
 const AMMOMOD_DEFAULT_HP_MULT 				= 6.0

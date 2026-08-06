@@ -1,6 +1,7 @@
 MGE_CREATE_SCOPE("__mge_main", "MGE", null, "MGEThink" )
 
 MGE.ARENAS      <- {}
+MGE.CAMS_FOR_ARENAS <- {}
 MGE.ARENAS_LIST <- [] // Need ordered arenas for selection with client commands like !add
 MGE.ALL_PLAYERS <- {}
 MGE.LOCALTIME   <- {}
@@ -262,6 +263,9 @@ function MGE::InitEntities() {
 
 	if (ENABLE_LEADERBOARD)
 		SetupLeaderboard()
+
+	// EntFire("__mge_main", "CallScriptFunction", "SetupArenaCameras", 1)
+	SetupArenaCameras()
 }
 
 function MGE::ScriptEntFireSafe( target, code, delay = -1, activator = null, caller = null, allow_dead = true ) {
@@ -349,7 +353,6 @@ function MGE::InitPlayerScope(player)
 	scope.enable_announcer <- true
 	scope.enable_hud	   <- true
 	// scope.enable_countdown <- true
-	scope.won_last_match   <- false
 	scope.ball_ent		   <- null
 
 	scope.stats			   <- {
@@ -386,10 +389,10 @@ function MGE::InitPlayerScope(player)
 		local command = strip(GetClientConvarValue("cl_class", player_entindex))
 		if (strip(command) == "" || command == cvarhijack) return
 
-		local command_only = strip(split(command, " ", true)[0])
+		local split_text = split(command, " ", true)
 
-		if (command_only in MGE.Events.chat_commands)
-			MGE.Events.chat_commands[command_only]({userid = MGE.ALL_PLAYERS[player], text = command})
+		if (split_text[0] in MGE.Events.chat_commands)
+			MGE.Events.chat_commands[split_text[0].tolower()](split_text.slice(1), {userid = MGE.ALL_PLAYERS[player], text = command})
 
 		cvarhijack = command
 	}
@@ -712,11 +715,12 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 		local _arena = config[custom_ruleset_arena_name]
 		_arena.Score          <- array(2, 0)
 
-		if (arena_reset && "IsCustomRuleset" in _arena && _arena.IsCustomRuleset)
+		if (arena_reset && _arena.CustomRulesetState)
 		{
 			_arena.mge <- "1"
 			_arena.IsMGE <- true
 			_arena.RulesetVote <- {}
+			_arena.CustomRulesetState <- 0
 			foreach(k, v in special_arenas)
 			{
 				if (k in _arena)
@@ -762,7 +766,7 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 			_arena.IsUltiduo <- false
 
 			// reset custom ruleset flags
-			_arena.IsCustomRuleset = false
+			_arena.CustomRulesetState <- 0
 		}
 
 		_arena.MaxPlayers     <- "4player" in _arena && _arena["4player"] == "1" ? 4 : 2
@@ -835,8 +839,8 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 			//alternative keyvalues for KOTH logic
 			//koth_radius is a new kv that you can set per-arena
 			_arena.Koth <- {
-				//see BBall notes about adding more spawns, koth uses the final index for cap points
-				cap_point = "koth_cap" in _arena || "cap_trigger" in _arena ? "cap_trigger" in _arena ? FindByName(null, _arena.cap_trigger).GetOrigin() : _arena.koth_cap : (_arena.SpawnPoints.len() + 1).tostring()
+				// koth uses the final index for cap points
+				cap_point = "koth_cap" in _arena || "cap_trigger" in _arena ? "cap_trigger" in _arena ? FindByName(null, _arena.cap_trigger).GetOrigin() : _arena.koth_cap : _arena.SpawnPoints.len().tostring()
 				cap_radius = "koth_radius" in _arena ? _arena.koth_radius : KOTH_DEFAULT_CAPTURE_POINT_RADIUS
 				owner_team = 0
 				current_cappers = {}
@@ -890,11 +894,8 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 			{
 				try
 				{
-					if (
-						(_arena.IsBBall   	 && spawn_idx > BBALL_MAX_SPAWNS)
-						|| (_arena.IsKoth    && spawn_idx > KOTH_MAX_SPAWNS)
-						|| (_arena.IsUltiduo && spawn_idx > ULTIDUO_MAX_SPAWNS)
-					) continue
+					if ((_arena.IsBBall && spawn_idx > BBALL_MAX_SPAWNS) || (_arena.IsUltiduo && spawn_idx > ULTIDUO_MAX_SPAWNS))
+						continue
 
 					local split_spawns = split(v, " ", true).apply( @(str) str.tofloat() )
 
@@ -920,7 +921,7 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 		foreach(i, spawn in _arena.SpawnPoints)
 			spawn[2] = i < (spawnpoints_len - 1) / 2 ? TF_TEAM_RED : TF_TEAM_BLUE
 
-		local idx = (_arena.SpawnPoints.len() + 1).tostring()
+		local idx = spawnpoints_len.tostring()
 		if (_arena.IsKoth && ("koth_cap" in _arena || idx in _arena))
 			_arena.Koth.cap_point = KVStringToVectorOrQAngle(_arena["koth_cap" in _arena ? "koth_cap" : idx])
 
@@ -973,7 +974,7 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 		_arena.IsMidair       <- "midair" in _arena  && _arena.midair == "1"
 		_arena.IsAllMeat      <- "allmeat" in _arena && _arena.allmeat == "1"
 
-		_arena.IsCustomRuleset <- false
+		_arena.CustomRulesetState <- 0
 
 		//new keyvalues
 		_arena.countdown_sound 		  	<- "countdown_sound" in _arena 			? _arena.countdown_sound : COUNTDOWN_SOUND
@@ -982,9 +983,9 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 		_arena.round_start_sound_volume <- "round_start_sound_volume" in _arena ? _arena.round_start_sound_volume : ROUND_START_SOUND_VOLUME
 		_arena.airshot_height_threshold <- "airshot_height_threshold" in _arena ? _arena.airshot_height_threshold : AIRSHOT_HEIGHT_THRESHOLD
 
-		if (_arena.IsMGE && !("IsCustomRuleset" in _arena) && !("RulesetVote" in _arena))
+		if (_arena.IsMGE && !("CustomRulesetState" in _arena) && !("RulesetVote" in _arena))
 		{
-			_arena.IsCustomRuleset <- false
+			_arena.CustomRulesetState <- 0
 			_arena.RulesetVote <- {}
 			foreach(k, _ in special_arenas)
 				_arena.RulesetVote[k] <- array(2, false)
@@ -1108,7 +1109,6 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 				{
 					if (
 						(_arena.IsBBall && spawn_idx > BBALL_MAX_SPAWNS) ||
-						(_arena.IsKoth && spawn_idx > KOTH_MAX_SPAWNS) 	||
 						(_arena.IsUltiduo && spawn_idx > ULTIDUO_MAX_SPAWNS)
 					) continue
 
@@ -1123,10 +1123,10 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 						angles = QAngle(split_spawns[3], split_spawns[4], split_spawns[5])
 
 					local spawn = [origin, angles, TEAM_UNASSIGNED]
-					if (spawn_idx > SPAWN_POINTS_ABSOLUTE_MAX)
-					{
-						error(format("Spawn index out of bounds: %d.  See SPAWN_POINTS_ABSOLUTE_MAX in constants.nut", spawn_idx))
-					}
+
+					Assert((spawn_idx <= SPAWN_POINTS_ABSOLUTE_MAX), 
+					format("Spawn index out of bounds: %d.  See SPAWN_POINTS_ABSOLUTE_MAX in constants.nut", spawn_idx))
+
 					_arena.SpawnPoints[spawn_idx] = spawn
 				}
 				catch(e)
@@ -1161,11 +1161,148 @@ function MGE::LoadSpawnPoints(custom_ruleset_arena_name = null, arena_reset = fa
 					}
 				", arena_name), 0.1)
 			} else {
-				local idx = (_arena.SpawnPoints.len() + 1).tostring()
+
+				local idx = spawnpoints_len.tostring()
+
 				_arena.Koth.cap_point <- KVStringToVectorOrQAngle(_arena["koth_cap" in _arena ? "koth_cap" : idx])
 			}
 		}
 	}
+}
+
+function MGE::SetupArenaCameras()
+{
+	local trace = {
+		start  = Vector()
+		end    = Vector()
+		hit    = false,
+		enthit = false,
+		mask = MASK_OPAQUE|CONTENTS_HITBOX|CONTENTS_MONSTER
+		ignore = null,
+	}
+
+	foreach(arena_name, arena in ARENAS)
+	{
+		foreach(point in arena.SpawnPoints)
+		{
+			// grab cameras near this arena's spawn point
+			local nearest_cam = FindByClassnameNearest("info_observer_point", point[0], 2048)
+
+			if (!nearest_cam)
+				continue
+
+			// see if this camera has clear LOS to a spawn point
+			if (TraceLine(nearest_cam.GetOrigin(), point[0], nearest_cam) == 1.0 )
+			{
+				CAMS_FOR_ARENAS[nearest_cam] <- arena_name
+				break
+			}
+			// above trace can fail if the camera is behind a wall in the arena
+			// e.g. Ammomod Circular on chillypunch
+			// or if no spawn points are visible from this camera
+			else
+			{
+				trace.start  = nearest_cam.GetOrigin()
+				trace.end 	 = point[0]
+				trace.mask   = MASK_OPAQUE|CONTENTS_HITBOX|CONTENTS_WINDOW|CONTENTS_MONSTER
+				trace.ignore = nearest_cam
+				TraceLineEx(trace)
+				
+				// TODO: simple skybox checks can fail on arenas sealed by brushes instead of skybox
+				if (!(trace.surface_flags & SURF_SKY))
+				{
+					CAMS_FOR_ARENAS[nearest_cam] <- arena_name
+					break
+				}
+			}
+		}
+	}
+
+	// missed cameras, check against non-missed nearby cameras
+	// if they can see eachother, they're probably in the same arena
+	for (local cam; cam = FindByClassname(cam, "info_observer_point");)
+	{
+		if (cam in CAMS_FOR_ARENAS)
+			continue
+
+		local original_cam_pos = cam.GetOrigin()
+
+		// move camera to check for nearby cameras
+		cam.SetAbsOrigin(original_cam_pos - Vector(0, 0, 3000)) 
+
+		for (local nearby_cam; nearby_cam = FindByClassnameWithin(nearby_cam, "info_observer_point", original_cam_pos, 2048);)
+		{
+			if (!(nearby_cam in CAMS_FOR_ARENAS)) 
+				continue
+
+			if (TraceLine(nearby_cam.GetOrigin(), original_cam_pos, nearby_cam) == 1.0)
+			{
+				CAMS_FOR_ARENAS[cam] <- CAMS_FOR_ARENAS[nearby_cam]
+				break
+			}
+		}
+
+		cam.SetAbsOrigin(original_cam_pos)
+	}
+
+	CAMS_FOR_ARENAS = CAMS_FOR_ARENAS.filter( @(cam, _) cam && cam.IsValid() )
+}
+
+function MGE::UpdateArenaHUD(arena_name, player = null)
+{
+	local arena = ARENAS[arena_name]
+
+	if (!MGE_HUD || !MGE_HUD.IsValid())
+		InitEntities()
+
+	local hudstr = arena_name + "\n"
+	foreach(p, _ in arena.CurrentPlayers)
+	{
+		local scope = p.GetScriptScope()
+		local team = p.GetTeam()
+
+		//joined spectator directly without using !remove
+		if (team <= TEAM_SPECTATOR) continue
+
+		hudstr += format("%s: %d (%s)\n", scope.player_name, arena.Score[team - 2], p.IsFakeClient() ? "BOT" : scope.stats.elo.tostring())
+	}
+
+	MGE_HUD.KeyValueFromString("message", hudstr)
+
+	// only update HUD for this player
+	if (player && player.GetScriptScope().enable_hud)
+	{
+		MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+		MGE_HUD.AcceptInput("Display", "", player, player)
+		return
+	}
+
+	foreach(p, _ in arena.CurrentPlayers)
+	{
+		if (!p.GetScriptScope().enable_hud)
+			continue
+
+		MGE_HUD.KeyValueFromString("color2",  p.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
+		MGE_HUD.AcceptInput("Display", "", p, p)
+	}
+}
+
+function MGE::GetSpectatorArena(player)
+{
+	local target = GetPropEntity(player, "m_hObserverTarget")
+
+	if (!target)
+		return
+
+	if (target.IsPlayer())
+	{	
+		local scope = target.GetScriptScope()
+		if ("arena_info" in scope && "arena" in scope.arena_info)
+			return scope.arena_info.name
+	}
+
+	if (target in CAMS_FOR_ARENAS)
+		return CAMS_FOR_ARENAS[target]
 }
 
 function MGE::AllMeat_FindWeapon(weapon)
@@ -1278,7 +1415,6 @@ function MGE::BBall_Pickup(player = null)
 
 function MGE::AddToArenaQueue(player, arena_name, player_class = 0)
 {
-
 	local arena = ARENAS[arena_name]
 
 	if (player in arena.CurrentPlayers || arena.Queue.find(player) != null)
@@ -1287,45 +1423,43 @@ function MGE::AddToArenaQueue(player, arena_name, player_class = 0)
 		return
 	}
 
-
 	local scope = player.GetScriptScope()
 
 	//somehow we didn't get our stats, fetch again on arena join
 	if (scope.stats.elo == -INT_MAX && ELO_TRACKING_MODE == 2)
 		GetStats(player)
+	
+	local arena_full = arena.CurrentPlayers.len() >= arena.MaxPlayers
 
-	RemoveFromArena(player, false)
+	RemoveFromArena(player, arena_full)
 
-	if (!arena.IsCustomRuleset)
+	if (!arena.CustomRulesetState)
 		MGE_ClientPrint(player, HUD_PRINTTALK, "ChoseArena", arena_name)
 
-	// Enough room, add to arena
-	if (arena.CurrentPlayers.len() < arena.MaxPlayers)
+	// Add to queue
+	arena.Queue.append(player)
+	local idx = arena.Queue.len() - 1
+
+	scope.arena_info.queue_for = arena_name
+	scope.arena_info.queue_pos = idx
+
+	local str = format( GetLocalizedString( !idx ? "NextInLine" : "InLine", player ), " " + (idx + 1) )
+	MGE_ClientPrint(player, HUD_PRINTTALK, str)
+
+	if (!arena_full)
 	{
-		AddToArena(player, arena_name, player_class)
+		CycleQueue(arena_name)
 
 		local name = scope.player_name
 		local elo = scope.stats.elo
 		// printl(arena_name)
-		if (!arena.IsCustomRuleset)
+		if (!arena.CustomRulesetState)
 		{
 			local str = ELO_TRACKING_MODE ?
 				format(GetLocalizedString("JoinsArena", player), name, player.IsFakeClient() ? "BOT" : elo.tostring(), arena_name) :
-				format(GetLocalizedString("JoinsArenaNoStats", player), scope.player_name, arena_name)
+				format(GetLocalizedString("JoinsArenaNoStats", player), name, arena_name)
 			MGE_ClientPrint(null, HUD_PRINTTALK, str)
 		}
-	}
-	// Add to queue
-	else
-	{
-		arena.Queue.append(player)
-		local idx = arena.Queue.len() - 1
-
-		scope.arena_info.queue_for = arena_name
-		scope.arena_info.queue_pos = idx
-
-		local str = format( GetLocalizedString( !idx ? "NextInLine" : "InLine", player ), "" + (idx + 1) )
-		MGE_ClientPrint(player, HUD_PRINTTALK, str)
 	}
 }
 
@@ -1386,7 +1520,7 @@ function MGE::RemoveFromArena(player, changeteam=true)
 
 	if ("ThinkTable" in scope)
 		foreach (k, v in scope.ThinkTable)
-			if (k != "ConCommandHijack")
+			if (k != "ConCommandHijack" && k != "SpecThink")
 				delete scope.ThinkTable[k]
 
 	local arena = scope.arena_info.arena
@@ -1419,7 +1553,7 @@ function MGE::RemoveFromArena(player, changeteam=true)
 	if (player in arena.CurrentPlayers)
 		delete arena.CurrentPlayers[player]
 
-	if (arena.IsCustomRuleset)
+	if (arena.CustomRulesetState)
 		LoadSpawnPoints(arena_name, true)
 
 	if (changeteam && player.GetTeam() != TEAM_SPECTATOR)
@@ -1530,36 +1664,21 @@ function MGE::RemoveAllBots()
 
 function MGE::CycleQueue(arena_name)
 {
-
 	local arena = ARENAS[arena_name]
 
 	local queue = arena.Queue
 
-	// queue is empty, remove flagged players from arena and return
-	if (!queue.len())
+	foreach ( p in arena.CurrentPlayers.keys().extend(queue) )
 	{
-		foreach (p, _ in arena.CurrentPlayers)
-			if (p.IsEFlagSet(EFL_REMOVE_FROM_ARENA))
-				RemoveFromArena(p)
-
-		return SetArenaState(arena_name, AS_IDLE)
-	}
-
-	local combined = arena.CurrentPlayers.keys().extend(queue)
-
-	foreach ( p in combined )
-	{
-		local requeue = queue.find(p) == null && !p.GetScriptScope().won_last_match
-		if ( p.IsEFlagSet(EFL_REMOVE_FROM_ARENA) || requeue )
-		{
+		if ( p.IsEFlagSet(EFL_REMOVE_FROM_ARENA) )
 			RemoveFromArena(p)
 
-			if (requeue)
-				AddToArenaQueue(p, arena_name)
-		}
+		if ( p.IsEFlagSet(EFL_REQUEUE_FOR_ARENA) )
+			ScriptEntFireSafe( "__mge_main", format("AddToArenaQueue(activator, `%s`)", arena_name), GENERIC_DELAY, p)
 	}
 	
-	// check queue again after removing flagged players
+	// SetArenaState(arena_name, AS_IDLE)
+
 	if (queue.len()) {
 
 		AddToArena(queue[0], arena_name)
@@ -1567,9 +1686,10 @@ function MGE::CycleQueue(arena_name)
 
 		foreach(i, p in queue)
 			MGE_ClientPrint(p, HUD_PRINTTALK, "InLine", (i + 1))
+		
+		if (arena.CurrentPlayers.len() < arena.MaxPlayers)
+			CycleQueue(arena_name)
 	}
-
-	SetArenaState(arena_name, AS_IDLE)
 }
 
 function MGE::CalcELO(winner, loser) {
@@ -1582,7 +1702,7 @@ function MGE::CalcELO(winner, loser) {
 
 	local arena = winner.GetScriptScope().arena_info.arena
 
-	if (arena.IsCustomRuleset)
+	if (arena.CustomRulesetState)
 		return
 
 	local winner_stats = winner.GetScriptScope().stats
@@ -1668,7 +1788,7 @@ function MGE::CalcELO2(winner, winner2, loser, loser2) {
 
 	local arena = winner.GetScriptScope().arena_info.arena
 
-	if (arena.IsCustomRuleset)
+	if (arena.CustomRulesetState)
 		return
 
 	local loser_scope 	= loser.GetScriptScope()
@@ -1761,22 +1881,7 @@ function MGE::CalcArenaScore(arena_name)
 
 	local arena_players = arena.CurrentPlayers.keys()
 
-	local hudstr = format("%s\n", arena_name)
-
-	foreach(p in arena_players)
-		if (p && p.IsValid())
-			hudstr = format("%s%s: %d (%s)\n",
-				hudstr,
-				p.GetScriptScope().player_name,
-				arena.Score[p.GetTeam() - 2],
-				p.IsFakeClient() ? "BOT" : p.GetScriptScope().stats.elo.tostring()
-			)
-
-	MGE_HUD.KeyValueFromString("message", hudstr)
-
-	foreach(p in arena_players)
-		if (p && p.IsValid() && p.GetScriptScope().enable_hud)
-			MGE_HUD.AcceptInput("Display", "", p, p)
+	UpdateArenaHUD(arena_name)
 
 	local fraglimit = arena.fraglimit.tointeger()
 
@@ -1796,8 +1901,7 @@ function MGE::CalcArenaScore(arena_name)
 			local winner_scope = winner.GetScriptScope()
 
 
-			loser_scope.won_last_match = false
-			winner_scope.won_last_match = true
+			loser.AddEFlags(EFL_REMOVE_FROM_ARENA|EFL_REQUEUE_FOR_ARENA)
 
 			MGE_ClientPrint(null, HUD_PRINTTALK, "XdefeatsY",
 				winner_scope.player_name,
@@ -1818,14 +1922,12 @@ function MGE::CalcArenaScore(arena_name)
 			{
 				local scope = p.GetScriptScope()
 				if (arena.Score[p.GetTeam() - 2] >= fraglimit) {
-
 					winners.append(p)
-					scope.won_last_match = true
 				}
 				else {
 
 					losers.append(p)
-					scope.won_last_match = false
+					p.AddEFlags(EFL_REMOVE_FROM_ARENA|EFL_REQUEUE_FOR_ARENA)
 				}
 			}
 
@@ -2001,17 +2103,8 @@ function MGE::SetArenaState(arena_name, state) {
 					foreach(player, _ in arena.CurrentPlayers)
 						EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", -1, null, null)
 				}
-				local setting_custom_ruleset = false
-				foreach(player, _ in arena.CurrentPlayers)
-				{
-					if ( "CustomRulesetThink" in player.GetScriptScope().ThinkTable )
-					{
-						setting_custom_ruleset = true
-						break
-					}
-				}
-				if ( arena.CurrentPlayers.len() == arena.MaxPlayers && !setting_custom_ruleset )
-					SetArenaState( arena_name, AS_COUNTDOWN )
+				// if ( arena.CurrentPlayers.len() == arena.MaxPlayers && !setting_custom_ruleset )
+				// 	SetArenaState( arena_name, AS_COUNTDOWN )
 			}
 
 			function AS_COUNTDOWN(arena_name, arena) {
@@ -2143,7 +2236,7 @@ function MGE::SetArenaState(arena_name, state) {
 					//20-0
 					if (arena.Score.find(arena.fraglimit.tointeger()) && arena.Score.find(0))
 					{
-						local sound = p.GetScriptScope().won_last_match ? format("vo/announcer_am_flawlessvictory0%d.mp3", RandomInt(1, 3)) : format("vo/announcer_am_flawlessdefeat0%d.mp3", RandomInt(1, 4))
+						local sound = p.IsEFlagSet(EFL_REMOVE_FROM_ARENA) ? format("vo/announcer_am_flawlessvictory0%d.mp3", RandomInt(1, 3)) : format("vo/announcer_am_flawlessdefeat0%d.mp3", RandomInt(1, 4))
 						PlayAnnouncer(p, sound)
 					}
 					//left early
@@ -2162,7 +2255,7 @@ function MGE::SetArenaState(arena_name, state) {
 				if (arena.IsKoth)
 					arena.Koth.current_cappers.clear()
 
-				if (arena.IsCustomRuleset)
+				if (arena.CustomRulesetState)
 					foreach(p, _ in arena.CurrentPlayers)
 						RemoveFromArena(p)
 
@@ -2532,7 +2625,7 @@ function MGE::SwitchWeaponSlot(player, slot, delay = -2)
 		EntFireByHandle(MGE_CLIENTCOMMAND, "Command", format("slot%d", slot), delay, player, player)
 }
 
-function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
+function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = null)
 {
 	local arena = ARENAS[arena_name]
 	local arena_players = arena.CurrentPlayers.keys()
@@ -2546,7 +2639,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 	arena.RulesetVote.clear()
 
 	arena[ruleset] <- "1"
-	arena.IsCustomRuleset <- true
+	arena.CustomRulesetState <- 1
 
 	local infammo_arenas = {
 
@@ -2670,31 +2763,32 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 		function ammomod() {
 			MGE.LoadSpawnPoints(arena_name)
-			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
+			arena.fraglimit = fraglimit || AMMOMOD_DEFAULT_FRAGLIMIT
 			arena.hpratio = AMMOMOD_DEFAULT_HP_MULT
 			return
 		}
 
 		function endif() {
 			MGE.LoadSpawnPoints(arena_name)
-			arena.fraglimit = AMMOMOD_DEFAULT_FRAGLIMIT
+			arena.fraglimit = fraglimit || AMMOMOD_DEFAULT_FRAGLIMIT
 			return
 		}
 
 		function midair() {
 			MGE.LoadSpawnPoints(arena_name)
-			arena.fraglimit = fraglimit
+			arena.fraglimit = fraglimit || AMMOMOD_DEFAULT_FRAGLIMIT
 			return
 		}
 
 		function allmeat() {
 			MGE.LoadSpawnPoints(arena_name)
-			arena.fraglimit = ALLMEAT_DEFAULT_FRAGLIMIT
+			arena.fraglimit = fraglimit || ALLMEAT_DEFAULT_FRAGLIMIT
 			return
 		}
 
 		"4player" : function() {
 			MGE.LoadSpawnPoints(arena_name)
+			arena.fraglimit = fraglimit || AMMOMOD_DEFAULT_FRAGLIMIT
 			return
 		}
 	}.setdelegate(MGE)
@@ -2703,7 +2797,6 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 		// absolute formatting nightmare
 		// does not cleanly map to in-game behavior when reading top to bottom
-
 		function bball() {
 
 			local scope = self.GetScriptScope()
@@ -2804,7 +2897,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 						// arena.bball_hoop_red <- scope.hoop.GetScriptScope().basket.ToKVString()
 						// arena.bball_hoop_blue <- scope.hoop.GetScriptScope().basket.ToKVString()
 
-						arena.fraglimit = 5
+						arena.fraglimit = fraglimit || DEFAULT_FRAGLIMIT
 
 						arena.bball_home 		<- ball.GetOrigin().ToKVString()
 						arena.bball_home_red 	<- ball.GetOrigin().ToKVString()
@@ -2846,6 +2939,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 								delete scope.ThinkTable.CustomRulesetThink
 							p.RemoveCustomAttribute("no_attack")
 							p.RemoveCustomAttribute("disable weapon switch")
+							arena.CustomRulesetState = 2
 						}
 						arena.RulesetVote.clear()
 						MGE.LoadSpawnPoints(arena_name)
@@ -3053,7 +3147,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				//we both picked an area close enough to eachother, start the game
 				if (votepos[0] && votepos[1] && (votepos[0] - votepos[1]).Length() < 200.0)
 				{
-					arena.fraglimit = 2
+					arena.fraglimit = fraglimit || 2
 					arena.koth_cap <- point.GetOrigin().ToKVString()
 
 					local cap_point = arena.RulesetVote.cap_point
@@ -3076,6 +3170,8 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 
 						if ("CustomRulesetThink" in scope.ThinkTable)
 							delete scope.ThinkTable.CustomRulesetThink
+
+						arena.CustomRulesetState = 2
 					}
 					delete arena.RulesetVote.pointvote_pos
 					MGE.LoadSpawnPoints(arena_name)
@@ -3087,7 +3183,7 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 				{
 					SendGlobalGameEvent("show_annotation", {
 
-						id 					= self.entindex() + KOTH_MAX_SPAWNS
+						id 					= self.entindex() + spawnpoints_len
 						text 				= scope.player_name + " wants to spawn the point here"
 						lifetime 			= 3.0
 						play_sound 			= COUNTDOWN_SOUND
@@ -3104,21 +3200,27 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 		function ultiduo() {
 			return
 		}
+
 		function ammomod() {
 			return
 		}
+
 		function endif() {
 			return
 		}
+
 		function midair() {
 			return
 		}
+
 		function allmeat() {
 			return
 		}
+
 		"4player" : function() {
 			return
 		}
+
 	}.setdelegate(MGE)
 
 	foreach (p in arena_players)
@@ -3126,21 +3228,23 @@ function MGE::SetCustomArenaRuleset(arena_name, ruleset, fraglimit = 5)
 		local scope = p.GetScriptScope()
 		ruleset_inits[ruleset].call(scope)
 		scope.ThinkTable["CustomRulesetThink"] <- ruleset_thinks[ruleset].bindenv(scope)
-
 		if (ruleset == "bball" || ruleset == "koth")
 		{
 			for (local child = p.FirstMoveChild(); child; child = child.NextMovePeer())
+			{
 				if (child instanceof CEconEntity)
 				{
 					SetPropInt(child, "m_nRenderMode", kRenderTransColor)
 					SetPropInt(child, "m_clrRender", 0)
 				}
+			}
 
 			p.AddCustomAttribute("no_attack", 1, -1)
 			p.AddCustomAttribute("disable weapon switch", 1, -1)
 		}
 	}
 
+	arena.CustomRulesetState = 1
 	SetArenaState(arena_name, AS_IDLE)
 
 	return

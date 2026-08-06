@@ -11,48 +11,59 @@ MGE.Events <- {
 
 	chat_commands = {
 
-		function add(params) {
+		function add(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 
-			local split_text = split(params.text, " ", true)
+			local function print_arenas() {
 
-			local idx = null
+				ClientPrint(player, 3, format("\x07%s Valid arenas:\x01", MGE_COLOR_MAIN))
 
-			try
-				idx = split_text[1].tointeger() - 1
-			catch(_) {}
+				foreach (i, arena_name in ARENAS_LIST) {
 
-			if (split_text.len() < 2 || idx > ARENAS_LIST.len() - 1 || idx < 0) {
+					local str = format("\x07%s %d:\x07%s %s\x01", MGE_COLOR_MAIN, i+1, MGE_COLOR_SUBJECT, arena_name)
 
-				ClientPrint(player, 3, "Valid arenas:")
+					local arena_players = ARENAS[arena_name].CurrentPlayers.len() + ARENAS[arena_name].Queue.len()
 
-				local i = 1
-				foreach (arena_name in ARENAS_LIST) {
-					ClientPrint(player, 3, format("\t%d: %s", i, arena_name))
-					i++
-				}
-				return
-			}
+					if ( arena_players )
+						str += format("\x07%s (%d)\x01", MGE_COLOR_BACKGROUND, arena_players)
 
-			if (idx != null)
-			{
-				AddToArenaQueue(player, ARENAS_LIST[idx])
-			}
-			else
-			{
-				foreach (arena_name, _ in ARENAS)
-				{
-					if (startswith(arena_name, split_text[1]))
-					{
-						AddToArenaQueue(player, arena_name)
-						break
-					}
+					ClientPrint(player, HUD_PRINTTALK, str)
 				}
 			}
+
+			if (!args.len())
+				return print_arenas()
+
+			local idx = ToStrictNum(args[0])
+
+			if (!idx)
+			{
+				if ( args[0] in ARENAS )
+					return AddToArenaQueue(player, args[0])
+
+				foreach (arena_name, _ in ARENAS) {
+
+					if (startswith(arena_name.tolower(), args[0].tolower()))
+						return AddToArenaQueue(player, arena_name)
+
+					foreach (substr in split(arena_name, " ", true))
+						if (startswith(substr.tolower(), args[0].tolower()))
+							return AddToArenaQueue(player, arena_name)
+				}
+
+				return print_arenas()
+			}
+
+			idx--
+
+			if (idx < 0 || idx >= ARENAS_LIST.len())
+				return print_arenas()
+
+			AddToArenaQueue(player, ARENAS_LIST[idx])
 		}
 
-		function remove(params) {
+		function remove(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
@@ -60,41 +71,38 @@ MGE.Events <- {
 
 			if (!arena) return
 
+			player.RemoveEFlags(EFL_REQUEUE_FOR_ARENA)
 			player.AddEFlags(EFL_REMOVE_FROM_ARENA)
 			CycleQueue(scope.arena_info.name)
 			// RemoveFromArena(player)
 		}
 
-		function addbot(params) {
+		function addbot(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 
 			if (!scope.arena_info) return
 
-			local split_text = split(params.text, " ", true)
-
-			AddBot(scope.arena_info.name, 1 in split_text ? ArenaClasses.find(split_text[1]) : TF_CLASS_SOLDIER)
+			AddBot(scope.arena_info.name, args.len() ? ArenaClasses.find(args[0]) : TF_CLASS_SOLDIER)
 		}
 
-		function removebot(params) {
+		function removebot(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
 
 			if (!scope.arena_info) return
 
-			local split_text = split(params.text, " ", true)
-			
 			foreach(player, _ in scope.arena_info.arena.CurrentPlayers)
 				if (player.IsFakeClient())
 					player.AddEFlags(EFL_REMOVE_FROM_ARENA)
 
 			CycleQueue(scope.arena_info.name)
-			// RemoveBot(scope.arena_info.name, 1 in split_text && split_text[1].tolower() == "all")
+			// RemoveBot(scope.arena_info.name, args.len() > 0 && args[0].tolower() == "all")
 		}
 
-		function handicap(params) {
+		function handicap(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
@@ -103,39 +111,39 @@ MGE.Events <- {
 
 			// if (arena.State != AS_IDLE) return
 
-			local split_text = split(params.text, " ", true)
-			local split_text_len = split_text.len()
 			if (!("handicap_hp_penalty" in scope))
 				scope.player_max_health_handicap <- player.GetMaxHealth()
 
-			if (split_text_len > 1)
+			if (args.len())
 			{
-				local handicap_text = split_text[1]
 
-				if ( handicap_text.tolower() == "off" )
-				{
-					scope.handicap_hp_penalty <- 0
-					return
-				}
+				local handicap = 0
 
-				local handicap = abs(ToStrictNum(split_text[1]))
-				if (!handicap || handicap > scope.player_max_health_handicap)
+				if ( args[0].tolower() != "off" )
+					handicap = abs(ToStrictNum(args[0]))
+
+				if (handicap > scope.player_max_health_handicap)
+					return MGE_ClientPrint(player, HUD_PRINTTALK, "InvalidHandicap")
+
+				else if (!handicap)
 				{
-					MGE_ClientPrint(player, HUD_PRINTTALK, handicap > scope.player_max_health_handicap ? "InvalidHandicap" : "HandicapDisabled")
-					// player.RemoveCustomAttribute("max health additive penalty")
+					MGE_ClientPrint(player, HUD_PRINTTALK, "HandicapDisabled")
+
 					if ("handicap_hp_penalty" in scope)
 						delete scope.handicap_hp_penalty
+
 					return
 				}
-				// player.AddCustomAttribute("max health additive penalty", handicap * -1.0, -1.0)
 				scope.handicap_hp_penalty <- handicap
 			}
-			"handicap_hp_penalty" in scope ?
-			MGE_ClientPrint(player, HUD_PRINTTALK, "CurrentHandicap", -scope.handicap_hp_penalty) :
-			MGE_ClientPrint(player, HUD_PRINTTALK, "NoCurrentHandicap")
+
+			if ("handicap_hp_penalty" in scope)
+				MGE_ClientPrint(player, HUD_PRINTTALK, "CurrentHandicap", -scope.handicap_hp_penalty)
+			else
+				MGE_ClientPrint(player, HUD_PRINTTALK, "NoCurrentHandicap")
 		}
 
-		function announcer(params) {
+		function announcer(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
@@ -143,7 +151,7 @@ MGE.Events <- {
 			MGE_ClientPrint(player, HUD_PRINTTALK, scope.enable_announcer ? "AnnouncerEnabled" : "AnnouncerDisabled")
 		}
 
-		function hud(params) {
+		function hud(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
@@ -151,7 +159,7 @@ MGE.Events <- {
 			MGE_ClientPrint(player, HUD_PRINTTALK, scope.enable_hud ? "HUDEnabled" : "HUDDisabled")
 		}
 
-		function ruleset(params) {
+		function ruleset(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
@@ -165,11 +173,10 @@ MGE.Events <- {
 				return MGE_ClientPrint(player, HUD_PRINTTALK, "RulesetCannotSet")
 
 			local arena_name = scope.arena_info.name
-			local ruleset_split = split(params.text, " ", true)
 
-			if (ruleset_split.len() == 1 || !(ruleset_split[1] in special_arenas))
+			if (args.len() == 1 || !(args[0] in special_arenas))
 			{
-				MGE_ClientPrint(player, HUD_PRINTTALK, "InvalidRuleset", ruleset_split.len() == 1 ? "" : ruleset_split[1])
+				MGE_ClientPrint(player, HUD_PRINTTALK, "InvalidRuleset", args.len() == 1 ? "" : args[0])
 
 				local valid_rulesets = ""
 				foreach (ruleset, _ in special_arenas)
@@ -179,8 +186,8 @@ MGE.Events <- {
 				ClientPrint(player, HUD_PRINTTALK, format("\x07%sValid Rulesets:\x07%s %s", MGE_COLOR_MAIN, MGE_COLOR_SUBJECT, valid_rulesets))
 				return
 			}
-			local ruleset = ruleset_split[1]
-			local fraglimit = 2 in ruleset_split ? ruleset_split[2].tointeger() : arena.fraglimit / 2
+			local ruleset = args[0]
+			local fraglimit = args.len() > 1 ? args[1].tointeger() : arena.fraglimit / 2
 
 			if (!("RulesetVote" in arena))
 				arena.RulesetVote <- {}
@@ -201,18 +208,17 @@ MGE.Events <- {
 					MGE_ClientPrint(p, HUD_PRINTTALK, "RulesetVoteArena", scope.player_name, ruleset, ruleset)
 		}
 
-		function language(params) {
+		function language(args, params) {
 
-			local lang = split(params.text, " ", true)
 			local player = GetPlayerFromUserID(params.userid)
-			if (lang.len() > 1 && lang[1] in MGE_Localization) {
+			if (args.len() > 0 && args[0] in MGE_Localization) {
 
-				MGE_ClientPrint(player, HUD_PRINTTALK, "LanguageSet", lang[1])
-				player.GetScriptScope().language <- lang[1]
+				MGE_ClientPrint(player, HUD_PRINTTALK, "LanguageSet", args[0])
+				player.GetScriptScope().language <- args[0]
 			}
 		}
 
-		function rank(params) {
+		function rank(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 			local scope = player.GetScriptScope()
@@ -223,7 +229,7 @@ MGE.Events <- {
 				MGE_ClientPrint(player, HUD_PRINTTALK, "MyRankNoRating", scope.stats.wins.tostring(), scope.stats.losses.tostring())
 		}
 
-		function help(params) {
+		function help(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 			MGE_ClientPrint(player, HUD_PRINTTALK, "Cmd_MGECmds")
@@ -240,12 +246,11 @@ MGE.Events <- {
 			MGE_ClientPrint(player, HUD_PRINTCONSOLE, "Cmd_Language")
 		}
 
-		function mgehelp(params) { this["help"](params) }
+		function mgehelp(args, params) { this["help"](args, params) }
 
-		function top5(params) {
+		function top5(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
-			local text = params.text
 
 			if (!ENABLE_LEADERBOARD)
 			{
@@ -253,7 +258,7 @@ MGE.Events <- {
 				return
 			}
 
-			local stat = split(text, " ", true).len() > 1 ? split(text, " ", true)[1].tolower() : "elo"
+			local stat = args.len() ? args[0].tolower() : "elo"
 
 			local data = ""
 			if (stat == "elo")
@@ -281,7 +286,7 @@ MGE.Events <- {
 			}
 		}
 
-		function stats(params) {
+		function stats(args, params) {
 
 			local player = GetPlayerFromUserID(params.userid)
 			MGE_ClientPrint(player, HUD_PRINTTALK, "Cmd_SeeConsole")
@@ -289,7 +294,7 @@ MGE.Events <- {
 				ClientPrint(player, HUD_PRINTCONSOLE, k + " : " + v)
 		}
 
-		function admincmd(params, prefix = "") {
+		function admincmd(args, params, prefix = "") {
 
 			local player = GetPlayerFromUserID(params.userid)
 			local steam_id = GetPropString(player, "m_szNetworkIDString")
@@ -303,7 +308,7 @@ MGE.Events <- {
 			local cmd = ""
 
 			// strip out redundant spaces
-			foreach( s in split(params.text, " ", true).slice(1) )
+			foreach( s in args )
 				cmd += s + " "
 
 			cmd = CharReplace(cmd, "'", "\"")
@@ -311,34 +316,22 @@ MGE.Events <- {
 			SendToServerConsole(prefix + " " + cmd)
 		}
 
-		function adminscript(params) { admincmd( params, "script" ) }
+		function adminscript(args, params) { admincmd(args, params, "script") }
 	}
 
 	function OnGameEvent_player_changename(params) { GetPlayerFromUserID(params.userid).GetScriptScope().player_name = params.newname }
 	function OnGameEvent_teamplay_round_start(params) { HandleRoundStart() }
 
-	function OnGameEvent_player_disconnect(params)
-	{
-		local player = GetPlayerFromUserID(params.userid)
-		if (!player) return
-
-		RemoveFromArena(player, false)
-
-		delete ALL_PLAYERS[player]
-	}
-
 	function OnGameEvent_player_say(params)
 	{
-
-		local split_text = split(params.text.tolower(), " ", true)
+		local split_text = split(params.text, " ", true)
 
 		if ( !split_text.len() ) return
 
-		local command_only = split_text[0]
-		command_only = command_only.slice(1)
+		local command = split_text[0].tolower().slice(1)
 
-		if (split_text[0][0] in valid_chars && command_only in chat_commands)
-			chat_commands[command_only](params)
+		if (split_text[0][0] in valid_chars && command in chat_commands)
+			chat_commands[command](split_text.slice(1), params)
 
 		//allow spectators to talk
 		//turns out this isn't necessary
@@ -355,6 +348,16 @@ MGE.Events <- {
 		// 		}
 		// 	}
 		// }
+	}
+
+	function OnGameEvent_player_disconnect(params)
+	{
+		local player = GetPlayerFromUserID(params.userid)
+		if (!player) return
+
+		RemoveFromArena(player, false)
+
+		delete ALL_PLAYERS[player]
 	}
 
 	function OnGameEvent_player_spawn(params)
@@ -431,12 +434,10 @@ MGE.Events <- {
 			local _arena = ARENAS[arena_name]
 
 			//set arena state to countdown
+			local start_countdown = false
 			if (arena.State == AS_IDLE && arena_players.len() == arena.MaxPlayers)
 			{
-				if (!arena.IsUltiduo && !( (arena.IsBBall || arena.IsKoth) && arena.State == AS_IDLE && arena.IsCustomRuleset) )
-					ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
-
-				else if (arena.IsUltiduo)
+				if (arena.IsUltiduo)
 				{
 					local current_medics = arena.Ultiduo.CurrentMedics
 					foreach(p in arena_players)
@@ -444,16 +445,19 @@ MGE.Events <- {
 							current_medics[p.GetTeam() - 2] = p
 
 					if (current_medics[0] && current_medics[1])
-						ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
+						start_countdown = true
 					else
 					{
 						foreach(p in arena_players)
 							MGE_ClientPrint(p, HUD_PRINTTALK, "UltiduoNotEnoughMedics")
-
-						arena.Ultiduo.CurrentMedics <- array(2, null)
 					}
 				}
+				else if (arena.CustomRulesetState != 1)
+					start_countdown = true
 			}
+
+			if (start_countdown)
+				ScriptEntFireSafe(player, "MGE.SetArenaState(arena_info.name, AS_COUNTDOWN)", COUNTDOWN_START_DELAY)
 
 			ScriptEntFireSafe("__mge_main", format("SetSpecialArena(activator, `%s`)", arena_name), GENERIC_DELAY, player)
 
@@ -488,29 +492,8 @@ MGE.Events <- {
 				})
 			}
 
-			if (scope.enable_hud)
-			{
-				//update hud
-				local hudstr = format("%s\n", arena_name)
-				foreach(p in arena_players)
-				{
-					local scope = p.GetScriptScope()
-					local team = p.GetTeam()
-
-					//joined spectator directly without using !remove
-					if (team <= TEAM_SPECTATOR) continue
-
-					hudstr += format("%s: %d (%s)\n", scope.player_name, arena.Score[team - 2], p.IsFakeClient() ? "BOT" : scope.stats.elo.tostring())
-				}
-
-				if (!MGE_HUD || !MGE_HUD.IsValid())
-					InitEntities()
-
-				MGE_HUD.KeyValueFromString("message", hudstr)
-				MGE_HUD.KeyValueFromString("color2",  player.GetTeam() == TF_TEAM_RED ? KOTH_RED_HUD_COLOR : KOTH_BLU_HUD_COLOR)
-				// MGE_HUD.AcceptInput("Display", "", player, player)
-				EntFireByHandle(MGE_HUD, "Display", "", GENERIC_DELAY, player, player)
-			}
+			// UpdateArenaHUD(arena_name, player)
+			ScriptEntFireSafe("__mge_main", format("UpdateArenaHUD(`%s`, activator)", arena_name), GENERIC_DELAY, player)
 
 			// if (arena.IsBBall)
 			EntFireByHandle(player, "DispatchEffect", "ParticleEffectStop", GENERIC_DELAY, null, null)
@@ -574,12 +557,13 @@ MGE.Events <- {
 
 		local arena_name = victim_scope.arena_info.name
 
-		if ( arena.IsCustomRuleset 
+		if ( arena.CustomRulesetState == 1 
 			&& arena.State == AS_IDLE 
 			&& "CustomRulesetThink" in victim_scope.ThinkTable 
 			&& ("bball" in victim_scope.ThinkTable || "koth" in victim_scope.ThinkTable)
 		) {
 			delete victim_scope.ThinkTable.CustomRulesetThink
+			arena.CustomRulesetState = 2
 			LoadSpawnPoints(arena_name, true)
 			return
 		}
@@ -664,7 +648,7 @@ MGE.Events <- {
 		// Koth / bball mode doesn't count deaths
 		if (!arena.IsKoth && !arena.IsBBall && arena.State == AS_FIGHT)
 		{
-			(victim.GetTeam() == TF_TEAM_RED) ? ++arena.Score[1] : ++arena.Score[0]
+			arena.Score[victim.GetTeam() == TF_TEAM_RED ? 1 : 0]++
 
 			CalcArenaScore(arena_name)
 		}
@@ -719,34 +703,50 @@ MGE.Events <- {
 		local team = params.team
 		if ("ThinkTable" in scope && "SpecThink" in scope.ThinkTable)
 			delete scope.ThinkTable.SpecThink
+		local bot = player.IsFakeClient()
+		local arena = scope.arena_info.arena
 
-		if (team == TEAM_SPECTATOR)
+		if (team <= TEAM_SPECTATOR)
 		{
 			if ("MGE" in ROOT && "MGE_LeaderboardCam" in MGE)
 				SetPropEntity(player, "m_hObserverTarget", MGE_LeaderboardCam)
 
 			local spec_cooldown_time = 0.0
-			local arena = scope.arena_info.arena || {State = -1}
-			RemoveFromArena(player, false)
-			if (!player.IsFakeClient())
+
+			if (arena) 
+			{
+				player.AddEFlags(EFL_REMOVE_FROM_ARENA)
+				CycleQueue(scope.arena_info.name)
+			}
+
+			if (!bot)
 			{
 				function SpecThink()
 				{
+					local spec_arena = GetSpectatorArena(player)
+					// printl(spec_arena)
+					if (spec_arena)
+					{
+						UpdateArenaHUD(spec_arena, player)
+					}
+
 					if (spec_cooldown_time < Time())
 					{
 						MGE_ClientPrint(player, HUD_PRINTTALK, "Adv")
 						spec_cooldown_time = Time() + SPECTATOR_MESSAGE_COOLDOWN
 					}
+
 				}
 				scope.ThinkTable.SpecThink <- SpecThink.bindenv(this)
 			}
 		}
 		else if (params.oldteam > TEAM_SPECTATOR && team > TEAM_SPECTATOR && !player.IsEFlagSet(EFL_ADDING_TO_ARENA))
 		{
-			if (!player.IsFakeClient())
+			if (!bot)
 			{
 				printf("AUTOTEAM SWITCH BLOCKED! removing %s from arena\n", scope.player_name)
-				RemoveFromArena(player)
+				player.AddEFlags(EFL_REMOVE_FROM_ARENA)
+				CycleQueue(scope.arena_info.name)
 			}
 		}
 	}
@@ -770,7 +770,7 @@ MGE.Events <- {
 		// 		print("new velocity: " + victim.GetAbsVelocity())
 		// 	}
 
-		if ( arena.IsCustomRuleset && arena.State != AS_FIGHT )
+		if ( arena.CustomRulesetState == 1 && arena.State != AS_FIGHT )
 		{
 			if (attacker != victim)
 			{

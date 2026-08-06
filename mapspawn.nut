@@ -46,7 +46,7 @@
  * 	   - These scripts handle interfacing from vscript to python for various things like database integration and github auto-updates 								 *
  *********************************************************************************************************************************************************************/
 
-const MGE_VERSION = "0.5.0"
+const MGE_VERSION = "0.5.1"
 
 ::ROOT  <- getroottable()
 ::CONST <- getconsttable()

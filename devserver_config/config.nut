@@ -142,7 +142,7 @@ const IGNORE_CLASS_RESTRICTIONS              = true //if true, all player classe
 //hud
 //see KOTH section for KOTH hud
 const MGE_HUD_POS_X                         = 0.1
-const MGE_HUD_POS_Y                         = 0.15
+const MGE_HUD_POS_Y                         = 0.2
 
 const AMMOMOD_RESPAWN_DELAY                 = 2.0
 const AMMOMOD_DEFAULT_HP_MULT 				= 6.0
@@ -214,13 +214,6 @@ const BBALL_HOOP_POS_OFFSET                 = 60
 const BBALL_HOOP_MAX_ANGLE_X                = 45.0
 
 const BBALL_BALL_ANGLE_X                    = 360.0
-
-//NOTE:
-//See BBall notes about adding more spawns
-// KOTH uses the last index for the cap point
-// if we have 6 max spawns, cap point will be index 7
-// alternative you can replace index 7 with `koth_cap` in the plugin spawn config
-const KOTH_MAX_SPAWNS                       = 6
 
 //both of these can be overridden in mgemod_spawns.nut
 const KOTH_DEFAULT_CAPTURE_POINT_RADIUS     = 256
