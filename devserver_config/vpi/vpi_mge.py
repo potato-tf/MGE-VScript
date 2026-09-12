@@ -189,7 +189,7 @@ async def ExecCalls():
 
 	# Go
 	if not tasks:
-		LOGGER.info("No tasks to execute")
+		# LOGGER.info("No tasks to execute")
 		return
 	
 	LOGGER.info(f"Executing {len(tasks)} tasks")
@@ -260,7 +260,7 @@ async def main():
 			os._exit(0)
 
 		files = os.listdir(SCRIPTDATA_DIR)
-		LOGGER.info(f"Found {len(files)} files in {SCRIPTDATA_DIR}")
+		# LOGGER.info(f"Found {len(files)} files in {SCRIPTDATA_DIR}")
 
 		for file in files:
 			path = os.path.join(SCRIPTDATA_DIR, file)
@@ -279,7 +279,7 @@ async def main():
 		await ExecCalls()
 
 		# Send to clients
-		LOGGER.info(f"Writing callbacks to files")
+		# LOGGER.info(f"Writing callbacks to files")
 		WriteCallbacksToFile()
 
 		calls = {}
