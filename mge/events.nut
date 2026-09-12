@@ -869,12 +869,12 @@ MGE.Events <- {
 
 	function OnGameEvent_hltv_rank_camera(params)
 	{
-		printf( "STV Rank: %d, Target: %s, Index: %d\n", params.rank, params.target, params.index )
+		printf( "STV Rank: %d, Target: %d, Index: %d\n", params.rank, params.target, params.index )
 	}
 
 	function OnGameEvent_hltv_rank_entity(params)
 	{
-		printf( "STV Rank (Entity): %d, Target: %s, Index: %d\n", params.rank, params.target, params.index )
+		printf( "STV Rank (Entity): %d, Target: %d, Index: %d\n", params.rank, params.target, params.index )
 	}
 
 	function OnGameEvent_hltv_chase(params)
