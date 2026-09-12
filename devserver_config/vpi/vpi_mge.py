@@ -73,7 +73,7 @@ def WriteCallbacksToFile():
 			# TODO: Moved to VPI client.  Confirm HandleCallbacks in vpi.nut is handling this correctly.
 
 			# "a+" file mode seeks to the end of the file, need to go back to the beginning
-			# f.seek(0)
+			f.seek(0)
 			# and then read
 			# contents = f.read()
 
@@ -82,7 +82,7 @@ def WriteCallbacksToFile():
 				# continue
 
 			# Wipe the file.
-			# f.truncate(0)
+			f.truncate(0)
 
 			table	 = {"Calls": info}
 			overflow = {}
