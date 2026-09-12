@@ -265,7 +265,7 @@ MGE.Events <- {
 			{
 				for (local i = 0; i < 5; i++) {
 
-					data += format("\x07"+MGE_COLOR_SUBJECT+"%s\x01: %s\n", MGE_LEADERBOARD_DATA.ELO[i][2], MGE_LEADERBOARD_DATA.ELO[i][1].tostring())
+					data += format("\x07"+MGE_COLOR_SUBJECT+"%s\x01: %s\n", LEADERBOARD_DATA.ELO[i][2], LEADERBOARD_DATA.ELO[i][1].tostring())
 				}
 
 				MGE_ClientPrint(player, HUD_PRINTTALK, "Top5Title")
@@ -273,8 +273,9 @@ MGE.Events <- {
 				return
 			}
 
-			foreach(leaderboard_stat, user_data in MGE_LEADERBOARD_DATA)
+			foreach(leaderboard_stat, user_data in LEADERBOARD_DATA)
 			{
+				leaderboard_stat = leaderboard_stat.tolower()
 				if (leaderboard_stat == stat || startswith(leaderboard_stat, stat))
 				{
 					for (local i = 0; i < 5; i++)
@@ -864,6 +865,26 @@ MGE.Events <- {
 			local vel = Vector(old_vel.x * ENDIF_FORCE_MULT.x, old_vel.y * ENDIF_FORCE_MULT.y, old_vel.z * ENDIF_FORCE_MULT.z)
 			victim.SetAbsVelocity(vel)
 		}
+	}
+
+	function OnGameEvent_hltv_rank_camera(params)
+	{
+		printf( "STV Rank: %d, Target: %s, Index: %d\n", params.rank, params.target, params.index )
+	}
+
+	function OnGameEvent_hltv_rank_entity(params)
+	{
+		printf( "STV Rank (Entity): %d, Target: %s, Index: %d\n", params.rank, params.target, params.index )
+	}
+
+	function OnGameEvent_hltv_chase(params)
+	{
+		__DumpScope(0, params)
+	}
+
+	function OnGameEvent_hltv_cameraman(params)
+	{
+		printf( "STV CameraMan: %d\n", GetClientConvarValue("name", params.index) )
 	}
 }
 MGE.Events.chat_commands.setdelegate(MGE)

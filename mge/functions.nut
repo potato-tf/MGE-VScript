@@ -5,6 +5,7 @@ MGE.CAMS_FOR_ARENAS <- {}
 MGE.ARENAS_LIST <- [] // Need ordered arenas for selection with client commands like !add
 MGE.ALL_PLAYERS <- {}
 MGE.LOCALTIME   <- {}
+MGE.STV_ENT <- null
 
 function MGE::_OnDestroy() {
 
@@ -408,6 +409,19 @@ function MGE::InitPlayerScope(player)
 	AddThinkToEnt(player, "PlayerThink")
 }
 
+function MGE::GetSTV()
+{
+	if (STV_ENT && STV_ENT.IsValid())
+		return STV_ENT
+
+	for (local i = 1; i <= MAX_PLAYERS; i++)
+		if (EntIndexToHScript(i))
+			if (!PlayerInstanceFromIndex(i))
+				return STV_ENT = EntIndexToHScript(i)
+
+	return null
+}
+
 function MGE::ForceChangeClass(player, classIndex)
 {
 	player.SetPlayerClass(classIndex)
@@ -416,7 +430,6 @@ function MGE::ForceChangeClass(player, classIndex)
 
 function MGE::ValidatePlayerClass(player, newclass, pre=false)
 {
-
 	// ignore all class restrictions
 	if ( IGNORE_CLASS_RESTRICTIONS )
 		return
@@ -634,7 +647,7 @@ function MGE::SetupLeaderboard()
 
 	function UpdateLeaderboard[scope]() {
 
-		local stat_keys = MGE.MGE_LEADERBOARD_DATA.keys()
+		local stat_keys = MGE.LEADERBOARD_DATA.keys()
 
 		if ( current_stat_index >= stat_keys.len() )
 			current_stat_index = 0
@@ -667,12 +680,12 @@ function MGE::SetupLeaderboard()
 				// 		printl(k2 + " : " + v2)
 
 				local message = format("          %s:\n", stat)
-				foreach(i, user_info in MGE.MGE_LEADERBOARD_DATA[stat]) {
+				foreach(i, user_info in MGE.LEADERBOARD_DATA[stat]) {
 
 					if (!user_info) {
 
 						user_info = i in response ? response[i] : ["NONE", -INT_MAX]
-						MGE.MGE_LEADERBOARD_DATA[stat][i] = user_info
+						MGE.LEADERBOARD_DATA[stat][i] = user_info
 					}
 
 					local name = 2 in user_info && user_info[2] ? user_info[2] : user_info[0]

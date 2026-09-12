@@ -64,22 +64,25 @@ def GetHostname(path):
 # Write responses from interface functions to file
 def WriteCallbacksToFile():
 	# Hosts to delete
-	delete = []
+	todelete = []
 
 	for host, info in callbacks.items():
 		path = os.path.join(SCRIPTDATA_DIR, f"{host}_vpi_input.interface")
 		with open(path, "a+") as f:
+
+			# TODO: Moved to VPI client.  Confirm HandleCallbacks in vpi.nut is handling this correctly.
+
 			# "a+" file mode seeks to the end of the file, need to go back to the beginning
-			f.seek(0)
+			# f.seek(0)
 			# and then read
-			contents = f.read()
+			# contents = f.read()
 
 			# Client hasn't handled our previous write, don't overwrite
-			if (len(contents) > 0 and not contents.isspace() and contents != "\x00"):
-				continue
+			# if (len(contents) > 0 and not contents.isspace() and contents != "\x00"):
+				# continue
 
-			# Wipe the file
-			f.truncate(0)
+			# Wipe the file.
+			# f.truncate(0)
 
 			table	 = {"Calls": info}
 			overflow = {}
@@ -113,13 +116,13 @@ def WriteCallbacksToFile():
 				callbacks[host] = overflow
 			# Exhausted all callbacks
 			else:
-				delete.append(host)
+				todelete.append(host)
 
 			if (not len(string)): continue
 
 			f.write(string)
 
-	for host in delete:
+	for host in todelete:
 		del callbacks[host]
 
 

@@ -25,7 +25,8 @@ function ROOT::GenerateSecret(n=128) {
 // Token used to verify the identity of the functions we expose to the public to prevent tampering
 // If they do not return this secret when prompted the program will abort
 // Also used to prove our identity to server
-// Avoid putting this token into a variable as error locals traces can give away its value
+
+// Avoid putting this token into a variable, as error stack traces can give away its value
 local function GetSecret() {
 	return @"9320fksXlk4d5a4fFP0"
 }
