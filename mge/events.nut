@@ -877,10 +877,7 @@ MGE.Events <- {
 
 	function OnGameEvent_hltv_rank_entity(params)
 	{	
-		if (params.target) 
-		{
-			printf( "STV Rank (Entity): %d, Target: %d, Index: %d\n", params.rank, params.target, params.index )
-		}
+		printf( "STV Rank (Entity): %d, Target: %d, Index: %d\n", params.rank, params.target, params.index )
 	}
 
 	function OnGameEvent_hltv_chase(params)
