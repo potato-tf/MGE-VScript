@@ -885,6 +885,11 @@ MGE.Events <- {
 		__DumpScope(0, params)
 	}
 
+	function OnGameEvent_hltv_fixed(params)
+	{
+		__DumpScope(0, params)
+	}
+
 	function OnGameEvent_hltv_cameraman(params)
 	{
 		printf( "STV CameraMan: %s\n", GetClientConvarValue("name", params.index) )
