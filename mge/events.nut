@@ -884,7 +884,7 @@ MGE.Events <- {
 
 	function OnGameEvent_hltv_cameraman(params)
 	{
-		printf( "STV CameraMan: %d\n", GetClientConvarValue("name", params.index) )
+		printf( "STV CameraMan: %s\n", GetClientConvarValue("name", params.index) )
 	}
 }
 MGE.Events.chat_commands.setdelegate(MGE)
