@@ -217,7 +217,7 @@ def ParseColumnDefinitions(columns):
 player_data_columns = "steam_id, name, elo, wins, losses, kills, deaths, damage_taken, damage_dealt, airshots, market_gardens, hoops_scored, koth_points_capped"
 
 @WrapDB
-async def VPI_MGE_DBInit(_, cursor):
+async def VPI_MGE_DBInit(info, cursor):
 
 	LOGGER.info("Initializing MGE database...")
 	# await cursor.execute("CREATE TABLE IF NOT EXISTS mge_leaderboard (steam_id TEXT PRIMARY KEY, elo INTEGER)")
