@@ -875,10 +875,10 @@ MGE.Events <- {
 
 		printf( "STV Rank: %d, Target: %d, Index: %d\n", params.rank, params.target, params.index )		
 
-		local random_cam = RandomInt(0, CAMS_FOR_ARENAS.len() - 1)
-		local cam = CAMS_FOR_ARENAS.keys()[random_cam]
+		local rnd = RandomInt(0, CAMS_FOR_ARENAS.len() - 1)
+		local cam = CAMS_FOR_ARENAS.keys()[rnd]
 
-		if ( ARENAS[ CAMS_FOR_ARENAS[ random_cam ] ].CurrentPlayers.len() && GetSTV().GetOrigin() != cam.GetOrigin() )
+		if ( ARENAS[ CAMS_FOR_ARENAS[ cam ] ].CurrentPlayers.len() && GetSTV().GetOrigin() != cam.GetOrigin() )
 			GetSTV().SetAbsOrigin(cam.GetOrigin())
 
 		stv_move_time = Time()
