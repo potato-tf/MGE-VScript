@@ -1,5 +1,6 @@
 MGE.Events <- {
 
+	stv_move_time = Time()
 	valid_chars = {
 
 		['!']  = 33,
@@ -869,16 +870,35 @@ MGE.Events <- {
 
 	function OnGameEvent_hltv_rank_camera(params)
 	{
-		if (params.target) 
-		{
-			printf( "STV Rank: %d, Target: %d, Index: %d\n", params.rank, params.target, params.index )
-		}
+		if (stv_move_time + 10 > Time())
+			return
+
+		printf( "STV Rank: %d, Target: %d, Index: %d\n", params.rank, params.target, params.index )		
+
+		local random_cam = RandomInt(0, CAMS_FOR_ARENAS.len() - 1)
+		local cam = CAMS_FOR_ARENAS.keys()[random_cam]
+
+		if ( ARENAS[ CAMS_FOR_ARENAS[ random_cam ] ].CurrentPlayers.len() && GetSTV().GetOrigin() != cam.GetOrigin() )
+			GetSTV().SetAbsOrigin(cam.GetOrigin())
+
+		stv_move_time = Time()
 	}
 
-	function OnGameEvent_hltv_rank_entity(params)
-	{	
-		printf( "STV Rank (Entity): %d, Target: %d, Index: %d\n", params.rank, params.target, params.index )
-	}
+	// function OnGameEvent_hltv_rank_entity(params)
+	// {
+	// 	if (stv_move_time + 10 > Time())
+	// 		return
+
+	// 	printf( "STV Rank (Entity): %d, Target: %d, Index: %d\n", params.rank, params.target, params.index )
+
+	// 	local random_cam = RandomInt(0, CAMS_FOR_ARENAS.len() - 1)
+	// 	local cam = CAMS_FOR_ARENAS.keys()[random_cam]
+
+	// 	if ( ARENAS[ CAMS_FOR_ARENAS[ random_cam ] ].CurrentPlayers.len() && GetSTV().GetOrigin() != cam.GetOrigin() )
+	// 		GetSTV().SetAbsOrigin(cam.GetOrigin())
+
+	// 	stv_move_time = Time()
+	// }
 
 	function OnGameEvent_hltv_chase(params)
 	{
