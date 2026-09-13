@@ -880,7 +880,7 @@ MGE.Events <- {
 		{
 			if (ARENAS[arena_name].CurrentPlayers.len() && stv.GetOrigin() != _cam.GetOrigin())
 			{
-				stv.SetAbsOrigin(_cam.GetOrigin())
+				stv.GetScriptScope().neworigin = _cam.GetOrigin()
 				break
 			}
 		}

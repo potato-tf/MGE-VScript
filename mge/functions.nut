@@ -415,9 +415,20 @@ function MGE::GetSTV()
 		return STV_ENT
 
 	for (local i = 1; i <= MAX_PLAYERS; i++)
+	{
 		if (EntIndexToHScript(i))
+		{
 			if (!PlayerInstanceFromIndex(i))
-				return STV_ENT = EntIndexToHScript(i)
+			{
+				STV_ENT = EntIndexToHScript(i)
+				STV_ENT.ValidateScriptScope()
+				STV_ENT.GetScriptScope().neworigin <- Vector()
+				STV_ENT.GetScriptScope().MoveThink <- function() { self.SetAbsOrigin(neworigin); return -1 }
+				AddThinkToEnt(STV_ENT, "MoveThink")
+				return STV_ENT
+			}
+		}
+	}
 
 	return null
 }
