@@ -875,15 +875,15 @@ MGE.Events <- {
 
 		printf( "STV Rank: %d, Target: %d, Index: %d\n", params.rank, params.target, params.index )		
 
-		local stv = GetSTV()
-		foreach( _cam, arena_name in CAMS_FOR_ARENAS )
-		{
-			if (ARENAS[arena_name].CurrentPlayers.len() && stv.GetOrigin() != _cam.GetOrigin())
-			{
-				stv.GetScriptScope().neworigin = _cam.GetOrigin()
-				break
-			}
-		}
+		// local stv = GetSTV()
+		// foreach( _cam, arena_name in CAMS_FOR_ARENAS )
+		// {
+			// if (ARENAS[arena_name].CurrentPlayers.len() && stv.GetOrigin() != _cam.GetOrigin())
+			// {
+				// stv.GetScriptScope().neworigin = _cam.GetOrigin()
+				// break
+			// }
+		// }
 
 		stv_move_time = Time()
 	}

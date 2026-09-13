@@ -420,11 +420,11 @@ function MGE::GetSTV()
 		{
 			if (!PlayerInstanceFromIndex(i))
 			{
-				STV_ENT = EntIndexToHScript(i)
-				STV_ENT.ValidateScriptScope()
-				STV_ENT.GetScriptScope().neworigin <- Vector()
-				STV_ENT.GetScriptScope().MoveThink <- function() { self.SetAbsOrigin(neworigin); return -1 }
-				AddThinkToEnt(STV_ENT, "MoveThink")
+				// STV_ENT = EntIndexToHScript(i)
+				// STV_ENT.ValidateScriptScope()
+				// STV_ENT.GetScriptScope().neworigin <- Vector()
+				// STV_ENT.GetScriptScope().MoveThink <- function() { self.SetAbsOrigin(neworigin); return -1 }
+				// AddThinkToEnt(STV_ENT, "MoveThink")
 				return STV_ENT
 			}
 		}
