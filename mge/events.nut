@@ -870,16 +870,20 @@ MGE.Events <- {
 
 	function OnGameEvent_hltv_rank_camera(params)
 	{
-		if (stv_move_time + 10 > Time())
+		if (!ALL_PLAYERS.len() || stv_move_time + 10 > Time())
 			return
 
 		printf( "STV Rank: %d, Target: %d, Index: %d\n", params.rank, params.target, params.index )		
 
-		local rnd = RandomInt(0, CAMS_FOR_ARENAS.len() - 1)
-		local cam = CAMS_FOR_ARENAS.keys()[rnd]
-
-		if ( ARENAS[ CAMS_FOR_ARENAS[ cam ] ].CurrentPlayers.len() && GetSTV().GetOrigin() != cam.GetOrigin() )
-			GetSTV().SetAbsOrigin(cam.GetOrigin())
+		local stv = GetSTV()
+		foreach( _cam, arena_name in CAMS_FOR_ARENAS )
+		{
+			if (ARENAS[arena_name].CurrentPlayers.len() && stv.GetOrigin() != _cam.GetOrigin())
+			{
+				stv.SetAbsOrigin(_cam.GetOrigin())
+				break
+			}
+		}
 
 		stv_move_time = Time()
 	}
