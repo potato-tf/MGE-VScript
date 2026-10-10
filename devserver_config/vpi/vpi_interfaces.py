@@ -426,6 +426,17 @@ async def VPI_MGE_UpdateServerData(info):
 	if not date_time or not 'datetime' in sys.modules:
 		from datetime import datetime as date_time
 
+	if STEAMAPI_LAST_REQUEST_TIME > date_time.now().timestamp():
+		err = f"""
+		[VPI ERROR] Steam API rate limit exceeded!
+		Last request time: {STEAMAPI_LAST_REQUEST_TIME}
+		Current time: {date_time.now().timestamp()}
+		Difference: {date_time.now().timestamp() - STEAMAPI_LAST_REQUEST_TIME}
+		Time until next request: {STEAMAPI_LAST_REQUEST_TIME - date_time.now().timestamp()}
+		"""
+		LOGGER.error(err)
+		return err
+
 	# now = int(date_time.now().timestamp())
 	# if now < STEAMAPI_LAST_REQUEST_TIME + STEAMAPI_REQUEST_RATE_LIMIT and STEAMAPI_LAST_REQUEST_TIME:
 	# 	err = f"""
@@ -457,7 +468,9 @@ async def VPI_MGE_UpdateServerData(info):
 	response = requests_get(endpoint)
 
 	if not 'servers' in response.json()['response']:
+		STEAMAPI_LAST_REQUEST_TIME = date_time.now().timestamp() + 3600 # 1 hour
 		LOGGER.error(endpoint)
+		return err
 
 	server = [server for server in response.json()['response']['servers'] if server['name'] == name]
 
